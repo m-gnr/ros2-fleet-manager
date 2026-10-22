@@ -1,7 +1,8 @@
 ## Başlamadan önce
 - Mimari, planlama veya uygulama işinden önce `docs/project-context.md` dosyasını oku.
 - Eski README veya notlardaki farklı politikaları güncel kararların yerine sessizce uygulama. Çelişki görürsen dur ve sor.
-- Kullanıcının kişisel notları korunur (Karar 08). Bu notları değiştirme, silme, özetleyip üzerine yazma. Kararın tam metni `docs/` içindedir.
+- Kullanıcının kişisel notları korunur. Bu notları değiştirme, silme, özetleyip üzerine yazma.
+- Mimari yön için [Revize Karar 08](docs/ROS2_Fleet_Manager_Karar_08_Revize_v1_0.pdf) ve [onaylı v2.3 geçiş kaydı](docs/architecture-v2.3-transition.md) esas alınır. Karar 08, ExecuteTask/yürütücü yönünü de kapsar: Fleet Manager ExecuteTask gönderir; robot yürütücüsü pickup/dropoff Nav2 hedeflerini yürütür. Kaynak önceliği [proje bağlamında](docs/project-context.md) tanımlıdır. Geçiş kaydının onayı Docker yerleşiminin onayı değildir.
 - Karar gerektiren bir şeyi tek başına kilitleme. Seçenekleri yaz, kullanıcıya sor.
 
 ## Doğruluk kaynakları

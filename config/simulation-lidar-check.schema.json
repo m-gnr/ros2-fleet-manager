@@ -1,0 +1,139 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sensor",
+    "wall",
+    "render",
+    "check"
+  ],
+  "properties": {
+    "sensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pose",
+        "samples",
+        "min_angle_rad",
+        "max_angle_rad",
+        "min_range_m",
+        "max_range_m",
+        "resolution_m",
+        "update_rate_hz"
+      ],
+      "properties": {
+        "pose": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "description": "base_link relative x/y/z metres and roll/pitch/yaw radians",
+          "items": {
+            "type": "number"
+          }
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 360,
+          "description": "Horizontal rays; low resolution validation"
+        },
+        "min_angle_rad": {
+          "type": "number",
+          "description": "Minimum horizontal angle in radians"
+        },
+        "max_angle_rad": {
+          "type": "number",
+          "description": "Maximum horizontal angle in radians"
+        },
+        "min_range_m": {
+          "type": "number",
+          "description": "Minimum range in metres",
+          "exclusiveMinimum": 0
+        },
+        "max_range_m": {
+          "type": "number",
+          "description": "Maximum range in metres",
+          "exclusiveMinimum": 0
+        },
+        "resolution_m": {
+          "type": "number",
+          "description": "Range resolution in metres",
+          "exclusiveMinimum": 0
+        },
+        "update_rate_hz": {
+          "type": "number",
+          "description": "Sensor rate in hertz",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "wall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pose",
+        "size_m"
+      ],
+      "properties": {
+        "pose": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "description": "World x/y/z metres and roll/pitch/yaw radians",
+          "items": {
+            "type": "number"
+          }
+        },
+        "size_m": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Wall x/y/z dimensions in metres",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "render": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "engine",
+        "headless"
+      ],
+      "properties": {
+        "engine": {
+          "const": "ogre2",
+          "description": "EGL-capable renderer for this experiment"
+        },
+        "headless": {
+          "const": true,
+          "description": "Use supported --headless-rendering option"
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_messages",
+        "range_tolerance_m"
+      ],
+      "properties": {
+        "minimum_messages": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Required received scans with increasing timestamps"
+        },
+        "range_tolerance_m": {
+          "type": "number",
+          "description": "Allowed wall range error in metres",
+          "exclusiveMinimum": 0
+        }
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

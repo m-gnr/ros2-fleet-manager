@@ -1,0 +1,15 @@
+# Stage B1 only; layer on the DDS and Stage A overrides.
+name: ros2-fleet-simulation-lidar-check
+x-lidar-check: &lidar-check
+  image: ros2-fleet-simulation-lidar-check:humble-fortress
+  build:
+    context: .
+    dockerfile: docker/simulation-lidar-check/Dockerfile
+services:
+  simulation:
+    <<: *lidar-check
+    environment:
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      EGL_PLATFORM: surfaceless
+  backend:
+    <<: *lidar-check

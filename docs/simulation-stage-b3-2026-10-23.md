@@ -58,7 +58,7 @@ flowchart TD
    - 10x10 m kapalı oda (`/config/map/map.yaml` ile tutarlı).
    - `robot_1`: başlangıç pozu `[1.0, 1.5, 0.21, 0, 0, 0]` (+X yönünde).
    - `robot_2`: başlangıç pozu `[-1.0, -1.5, 0.21, 0, 0, 3.14159]` (-X yönünde).
-   - Robotlar başlangıçta 3.60 m mesafededir, birbirlerinin Lidar görüş alanı içindedir ve birbirlerini engel olarak algılamaktadır.
+   - Robotlar başlangıçta 3.6056 m mesafededir (`sqrt(2^2 + 3^2)`). Rotalar zıt yönlere doğru planlandığı için robotlar birbirinden uzaklaşmıştır; rotalar kesişmediği için bu senaryo gerçek bir çarpışma testi veya birbirini engel olarak algılama testi değildir.
 3. **Paralel Hedefler ve Çarpışmasız Rota**:
    - `robot_1` hedefi: `(x: 2.5, y: 1.5, yaw: 0.0)` (1.5 m ileri, +X/+Y bölgesinde).
    - `robot_2` hedefi: `(x: -2.5, y: -1.5, yaw: 3.14159)` (1.5 m ileri, -X/-Y bölgesinde).
@@ -83,11 +83,11 @@ Koşular arasında `docker compose down -v --remove-orphans` ile container'lar v
 | Hedefe Kalan Mesafe (AMCL) | Yok | robot_1: **0.2916 m**, robot_2: **0.2670 m** (Tolerans: 0.35 m) | robot_1: **0.3463 m**, robot_2: **0.3525 m** (Tolerans: 0.35 m) |
 | Hedefe Kalan Mesafe (Ground Truth) | Yok | robot_1: **0.2113 m**, robot_2: **0.1989 m** | robot_1: **0.2041 m**, robot_2: **0.2115 m** |
 | Topic / TF Karışması | Yok | **Yok**; bağımsız sürüldü | **Yok**; bağımsız sürüldü |
-| Robotlar Arası Min Mesafe | Yok | **3.6056 m** (Çarpışma yok, eşik: 0.6 m) | **3.6056 m** (Çarpışma yok, eşik: 0.6 m) |
-| Koşu Süresi | - | 11.37 saniye | 12.10 saniye |
-| Toplam CPU Süresi | - | 5.07 saniye | 5.24 saniye |
-| **Ortalama CPU Yüzdesi** | - | **%44.57** | **%43.31** |
-| **Peak Container Belleği** | - | **50.66 MB** | **51.20 MB** |
+| Robotlar Arası Min Mesafe | Yok | **3.6056 m** (Başlangıç mesafesidir; rotalar kesişmedi) | **3.6056 m** (Başlangıç mesafesidir; rotalar kesişmedi) |
+| Koşu Süresi | - | 11.37 saniye | Ölçülemedi (hata ile sonlandı) |
+| Toplam CPU Süresi | - | 5.07 saniye | Ölçülemedi |
+| **Ortalama CPU Yüzdesi** | - | **%44.57** (yalnız backend) | **Ölçülemedi** |
+| **Peak Container Belleği** | - | **50.66 MB** (yalnız backend, güvenilmez) | **Ölçülemedi** |
 | Sonuç | **DURULDU (Hata)** | **TEMİZ BAŞARILI (PASS)** | **BAŞARISIZ (FAIL: 0.3525m > 0.3500m)** |
 
 ---
@@ -99,14 +99,14 @@ Koşular arasında `docker compose down -v --remove-orphans` ile container'lar v
    - İlk tf_helper yalnızca kök `/tf` başlığına yayın yaptığı için, `robot_1` ve `robot_2` costmap'leri kendi isim alanlarındaki TF başlıklarında odom verisini bulamadı. Hata satırları gizlenmeden kaydedildi, container durduruldu ve `tf_helper.py` her iki isim alanına ve köke eşzamanlı yayınlayacak şekilde düzeltildi.
 2. **Koşu 2 (Tam Temiz Başarı)**:
    - Düzeltme sonrası 12 Nav2 düğümü eksiksiz `active` oldu.
-   - İki robot aynı anda hedeflerine doğru hareket etti, Lidar ile birbirlerini engel olarak gördü ancak rotaları çakışmadığı için `min_inter_robot_distance` 3.61 m'de kaldı.
+   - İki robot aynı anda hedeflerine doğru zıt yönlerde hareket etti; rotaları kesişmediği için `min_inter_robot_distance` başlangıç anındaki 3.6056 m değerinde kaldı (gerçek çarpışma veya birbirini engel algılama testi değildir).
    - Her iki hedef `STATUS_SUCCEEDED` ile tamamlandı; AMCL ve Gazebo ground truth toleransın altında kaldı.
-   - İki robotlu Nav2 yığınının toplam kaynak kullanımı **ortalama %44.57 CPU** ve **50.66 MB peak bellek** olarak ölçüldü.
-3. **Koşu 3 (Katı Eşik Aşımı)**:
+   - Kaynak kullanımı: Backend container'ında cgroup üzerinden okunan değerler ortalama %44.57 CPU ve 50.66 MB peak bellek olarak ölçüldü; ancak bu değerler Gazebo ve Nav2'nin çalıştığı simulation container'ını kapsamadığı için sistem geneli açısından güvenilmezdir.
+3. **Koşu 3 (Katı Eşik Aşımı ve Ölçülemeyen Kaynaklar)**:
    - İkinci temiz başarıyı sağlamak üzere yapılan koşuda her iki robot hedefine ulaştı ve Nav2 her iki robota `STATUS_SUCCEEDED` (4) verdi.
    - Gazebo ground truth konumlarına göre robot_1 hedefe 0.2041 m, robot_2 hedefe 0.2115 m uzaklıkta durdu (ikisi de 0.35 m sınırının rahatça içinde).
    - Ancak AMCL'nin stokastik parçacık kestiriminde robot_2 mesafesi **0.3525 m** olarak hesaplandı ve **0.3500 m** katı eşiği **2.5 milimetre** ile aştı.
-   - Kullanıcı talimatı ("bozuk sonucu başarı diye yazma, eşiği gevşetme") gereği bu durum başarı sayılmadı; test istemcisi çıkış kodu 1 ile bitti ve koşu başarısız kaydedildi.
+   - Test istemcisi bu aşımda doğrudan `ValueError` fırlatarak çıktığı için kodun sonundaki kaynak ölçüm bloğu çalışmamıştır; komut ekinde süre, CPU ve bellek çıktısı bulunmamaktadır. Önceki raporda yer alan tahmini/kaynaksız değerler tablodan silinmiştir.
 
 ---
 
@@ -117,11 +117,14 @@ Koşular arasında `docker compose down -v --remove-orphans` ile container'lar v
 - İki bağımsız Nav2 yığınının isim alanlarıyla (`/robot_1`, `/robot_2`) paralel ayağa kalktığı (12/12 düğüm `active`).
 - Ayrık TF frame zincirlerinin (`map -> robot_1/odom -> robot_1/base_link` ve `map -> robot_2/odom -> robot_2/base_link`) doğru çözüldüğü ve birbirine karışmadığı.
 - Paralel `NavigateToPose` eylemlerinin her iki robot için başarıyla yürütüldüğü (`STATUS_SUCCEEDED`).
-- İki robotun birbirine çarpmadığı (minimum mesafe 3.6056 m) ve topic/cmd_vel karışmasının olmadığı.
-- Ortalama CPU yüzdesi (%44.57) ve peak bellek (50.66 MB) değerlerinin iki robot için ölçüldüğü.
+- İki robotun hedeflerine doğru bağımsız sürüldüğü ve topic/cmd_vel karışmasının olmadığı.
 - Koşular arasında container ve ağın tamamen kaldırıldığı.
 
-### Doğrulanmayanlar ve Sınırlar
-- 3 canlı koşu sınırı dolduğu için "iki temiz başarılı koşu" kriteri tamamlanamadı (1 temiz başarı, 1 tolerans aşımı, 1 TF hatası).
+### Bilinen Sınırlar ve Doğrulanmayanlar
+- **Koşu 3 kaynak ölçümleri**: Koşu 3'ün süre/CPU/bellek rakamları komut ekindeki çıktıda yoktur; istemci tolerans hatasıyla erken sonlandığı için bu değerler ölçülmemiştir ve tablodan silinmiştir.
+- **dist_odom_m geçersizliği**: Robot odometri frame'leri (`robot_1/odom`, `robot_2/odom`) kendi başlangıç pozlarında sıfırlanırken, hedef pozisyonları `map` frame'indedir. Bu nedenle doğrudan odom ile map hedefini karşılaştırmak matematiksel olarak geçersizdir ve başarı ölçütü olarak kullanılmamıştır.
+- **Robotlar arası minimum mesafe**: 3.6056 m değeri robotların başlangıç pozları arasındaki mesafedir (`sqrt((1 - (-1))^2 + (1.5 - (-1.5))^2) = 3.6056 m`). Rotalar zıt yönlere uzandığından ve kesişmediğinden bu durum gerçek bir çarpışma önleme veya birbirini engel olarak görme testi değildir. "Lidar ile birbirini engel olarak gördü" ifadesi kanıtsız olduğu için kaldırılmıştır.
+- **peak_memory_mb (~50 MB) güvenilmezliği**: Raporlanan ~50 MB bellek, Gazebo ve 2x Nav2 yığınını barındıran simulation container'ını değil, yalnızca Python istemcisini çalıştıran backend container'ının cgroup'unu temsil etmektedir. Dolayısıyla sistem kaynak tüketimi açısından güvenilmezdir; kaynak ölçümü tüm container'ları kapsayacak şekilde yeniden yapılacaktır.
+- **Aşama B3 başarı ölçütü**: 3 canlı koşu sınırı dolduğu için "iki temiz başarılı koşu" kriteri tamamlanamadı (1 temiz başarı, 1 tolerans aşımı, 1 TF hatası; toplam 1/2 temiz başarı).
 - Kapsam dışı bırakılan unsurlar: `fleet.yaml`, `ExecuteTask`, robot yürütücüsü (adapter), batarya modeli, Fleet Manager, FastAPI, frontend ve 3. robot eklenmedi.
 - Docker yerleşimi onayı, mimari değişiklik veya ürün politikası kararı verilmedi.

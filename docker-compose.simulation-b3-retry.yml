@@ -1,0 +1,25 @@
+name: ros2-fleet-simulation-b3-retry
+
+x-b3-retry: &b3-retry
+  image: ros2-fleet-simulation-nav2-check:humble-fortress
+  volumes:
+    - ./config:/config:ro
+    - ./docker/simulation-b3-retry:/opt/simulation-b3-retry:ro
+
+services:
+  simulation:
+    <<: *b3-retry
+    environment:
+      SIM_CHECK_ROLE: simulation
+      DDS_TEST_TIMEOUT_SECONDS: "120"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      EGL_PLATFORM: surfaceless
+      IGN_GAZEBO_RENDER_ENGINE_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+      IGN_RENDERING_PLUGIN_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+    command: ["python3", "/opt/simulation-b3-retry/check.py"]
+  backend:
+    <<: *b3-retry
+    environment:
+      SIM_CHECK_ROLE: backend
+      DDS_TEST_TIMEOUT_SECONDS: "120"
+    command: ["python3", "/opt/simulation-b3-retry/check.py"]

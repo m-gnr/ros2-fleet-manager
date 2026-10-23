@@ -1,0 +1,25 @@
+name: ros2-fleet-simulation-nav2-check
+
+x-nav2-check: &nav2-check
+  image: ros2-fleet-simulation-nav2-check:humble-fortress
+  volumes:
+    - ./config:/config:ro
+    - ./docker/simulation-nav2-check:/opt/simulation-nav2-check:ro
+
+services:
+  simulation:
+    <<: *nav2-check
+    environment:
+      SIM_CHECK_ROLE: simulation
+      DDS_TEST_TIMEOUT_SECONDS: "90"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      EGL_PLATFORM: surfaceless
+      IGN_GAZEBO_RENDER_ENGINE_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+      IGN_RENDERING_PLUGIN_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+    command: ["python3", "/opt/simulation-nav2-check/check.py"]
+  backend:
+    <<: *nav2-check
+    environment:
+      SIM_CHECK_ROLE: backend
+      DDS_TEST_TIMEOUT_SECONDS: "90"
+    command: ["python3", "/opt/simulation-nav2-check/check.py"]

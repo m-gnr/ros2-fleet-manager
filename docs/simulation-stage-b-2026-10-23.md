@@ -4,11 +4,13 @@ Tarih: 23 Ekim 2026 (Europe/Istanbul).
 
 ## Durum ve kapsam
 
-**B1 BAŞARISIZ; karar kapısında duruldu. B2 başlatılmadı.** Bu kayıt Docker yerleşimi onayı değildir. [Proje bağlamı](project-context.md), [onaylı v2.3 geçiş kaydı](architecture-v2.3-transition.md) ve [Aşama A](simulation-validation-2026-10-23.md) okundu. Önceki kayıtlar ve kişisel notlar değiştirilmez.
+**B1 GEÇTİ: `03` ve `04` iki temiz başarılı koşudur. B2 başlatılmadı; bu sınırlı deneme tamamlandı.** Bu kayıt Docker yerleşimi onayı değildir. [Proje bağlamı](project-context.md), [onaylı v2.3 geçiş kaydı](architecture-v2.3-transition.md) ve [Aşama A](simulation-validation-2026-10-23.md) okundu. Önceki kayıtlar ve kişisel notlar değiştirilmez.
+
+İlk iki başarısız koşuda eklenti arama engeli incelendi; resmi `--render-engine-server` ve override ortam değişkenleriyle eklenti yükleme aşaması aşıldı. Ancak OGRE2 motoru dummy render window başlatırken HLMS Unlit shader şablon dosyalarının eksikliği (`FileNotFoundException`) nedeniyle `Ogre::HlmsPbsDatablock::getBrdf()` üzerinde çöktü (-11 segfault). Bu frame, [ikinci koşunun tam logundaki](simulation-stage-b-commands-2026-10-23.md#run-b1-02) `#0` satırında yer alır. O aşamada kullanıcının açık talimatı gereği sonraki hata kovalanmadan duruldu. Sonraki açık izinle yapılan sınırlı resmi paket denemesi aşağıda kayıtlıdır; shader eksikliği giderildi ve iki koşuda gerçek LaserScan doğrulandı.
 
 ## Ayrı deney düzeni
 
-[Ayrı Compose override](../docker-compose.simulation-lidar-check.yml), DDS ve Aşama A override dosyalarının üzerine eklenir. Ayrı proje, container, ağ ve image kullanılır. [Dockerfile](../docker/simulation-lidar-check/Dockerfile), ölçülen yerel Aşama A image'ına OGRE2 paketini ekler. Aşama A dosyaları değiştirilmez. [Betik](../docker/simulation-lidar-check/check.py), Aşama A config doğrulayıcısını ve aynı robot dünya şablonunu kullanır; çalışma sırasında `/tmp/lidar-world.sdf` dosyasına sensör ve duvar ekler. Config iki container'da da salt okunur bağlanır.
+[Ayrı Compose override](../docker-compose.simulation-lidar-check.yml), DDS ve Aşama A override dosyalarının üzerine eklenir. Ayrı proje, container, ağ ve image kullanılır. [Dockerfile](../docker/simulation-lidar-check/Dockerfile), ölçülen yerel Aşama A image'ına OGRE2 runtime paketini ve aşağıda belirlenen resmi medya sağlayıcısını zorunlu bağımlılıklarıyla ekler. Aşama A dosyaları değiştirilmez. [Betik](../docker/simulation-lidar-check/check.py), Aşama A config doğrulayıcısını ve aynı robot dünya şablonunu kullanır; çalışma sırasında `/tmp/lidar-world.sdf` dosyasına sensör ve duvar ekler. Config iki container'da da salt okunur bağlanır.
 
 ```mermaid
 flowchart LR
@@ -58,26 +60,62 @@ Bu nedenle ayrı image'da `libignition-rendering6-ogre2` kurulur. Sunucu `-s -r 
 
 ## Sonuç
 
-`simulation-b1-20261023-01` başarısızdır. Köprü `/validation_robot/scan` için `ignition.msgs.LaserScan → sensor_msgs/msg/LaserScan` bağlantısını açtı. Backend `rmw_cyclonedds_cpp` ile başladı. Ancak Gazebo render motorunu yükleyemedi:
+Son sınırlı deneme başarılıdır. [03 koşusu](simulation-stage-b-commands-2026-10-23.md#run-b1-03) ve [04 koşusu](simulation-stage-b-commands-2026-10-23.md#run-b1-04) aynı image, config ve kabul betiğiyle çalıştırıldı. Arada `down` ile iki test container'ı ve ağ kaldırıldı; ikinci koşu yeni container ve ağ kimlikleriyle başladı. Üçüncü koşuya gerek kalmadı.
+
+| Ölçüm | 03 | 04 |
+| --- | --- | --- |
+| Koşu kimliği | `simulation-b1-20261023-03` | `simulation-b1-20261023-04` |
+| Doğrulanan gerçek LaserScan | 10 | 10 |
+| Her mesajdaki sonlu, menzil içi ışın | 31 | 31 |
+| Ölçülen mesafe aralığı (m) | 1.950119–2.077357 | 1.950119–2.077357 |
+| En büyük analitik duvar hatası (m) | 0.004366012 | 0.004366012 |
+| Artan simülasyon zaman damgaları (s) | 0.002–1.8 | 0.002–1.8 |
+| Gazebo / köprü / simulation / backend / Compose çıkışı | 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 |
+
+Duvarın ön yüzüne merkez doğrultudaki beklenen uzaklık config geometrisinden 1.95 m hesaplanır; her ışın kendi açısı için kontrol edildi. Ölçülen en büyük hata config'deki toleransın altındadır. Her iki koşuda `B1_PASS` ve `SCAN_SUMMARY: validated_messages=10, queued_messages=0` vardır. Render thread başlatıldı, gerçek `gpu_lidar` topic'i yayımlandı. Yeni hata, segfault, `FAIL` veya `FORCED_KILL` görülmedi. Sahte scan veya hata bastırma eklenmedi.
+
+Önceki başarısız koşuların kanıtı korunur:
+
+`simulation-b1-20261023-01` ve `simulation-b1-20261023-02` başarısızdır. İkinci denemede resmi mekanizmalar uygulandı: Compose override'ında `IGN_GAZEBO_RENDER_ENGINE_PATH` ve `IGN_RENDERING_PLUGIN_PATH` tanımlandı; `check.py` içinde `--physics-engine`'de olduğu gibi `--render-engine-server /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins/libignition-rendering6-ogre2.so.6` parametresi verildi.
+
+Bu parametreyle `RenderEngineManager` eklentiyi yükledi; ilk koşudaki `Failed to load plugin` ve `Engine [ogre2] is not supported` hataları tamamen ortadan kalktı. Ancak OGRE2 motoru pencere/bağlam oluştururken `/usr/share/ignition/ignition-rendering6/ogre2/src/media/Hlms/Unlit/GLSL` klasöründeki HLMS Unlit GLSL shader şablon dosyalarını bulamadı (`OGRE EXCEPTION(6:FileNotFoundException)`):
 
 ```text
-Failed to load plugin [ignition-rendering-ogre2] : couldn't find shared library.
-Engine [ogre2] is not supported. Loading OGRE2 instead.
-Segmentation fault (Address not mapped to object [(nil)])
+[Err] [Ogre2RenderEngine.cc:993]  Unable to create the rendering window: OGRE EXCEPTION(6:FileNotFoundException): Data folder provided contains no valid template shader files. Did you provide the right folder location? Check you have the right read pemissions. Folder: /usr/share/ignition/ignition-rendering6/ogre2/src/media/Hlms/Unlit/GLSL in Hlms::Hlms at /build/ogre-next-phBY09/ogre-next-2.2.5+dfsg3/OgreMain/src/OgreHlms.cpp (line 441)
+[Err] [Ogre2RenderEngine.cc:1001] Unable to create the rendering window after [11] attempts.
+[Err] [Ogre2RenderEngine.cc:919] Failed to create dummy render window.
+[Err] [Ogre2Material.cc:997] Ogre HLMS PBS not ready. Is Ogre2 Render Engine initiallized?
+Segmentation fault (Address not mapped to object [0x2e0])
 ```
 
-Gazebo alt süreci `-11`, simulation container `1`, backend container `1`, Compose `1` ile bitti. Köprü kapanış kodu `0` olması sensör başarısı değildir. **Kaydedilen/doğrulanan LaserScan mesaj sayısı 0**; hiçbir `SCAN` veya `B1_PASS` kaydı yoktur. Sonlu menzil ve duvar uyumu doğrulanmadı. İlk istemcide kesilme anında toplam callback sayacı ayrıca basılmadığı için sıfırın kapsamı kaydedilen/doğrulanan mesajlardır; toplam teslim edilmiş mesaj sayısının bağımsız ölçümü yoktur.
+Gazebo alt süreci `-11`, simulation container `1`, backend container `1`, Compose `1` ile bitti. İkinci istemcide düzeltilen backend kapanışı çalıştı: `SCAN_SUMMARY: validated_messages=0, queued_messages=0` kaydedildi ve temiz şekilde `ExternalShutdownException` yakalandı. **Kaydedilen/doğrulanan LaserScan mesaj sayısı 01 ve 02 koşularında 0**; bu iki eski koşuda hiçbir `SCAN` veya `B1_PASS` kaydı yoktur.
 
-B1 başarısızlığından sonra yeni bir lidar/render koşusu veya B2 yapılmadı. Yalnız salt okunur paket teşhisi, test altyapısının kapanış raporlaması düzeltmesi, paketleme, config testleri ve temizlik tamamlandı.
+İkinci koşu sırasında geçerli kullanıcı talimatı gereği (yeni hata çıkarsa sonraki hatayı kovalamadan dur) o aşamada shader eksikliğini giderme veya Xvfb denemesine girişilmedi; karar kapısında duruldu ve B2 başlatılmadı.
+
+## Son sınırlı paket denemesi
+
+Kullanıcı, ikinci koşudan sonra yalnız eksik medyanın resmi paketini bulup uyumluysa B1 image'ına eklemeyi onayladı. İzin, aynı testi yeni koşu kimliğiyle çalıştırmak ve farklı hata çıkarsa tekrar denemeden durmaktır. Başarı durumunda iki temiz koşu aranır; bu dizide toplam en fazla üç canlı koşu yapılabilir. B2 kapsam dışıdır. Bu izin Docker yerleşimi onayı değildir.
+
+[Resmi depo sorguları ve arşiv içeriği](simulation-stage-b-commands-2026-10-23.md#iteration-03-package-contents) şu sonucu verdi:
+
+- Önceki image'da hata yolunun `dpkg -S` sorgusu eşleşme vermedi (çıkış 1). İndeks güncellemesi bitmeden yapılan erken `apt-cache show` sorgusu da çıkış 100 verdi; tamamlanmış indeks sorgusu esas alındı. İki başarısız teşhis komutu ekte korunur; canlı B1 koşusu değildir.
+- Sağlayıcı: ROS resmi deposundan (`packages.ros.org/ros2/ubuntu`, `jammy/main`, `arm64`) `libignition-rendering6-ogre2-dev`, sürüm `6.6.4-1~jammy`. Arşiv SHA256: `717dc0c44bc1fcc39295b4c7dcedeb830bc4e3f284cde5557c72964a523bebbf`. `apt-get download` ve `dpkg-deb --contents` ile içerik incelendi; arşiv elle kurulmadı veya dosyaları çıkartılıp taşınmadı. `apt-file` gerekmedi.
+- Gerçek paket yolu `/usr/share/ignition/ignition-rendering6/ogre2/media/Hlms/Unlit/GLSL`; PixelShader, VertexShader ve piece şablonlarını içerir. Logdaki `ogre2/src/media` kurulum yolu değildir. [Aynı sürümün resmi kaynak kodunda](https://github.com/gazebosim/gz-rendering/blob/ignition-rendering6_6.6.4/ogre2/src/Ogre2RenderEngine.cc#L630) `RegisterHlms`, `ogre2/media` bulunamazsa `ogre2/src/media` yoluna geçer. Kaynak yalnız okundu; derleme yapılmadı.
+- Paket, kurulu `libignition-rendering6-ogre2` ile tam sürüm eşitliği ister. ROS adayı kurulu rendering sürümüyle aynıdır. Ubuntu'daki `libignition-rendering-ogre2-dev` adayı `6.1.0+ds-0ubuntu2` olduğundan seçilmedi. Ubuntu `libogre-next-dev` adayı `2.2.5+dfsg3-0ubuntu2`, kurulu OGRE Next ile aynıdır ve ROS paketinin zorunlu bağımlılığıdır.
+- B1 Dockerfile'a yalnız `libignition-rendering6-ogre2-dev=6.6.4-1~jammy` kurulum talebi eklendi. APT simülasyonu önceki B1 image'ına göre 42 yeni paket (hedef ve 41 zorunlu bağımlılık), 0 yükseltme, 0 kaldırma gösterdi. Önerilen paketler kurulmaz. Paket kendi standart `.so` bağlarını içerir; elle symlink oluşturulmadı. Tam dosya yoluyla motor yükleyen mevcut B1 betiği ve override bu çalışmada değiştirilmedi.
+
+Kurulumdan sonra `dpkg -S`, GLSL dizininin sahibini aynı paket olarak doğruladı; dört şablon dosyası listelendi. `dpkg --audit` sorun bildirmedi. Image build, Compose config ve image içindeki iki config/dünya testi çıkış 0 verdi.
 
 ## Başarısız denemeler ve teşhis sınırı
 
-1. İlk config testi, Aşama A ile B1 betiklerinin ikisinin de `check` modül adı taşıması nedeniyle `RecursionError` verdi (`Ran 2 tests`, `FAILED (errors=9)`, çıkış 1). Aşama A modülü artık dosya yoluyla ayrı `stage_a_check` adı altında yüklenir. Düzeltilen test çıkış 0 verdi. Bu test hatası canlı koşudaki render çökmesinden farklıdır; doğrudan çalıştırılan eski betik config'i başarıyla yüklemişti.
-2. Tek canlı B1 koşusu yukarıdaki render yükleme hatasıyla durdu. Runtime paketi kurulu olmasına rağmen genel eklenti adı çözülemedi. Sonradan `dpkg -L`, `find` ve `ldd` incelemesinde `libignition-rendering6-ogre2.so.6` ve `.so.6.6.4` dosyaları bulundu; `ldd` çıktılarında `not found` yoktu. Bu, isim/arama yolu/paketleme yönünü incelemeye değer kılar; kök neden veya EGL desteği kesinleşmiş değildir. Özel symlink eklenmedi; yeni motor yolu denenmedi.
-3. Compose simulation çıkışı nedeniyle backend'i durdurunca ilk istemcinin `finally` bloğu ikinci kez ROS shutdown çağırdı: `failed to shutdown: rcl_shutdown already called on the given context`. Son kaynakta `rclpy.ok()` kontrolü ve `SCAN_SUMMARY` eklendi. Hatalar başarıya çevrilmez. Bu kapanış düzeltmesinin canlı koşusu **doğrulanmadı**; yeniden lidar çalıştırılmadı.
-4. Bir ara `docker compose ... logs --no-color --tail 30` komutunda `DDS_TEST_PAYLOAD` unutuldu, Compose interpolasyon hatası verdi (çıkış 1). Koşu kimliği verilerek `logs --no-color --tail 35` tekrarlandı (çıkış 0). Bu komutlar yeni koşu başlatmadı.
+1. İlk config testi, Aşama A ile B1 betiklerinin ikisinin de `check` modül adı taşıması nedeniyle `RecursionError` verdi (`Ran 2 tests`, `FAILED (errors=9)`, çıkış 1). Aşama A modülü artık dosya yoluyla ayrı `stage_a_check` adı altında yüklenir. Düzeltilen test çıkış 0 verdi.
+2. Canlı B1 ilk koşusu (`simulation-b1-20261023-01`) render motoru eklentisi bulunamadığı için çöktü. `libignition-rendering6.so.6` ve `libignition-common4.so.4` disassembly incelemesinde saptandı: `RenderEngineManager` genel eklenti adı olarak `ignition-rendering-ogre2` arar; `SystemPaths::FindSharedLibrary` buna `lib` ve `.so` ekleyerek `libignition-rendering-ogre2.so` bekler. Ancak ROS resmi deposundan gelen Jammy ARM64 runtime paketi (`libignition-rendering6-ogre2`) engine-plugins dizinine yalnızca ABI soname'i (`libignition-rendering6-ogre2.so.6` ve `.so.6.6.4`) koyar; sürümsüz `.so` veya '6' içermeyen sembolik bağ sağlamaz. Bu nedenle ortam değişkenleri tek başına bu adı eşleştiremez.
+3. Canlı B1 ikinci koşusu (`simulation-b1-20261023-02`): Eklenti arama engeli, resmi `--render-engine-server /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins/libignition-rendering6-ogre2.so.6` parametresiyle aşıldı (`FindSharedLibrary` mutlak dosya yolu mevcutsa doğrudan kabul eder). Eklenti yüklendi ancak bu kez OGRE2'nin HLMS Unlit GLSL shader şablonlarının (`/usr/share/ignition/ignition-rendering6/ogre2/src/media/Hlms/Unlit/GLSL`) image içinde mevcut olmadığı (`FileNotFoundException`) görüldü. 11 denemeden sonra dummy window oluşturulamadı ve PBS datablock üzerinde `0x2e0` adresine geçersiz erişimle segfault (-11) oluştu.
+4. İlk istemcinin `finally` bloğu shutdown çakışması düzeltildi; ikinci canlı koşuda `rclpy.ok()` ile temiz kapandı ve `SCAN_SUMMARY: validated_messages=0, queued_messages=0` üretti.
 
-İlk render yolu yalnız OGRE2 + EGL + yazılım render oldu. Xvfb, başka sensör eklentisi ve host Gazebo **denenmedi**. Eklenti yüklenemeden çöküldüğü için EGL bağlamı/gerçek yazılım renderer adı ve OpenGL sürümü ölçülemedi. Mesa paket sürümünün bulunması aktif renderer kanıtı değildir.
+5. Son kanıt kontrolünde 03/04 logları ve yalnız üç dosyanın değiştiği doğrulandı. Ardından isteğe bağlı eski/yeni tam paket envanteri karşılaştırması, eski B1 image ID'si Docker tarafından bulunamadığı için başarısız oldu (`docker run`: 125; kontrol betiği: 1). Bu bir canlı B1 hatası değildir; image yeniden üretilmedi ve ek canlı koşu yapılmadı. APT kurulum planı, başarılı build ve kurulu rendering/OGRE sürümleri ayrı kanıt olarak korunur.
+
+Xvfb, başka sensör eklentisi ve host Gazebo **denenmedi**. Kullanıcı kuralı gereği shader dosyası elle kopyalanmadı veya elle symlink açılmadı.
 
 ## Ölçülen ortam ve image kimlikleri
 
@@ -86,36 +124,39 @@ Platform **linux/arm64**; iki container aynı image'dan çalıştı. Docker iste
 | Image | Ölçülen ID / RepoDigest sha256 |
 | --- | --- |
 | Aşama A tabanı | `69cb7989a1a325add4f0ca325f4fa1e002beb4f2ffd415d59f1efd4e32151b39` |
-| Başarısız canlı B1 koşusu | `3047a642208db50e5f5f1295384acdf0bbdf23db7c10f6bab2ccca822541d815` |
-| Son kaynak/test paketlemesi; canlı lidar tekrar çalıştırılmadı | `5108ed0398fd0ba7b57865a1bea1f1ca2feb4a29f69ad8e276546b597a4b6a31` |
+| Başarısız canlı B1 ilk koşusu (01) | `3047a642208db50e5f5f1295384acdf0bbdf23db7c10f6bab2ccca822541d815` |
+| Başarısız canlı B1 ikinci koşusu (02) | `b61a40e60409a13f50c91d048d54be25121ac8c734d876a8e67db54886eeaacc` |
+| Başarılı canlı B1 koşuları (03, 04) | `ba741517e3ef0d109d05315983a6ded3e16e79693d49a4f968e65f2b73695162` |
 
-Canlı koşunun platform manifest digest'i `6676892fb08b6c292c311103b072502d5e44d0a7ab0fffd00db47f7e75623f9a`, config digest'i `44817b659c9a3be5ad717eae6e798d11dbadbe75389d486c8ad84ebc97034955`. Son paketlemenin platform manifest digest'i `1a9706b4ad50278b5012714cac1cfd96f55fe503ecd733757273edc8a17a2822`, config digest'i `add4e7b81ea2518e120715088ff9466cfc8d647e78b2fe882a3d61bd097d90d9`. Ara paketleme digest'i ve bütün build çıktıları ekte korunur. Paketler sürümle sabitlenmedi; gelecekte önbelleksiz build aynı bağımlılıkları garanti etmez.
+İkinci canlı koşunun (`02`) platform manifest digest'i `a36b61ff1e6c26f5f2df1d9a992734466314ea243c2c1032df50ea64387d853e`, config digest'i `3f4b5f68ccf229f0ebc90f54ef5c229527ccbc22fdcb73867c29377a0665ba48`. Bütün build ve inspect çıktıları ekte korunur.
 
-Son image'daki config testleri: `Ran 2 tests in 0.030s`, `OK`, çıkış 0. Geçerli config/dünya üretimi ile eksik/ek alan, NaN, geçersiz örnek sayısı, ters menzil/açı sınırı, sıfır duvar boyutu ve desteklenmeyen yönelim denetlendi. Compose config kontrolü de çıkış 0. Bu sonuçlar lidar kapısını geçirmez.
+Başarılı image'ın platform manifest digest'i `b1bf0062d06e3c0d9fb960a95ca57554da1d396489f144e344d5bd5a23d3ccc6`, config digest'i `e263f885cac89e90c1de697c477d0778dc914b627e8e9dbff189fada4c87ad55`.
 
-`down` çıkış 0 ile iki container'ı ve `ros2-fleet-simulation-lidar-check_dds` ağını kaldırdı. Son container ve ağ sorguları yalnız başlık döndürdü. Image'lar yerelde bırakıldı. Her iki container'ın config mount'u `Mode=ro`, `RW=false` olarak ölçüldü.
+İkinci koşu öncesi container içi config testleri: `Ran 2 tests in 0.020s`, `OK`, çıkış 0. Compose config kontrolü de çıkış 0.
+
+Son başarılı koşudan sonra paket inceleme container'ı da kaldırıldı. 03 sonrası filtrede görünen `b1-package-audit-03`, image'dan Compose etiketi devralmış, zaten durmuş bir teşhis container'ıydı; Gazebo veya ROS testi çalıştırmıyordu. 04 sonrası temizlik çıktısında yalnız başlıklar vardır.
+
+İşlem sonunda `down` komutu iki container'ı ve `ros2-fleet-simulation-lidar-check_dds` ağını kaldırdı. Temizlik `docker ps -a` ve `docker network ls` ile doğrulandı (yalnızca başlık satırları döndü). Aşama A tabanı ve başarılı B1 image'ı yerelde bırakıldı; eski B1 ID'sinin sonraki envanter sorgusunda erişilemediği aşağıda kayıtlıdır. Her iki container'ın config mount'u `Mode=ro`, `RW=false` olarak ölçüldü.
 
 ## Karar bekleyen seçenekler
 
-Bağlam: B1 mevcut ARM64 Docker/OGRE2 paket bileşiminde render eklentisi yüklenirken durdu. Kullanıcının açık talimatı nedeniyle B2'ye geçilmez. **Seçilen sonraki yol yoktur.**
+Bağlam: Eksik resmi medya paketini inceleme ve uyumlu paketi kurup sınırlı B1 denemesi yapma seçeneği kullanıcı tarafından seçildi. Gerekçe, mevcut eklenti yüklenirken yalnız paketlenmiş shader dosyalarının eksik olduğunun görülmesiydi. Bu yol iki temiz koşuyla tamamlandı. **Yeni bir mimari karar alınmadı ve sonraki aşama başlatılmadı.**
 
-| Seçenek | Gerekçe / sınır |
-| --- | --- |
-| Aynı Docker B1'inde paket/eklenti arama yolunu incelemek | Mevcut kanıt yükleme aşamasını işaret ediyor. Resmî paket veya desteklenen arama yolu ile ayrı tekrar gerekir; çözüm doğrulanmadı. |
-| Host'ta Gazebo | Container render sınırını ayırabilir. Host kurulumu ve backend ile iletişim yeniden doğrulanmalı; uygulanmadı. |
-| Lidar'sız Nav2 yapılandırması | Mevcut B1/AMCL kabulünü karşılamaz; lokalizasyon ve sensör kapsamı için kullanıcının yeni kararı gerekir. Uygulanmadı. |
-| Farklı sensör eklentisi veya render altyapısı | Gerçek LaserScan üretimi yine aynı duvar testiyle kanıtlanmalı. Xvfb veya farklı eklenti uyumluluğu doğrulanmadı. |
+Önceki alternatifler olan host Gazebo, lidar'sız Nav2 ve farklı sensör/render altyapısı uygulanmadı. B1 sonucu bunlardan birini seçme veya Docker yerleşimini onaylama anlamına gelmez. B2 için ayrı kullanıcı talimatı beklenir.
 
 ## Doğrulanmadı ve sınırlar
 
-- B1 gerçek LaserScan alımı, sonlu değerler ve engel uyumu **doğrulanmadı**.
-- EGL bağlamı, aktif renderer ve ARM64 headless sensör desteği **doğrulanmadı**; bu tek başarısız koşu platformun tümüyle olanaksız olduğunu göstermez.
-- B2 Nav2, AMCL, map_server, özel harita, lifecycle hazırlığı, NavigateToPose sonucu, poz hata eşiği ve iki temiz başarılı koşu **doğrulanmadı / başlatılmadı**.
-- Son kaynak paketlemesinin canlı sensör/kapanış davranışı **doğrulanmadı**. Yalnız config ve dünya üretim testleri geçti.
+- B1 gerçek LaserScan alımı, sonlu değerler, duvar geometrisi ve temiz kapanış yalnız bu sabit tek robotlu ortamda iki kez doğrulandı. Uzun süreli çalışma, hareketli robot ve farklı sensör/geometri ayarları **doğrulanmadı**.
+- Bu ARM64 image ve headless ayarlarıyla OGRE2 sensör çalışması ve HLMS dosyalarının kullanılabilirliği doğrulandı. Aktif GL/EGL sürücü adı/sürümü ayrıca ölçülmedi; diğer host/GPU/platform desteği **doğrulanmadı**.
+- B2 Nav2, AMCL, map_server, özel harita, lifecycle hazırlığı, NavigateToPose sonucu, poz hata eşiği ve B2 için iki temiz başarılı koşu **doğrulanmadı / başlatılmadı**.
+- Eski B1 image ID'siyle tüm paket envanterinin birebir karşılaştırılması **doğrulanmadı**; eski image sorgusu erişim hatası verdi.
 - Çoklu robot, uygulama hata yolları ve Docker yerleşimi onayı kapsam dışıdır.
 - Mevcut Aşama A, v2.3 geçiş kaydı, Docker karar taslağı, PDF'ler ve kişisel notlar değişmedi.
+- İkinci koşuda backend kapanışı canlı doğrulandı; `SCAN_SUMMARY` üretildi ve shutdown çakışması oluşmadı. Bu, sensör başarısı değildir; koşu `ExternalShutdownException` ile başarısız bitti.
 
 ## Eklenen dosyalar
+
+Bu son çalışmada yalnız B1 `Dockerfile` ve iki B1 kayıt dosyası değişti. Başlangıçta mevcut olan override ve `check.py` değişiklikleri korundu. Aşağıdaki liste B1 deneyinin toplam dosya kapsamıdır.
 
 - `config/simulation-lidar-check.json` ve `.schema.json`: sensör, gerçek duvar, render ve kabul ayarları.
 - `docker-compose.simulation-lidar-check.yml`: ayrı B1 projesi/image override'ı.

@@ -11,5 +11,7 @@ services:
     environment:
       LIBGL_ALWAYS_SOFTWARE: "1"
       EGL_PLATFORM: surfaceless
+      IGN_GAZEBO_RENDER_ENGINE_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+      IGN_RENDERING_PLUGIN_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
   backend:
     <<: *lidar-check

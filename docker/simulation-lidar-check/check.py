@@ -145,8 +145,14 @@ def simulation(config):
     engines = list(Path('/usr/lib').glob('*/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5'))
     if len(engines) != 1:
         raise RuntimeError(f'Expected one packaged Fortress DART engine, found {engines}')
+    render_engines = list(Path('/usr/lib').glob('*/ign-rendering-6/engine-plugins/libignition-rendering6-ogre2.so.6'))
+    if len(render_engines) != 1:
+        raise RuntimeError(f'Expected one packaged Fortress OGRE2 engine, found {render_engines}')
     commands = [
-        ['ign', 'gazebo', '-s', '-r', '-v', '4', '--headless-rendering', '--physics-engine', str(engines[0]), '/tmp/lidar-world.sdf'],
+        ['ign', 'gazebo', '-s', '-r', '-v', '4', '--headless-rendering',
+         '--physics-engine', str(engines[0]),
+         '--render-engine-server', str(render_engines[0]),
+         '/tmp/lidar-world.sdf'],
         ['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
          ns + '/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan',
          '/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock',

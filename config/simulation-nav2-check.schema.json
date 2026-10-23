@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "robot",
+    "map_path",
+    "nav2_parameters",
+    "sensor",
+    "room",
+    "goal",
+    "check"
+  ],
+  "properties": {
+    "robot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "namespace", "initial_pose"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"},
+        "namespace": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"},
+        "initial_pose": {
+          "description": "x y z in metres, roll pitch yaw in radians",
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {"type": "number"}
+        }
+      }
+    },
+    "map_path": {
+      "description": "Full path to map yaml; must not be null in Stage B2",
+      "type": "string",
+      "minLength": 1
+    },
+    "nav2_parameters": {
+      "description": "Full path to Nav2 parameters yaml; must not be null in Stage B2",
+      "type": "string",
+      "minLength": 1
+    },
+    "sensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pose",
+        "samples",
+        "min_angle_rad",
+        "max_angle_rad",
+        "min_range_m",
+        "max_range_m",
+        "resolution_m",
+        "update_rate_hz"
+      ],
+      "properties": {
+        "pose": {
+          "description": "x y z roll pitch yaw relative to base_link",
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {"type": "number"}
+        },
+        "samples": {"type": "integer", "minimum": 16, "maximum": 720},
+        "min_angle_rad": {"type": "number"},
+        "max_angle_rad": {"type": "number"},
+        "min_range_m": {"type": "number", "exclusiveMinimum": 0},
+        "max_range_m": {"type": "number", "exclusiveMinimum": 0},
+        "resolution_m": {"type": "number", "exclusiveMinimum": 0},
+        "update_rate_hz": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "room": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size_m", "wall_thickness_m", "wall_height_m"],
+      "properties": {
+        "size_m": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"type": "number", "exclusiveMinimum": 1.0}
+        },
+        "wall_thickness_m": {"type": "number", "exclusiveMinimum": 0.05},
+        "wall_height_m": {"type": "number", "exclusiveMinimum": 0.2}
+      }
+    },
+    "goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pose", "xy_tolerance_m", "yaw_tolerance_rad", "timeout_seconds"],
+      "properties": {
+        "pose": {
+          "description": "Target x y yaw in map frame",
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"type": "number"}
+        },
+        "xy_tolerance_m": {"type": "number", "exclusiveMinimum": 0.01},
+        "yaw_tolerance_rad": {"type": "number", "exclusiveMinimum": 0.01},
+        "timeout_seconds": {"type": "number", "exclusiveMinimum": 5.0}
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amcl_tolerance_m",
+        "minimum_scan_messages",
+        "expected_scan_rate_hz",
+        "scan_rate_tolerance_hz"
+      ],
+      "properties": {
+        "amcl_tolerance_m": {"type": "number", "exclusiveMinimum": 0.05},
+        "minimum_scan_messages": {"type": "integer", "minimum": 1},
+        "expected_scan_rate_hz": {"type": "number", "exclusiveMinimum": 0.5},
+        "scan_rate_tolerance_hz": {"type": "number", "exclusiveMinimum": 0.1}
+      }
+    }
+  }
+}

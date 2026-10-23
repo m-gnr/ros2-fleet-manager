@@ -1,0 +1,19 @@
+# Test-only override for docker-compose.dds.yml; not application deployment.
+x-action-common: &action-common
+  image: ros2-fleet-dds-action-check:humble-fortress
+  build:
+    context: .
+    dockerfile: docker/dds/Dockerfile.action
+  env_file:
+    - ./config/dds.env
+    - ./config/dds-action.env
+
+services:
+  simulation:
+    <<: *action-common
+    environment:
+      DDS_ROLE: server
+  backend:
+    <<: *action-common
+    environment:
+      DDS_ROLE: client

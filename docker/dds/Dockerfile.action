@@ -1,0 +1,5 @@
+FROM ros2-fleet-dds-check:humble-fortress
+COPY interfaces/dds_probe_interfaces /opt/probe_ws/src/dds_probe_interfaces
+RUN . /opt/ros/humble/setup.sh && cd /opt/probe_ws && colcon build
+COPY docker/dds/action_probe.py /opt/dds-check/action_probe.py
+CMD ["bash", "-c", "source /opt/probe_ws/install/setup.bash && exec python3 /opt/dds-check/action_probe.py"]

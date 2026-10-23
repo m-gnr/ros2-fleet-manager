@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stage B3 Multi-Robot Validation Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "robots",
+    "map_path",
+    "nav2_template_path",
+    "sensor",
+    "room",
+    "goals",
+    "check"
+  ],
+  "properties": {
+    "robots": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "namespace", "initial_pose", "goal_pose", "odom_frame", "base_frame"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "namespace": { "type": "string", "minLength": 1 },
+          "initial_pose": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "items": { "type": "number" }
+          },
+          "goal_pose": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": { "type": "number" }
+          },
+          "odom_frame": { "type": "string", "minLength": 1 },
+          "base_frame": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "map_path": { "type": "string", "pattern": "^/.*\\.(yaml|yml)$" },
+    "nav2_template_path": { "type": "string", "pattern": "^/.*\\.(yaml|yml)$" },
+    "sensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pose",
+        "samples",
+        "min_angle_rad",
+        "max_angle_rad",
+        "min_range_m",
+        "max_range_m",
+        "resolution_m",
+        "update_rate_hz"
+      ],
+      "properties": {
+        "pose": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": { "type": "number" }
+        },
+        "samples": { "type": "integer", "minimum": 16, "maximum": 2048 },
+        "min_angle_rad": { "type": "number" },
+        "max_angle_rad": { "type": "number" },
+        "min_range_m": { "type": "number", "exclusiveMinimum": 0 },
+        "max_range_m": { "type": "number", "exclusiveMinimum": 0 },
+        "resolution_m": { "type": "number", "exclusiveMinimum": 0 },
+        "update_rate_hz": { "type": "number", "exclusiveMinimum": 0, "maximum": 50 }
+      }
+    },
+    "room": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size_m", "wall_thickness_m", "wall_height_m"],
+      "properties": {
+        "size_m": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "wall_thickness_m": { "type": "number", "exclusiveMinimum": 0 },
+        "wall_height_m": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "goals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["xy_tolerance_m", "yaw_tolerance_rad", "timeout_seconds"],
+      "properties": {
+        "xy_tolerance_m": { "type": "number", "exclusiveMinimum": 0 },
+        "yaw_tolerance_rad": { "type": "number", "exclusiveMinimum": 0 },
+        "timeout_seconds": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amcl_tolerance_m",
+        "minimum_scan_messages",
+        "expected_scan_rate_hz",
+        "scan_rate_tolerance_hz",
+        "min_collision_distance_m"
+      ],
+      "properties": {
+        "amcl_tolerance_m": { "type": "number", "exclusiveMinimum": 0 },
+        "minimum_scan_messages": { "type": "integer", "minimum": 1 },
+        "expected_scan_rate_hz": { "type": "number", "exclusiveMinimum": 0 },
+        "scan_rate_tolerance_hz": { "type": "number", "exclusiveMinimum": 0 },
+        "min_collision_distance_m": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
+  }
+}

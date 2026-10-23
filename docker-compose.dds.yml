@@ -1,0 +1,27 @@
+name: ros2-fleet-dds-check
+
+x-dds-common: &dds-common
+  image: ros2-fleet-dds-check:humble-fortress
+  build:
+    context: ./docker/dds
+  env_file:
+    - ./config/dds.env
+  init: true
+  networks:
+    - dds
+
+services:
+  simulation:
+    <<: *dds-common
+    environment:
+      DDS_ROLE: publisher
+      DDS_TEST_PAYLOAD: ${DDS_TEST_PAYLOAD:?Set a unique payload for this run}
+  backend:
+    <<: *dds-common
+    environment:
+      DDS_ROLE: subscriber
+      DDS_TEST_PAYLOAD: ${DDS_TEST_PAYLOAD:?Set a unique payload for this run}
+
+networks:
+  dds:
+    driver: bridge

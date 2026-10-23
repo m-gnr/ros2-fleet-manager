@@ -1,5 +1,7 @@
 # ROS 2 Tabanlı Çok Robotlu Mini Filo Yönetim Sistemi
 
+DDS doğrulama ortamı ve çalışma kanıtları: [iki container mesaj alma testi](docs/dds-validation-2026-10-22.md). Bu test kaydı Docker yerleşimi onayı değildir.
+
 > **Güncel kaynak uyarısı (22 Ekim 2026):** Bu README aşağıda eski v2.x mimarisini içerir; tüm hükümleri güncel veya kilitli kabul etmeyin. [Proje bağlamı](docs/project-context.md) ve [v2.3 geçiş kaydı](docs/architecture-v2.3-transition.md) önceliklidir. Taşıma için Fleet Manager `ExecuteTask` gönderir; robot yürütücüsü pickup/dropoff `NavigateToPose` hedeflerini yürütür. Eski otomatik retry ve restart recovery açıklamaları güncel MVP politikası değildir. Üç container yerleşimi henüz doğrulanmamış öneridir.
 
 Simülasyon ortamında **config-driven**, **pickup → dropoff** görevli çok robotlu filo yönetimi ve web tabanlı izleme paneli.

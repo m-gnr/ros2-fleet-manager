@@ -1,0 +1,18 @@
+# Validation only; layer on docker-compose.dds.yml.
+name: ros2-fleet-simulation-check
+x-simulation-check: &simulation-check
+  image: ros2-fleet-simulation-check:humble-fortress
+  build:
+    context: .
+    dockerfile: docker/simulation-check/Dockerfile
+  volumes:
+    - ./config:/config:ro
+services:
+  simulation:
+    <<: *simulation-check
+    environment:
+      SIM_CHECK_ROLE: simulation
+  backend:
+    <<: *simulation-check
+    environment:
+      SIM_CHECK_ROLE: backend

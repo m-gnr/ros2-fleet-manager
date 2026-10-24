@@ -3,9 +3,9 @@ name: ros2-fleet-dds-check
 x-dds-common: &dds-common
   image: ros2-fleet-dds-check:humble-fortress
   build:
-    context: ./docker/dds
+    context: ../../docker/dds
   env_file:
-    - ./config/dds.env
+    - ../../config/dds.env
   init: true
   networks:
     - dds

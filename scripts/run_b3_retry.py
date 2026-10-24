@@ -149,9 +149,9 @@ def main():
 
     compose_cmd = [
         docker_bin, 'compose',
-        '-f', 'docker-compose.dds.yml',
-        '-f', 'docker-compose.simulation-check.yml',
-        '-f', 'docker-compose.simulation-b3-retry.yml',
+        '-f', 'docker/compose/docker-compose.dds.yml',
+        '-f', 'docker/compose/docker-compose.simulation-check.yml',
+        '-f', 'docker/compose/docker-compose.simulation-b3-retry.yml',
         'up', '--abort-on-container-exit', '--exit-code-from', 'backend'
     ]
 

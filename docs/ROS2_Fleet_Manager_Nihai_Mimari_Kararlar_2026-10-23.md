@@ -15,14 +15,14 @@
 3. [Mimari Kaynak Önceliği ve Çelişki Çözümleri](#3-mimari-kaynak-önceliği-ve-çelişki-çözümleri)
 4. [Üç Servisli Docker Compose Mimarisi](#4-üç-servisli-docker-compose-mimarisi)
 5. [ROS 2 ve Nav2 Sorumluluk Sınırları](#5-ros-2-ve-nav2-sorumluluk-sınırları)
-6. [Fleet Manager – Robot Executor Görev Akışı ve Preemption Protokolü](#6-fleet-manager--robot-executor-görev-akışı-ve-preemption-protokolü)
+6. [Fleet Manager – Robot Executor Görev Akışı ve Preemption Protokolü](#6-fleet-managerrobot-executor-görev-akışı-ve-preemption-protokolü)
 7. [Wh Tabanlı Enerji Modeli ve Matematiksel Formülasyon](#7-wh-tabanlı-enerji-modeli-ve-matematiksel-formülasyon)
 8. [Battery Simulator Mimarisi ve Hesaplama Kuralları](#8-battery-simulator-mimarisi-ve-hesaplama-kuralları)
 9. [Şarj, Park ve Güvenli Bekleme Politikaları](#9-şarj-park-ve-güvenli-bekleme-politikaları)
 10. [Fleet YAML Yapılandırma İlkeleri ve Revizyon Yaşam Döngüsü](#10-fleet-yaml-yapılandırma-ilkeleri-ve-revizyon-yaşam-döngüsü)
 11. [Modüller Arası Veri Sözleşmeleri ve İletişim Arayüzleri](#11-modüller-arası-veri-sözleşmeleri-ve-iletişim-arayüzleri)
 12. [Tamamlanan Simülasyon Testleri ve Doğrulama Kanıtları](#12-tamamlanan-simülasyon-testleri-ve-doğrulama-kanıtları)
-13. [Test Edilmemiş Alanlar ve Teknik Risk Değerlendirmesi](#13-test-edilmemiş-alanlar-ve-teknik-risk-değerlendirmesi)
+13. [Test Edilmemiş Alanlar ve Teknik Risk Değerlendirmesi](#13-test-edilmemiş-alanlar-ve-teknik-riskler)
 14. [C Aşaması (C1–C5) Geliştirme Yol Haritası](#14-c-aşaması-c1c5-geliştirme-yol-haritası)
 15. [Açık Mimari Kararlar ve Öneriler](#15-açık-mimari-kararlar-ve-öneriler)
 16. [Nihai Onaylı Kararlar Matrisi](#16-nihai-onaylı-kararlar-matrisi)
@@ -429,6 +429,8 @@ flowchart TD
 
 ---
 
+<a id="10-fleet-yaml-yapılandırma-ilkeleri-ve-revizyon-yaşam-döngüsü"></a>
+
 ## 10. Fleet YAML Yapılandırma İlkeleri ve Revizyon Yaşam Döngüsü
 
 Sistemin tüm operasyonel, robotsal ve geometrik tanımları tek bir merkezi dosyada toplanır:
@@ -505,6 +507,8 @@ Sistem çalışma anında yapılandırma değişikliklerini yönetmek için üç
 > **Önemli Not:** Bu yapılandırma dosyasının ve şemasının fiziksel olarak üretilmesi **Aşama C1**'in görevidir. Bu aşamada henüz dosya oluşturulmamıştır.
 
 ---
+
+<a id="11-modüller-arası-veri-sözleşmeleri-ve-iletişim-arayüzleri"></a>
 
 ## 11. Modüller Arası Veri Sözleşmeleri ve İletişim Arayüzleri
 
@@ -753,10 +757,10 @@ Aşağıdaki tablo, sistemdeki tüm mimari bileşen ve kuralların bağlayıcı 
 4. **`docs/architecture-v2.3-transition.md`:** ExecuteTask / Robot Yürütücüsü yönü ve durum otoritesi sınırları onaylı geçiş kaydı (22 Ekim 2026).
 5. **`docs/project-architecture-readiness-review-2026-10-23.md`:** Aşama B4 Kapsamlı Dokümantasyon ve Mimari Hazırlık Denetim Raporu (23 Ekim 2026).
 6. **`docs/docker-placement-decision.md`:** Docker yerleşimi karar taslağı (23 Ekim 2026).
-7. **`docs/simulation-stage-b3-retry-2026-10-23.md`:** İki robotlu Nav2 ve host kaynak ölçümü doğrulama raporu (B3 Retry, 23 Ekim 2026).
-8. **`docs/simulation-stage-amcl-test-2026-10-23.md`:** AMCL kasıtlı ofset yakınsama sınaması test raporu (23 Ekim 2026).
-9. **`docs/dds-validation-2026-10-22.md`:** İki container arası Cyclone DDS topic iletişim testi kanıtı (23 Ekim 2026).
-10. **`docs/dds-action-validation-2026-10-23.md`:** İki container arası Cyclone DDS action iletişim testi kanıtı (23 Ekim 2026).
+7. **`docs/validation/simulation/b3-retry/simulation-stage-b3-retry-2026-10-23.md`:** İki robotlu Nav2 ve host kaynak ölçümü doğrulama raporu (B3 Retry, 23 Ekim 2026).
+8. **`docs/validation/simulation/amcl/simulation-stage-amcl-test-2026-10-23.md`:** AMCL kasıtlı ofset yakınsama sınaması test raporu (23 Ekim 2026).
+9. **`docs/validation/dds/dds-validation-2026-10-22.md`:** İki container arası Cyclone DDS topic iletişim testi kanıtı (23 Ekim 2026).
+10. **`docs/validation/dds/dds-action-validation-2026-10-23.md`:** İki container arası Cyclone DDS action iletişim testi kanıtı (23 Ekim 2026).
 11. **`docs/design/config_driven_multi_robot_ros2_nav2_architecture_tr_v1_3_fix.pdf`:** Config-driven multi-robot altyapısı, revizyonlar ve Apply protokolü (09 Ekim 2026).
 12. **`docs/design/battery_simulator_node_architecture_v1_2_fix.pdf`:** Battery simulator düğümü ve tüketim mimarisi (09 Ekim 2026).
 13. **`docs/design/fleet_manager_mimarisi_ve_algoritmalar_v2_2_fix.pdf`:** Fleet manager çekirdeği ve durum makineleri teknik tasarımı (09 Ekim 2026).

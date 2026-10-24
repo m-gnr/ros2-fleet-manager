@@ -3,10 +3,10 @@ name: ros2-fleet-simulation-check
 x-simulation-check: &simulation-check
   image: ros2-fleet-simulation-check:humble-fortress
   build:
-    context: .
+    context: ../..
     dockerfile: docker/simulation-check/Dockerfile
   volumes:
-    - ./config:/config:ro
+    - ../../config:/config:ro
 services:
   simulation:
     <<: *simulation-check

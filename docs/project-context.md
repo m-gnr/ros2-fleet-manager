@@ -1,5 +1,7 @@
 # Kalıcı proje bağlamı
 
+> **Güncellik notu (24 Ekim 2026):** Aşağıdaki tarihsel hükümler korunur. [Nihai mimari kararların](ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md#3-mimari-kaynak-önceliği-ve-çelişki-çözümleri) açık çözümleri geçerlidir: üç servisli hedef onaylıdır; canlı uçtan uca doğrulama ayrı durumdur. Wh enerji modeli, ExecuteTask yürütücüsü ve tek filo dosyası kararları eski çelişen hükümleri değiştirir. Bu not kaynak önceliğini veya eski kaydın onay kapsamını değiştirmez.
+
 Son güncelleme: 23 Ekim 2026. Kullanıcı, Karar 08 ve gönderdiği notların unutulmamasını açıkça istedi. Bu kayıt kaynakların yerine geçen tam bir mimari şartname değildir; ilgili ayrıntılar kaynak PDF'den doğrulanmalıdır.
 
 ## Kaynaklar ve öncelik
@@ -18,7 +20,7 @@ Son güncelleme: 23 Ekim 2026. Kullanıcı, Karar 08 ve gönderdiği notların u
 
 ## Kullanıcının açık geliştirme tercihleri
 
-- 22 Ekim 2026: Kullanıcı minimal DDS doğrulama ortamı için ROS 2 Humble ve Gazebo Ignition Fortress seçti. Kapsam yalnız simulation → backend mesaj alımıdır; [test kaydı](dds-validation-2026-10-22.md) çalışma kanıtını tutar. Bu seçim Docker yerleşimi onayı veya action/Nav2 doğrulaması değildir.
+- 22 Ekim 2026: Kullanıcı minimal DDS doğrulama ortamı için ROS 2 Humble ve Gazebo Ignition Fortress seçti. Kapsam yalnız simulation → backend mesaj alımıdır; [test kaydı](validation/dds/dds-validation-2026-10-22.md) çalışma kanıtını tutar. Bu seçim Docker yerleşimi onayı veya action/Nav2 doğrulaması değildir.
 
 - Gazebo headless çalışacak; Gazebo görüntüsü web'e aktarılmayacak.
 - GUI React + Konva ile geliştirilecek; ROS ve GUI geliştirmesi birlikte ilerleyecek.
@@ -51,6 +53,6 @@ Son güncelleme: 23 Ekim 2026. Kullanıcı, Karar 08 ve gönderdiği notların u
 
 ## Önerilen ilk kilometre taşı
 
-23 Ekim 2026: Minimal iki-container DDS mesaj alma testi geçti; kanıt ve doğrulanmamış kapsam [test kaydında](dds-validation-2026-10-22.md). Bu sonuç Docker yerleşimi onayı değildir.
+23 Ekim 2026: Minimal iki-container DDS mesaj alma testi geçti; kanıt ve doğrulanmamış kapsam [test kaydında](validation/dds/dds-validation-2026-10-22.md). Bu sonuç Docker yerleşimi onayı değildir.
 
 Headless Gazebo'da tek robotun konumunu WebSocket üzerinden Konva'da gösterme ve panelden gönderilen hedefe hareketini izleme. Ardından ExecuteTask pickup/dropoff ve ikinci robot. Bu bir geliştirme önerisidir; tamamlanmış uygulama değildir. İnceleme sırasında depo ağırlıkla dokümantasyon ve boş uygulama klasörlerinden oluşuyordu.

@@ -1,5 +1,7 @@
 # Docker yerleşimi karar taslağı: sınırlı DDS mesaj alımı
 
+> **Güncellik notu (24 Ekim 2026):** Aşağıdaki tarihsel hükümler korunur. [Nihai mimari kararların](ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md#3-mimari-kaynak-önceliği-ve-çelişki-çözümleri) açık çözümleri geçerlidir: üç servisli hedef onaylıdır; canlı uçtan uca doğrulama ayrı durumdur. Wh enerji modeli, ExecuteTask yürütücüsü ve tek filo dosyası kararları eski çelişen hükümleri değiştirir. Bu not kaynak önceliğini veya eski kaydın onay kapsamını değiştirmez.
+
 Tarih: 23 Ekim 2026.
 
 Durum: Taslak — kullanıcı onayı bekleniyor.
@@ -8,7 +10,7 @@ Durum: Taslak — kullanıcı onayı bekleniyor.
 
 [Onaylı v2.3 geçiş kaydı](architecture-v2.3-transition.md), ExecuteTask/yürütücü yönünü ve kendi kapsam sınırlarını belirler; Docker yerleşimini onaylamaz. Kaydın Docker bölümü tarihsel öneri olarak korunur. `simulation`, `backend` ve `frontend` içeren üç servisli yerleşim hâlâ öneridir.
 
-[DDS test kaydı](dds-validation-2026-10-22.md), iki container arasında gerçek mesaj alımının başarılı olduğunu belgeler. Bu taslak, mevcut kanıta dayanarak kullanıcıya yalnız aşağıdaki dar kapsamı onaya sunar. Kaynak önceliği [proje bağlamında](project-context.md) tanımlıdır.
+[DDS test kaydı](validation/dds/dds-validation-2026-10-22.md), iki container arasında gerçek mesaj alımının başarılı olduğunu belgeler. Bu taslak, mevcut kanıta dayanarak kullanıcıya yalnız aşağıdaki dar kapsamı onaya sunar. Kaynak önceliği [proje bağlamında](project-context.md) tanımlıdır.
 
 ## Seçenekler
 
@@ -25,15 +27,15 @@ Bu kabul, tam Docker mimarisinin veya üç servisli yerleşimin onayı anlamına
 
 ## Gerekçe
 
-[Başarılı ikinci koşu](dds-validation-2026-10-22.md#koşular), backend'in beklenen mesaj içeriğini aldığını ve Compose ile iki container'ın sıfır çıkış koduyla tamamlandığını gösterir. Kanıt yalnız topic keşfine dayanmaz. Bu sonuç, sınanan DDS mesaj alımını kabul etmeyi önermek için yeterlidir; uygulama bileşenlerinin birlikte çalışmasını kanıtlamaz.
+[Başarılı ikinci koşu](validation/dds/dds-validation-2026-10-22.md#koşular), backend'in beklenen mesaj içeriğini aldığını ve Compose ile iki container'ın sıfır çıkış koduyla tamamlandığını gösterir. Kanıt yalnız topic keşfine dayanmaz. Bu sonuç, sınanan DDS mesaj alımını kabul etmeyi önermek için yeterlidir; uygulama bileşenlerinin birlikte çalışmasını kanıtlamaz.
 
-Image kimliği, paket sürümleri ve Docker ortamı için tek kaynak [gerçek test ortamı](dds-validation-2026-10-22.md#gerçek-test-ortamı) bölümüdür. Bu bilgiler burada tekrarlanmaz. Aynı bölümde belirtilen paket sürümü sabitleme sınırı nedeniyle yeni image için yeniden kanıt gerekir.
+Image kimliği, paket sürümleri ve Docker ortamı için tek kaynak [gerçek test ortamı](validation/dds/dds-validation-2026-10-22.md#gerçek-test-ortamı) bölümüdür. Bu bilgiler burada tekrarlanmaz. Aynı bölümde belirtilen paket sürümü sabitleme sınırı nedeniyle yeni image için yeniden kanıt gerekir.
 
 ## Kapsam
 
 - Yalnız `simulation` test yayıncısından `backend` test abonesine DDS mesaj alımı; bu servis adları gerçek uygulama bileşenlerinin doğrulandığı anlamına gelmez.
 - linux/arm64, ROS 2 Humble, Cyclone DDS, ROS_DOMAIN_ID 42 ve tek Compose bridge ağı.
-- Test kaydındaki image ve ayarlar altında, beklenen `std_msgs/msg/String` içeriğinin alındığı başarılı koşu. Mesaj kanıtı ve çıkış kodları [koşular bölümünde](dds-validation-2026-10-22.md#koşular), düzen ve QoS [test kaydında](dds-validation-2026-10-22.md#dosyalar-ve-ayarlar) bulunur.
+- Test kaydındaki image ve ayarlar altında, beklenen `std_msgs/msg/String` içeriğinin alındığı başarılı koşu. Mesaj kanıtı ve çıkış kodları [koşular bölümünde](validation/dds/dds-validation-2026-10-22.md#koşular), düzen ve QoS [test kaydında](validation/dds/dds-validation-2026-10-22.md#dosyalar-ve-ayarlar) bulunur.
 
 ## Kapsam dışı
 

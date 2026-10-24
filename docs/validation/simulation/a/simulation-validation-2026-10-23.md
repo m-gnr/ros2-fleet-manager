@@ -6,9 +6,9 @@ Durum: **Aşama A GEÇTİ**; son image ile iki temiz koşu doğrulandı. Bu orta
 
 ## Kapsam ve düzen
 
-[Proje bağlamı](project-context.md), [onaylı geçiş kaydı](architecture-v2.3-transition.md), [DDS testi](dds-validation-2026-10-22.md) ve [action testi](dds-action-validation-2026-10-23.md) okundu. Mevcut test dosyaları değiştirilmedi. Ana uygulama `docker-compose.yml` oluşturulmadı.
+[Proje bağlamı](../../../project-context.md), [onaylı geçiş kaydı](../../../architecture-v2.3-transition.md), [DDS testi](../../dds/dds-validation-2026-10-22.md) ve [action testi](../../dds/dds-action-validation-2026-10-23.md) okundu. Mevcut test dosyaları değiştirilmedi. Ana uygulama `docker-compose.yml` oluşturulmadı.
 
-[Override](../docker-compose.simulation-check.yml), mevcut DDS Compose üzerine uygulanır. Ayrı proje adı kullanır. İki container tek bridge ağındadır. Ortak DDS ayarları [mevcut env dosyasından](../config/dds.env) gelir. Aynı domain kullanan eski testlerle eşzamanlı çalıştırılmamalıdır. Host ağı, host IPC, port yayını veya ek discovery sunucusu yoktur.
+[Override](../../../../docker/compose/docker-compose.simulation-check.yml), mevcut DDS Compose üzerine uygulanır. Ayrı proje adı kullanır. İki container tek bridge ağındadır. Ortak DDS ayarları [mevcut env dosyasından](../../../../config/dds.env) gelir. Aynı domain kullanan eski testlerle eşzamanlı çalıştırılmamalıdır. Host ağı, host IPC, port yayını veya ek discovery sunucusu yoktur.
 
 ```mermaid
 flowchart LR
@@ -22,9 +22,9 @@ flowchart LR
     R -->|"/clock ve robot odometrisi"| B
 ```
 
-[Image](../docker/simulation-check/Dockerfile), yerel DDS image'ını temel alır ve `ros-humble-ros-gz-bridge` ile JSON Schema doğrulayıcısını ekler. İlk taban image mevcut olmalıdır; hazırlık için önceki DDS kaydına bakılır. Apt paketleri sürümle sabitlenmedi; yeniden derleme aynı paketleri garanti etmez. Ölçülen kimlik ve sürümler aşağıdadır.
+[Image](../../../../docker/simulation-check/Dockerfile), yerel DDS image'ını temel alır ve `ros-humble-ros-gz-bridge` ile JSON Schema doğrulayıcısını ekler. İlk taban image mevcut olmalıdır; hazırlık için önceki DDS kaydına bakılır. Apt paketleri sürümle sabitlenmedi; yeniden derleme aynı paketleri garanti etmez. Ölçülen kimlik ve sürümler aşağıdadır.
 
-[Dünya şablonu](../docker/simulation-check/world.sdf.in) bu çalışma için yazıldı. Bir düz zemin, iki tekerlek, pasif destek küresi ve DiffDrive eklentisi içerir. Model veya harita indirilmedi. Sabit mekanik boyutlar test modelinin geometrisidir; robot kimliği ve başlangıç pozu config'den üretilir. Şablon `/tmp/validation-world.sdf` içine açılır; salt okunur `/config` dizinine yazılmaz.
+[Dünya şablonu](../../../../docker/simulation-check/world.sdf.in) bu çalışma için yazıldı. Bir düz zemin, iki tekerlek, pasif destek küresi ve DiffDrive eklentisi içerir. Model veya harita indirilmedi. Sabit mekanik boyutlar test modelinin geometrisidir; robot kimliği ve başlangıç pozu config'den üretilir. Şablon `/tmp/validation-world.sdf` içine açılır; salt okunur `/config` dizinine yazılmaz.
 
 Fortress DiffDrive API'si için [resmî hareket öğreticisi](https://gazebosim.org/docs/fortress/moving_robot/) kullanıldı (23 Ekim 2026 erişimi; yaşayan belge, sabit sürüm etiketi yok). Köprü davranışı kurulu paketin gerçek çalışma loglarıyla sınandı. ROS belge sayfası erişim engeli, GitHub tarayıcı isteği erişim hatası verdi; bunlar çalışma başarısı kanıtı olarak kullanılmadı.
 
@@ -32,7 +32,7 @@ Lidar yoktur; render/sensör eklentisi yüklenmez. `ign gazebo -s -r` yalnız su
 
 ## Config ve doğrulama
 
-[Tek robot dosyası](../config/simulation-check.json) tek değer kaynağıdır. [Şema](../config/simulation-check.schema.json) ek alanları reddeder; bütün alanlar zorunludur. Kodda eksik alanlar için varsayılan yoktur. Çoklu robot veya `fleet.yaml` şeması tasarlanmadı.
+[Tek robot dosyası](../../../../config/simulation-check.json) tek değer kaynağıdır. [Şema](../../../../config/simulation-check.schema.json) ek alanları reddeder; bütün alanlar zorunludur. Kodda eksik alanlar için varsayılan yoktur. Çoklu robot veya `fleet.yaml` şeması tasarlanmadı.
 
 | Alan | Anlam, birim ve sınır |
 | --- | --- |
@@ -46,9 +46,9 @@ Lidar yoktur; render/sensör eklentisi yüklenmez. `ign gazebo -s -r` yalnız su
 | probe.minimum_distance_m / maximum_distance_m | Başarı için odometri yer değiştirme aralığı, metre; üst sınır alt sınırdan büyük |
 | probe.settle_seconds | Başlangıç ve sıfır komut sonrası bekleme, simülasyon saniyesi |
 
-Sayısal değerlerin sonlu olması başlangıçta denetlenir. Ortam değişkenlerinin açıklaması [DDS kaydında](dds-validation-2026-10-22.md#dosyalar-ve-ayarlar) bulunur. Bu test `DDS_TEST_TIMEOUT_SECONDS` değerini monoton duvar saatiyle toplam istemci bekleme sınırı olarak kullanır; ürün timeout politikası değildir. `DDS_TEST_PAYLOAD` boş olamaz ve koşuyu tanımlar. `SIM_CHECK_ROLE` override içinde `simulation` veya `backend` olur. Eski `DDS_ROLE`, topic ve yayın periyodu miras alınır fakat bu betikte kullanılmaz. Domain aralığı ve container dışı erişim ayarı başlangıçta kontrol edilir; gerçek RMW istemcide sorgulanır.
+Sayısal değerlerin sonlu olması başlangıçta denetlenir. Ortam değişkenlerinin açıklaması [DDS kaydında](../../dds/dds-validation-2026-10-22.md#dosyalar-ve-ayarlar) bulunur. Bu test `DDS_TEST_TIMEOUT_SECONDS` değerini monoton duvar saatiyle toplam istemci bekleme sınırı olarak kullanır; ürün timeout politikası değildir. `DDS_TEST_PAYLOAD` boş olamaz ve koşuyu tanımlar. `SIM_CHECK_ROLE` override içinde `simulation` veya `backend` olur. Eski `DDS_ROLE`, topic ve yayın periyodu miras alınır fakat bu betikte kullanılmaz. Domain aralığı ve container dışı erişim ayarı başlangıçta kontrol edilir; gerçek RMW istemcide sorgulanır.
 
-[Doğrulama betiği](../docker/simulation-check/check.py), iki süreçten biri beklenmedik biçimde kapanırsa simulation'ı başarısız bitirir. Backend önce köprü abonesini, `/clock` ve odometriyi bekler. Sıfır komutla yerleşme sonrası başlangıç örneğini kaydeder; belirlenen süre hız yayımlar, sıfır komut gönderir ve son örneği alır. Pozisyonların sonluluğu, frame adları, artan odometri zamanı/örnek sayısı ve sınırlar içindeki yer değiştirme doğrulanır. Yalnız topic keşfi başarı sayılmaz. İstemci kapanırken sıfır komut gönderir; bu ürün düzeyinde güvenli duruş kanıtı değildir.
+[Doğrulama betiği](../../../../docker/simulation-check/check.py), iki süreçten biri beklenmedik biçimde kapanırsa simulation'ı başarısız bitirir. Backend önce köprü abonesini, `/clock` ve odometriyi bekler. Sıfır komutla yerleşme sonrası başlangıç örneğini kaydeder; belirlenen süre hız yayımlar, sıfır komut gönderir ve son örneği alır. Pozisyonların sonluluğu, frame adları, artan odometri zamanı/örnek sayısı ve sınırlar içindeki yer değiştirme doğrulanır. Yalnız topic keşfi başarı sayılmaz. İstemci kapanırken sıfır komut gönderir; bu ürün düzeyinde güvenli duruş kanıtı değildir.
 
 ## Çalışma sonucu
 

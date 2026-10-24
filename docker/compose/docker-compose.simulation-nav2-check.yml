@@ -3,8 +3,8 @@ name: ros2-fleet-simulation-nav2-check
 x-nav2-check: &nav2-check
   image: ros2-fleet-simulation-nav2-check:humble-fortress
   volumes:
-    - ./config:/config:ro
-    - ./docker/simulation-nav2-check:/opt/simulation-nav2-check:ro
+    - ../../config:/config:ro
+    - ../../docker/simulation-nav2-check:/opt/simulation-nav2-check:ro
 
 services:
   simulation:

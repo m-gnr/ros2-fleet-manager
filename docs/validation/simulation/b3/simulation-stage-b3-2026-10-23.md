@@ -8,7 +8,7 @@ Tarih: 23 Ekim 2026 (Europe/Istanbul).
 
 Bu aşamada fleet projesinin MVP düzeni, yani tek Gazebo Fortress dünyasında (`b3_validation_world`) iki robotun (`robot_1` ve `robot_2`), her birinin kendi bağımsız namespace'inde (`/robot_1`, `/robot_2`), ayrık TF frame'leriyle (`robot_1/odom`, `robot_1/base_link` ve `robot_2/odom`, `robot_2/base_link`) ve bağımsız Nav2 yığınlarıyla doğrulanması hedeflendi. Global frame `map` ortak tutuldu.
 
-B1 ve B2 dosyalarına dokunulmadı; yeni bağımsız yapılandırma (`config/simulation-b3.json`), şema (`.schema.json`), parametre şablonu (`config/simulation-b3-params.template.yaml`), Compose override (`docker-compose.simulation-b3.yml`), TF yardımcısı (`docker/simulation-b3/tf_helper.py`) ve harness (`docker/simulation-b3/check.py`) kullanıldı. Docker yerleşimi onaylanmış sayılmaz. [Proje bağlamındaki](project-context.md) kaynak önceliği geçerlidir.
+B1 ve B2 dosyalarına dokunulmadı; yeni bağımsız yapılandırma (`config/simulation-b3.json`), şema (`.schema.json`), parametre şablonu (`config/simulation-b3-params.template.yaml`), Compose override (`docker/compose/docker-compose.simulation-b3.yml`), TF yardımcısı (`docker/simulation-b3/tf_helper.py`) ve harness (`docker/simulation-b3/check.py`) kullanıldı. Docker yerleşimi onaylanmış sayılmaz. [Proje bağlamındaki](../../../project-context.md) kaynak önceliği geçerlidir.
 
 ```mermaid
 flowchart TD

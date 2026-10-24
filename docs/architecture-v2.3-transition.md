@@ -1,5 +1,7 @@
 # v2.3 mimari geçiş kaydı: görev yürütücüsü ve Docker taslağı
 
+> **Güncellik notu (24 Ekim 2026):** Aşağıdaki tarihsel hükümler korunur. [Nihai mimari kararların](ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md#3-mimari-kaynak-önceliği-ve-çelişki-çözümleri) açık çözümleri geçerlidir: üç servisli hedef onaylıdır; canlı uçtan uca doğrulama ayrı durumdur. Wh enerji modeli, ExecuteTask yürütücüsü ve tek filo dosyası kararları eski çelişen hükümleri değiştirir. Bu not kaynak önceliğini veya eski kaydın onay kapsamını değiştirmez.
+
 Tarih: 22 Ekim 2026.
 
 Durum: Mimari geçiş kaydı kullanıcı tarafından 22 Ekim 2026 tarihinde onaylandı. Onay, ExecuteTask/yürütücü yönünü ve burada açıkça belirtilen kapsam sınırlarını kapsar; aşağıdaki açık kararları kapatmaz. v2.3 belge setinin tamamının veya Docker dağıtımının onayı değildir. Kaynak PDF'ler ve kişisel notlar değiştirilmez; çelişen eski hükümler aşağıdaki kapsamda uygulanmaz.

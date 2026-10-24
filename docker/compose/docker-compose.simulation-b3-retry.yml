@@ -3,8 +3,8 @@ name: ros2-fleet-simulation-b3-retry
 x-b3-retry: &b3-retry
   image: ros2-fleet-simulation-nav2-check:humble-fortress
   volumes:
-    - ./config:/config:ro
-    - ./docker/simulation-b3-retry:/opt/simulation-b3-retry:ro
+    - ../../config:/config:ro
+    - ../../docker/simulation-b3-retry:/opt/simulation-b3-retry:ro
 
 services:
   simulation:

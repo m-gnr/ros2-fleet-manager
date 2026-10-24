@@ -6,7 +6,7 @@ Tarih: 23 Ekim 2026 (Europe/Istanbul).
 
 **B2 GEÇTİ: `01` ve `02` iki TEMİZ başarılı canlı koşudur. Toplam canlı koşu: 2/3 (başarısız koşu: 0). Aşama B2 tek robotlu Nav2 simülasyon doğrulaması başarıyla tamamlandı.**
 
-Bu kayıt, önceki [B2 hazırlık kaydının](simulation-stage-b2-2026-10-23.md) ve [B1 kaydının](simulation-stage-b-2026-10-23.md) devamıdır. B1 dosyaları ve image'ı korunmuştur, değiştirilmemiştir. Docker yerleşimi onaylanmış sayılmaz. [Proje bağlamındaki](project-context.md) ve [onaylı v2.3 geçiş kaydındaki](architecture-v2.3-transition.md) kaynak önceliği geçerlidir. Backend test istemcisi yalnızca `NavigateToPose` eyleminin gönderimi ve sonucunun doğrulanması içindir; uygulama mimarisinde komut sahipliği değişmemiştir.
+Bu kayıt, önceki [B2 hazırlık kaydının](simulation-stage-b2-2026-10-23.md) ve [B1 kaydının](../b1/simulation-stage-b-2026-10-23.md) devamıdır. B1 dosyaları ve image'ı korunmuştur, değiştirilmemiştir. Docker yerleşimi onaylanmış sayılmaz. [Proje bağlamındaki](../../../project-context.md) ve [onaylı v2.3 geçiş kaydındaki](../../../architecture-v2.3-transition.md) kaynak önceliği geçerlidir. Backend test istemcisi yalnızca `NavigateToPose` eyleminin gönderimi ve sonucunun doğrulanması içindir; uygulama mimarisinde komut sahipliği değişmemiştir.
 
 ```mermaid
 flowchart TD
@@ -66,7 +66,7 @@ Eski A ve B1 dosyalarının null alanları korunarak, B2'ye özel tamamen yeni v
    - `map_path` (`/config/map/map.yaml`) ve `nav2_parameters` (`/config/simulation-nav2-params.yaml`) null olmayacak şekilde tanımlandı.
    - Lidar: `samples: 180` (düşük/orta ışın sayısı, 360 derece yatay tarama), `update_rate_hz: 5.0` (düşük/orta scan hızı), menzil 0.1–10.0m.
    - Hedef poz: `x: 2.0, y: 1.0, yaw: 0.0`, toleranslar: `xy_tolerance_m: 0.35`, `amcl_tolerance_m: 0.4`.
-4. **B2 Giriş Betiği ve Compose Override (`docker-compose.simulation-nav2-check.yml`)**:
+4. **B2 Giriş Betiği ve Compose Override (`docker/compose/docker-compose.simulation-nav2-check.yml`)**:
    - Tabanın B1 CMD'sini devralmamak için override dosyasında `command: ["python3", "/opt/simulation-nav2-check/check.py"]` açıkça belirtildi.
    - Gazebo headless (`-s -r --headless-rendering`, OGRE2 eklentisiyle), RViz kapalı, SLAM devre dışı (`slam:=False`) olarak çalıştırıldı.
    - `tf_helper.py`: Odometriden gelen veriyi `odom -> base_link` olarak yayınlayan ve `base_link -> validation_robot/base_link/lidar` static transformunu basan yardımcı düğüm olarak simulation container'ında başlatıldı.
@@ -125,10 +125,10 @@ Toplam 2 canlı koşu yapıldı. Her iki koşuda da tüm başarı ölçütleri e
 - `config/map/map.pgm` ve `config/map/map.yaml`: B2 dünyasıyla tutarlı harita dosyaları.
 - `config/simulation-nav2-check.json` ve `.schema.json`: B2 yapılandırması ve sıkı doğrulama şeması.
 - `config/simulation-nav2-params.yaml`: use_sim_time, tek robot ve AMCL başlangıç pozu içeren Nav2 parametreleri.
-- `docker-compose.simulation-nav2-check.yml`: B2 bağımsız Compose override dosyası.
+- `docker/compose/docker-compose.simulation-nav2-check.yml`: B2 bağımsız Compose override dosyası.
 - `docker/simulation-nav2-check/check.py`: B2 simülasyon ve backend test istemcisi yürütücüsü.
 - `docker/simulation-nav2-check/tf_helper.py`: Odometri-TF köprüsü ve sensör statik TF yayıncısı.
 - `docker/simulation-nav2-check/test_config.py`: B2 yapılandırma ve dünya oluşturucu birim testleri.
-- `docs/simulation-stage-b2-2026-10-23.md`: resolv.conf maddesi canlı koşu kanıtıyla güncellendi.
-- `docs/simulation-stage-b2-continuation-commands-2026-10-23.md`: Tüm komutlar, çıkış kodları ve tam çıktılar.
-- Bu kayıt: `docs/simulation-stage-b2-continuation-2026-10-23.md`.
+- `docs/validation/simulation/b2/simulation-stage-b2-2026-10-23.md`: resolv.conf maddesi canlı koşu kanıtıyla güncellendi.
+- `docs/validation/simulation/b2/simulation-stage-b2-continuation-commands-2026-10-23.md`: Tüm komutlar, çıkış kodları ve tam çıktılar.
+- Bu kayıt: `docs/validation/simulation/b2/simulation-stage-b2-continuation-2026-10-23.md`.

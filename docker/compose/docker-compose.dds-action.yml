@@ -2,11 +2,11 @@
 x-action-common: &action-common
   image: ros2-fleet-dds-action-check:humble-fortress
   build:
-    context: .
+    context: ../..
     dockerfile: docker/dds/Dockerfile.action
   env_file:
-    - ./config/dds.env
-    - ./config/dds-action.env
+    - ../../config/dds.env
+    - ../../config/dds-action.env
 
 services:
   simulation:

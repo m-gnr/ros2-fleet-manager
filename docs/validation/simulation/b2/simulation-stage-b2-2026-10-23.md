@@ -10,11 +10,11 @@ Devamı: [simulation-stage-b2-continuation-2026-10-23.md](simulation-stage-b2-co
 
 Resmi Humble Nav2 paketleri linux/arm64 image'a kuruldu; build çıkışı 0, kurulu paket durumları `installed`, `dpkg --audit` çıktısı boş. Buna rağmen aşağıdaki paket betiği hatası nedeniyle kullanıcının “her adımda yeni bir hata çıkarsa dur” sınırı uygulandı. Bu sonuç Nav2 çalışması veya B2 başarısı değildir.
 
-Bu kayıt [B1 kaydından](simulation-stage-b-2026-10-23.md) ayrıdır. B1 dosyaları korunur. Docker yerleşimi onaylanmış sayılmaz. [Proje bağlamındaki](project-context.md) kaynak önceliği geçerlidir. Backend test istemcisi henüz eklenmedi; uygulama komut sahipliği değişmez.
+Bu kayıt [B1 kaydından](../b1/simulation-stage-b-2026-10-23.md) ayrıdır. B1 dosyaları korunur. Docker yerleşimi onaylanmış sayılmaz. [Proje bağlamındaki](../../../project-context.md) kaynak önceliği geçerlidir. Backend test istemcisi henüz eklenmedi; uygulama komut sahipliği değişmez.
 
 ## Kurulum planı ve kanıt
 
-Taban, B1'in başarılı yerel `ros2-fleet-simulation-lidar-check:humble-fortress` image'ıdır. Önce geçici linux/arm64 container içinde `apt-get update -o APT::Update::Error-Mode=any`, resmi depo adayları ve APT kurulum simülasyonu denetlendi (0). Resmi `packages.ros.org/ros2/ubuntu`, `jammy/main arm64` adayları [ayrı Dockerfile](../docker/simulation-nav2-check/Dockerfile) içinde sabitlendi. Ardından tek build ile `--no-install-recommends` kurulumu yapıldı (0).
+Taban, B1'in başarılı yerel `ros2-fleet-simulation-lidar-check:humble-fortress` image'ıdır. Önce geçici linux/arm64 container içinde `apt-get update -o APT::Update::Error-Mode=any`, resmi depo adayları ve APT kurulum simülasyonu denetlendi (0). Resmi `packages.ros.org/ros2/ubuntu`, `jammy/main arm64` adayları [ayrı Dockerfile](../../../../docker/simulation-nav2-check/Dockerfile) içinde sabitlendi. Ardından tek build ile `--no-install-recommends` kurulumu yapıldı (0).
 
 APT planı ve gerçek kurulum: 472 yeni paket, 2 yükseltme, 0 kaldırma; 7 paket yükseltilmeden kaldı. Arşiv indirmesi 230 MB, 8 dakika 40 saniye; APT build katmanı 636.9 saniye sürdü. Nav2 metapaketinin bağımlılıkları RViz ve SLAM paketlerini de içerdi; GUI veya SLAM çalıştırılmadı. Paket isimleri [resmi Nav2 paket kaydı](https://index.ros.org/p/nav2_bringup/) ile karşılaştırıldı. Gerçek kurulum kanıtı komut ekindeki APT ve dpkg çıktılarıdır.
 

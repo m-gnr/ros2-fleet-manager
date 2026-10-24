@@ -4,13 +4,13 @@ Tarih: 23 Ekim 2026 (Europe/Istanbul).
 
 ## Durum ve kapsam
 
-**B1 GEÇTİ: `03` ve `04` iki temiz başarılı koşudur. B2 başlatılmadı; bu sınırlı deneme tamamlandı.** Bu kayıt Docker yerleşimi onayı değildir. [Proje bağlamı](project-context.md), [onaylı v2.3 geçiş kaydı](architecture-v2.3-transition.md) ve [Aşama A](simulation-validation-2026-10-23.md) okundu. Önceki kayıtlar ve kişisel notlar değiştirilmez.
+**B1 GEÇTİ: `03` ve `04` iki temiz başarılı koşudur. B2 başlatılmadı; bu sınırlı deneme tamamlandı.** Bu kayıt Docker yerleşimi onayı değildir. [Proje bağlamı](../../../project-context.md), [onaylı v2.3 geçiş kaydı](../../../architecture-v2.3-transition.md) ve [Aşama A](../a/simulation-validation-2026-10-23.md) okundu. Önceki kayıtlar ve kişisel notlar değiştirilmez.
 
 İlk iki başarısız koşuda eklenti arama engeli incelendi; resmi `--render-engine-server` ve override ortam değişkenleriyle eklenti yükleme aşaması aşıldı. Ancak OGRE2 motoru dummy render window başlatırken HLMS Unlit shader şablon dosyalarının eksikliği (`FileNotFoundException`) nedeniyle `Ogre::HlmsPbsDatablock::getBrdf()` üzerinde çöktü (-11 segfault). Bu frame, [ikinci koşunun tam logundaki](simulation-stage-b-commands-2026-10-23.md#run-b1-02) `#0` satırında yer alır. O aşamada kullanıcının açık talimatı gereği sonraki hata kovalanmadan duruldu. Sonraki açık izinle yapılan sınırlı resmi paket denemesi aşağıda kayıtlıdır; shader eksikliği giderildi ve iki koşuda gerçek LaserScan doğrulandı.
 
 ## Ayrı deney düzeni
 
-[Ayrı Compose override](../docker-compose.simulation-lidar-check.yml), DDS ve Aşama A override dosyalarının üzerine eklenir. Ayrı proje, container, ağ ve image kullanılır. [Dockerfile](../docker/simulation-lidar-check/Dockerfile), ölçülen yerel Aşama A image'ına OGRE2 runtime paketini ve aşağıda belirlenen resmi medya sağlayıcısını zorunlu bağımlılıklarıyla ekler. Aşama A dosyaları değiştirilmez. [Betik](../docker/simulation-lidar-check/check.py), Aşama A config doğrulayıcısını ve aynı robot dünya şablonunu kullanır; çalışma sırasında `/tmp/lidar-world.sdf` dosyasına sensör ve duvar ekler. Config iki container'da da salt okunur bağlanır.
+[Ayrı Compose override](../../../../docker/compose/docker-compose.simulation-lidar-check.yml), DDS ve Aşama A override dosyalarının üzerine eklenir. Ayrı proje, container, ağ ve image kullanılır. [Dockerfile](../../../../docker/simulation-lidar-check/Dockerfile), ölçülen yerel Aşama A image'ına OGRE2 runtime paketini ve aşağıda belirlenen resmi medya sağlayıcısını zorunlu bağımlılıklarıyla ekler. Aşama A dosyaları değiştirilmez. [Betik](../../../../docker/simulation-lidar-check/check.py), Aşama A config doğrulayıcısını ve aynı robot dünya şablonunu kullanır; çalışma sırasında `/tmp/lidar-world.sdf` dosyasına sensör ve duvar ekler. Config iki container'da da salt okunur bağlanır.
 
 ```mermaid
 flowchart LR
@@ -26,7 +26,7 @@ Bu şema yalnız deney düzenini gösterir. Çoklu robot, fleet.yaml, ExecuteTas
 
 ## Config ve kabul ölçütü
 
-Robot kimliği ve başlangıç pozu [Aşama A config'inden](../config/simulation-check.json) gelir; aynı değerler ikinci config'e kopyalanmaz. B1'de harita ve Nav2 parametreleri bu dosyada `null` kalır. [Lidar config](../config/simulation-lidar-check.json) ve [şeması](../config/simulation-lidar-check.schema.json) bütün yeni alanları zorunlu tutar, ek alanları reddeder. Kodda eksik ayar için varsayılan yoktur. Sayıların sonluluğu, min/max sırası ve analitik duvar kontrolünün gerektirdiği sıfır yönelim başlangıçta denetlenir.
+Robot kimliği ve başlangıç pozu [Aşama A config'inden](../../../../config/simulation-check.json) gelir; aynı değerler ikinci config'e kopyalanmaz. B1'de harita ve Nav2 parametreleri bu dosyada `null` kalır. [Lidar config](../../../../config/simulation-lidar-check.json) ve [şeması](../../../../config/simulation-lidar-check.schema.json) bütün yeni alanları zorunlu tutar, ek alanları reddeder. Kodda eksik ayar için varsayılan yoktur. Sayıların sonluluğu, min/max sırası ve analitik duvar kontrolünün gerektirdiği sıfır yönelim başlangıçta denetlenir.
 
 | Alan | Anlam / birim |
 | --- | --- |
@@ -42,7 +42,7 @@ Robot kimliği ve başlangıç pozu [Aşama A config'inden](../config/simulation
 | check.minimum_messages | Kabul için gereken gerçek LaserScan mesaj sayısı |
 | check.range_tolerance_m | Her ışında duvar geometrisine göre izin verilen hata, metre |
 
-Tek değer kaynağı bağlantılı config dosyalarıdır; varsayılanlar ayrıca tanımlanmaz. DDS domain, RMW ve duvar saati bekleme sınırı [dds.env](../config/dds.env) dosyasından gelir. Test süresi ürün timeout politikası değildir. Koşu kimliği `DDS_TEST_PAYLOAD` ile verilir. Aynı domain'deki diğer deneyler eşzamanlı çalıştırılmaz.
+Tek değer kaynağı bağlantılı config dosyalarıdır; varsayılanlar ayrıca tanımlanmaz. DDS domain, RMW ve duvar saati bekleme sınırı [dds.env](../../../../config/dds.env) dosyasından gelir. Test süresi ürün timeout politikası değildir. Koşu kimliği `DDS_TEST_PAYLOAD` ile verilir. Aynı domain'deki diğer deneyler eşzamanlı çalıştırılmaz.
 
 Backend yalnız topic keşfine bakmaz. Artan zaman damgalı mesajlar, beklenen ışın sayısı, sonlu ve menzil içinde değerler aranır. Her ışının beklenen mesafesi duvarın ön yüzü ile sensör x konumu arasındaki farkın `cos(açı)` değerine bölünmesiyle hesaplanır. Duvarın y kapsamına düşmeyen ışın kabul edilmez. Robot B1 boyunca hareketsizdir; hız komutu gönderilmez. Sahte scan, sahte ölçüm, sürüm yeteneğini olduğundan farklı gösteren OpenGL override veya özel symlink yoktur.
 
@@ -159,7 +159,7 @@ Bağlam: Eksik resmi medya paketini inceleme ve uyumlu paketi kurup sınırlı B
 Bu son çalışmada yalnız B1 `Dockerfile` ve iki B1 kayıt dosyası değişti. Başlangıçta mevcut olan override ve `check.py` değişiklikleri korundu. Aşağıdaki liste B1 deneyinin toplam dosya kapsamıdır.
 
 - `config/simulation-lidar-check.json` ve `.schema.json`: sensör, gerçek duvar, render ve kabul ayarları.
-- `docker-compose.simulation-lidar-check.yml`: ayrı B1 projesi/image override'ı.
+- `docker/compose/docker-compose.simulation-lidar-check.yml`: ayrı B1 projesi/image override'ı.
 - `docker/simulation-lidar-check/Dockerfile`, `check.py`, `test_config.py`: bağımlılık, gerçek sensör probu ve config testleri.
 - Bu kayıt ve [komut/çıktı eki](simulation-stage-b-commands-2026-10-23.md).
 

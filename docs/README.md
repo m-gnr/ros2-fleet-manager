@@ -18,8 +18,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [C2.1 Doğrulama Raporu](validation/c2/c2-1-validation-2026-10-24.md): Saf Python durum makinesi ve IDL sözleşmeleri test kanıtı (49/49 test geçti).
 - [C2.2 Doğrulama Raporu](validation/c2/c2-2-validation-2026-10-24.md): Robot Executor ROS 2 düğümü, ActionServer, Nav2 istemcisi ve entegrasyon kanıtı (55/55 test geçti).
 - [C2.3 Doğrulama Raporu](validation/c2/c2-3-validation-2026-10-24.md): Gazebo Fortress + Nav2 + Robot Executor tek robotlu canlı simülasyon doğrulama kanıtı (2/2 temiz koşu, 7/7 senaryo geçti).
+- [C3 Fleet Manager Kararları](c3-fleet-manager-decisions-2026-10-24.md): RobotStatus stale süresi, iletişim kaybı operatör uyarısı/kurtarma ilkesi, IDLE süresine göre eşitlik çözümü ve aging uygulanmaması kararları.
 
-C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2 aşamasında IDL tanımları (`ExecuteTask.action`, `RobotStatus.msg`, `ClearRobotError.srv`), ROS 2'den bağımsız durum makinesi, ROS 2 düğümü (`RobotExecutorNode`) ve tek robotlu canlı Gazebo + Nav2 simülasyon entegrasyonu (C2.1, C2.2, C2.3) tamamlanarak başarıyla doğrulanmıştır. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
+C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2 aşamasında IDL tanımları (`ExecuteTask.action`, `RobotStatus.msg`, `ClearRobotError.srv`), ROS 2'den bağımsız durum makinesi, ROS 2 düğümü (`RobotExecutorNode`) ve tek robotlu canlı Gazebo + Nav2 simülasyon entegrasyonu (C2.1, C2.2, C2.3) tamamlanarak başarıyla doğrulanmıştır. C3 aşamasında Fleet Manager çekirdek ve zamanlayıcı kararları (C3-DEC-01–04) kilitlenmiştir. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
 
 ## Doğrulama kanıtları
 

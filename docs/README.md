@@ -23,6 +23,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2 aşamasında IDL tanımları (`ExecuteTask.action`, `RobotStatus.msg`, `ClearRobotError.srv`), ROS 2'den bağımsız durum makinesi, ROS 2 düğümü (`RobotExecutorNode`) ve tek robotlu canlı Gazebo + Nav2 simülasyon entegrasyonu (C2.1, C2.2, C2.3) tamamlanarak başarıyla doğrulanmıştır. C3 aşamasında Fleet Manager çekirdek kararları (C3-DEC-01–04) kilitlenmiş ve C3.1 saf Python domain çekirdeği ve zamanlayıcı testleri eksiksiz doğrulanmıştır. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
 
+- [C3.2 SQLite Outbox ve Tek Consumer](c3-2-sqlite-outbox.md): uygulama sözleşmesi, teslim/tekrar ve senaryo reset sınırları.
+- [C3.2 Doğrulama Raporu](validation/c3/c3-2-validation-2026-10-24.md): 29 yeni test ve C1–C3.1 regresyonu; 174 geçti, ROS ortamı gerektiren 10 test atlandı.
+
 ## Doğrulama kanıtları
 
 [Doğrulama dizini](validation/README.md), DDS, A, B1, B2, AMCL, B3 ve B3 Retry raporlarını komut ekleriyle birlikte listeler. AMCL sonucu 1 geçti / 1 kaldı; ilk B3 ve Retry ayrı oturumlardır. Kanıtların tarihleri, ölçütleri ve başarısız koşuları korunur.

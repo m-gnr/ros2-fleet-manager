@@ -293,7 +293,11 @@ class FleetManagerCore:
             # 1. Look for available eligible IDLE or returning robots
             idle_robots = self.tracker.get_eligible_idle_robots(current_time)
             # Filter out robots currently in preemption handshake
-            idle_robots = [r for r in idle_robots if r.robot_id not in self._pending_preemption_assignments]
+            idle_robots = [
+                r for r in idle_robots
+                if r.robot_id not in self._pending_preemption_assignments
+                and r.robot_id not in self._active_tasks_by_robot
+            ]
 
             selection = self.scheduler.select_best_idle_robot(
                 task=task,

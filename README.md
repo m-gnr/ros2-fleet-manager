@@ -14,7 +14,7 @@ flowchart LR
 
 `simulation` robot başına düğümleri, `backend` görev ve kaynak yönetimini, `frontend` kullanıcı arayüzünü barındıracaktır. Taşıma akışı: Fleet Manager → ExecuteTask → Robot Executor → Nav2. Ayrıntı ve kaynak önceliği [dokümantasyon haritasındadır](docs/README.md).
 
-24 Ekim 2026 depo kontrolünde C1 (konfigürasyon altyapısı) ve C2 (Robot Executor: saf Python durum makinesi, ROS 2 Humble düğümü ve tek robotlu canlı Gazebo + Nav2 simülasyon doğrulaması) tamamlanıp doğrulanmıştır. Fleet Manager (C3), Battery Simulator (C4), FastAPI ve React uygulamaları (C5) henüz geliştirilmemiştir. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
+24 Ekim 2026 depo kontrolünde C1 (konfigürasyon altyapısı) ve C2 (Robot Executor: saf Python durum makinesi, ROS 2 Humble düğümü ve tek robotlu canlı Gazebo + Nav2 simülasyon doğrulaması) tamamlanıp doğrulanmıştır. Fleet Manager C3.1 domain çekirdeği ve C3.2 SQLite Outbox/tek consumer katmanı saf Python testleriyle doğrulanmıştır. Fleet Manager ROS 2 adaptörleri, Battery Simulator (C4), FastAPI ve React uygulamaları (C5) henüz geliştirilmemiştir. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
 
 ## Gereksinimler
 
@@ -106,7 +106,8 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [x] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** `RobotExecutorNode` ActionServer, Nav2 `NavigateToPose` istemcisi, launch ve entegrasyon testleri (**DOĞRULANDI**)
 - [x] **C2.3 — Canlı Simülasyon Doğrulaması:** Gazebo Fortress + Nav2 + Robot Executor tek robotlu entegrasyonu, 7 senaryo ve Option A hata kurtarma (**DOĞRULANDI**)
 - [x] **C3.1 — Fleet Manager Çekirdeği:** Saf Python domain modelleri, FIFO/öncelik kuyruğu, Wh enerji uygunluğu, güvenli preemption, T01–T09 senaryoları (**DOĞRULANDI**)
-- [ ] **C3.2 — Fleet Manager ROS 2 & Outbox:** SQLite Outbox, tek consumer olay döngüsü, ROS 2 action/topic entegrasyonu (Planlanan)
+- [x] **C3.2 — SQLite Outbox ve Tek Consumer:** Atomik kayıt, olay süzme ve gönderim tekrarları (**DOĞRULANDI**, saf Python/SQLite kapsamı). [Sözleşme ve sınırlar](docs/c3-2-sqlite-outbox.md).
+- [ ] **Fleet Manager ROS 2 entegrasyonu:** Action/topic adaptörleri ve kaynak sıra numarası eşlemesi (Planlanan).
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)
 

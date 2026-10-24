@@ -14,8 +14,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [Compose kılavuzu](../docker/compose/README.md): test katmanları ve güncel yollar.
 - [Organizasyon doğrulaması](organization-validation-2026-10-24.md): taşıma kapsamı, kontroller ve sınırlar.
 - [C1 Konfigürasyon Altyapısı](configuration-c1.md): `fleet.yaml` yapısı, birimler, Pydantic doğrulayıcı ve şema kuralları.
+- [C2 Robot Executor Kararları](c2-executor-decisions-2026-10-24.md): `RobotStatus.msg` faz alanı, `ExecuteTask` öncelik sabitleri ve iki aşamalı test stratejisi kararları.
 
-C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2–C5 uygulama paketleri henüz oluşturulmamıştır. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
+C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2 Robot Executor arayüz ve test kararları kilitlenmiştir. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
 
 ## Doğrulama kanıtları
 

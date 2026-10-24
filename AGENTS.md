@@ -1,6 +1,6 @@
 ## Başlamadan önce
 
-- Mimari, planlama veya uygulama işinden önce `docs/project-context.md` dosyasını oku.
+- Mimari, planlama veya uygulama işinden önce `docs/project-context.md` ve [dokümantasyon haritasını](docs/README.md) oku.
 - Birincil nihai mimari referansı [ROS 2 Fleet Manager Nihai Mimari Kararlar](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf) belgesidir: DOC-ARCH-2026-10-23-FINAL, v1.0, 23 Ekim 2026, 13 sayfa. İlgili bölümleri çalışmaya başlamadan önce oku.
 - Kullanıcının kişisel notları korunur. Bu notları değiştirme, silme, özetleyip üzerine yazma.
 - Eski README veya notlardaki farklı politikaları güncel kararların yerine sessizce uygulama. Çözülmemiş çelişki görürsen ilgili işi durdur ve sor.
@@ -14,11 +14,13 @@
 | Kullanıcı kuralları ve kalıcı proje bağlamı | `AGENTS.md`, `docs/project-context.md` |
 | Birincil nihai mimari kararlar | `docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf` |
 | Ayrıntılı karar geçmişi ve geçiş gerekçeleri | `docs/ROS2_Fleet_Manager_Karar_08_Revize_v1_0.pdf`, `docs/architecture-v2.3-transition.md` |
-| Doğrulama kanıtları ve hazırlık durumu | `docs/` altındaki aşama/test raporları ve B4 denetim raporu |
-| Düzenlenebilir filo, robot, harita, istasyon ve batarya tanımları | `config/fleet.yaml` |
-| Konfigürasyon şeması | `config/fleet.schema.json` ve ilgili doğrulayıcı |
-| ROS arayüzleri (mesaj/action/servis) | `interfaces/` |
-| Uygulanmış servis düzeni | `docker-compose.yml` |
+| Doğrulama kanıtları | [docs/validation/README.md](docs/validation/README.md) ve ilgili rapor/komut ekleri |
+| Tarihsel hazırlık denetimi | `docs/project-architecture-readiness-review-2026-10-23.md` (B4) |
+| Hedef filo, robot, harita, istasyon ve batarya tanımları | `config/fleet.yaml` — henüz yok; C1 çıktısı |
+| Hedef filo şeması ve doğrulayıcı | `config/fleet.schema.json` ve Pydantic doğrulayıcı — henüz yok; C1 çıktısı |
+| Mevcut ROS test arayüzü | `interfaces/dds_probe_interfaces/` — TransportProbe; ExecuteTask değildir |
+| Mevcut doğrulama servisleri | `docker/compose/docker-compose.*.yml`; [katman kılavuzu](docker/compose/README.md) |
+| Hedef uygulama dağıtımı | Kök `docker-compose.yml` henüz yok; üç servisli hedef uygulanmış sayılmaz |
 
 - Nihai PDF, eski kararları ve 23 Ekim kararlarını birleştiren mimari başvuru belgesidir. Kullanıcı koruma ve çalışma kurallarını ortadan kaldırmaz.
 - PDF bölüm 3'teki tarihsel kaynak sırası korunur: proje bağlamı/AGENTS, Revize Karar 08, v2.3 geçiş kaydı, 23 Ekim kararları, B4 raporu, eski belgeler. PDF'nin açık çelişki çözümlerini eski hükümlerle geri alma.
@@ -30,7 +32,9 @@
 ## Mimari durum ve kapsam
 
 - Durumları ayrı tut: **ONAYLANDI** (hedef karar), **DOĞRULANDI** (kapsamı belli test kanıtı), **HENÜZ TEST EDİLMEDİ**, **ÖNERİ**. Bir karar hem onaylı hem henüz test edilmemiş olabilir.
-- PDF'nin 23 Ekim tarihli durumuna göre Fleet Manager, Robot Executor, Battery Simulator, FastAPI ve React UI henüz kodlanmamıştır; `fleet.yaml` C1 çıktısıdır. Bu tarihsel bilgiyi güncel depo incelemesi yapmadan bugünün durumu gibi tekrarlama.
+- 24 Ekim 2026 depo kontrolünde Fleet Manager, Robot Executor, Battery Simulator, FastAPI ve React UI henüz yoktur. Mevcut kod DDS/simülasyon doğrulama altyapısıdır; test servis adlarını ürün bileşenleri sanma. Sonraki çalışmalarda bu durumu depodan yeniden kontrol et.
+- Test kodları ve altı `test_config.py`, `docker/` altındadır; `config/` test JSON/şema, Nav2 parametreleri ve haritayı tutar. `scripts/run_b3_retry.py` host çalıştırıcısıdır. Yerel `backend/`, `frontend/`, `ros2_ws/src/` ve `tests/` boş dizinleri Git tarafından taşınmaz.
+- Raporlar `docs/validation/`, eski README `docs/archive/readme-v2.x.md` altındadır. Eski rapor yollarındaki kısa dosyalar PDF atıfları için yönlendirmedir; yeni bağlantıları asıl rapora ver. Tarihsel komut/çıktı bloklarını yeni yollarla yeniden yazma.
 - MVP: en az iki robot, bağımsız Nav2/AMCL, robot başına Executor ve Battery Simulator, öncelik/FIFO, güvenli preemption, şarj/park yönetimi, SQLite Outbox, FastAPI ve React + Konva 2D panel. Video akışı aktarılmaz.
 - Genişletilmiş kapsam: üçüncü robotun dinamik eklenmesi, web üzerinden senaryo başlatma ve iki robotlu takas. C1'de üç robotlu config doğrulamak, üçüncü robotun canlı performansını doğrulamak değildir.
 - Kapsam dışı: fiziksel robot entegrasyonu, dar koridor için küresel çarpışmasız trafik planlaması, otomatik palet mekanizması, şarj istasyonu elektriksel arızaları, çoklu aktif Fleet Manager ve canlı manager çökmesi sonrası otomatik devam. Manager çökmesinde senaryo reset esastır.
@@ -59,7 +63,7 @@
 - Nav2 rota planlama, yerel engel kaçınma ve hız kontrolünden sorumludur. FM enerji/mesafe için planner sorgulayabilir; bu, taşıma yürütücülüğünü devralması anlamına gelmez.
 - Fiziksel robot durumunun otoritesi Robot Executor'dır. FM'deki robot kaydı `RobotStatus` verisinin kopyasıdır; FM'de ikinci bir fiziksel robot durum makinesi oluşturma.
 - Sonuçları `task_id`, `assignment_epoch` ve action goal UUID ile eşleştir. Eski sonuçların yeni atamayı değiştirmesine izin verme.
-- Arayüzleri PDF bölüm 11'e göre `interfaces/` altında yönet: `ExecuteTask.action`, `RobotStatus.msg`, `ClearRobotError.srv`. Kimlik, epoch, durum, hata ve enerji alanlarını ilgili dokümanlarla birlikte güncelle.
+- C2 arayüzlerini PDF bölüm 11'e göre `interfaces/` altında oluştur (henüz mevcut değiller): `ExecuteTask.action`, `RobotStatus.msg`, `ClearRobotError.srv`. Kimlik, epoch, durum, hata ve enerji alanlarını ilgili dokümanlarla birlikte güncelle.
 
 ### Güvenli preemption
 
@@ -124,6 +128,8 @@ Atanabilirlik: E_required <= E_remaining - C_usable * SoC_emergency / 100
 
 ## C1-C5 geliştirme sırası
 
+Aşağıdaki çıktılar geliştirme hedefleridir; mevcut dosya veya tamamlanmış özellik listesi değildir.
+
 | Aşama | Çıktı | Kabul ölçütü |
 |---|---|---|
 | C1 - Konfigürasyon | `fleet.yaml`, `fleet.schema.json`, Pydantic doğrulayıcı, `test_config.py` ve sınır testleri | Kod değişmeden yalnız YAML ile 1, 2 ve 3 robotlu yapılandırmalar doğrulanır |
@@ -154,12 +160,12 @@ Atanabilirlik: E_required <= E_remaining - C_usable * SoC_emergency / 100
 - Yeni bir ayar eklerken config dosyasını, şemayı ve ilgili dokümanı birlikte güncelle.
 - Değişiklikten sonra ilgili testi veya doğrulamayı çalıştır. Çalıştıramadıysan **doğrulanmadı** diye işaretle ve kullanıcıya bildir.
 - Test sonucunu komut, kapsam ve sonuçla kaydet. Hedef mimari, tamamlanan kod ve doğrulanmış davranışı ayrı raporla.
-- Kullanıcının kişisel notlarını veya mevcut PDF'leri bu güncellemenin parçası olarak değiştirme.
+- Kullanıcının mevcut değişikliklerini koru; görev dışı değişiklikleri commit'e katma. `git reset --hard`, `git clean -fd`, force push ve geçmiş yeniden yazma kullanma. Push öncesi uzak dalı kontrol et; ayrışma veya çatışmada dur.
 
 ## Dokümantasyon kuralları
 
-- Kod, config, arayüz veya Compose değişikliği yaptığında ilgili dokümanı aynı değişiklikte güncelle. Doküman güncellemesi işin parçasıdır.
-- Dokümanlar `docs/` altında `.md` formatında tutulur. Yeni PDF ekleme. Mevcut PDF'leri silme veya üzerine yazma; `.md`'ye çevirme ayrı ve açık bir görev olarak yapılır. Yukarıdaki mevcut nihai PDF'ye referans verilmesi bu kuralı değiştirmez.
+- Kod, config, arayüz veya Compose değişikliğinde ilgili dokümanı aynı değişiklikte güncelle.
+- Yeni dokümanları `docs/` altında `.md` olarak tut ve `docs/README.md` haritasına bağla; doğrulama raporu ve komut eklerini ilgili `docs/validation/` aşamasında birlikte sakla. Yeni PDF ekleme; mevcut PDF'leri silme veya üzerine yazma. Markdown dönüşümü ayrı ve açık bir görevdir.
 - Bir bilgi tek yerde yazılır, diğer yerlerden bağlantıyla referans verilir. Bu dosyadaki uygulama kurallarının ayrıntıları için nihai PDF'ye yönlendir; yeni paralel mimari şartnameler oluşturma.
 - Dil: README ve `docs/` şimdilik Türkçe yazılır. İleride İngilizceye geçilecek; başlıkları sabit tut, cümleleri kısa ve çevrilmesi kolay yaz. Bir dosyada iki dil karıştırma. Mevcut dosyaları kendiliğinden çevirme; çeviri ayrı ve açık bir görevdir.
 - Kod yorumları, commit mesajları, değişken/fonksiyon isimleri ve config alan adları İngilizce olur. Kod, komut, dosya adı ve teknik terimler olduğu gibi kalır.
@@ -170,13 +176,13 @@ Atanabilirlik: E_required <= E_remaining - C_usable * SoC_emergency / 100
 
 ## README.md standardı
 
-README kısa, güncel ve çalıştırılabilir olmalı. Ayrıntı için `docs/` içine yönlendirsin. Şu sırayı izle:
+README kısa ve güncel olmalı; ayrıntı için `docs/README.md` haritasına yönlendirsin. Şu sırayı izle:
 
 1. **Proje adı ve tek cümlelik açıklama**
 2. **Mimari özeti**: Mermaid diyagramı ve üç servisin (`simulation`, `backend`, `frontend`) birer cümlelik görevi; hedef ve doğrulanmış durum ayrımı
 3. **Gereksinimler**: Docker, Docker Compose sürümü, varsa GPU/donanım notu
-4. **Hızlı başlangıç**: kopyala-yapıştır ile çalışan komutlar (`docker compose up`), ardından tarayıcıda açılacak adres
-5. **Konfigürasyon**: `config/` yapısı, `fleet.yaml`, yeni robot ekleme adımları ve env değişkenleri
+4. **Hızlı başlangıç**: yalnız mevcut ve doğrulanmış komutlar; uygulama kurulumu ve panel yokken `docker compose up` veya çalışan web adresi sunma
+5. **Konfigürasyon**: mevcut test ayarları/env dosyaları ile gelecekteki `fleet.yaml` ve robot ekleme hedefini ayır
 6. **Proje yapısı**: klasör ağacı ve her klasörün tek satırlık açıklaması
 7. **Geliştirme**: test, derleme ve lint komutları
 8. **Sorun giderme**: bilinen sorunlar; örneğin container'lar arası ROS/DDS keşfi
@@ -188,16 +194,19 @@ README kuralları:
 
 - Her komutu yazmadan önce çalıştır. Çalıştıramadığın komutu **doğrulanmadı** diye işaretle ve kullanıcıya bildir.
 - Sürüm numarası ve port gibi değerleri config'den ayrı tekrar yazma; mümkünse config dosyasına bağlantı ver.
-- Ekran görüntüsü veya diyagram varsa kodla birlikte güncelle; yeni mimari diyagramlarda Mermaid kuralını uygula.
+- Ekran görüntüsü ve diyagramları kodla birlikte güncel tut; Mermaid kuralını koru.
 - Uygulanmamış özellikleri yapılmış gibi yazma. Planlananı **Yol haritası** altına koy. Onaylı hedefi test edilmiş uygulama gibi sunma.
 
 ## Komutlar
 
-Bu dosya hazırlanırken proje deposunda çalıştırma yapılmadı. Aşağıdaki komutların doğrulama durumu korunmalı; depo incelenmeden test, derleme veya lint komutu uydurulmamalıdır.
+Komutları depo kökünden çalıştır. Doğrulama Compose dosyalarını [kılavuzdaki](docker/compose/README.md) sırayla ve `-f docker/compose/...` yollarıyla birleştir. Config kontrolü container başlatmaz; canlı test veya build başarısı değildir.
 
-| İşlem | Komut | Durum |
+| İşlem | Komut / kaynak | Durum |
 |---|---|---|
-| Hepsini başlat | `docker compose up` | Doğrulanmadı; nihai üç servisli canlı kurulum kanıtı değildir |
-| Backend testleri | Henüz belirlenmedi | Depodaki gerçek test düzeninden bulunup çalıştırılacak |
-| ROS paketlerini derle | Henüz belirlenmedi | Depodaki gerçek workspace düzeninden bulunup çalıştırılacak |
-| Lint | Henüz belirlenmedi | Depodaki araç yapılandırmasından bulunup çalıştırılacak |
+| DDS yapılandırma kontrolü | `DDS_TEST_PAYLOAD=organization-audit docker compose -f docker/compose/docker-compose.dds.yml config --quiet` | 24 Ekim 2026: çıkış 0; yalnız yapılandırma |
+| Aşama testleri | `docs/validation/README.md` üzerinden rapor ve komut ekleri | Tarihsel kanıt; yeniden koşulmadıkça yeni başarı iddiası yok |
+| B3 Retry çalıştırıcısı | `scripts/run_b3_retry.py` | Mevcut; container başlatır, salt okunur kontrol değildir |
+| Nihai uygulamayı başlatma | Henüz yok | Kök uygulama Compose'u ve web paneli uygulanmadı |
+| Backend testleri / uygulama ROS derlemesi / lint | Henüz tanımlı değil | Test probe paketini veya aşama testlerini ürün doğrulaması sayma |
+
+B2/AMCL/B3/Retry birleşimleri Nav2 image adını kullanırken A katmanının build tarifini miras alır. `build` veya `up --build` ile doğru Nav2 image'ının üretileceğini varsayma; ayrıntı Compose kılavuzundadır. Ortam, çalışma dizini veya `.env` değiştiğinde yolları ve çözümlenen yapılandırmayı yeniden kontrol et.

@@ -15,8 +15,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [Organizasyon doğrulaması](organization-validation-2026-10-24.md): taşıma kapsamı, kontroller ve sınırlar.
 - [C1 Konfigürasyon Altyapısı](configuration-c1.md): `fleet.yaml` yapısı, birimler, Pydantic doğrulayıcı ve şema kuralları.
 - [C2 Robot Executor Kararları](c2-executor-decisions-2026-10-24.md): `RobotStatus.msg` faz alanı, `ExecuteTask` öncelik sabitleri ve iki aşamalı test stratejisi kararları.
+- [C2.1 Doğrulama Raporu](validation/c2/c2-1-validation-2026-10-24.md): Saf Python durum makinesi ve IDL sözleşmeleri test kanıtı (49/49 test geçti).
 
-C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2 Robot Executor arayüz ve test kararları kilitlenmiştir. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
+C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2.1 aşamasında IDL tanımları (`ExecuteTask.action`, `RobotStatus.msg`, `ClearRobotError.srv`) ve ROS 2'den bağımsız `fleet_robot_executor` durum makinesi tamamlanıp doğrulanmıştır. C2.2 canlı ROS 2 düğümü ve simülasyon entegrasyonu aşaması planlanmaktadır. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
 
 ## Doğrulama kanıtları
 

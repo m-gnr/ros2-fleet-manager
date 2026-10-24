@@ -1,0 +1,31 @@
+# Goal
+string task_id
+uint64 assignment_epoch
+geometry_msgs/PoseStamped pickup_pose
+geometry_msgs/PoseStamped dropoff_pose
+uint8 priority
+
+uint8 PRIORITY_HIGH = 1
+uint8 PRIORITY_MEDIUM = 2
+uint8 PRIORITY_LOW = 3
+---
+# Result
+uint8 status
+uint64 completed_epoch
+builtin_interfaces/Time completion_stamp
+string error_reason
+
+uint8 STATUS_SUCCEEDED = 1
+uint8 STATUS_FAILED = 2
+uint8 STATUS_PREEMPTED = 3
+---
+# Feedback
+uint8 current_phase
+geometry_msgs/PoseStamped current_pose
+float32 distance_to_goal
+float32 battery_soc
+
+uint8 PHASE_MOVING_TO_PICKUP = 1
+uint8 PHASE_LOADING = 2
+uint8 PHASE_MOVING_TO_DROPOFF = 3
+uint8 PHASE_UNLOADING = 4

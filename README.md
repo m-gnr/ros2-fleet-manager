@@ -47,18 +47,27 @@ DDS ortam ayarları [dds.env](config/dds.env) ve [dds-action.env](config/dds-act
 | [docker/](docker/) | Dockerfile, doğrulama kodları ve bunların testleri |
 | [config/](config/) | Test ayarları, şemalar, filo tanımı (`fleet.yaml`) ve harita |
 | [fleet_config/](fleet_config/) | C1 konfigürasyon veri modelleri, yükleyici ve CLI doğrulayıcı |
-| [interfaces/](interfaces/) | Geçici DDS TransportProbe arayüzü; ExecuteTask değildir |
+| [interfaces/](interfaces/) | `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve geçici DDS `dds_probe_interfaces` |
+| [ros2_ws/src/](ros2_ws/src/) | Robot Executor paketi (`fleet_robot_executor` saf Python durum makinesi) |
 | [scripts/](scripts/) | B3 Retry çalıştırma ve kaynak ölçüm betiği |
-| [tests/](tests/) | C1 sözleşme, şema ve sınır testleri (`test_config.py`) |
+| [tests/](tests/) | C1 sözleşme (`test_config.py`) ve C2.1 durum makinesi (`test_executor_state_machine.py`) testleri |
 | [docs/](docs/README.md) | Mimari, karar geçmişi, konfigürasyon ve doğrulama kayıtları |
 
-Yerel `backend/`, `frontend/` ve `ros2_ws/src/` dizinleri henüz boştur; Git boş dizinleri taşımaz.
+Yerel `backend/` ve `frontend/` dizinleri henüz boştur; Git boş dizinleri taşımaz.
 
 ## Geliştirme
 
 - **C1 Konfigürasyon Testleri (74 test):**
   ```sh
   PYTHONPATH=. uv run --with-requirements requirements-c1.txt pytest tests/test_config.py
+  ```
+- **C2.1 Robot Executor Durum Makinesi Testleri (49 test):**
+  ```sh
+  PYTHONPATH="ros2_ws/src/fleet_robot_executor:." uv run --with-requirements requirements-c1.txt pytest tests/test_executor_state_machine.py ros2_ws/src/fleet_robot_executor/test/test_state_machine.py
+  ```
+- **Tam Birim Test Koşusu (113 test):**
+  ```sh
+  PYTHONPATH="ros2_ws/src/fleet_robot_executor:." uv run --with-requirements requirements-c1.txt pytest tests/
   ```
 - **CLI Konfigürasyon Doğrulama:**
   ```sh
@@ -75,6 +84,8 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [Dokümantasyon haritası](docs/README.md)
 - [C1 Konfigürasyon Belgesi](docs/configuration-c1.md)
 - [C1 Doğrulama Raporu](docs/validation/c1/c1-validation-2026-10-24.md)
+- [C2 Robot Executor Kararları](docs/c2-executor-decisions-2026-10-24.md)
+- [C2.1 Doğrulama Raporu](docs/validation/c2/c2-1-validation-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)
@@ -83,7 +94,8 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 ## Yol haritası
 
 - [x] **C1 — Konfigürasyon:** `fleet.yaml`, şema, Pydantic doğrulayıcı, 1-2-3 robot desteği (**DOĞRULANDI**)
-- [ ] **C2 — Robot Executor:** `ExecuteTask.action`, `RobotStatus.msg`, `fleet_robot_executor` (Planlanan)
+- [x] **C2.1 — Robot Executor Durum Makinesi:** `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve ROS 2 bağımsız durum makinesi (**DOĞRULANDI**)
+- [ ] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** Canlı Executor action sunucusu, Nav2 `NavigateToPose` istemcisi, simülasyon entegrasyonu (Planlanan)
 - [ ] **C3 — Fleet Manager:** Öncelik/FIFO, preemption, SQLite Outbox (Planlanan)
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)

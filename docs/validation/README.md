@@ -13,5 +13,6 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | B3 Retry | [Rapor](simulation/b3-retry/simulation-stage-b3-retry-2026-10-23.md) · [Komut eki](simulation/b3-retry/simulation-stage-b3-retry-commands-2026-10-23.md) | 2/2 temiz başarı |
 | C1 | [Rapor](c1/c1-validation-2026-10-24.md) | 74/74 birim/sözleşme testi geçti; 1, 2, 3 robot doğrulandı |
 | C2.1 | [Rapor](c2/c2-1-validation-2026-10-24.md) | 49/49 durum makinesi ve IDL testi geçti; saf Python doğrulandı |
+| C2.2 | [Rapor](c2/c2-2-validation-2026-10-24.md) | 55/55 ROS 2 Humble düğüm ve yaşam döngüsü testi geçti; entegrasyon doğrulandı |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.

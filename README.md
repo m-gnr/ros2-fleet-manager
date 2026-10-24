@@ -86,6 +86,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [C1 Doğrulama Raporu](docs/validation/c1/c1-validation-2026-10-24.md)
 - [C2 Robot Executor Kararları](docs/c2-executor-decisions-2026-10-24.md)
 - [C2.1 Doğrulama Raporu](docs/validation/c2/c2-1-validation-2026-10-24.md)
+- [C2.2 Doğrulama Raporu](docs/validation/c2/c2-2-validation-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)
@@ -95,7 +96,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 
 - [x] **C1 — Konfigürasyon:** `fleet.yaml`, şema, Pydantic doğrulayıcı, 1-2-3 robot desteği (**DOĞRULANDI**)
 - [x] **C2.1 — Robot Executor Durum Makinesi:** `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve ROS 2 bağımsız durum makinesi (**DOĞRULANDI**)
-- [ ] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** Canlı Executor action sunucusu, Nav2 `NavigateToPose` istemcisi, simülasyon entegrasyonu (Planlanan)
+- [x] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** `RobotExecutorNode` ActionServer, Nav2 `NavigateToPose` istemcisi, launch ve entegrasyon testleri (**DOĞRULANDI**)
 - [ ] **C3 — Fleet Manager:** Öncelik/FIFO, preemption, SQLite Outbox (Planlanan)
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)

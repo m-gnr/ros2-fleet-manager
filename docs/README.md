@@ -26,6 +26,7 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 - [C3.2 SQLite Outbox ve Tek Consumer](c3-2-sqlite-outbox.md): uygulama sözleşmesi, teslim/tekrar ve senaryo reset sınırları.
 - [C3.2 Doğrulama Raporu](validation/c3/c3-2-validation-2026-10-24.md): 29 yeni test ve C1–C3.1 regresyonu; 174 geçti, ROS ortamı gerektiren 10 test atlandı.
 - [C3.3 ROS 2 Entegrasyonu Teknik Karar Kaydı](c3-3-integration-decisions-2026-10-24.md): kaynak sıra/oturum, belirsiz teslim, saat ayrımı ve goal ret kararları; açık ayrıntılar ve entegrasyon önkoşulları. Uygulama henüz test edilmedi.
+- [C3.3.1 Executor Güvenliği Resmî Karar Kaydı](c3-3-1-executor-safety-decisions-2026-10-24.md): sıra/oturum tipleri, duplicate kayıt ömrü, restart/reset, gerçek terminal epoch ve güvenli iptal için yedi onaylı karar; açık ayrıntılar korunur. Davranışlar henüz test edilmedi.
 
 ## Doğrulama kanıtları
 

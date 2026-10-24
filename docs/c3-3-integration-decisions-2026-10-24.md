@@ -1,5 +1,7 @@
 # C3.3 ROS 2 Entegrasyonu Teknik Karar Kaydı
 
+> **24 Ekim 2026 C3.3.1 ek kaydı:** [Executor güvenliği kararları](c3-3-1-executor-safety-decisions-2026-10-24.md), sonraki yedi kullanıcı onayını ve önceki açık seçeneklere etkisini kaydeder. İlgili konularda bu ek kayıt esas alınır; uygulama ve test başarısı iddia edilmez.
+
 **Tarih:** 24 Ekim 2026
 **Durum:** Bölüm 2'deki dört kullanıcı kararı **ONAYLANDI**. Uygulama ve C3.3 entegrasyonu **HENÜZ TEST EDİLMEDİ**. Açık ayrıntılar onaylanmış sayılmaz.
 **Kapsam:** Fleet Manager ROS adaptörleri, RobotStatus sıralaması, ExecuteTask teslimi, saat ayrımı ve entegrasyon önkoşulları. Bu değişiklik yalnız dokümantasyondur.

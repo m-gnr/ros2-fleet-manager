@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "BatteryModel": {
+      "additionalProperties": false,
+      "properties": {
+        "usable_capacity_wh": {
+          "exclusiveMinimum": 0,
+          "title": "Usable Capacity Wh",
+          "type": "number"
+        },
+        "consumption_wh_per_meter": {
+          "exclusiveMinimum": 0,
+          "title": "Consumption Wh Per Meter",
+          "type": "number"
+        },
+        "idle_power_w": {
+          "minimum": 0,
+          "title": "Idle Power W",
+          "type": "number"
+        },
+        "charge_power_w": {
+          "exclusiveMinimum": 0,
+          "title": "Charge Power W",
+          "type": "number"
+        }
+      },
+      "required": [
+        "usable_capacity_wh",
+        "consumption_wh_per_meter",
+        "idle_power_w",
+        "charge_power_w"
+      ],
+      "title": "BatteryModel",
+      "type": "object"
+    },
+    "ChargingStation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "pose": {
+          "$ref": "#/$defs/Pose"
+        },
+        "tolerance_radius": {
+          "description": "Dock contact region radius, metres.",
+          "exclusiveMinimum": 0,
+          "title": "Tolerance Radius",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "pose",
+        "tolerance_radius"
+      ],
+      "title": "ChargingStation",
+      "type": "object"
+    },
+    "Fleet": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "map_path": {
+          "description": "File path relative to the fleet YAML directory.",
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Map Path",
+          "type": "string"
+        },
+        "use_sim_time": {
+          "const": true,
+          "title": "Use Sim Time",
+          "type": "boolean"
+        },
+        "battery_models": {
+          "minProperties": 1,
+          "patternProperties": {
+            "^[A-Za-z_][A-Za-z0-9_]*$": {
+              "$ref": "#/$defs/BatteryModel"
+            }
+          },
+          "title": "Battery Models",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "map_path",
+        "use_sim_time",
+        "battery_models"
+      ],
+      "title": "Fleet",
+      "type": "object"
+    },
+    "Policies": {
+      "additionalProperties": false,
+      "properties": {
+        "assignment": {
+          "const": "priority_fifo_nearest_eligible",
+          "title": "Assignment",
+          "type": "string"
+        },
+        "preemption_priority": {
+          "const": "HIGH",
+          "title": "Preemption Priority",
+          "type": "string"
+        },
+        "max_preemptions": {
+          "const": 2,
+          "title": "Max Preemptions",
+          "type": "integer"
+        },
+        "extra_swap_enabled": {
+          "const": false,
+          "title": "Extra Swap Enabled",
+          "type": "boolean"
+        },
+        "automatic_retry": {
+          "const": false,
+          "title": "Automatic Retry",
+          "type": "boolean"
+        },
+        "automatic_reassignment": {
+          "const": false,
+          "title": "Automatic Reassignment",
+          "type": "boolean"
+        },
+        "charge_target_soc_percent": {
+          "const": 80,
+          "title": "Charge Target Soc Percent",
+          "type": "integer"
+        },
+        "charge_queue": {
+          "const": "lowest_soc_fifo",
+          "title": "Charge Queue",
+          "type": "string"
+        },
+        "emergency_soc_percent": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Emergency Soc Percent",
+          "type": "number"
+        },
+        "low_soc_percent": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Low Soc Percent",
+          "type": "number"
+        },
+        "safety_margin_wh": {
+          "minimum": 0,
+          "title": "Safety Margin Wh",
+          "type": "number"
+        }
+      },
+      "required": [
+        "assignment",
+        "preemption_priority",
+        "max_preemptions",
+        "extra_swap_enabled",
+        "automatic_retry",
+        "automatic_reassignment",
+        "charge_target_soc_percent",
+        "charge_queue",
+        "emergency_soc_percent",
+        "low_soc_percent",
+        "safety_margin_wh"
+      ],
+      "title": "Policies",
+      "type": "object"
+    },
+    "Pose": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "description": "X position in map frame, metres.",
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "description": "Y position in map frame, metres.",
+          "title": "Y",
+          "type": "number"
+        },
+        "yaw": {
+          "description": "Heading in map frame, radians.",
+          "title": "Yaw",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "yaw"
+      ],
+      "title": "Pose",
+      "type": "object"
+    },
+    "Robot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "namespace": {
+          "pattern": "^/[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*$",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "initial_pose": {
+          "$ref": "#/$defs/Pose"
+        },
+        "battery_model": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Battery Model",
+          "type": "string"
+        },
+        "nav2_action_name": {
+          "pattern": "^/[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*$",
+          "title": "Nav2 Action Name",
+          "type": "string"
+        },
+        "nav2_params_path": {
+          "description": "Nav2 template path relative to fleet YAML.",
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Nav2 Params Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "initial_pose",
+        "battery_model",
+        "nav2_action_name",
+        "nav2_params_path"
+      ],
+      "title": "Robot",
+      "type": "object"
+    },
+    "Station": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "pose": {
+          "$ref": "#/$defs/Pose"
+        }
+      },
+      "required": [
+        "id",
+        "pose"
+      ],
+      "title": "Station",
+      "type": "object"
+    },
+    "Stations": {
+      "additionalProperties": false,
+      "properties": {
+        "charging_stations": {
+          "items": {
+            "$ref": "#/$defs/ChargingStation"
+          },
+          "minItems": 1,
+          "title": "Charging Stations",
+          "type": "array"
+        },
+        "parking_stations": {
+          "items": {
+            "$ref": "#/$defs/Station"
+          },
+          "title": "Parking Stations",
+          "type": "array"
+        },
+        "safe_waiting_areas": {
+          "items": {
+            "$ref": "#/$defs/Station"
+          },
+          "title": "Safe Waiting Areas",
+          "type": "array"
+        }
+      },
+      "required": [
+        "charging_stations",
+        "parking_stations",
+        "safe_waiting_areas"
+      ],
+      "title": "Stations",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "fleet": {
+      "$ref": "#/$defs/Fleet"
+    },
+    "robots": {
+      "items": {
+        "$ref": "#/$defs/Robot"
+      },
+      "minItems": 1,
+      "title": "Robots",
+      "type": "array"
+    },
+    "stations": {
+      "$ref": "#/$defs/Stations"
+    },
+    "policies": {
+      "$ref": "#/$defs/Policies"
+    }
+  },
+  "required": [
+    "fleet",
+    "robots",
+    "stations",
+    "policies"
+  ],
+  "title": "FleetConfig",
+  "type": "object"
+}

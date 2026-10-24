@@ -13,8 +13,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [Proje girişi](../README.md): mevcut depo durumu ve C1–C5 sırası.
 - [Compose kılavuzu](../docker/compose/README.md): test katmanları ve güncel yollar.
 - [Organizasyon doğrulaması](organization-validation-2026-10-24.md): taşıma kapsamı, kontroller ve sınırlar.
+- [C1 Konfigürasyon Altyapısı](configuration-c1.md): `fleet.yaml` yapısı, birimler, Pydantic doğrulayıcı ve şema kuralları.
 
-`fleet.yaml` ve uygulama paketleri henüz oluşturulmamıştır. İstasyon alanının YAML yerleşimi gibi açık kararlar dosya organizasyonuyla çözülmüş sayılmaz.
+C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı oluşturulup doğrulanmıştır; C2–C5 uygulama paketleri henüz oluşturulmamıştır. İstasyon alanının YAML yerleşimi `docs/configuration-c1.md` içinde belgelenmiştir.
 
 ## Doğrulama kanıtları
 

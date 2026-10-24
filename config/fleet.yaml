@@ -1,0 +1,52 @@
+# C1 example only: battery values are uncalibrated, explicitly approved for C1.
+# All fields are required; no operational defaults are supplied by code.
+# Paths are relative to this file. Units and decisions: docs/configuration-c1.md.
+fleet:
+  name: warehouse_fleet_v1
+  map_path: map/map.yaml
+  use_sim_time: true
+  battery_models:
+    turtlebot3_burger:
+      usable_capacity_wh: 100.0
+      consumption_wh_per_meter: 0.20
+      idle_power_w: 2.0
+      charge_power_w: 20.0
+
+robots:
+  - id: robot_1
+    name: robot_1
+    namespace: /robot_1
+    initial_pose: {x: -2.0, y: -0.5, yaw: 0.0}
+    battery_model: turtlebot3_burger
+    nav2_action_name: /robot_1/navigate_to_pose
+    nav2_params_path: simulation-b3-params.template.yaml
+  - id: robot_2
+    name: robot_2
+    namespace: /robot_2
+    initial_pose: {x: 1.0, y: 2.5, yaw: 3.1415}
+    battery_model: turtlebot3_burger
+    nav2_action_name: /robot_2/navigate_to_pose
+    nav2_params_path: simulation-b3-params.template.yaml
+
+stations:
+  charging_stations:
+    - id: dock_1
+      pose: {x: 0.5, y: -2.0, yaw: 0.0}
+      tolerance_radius: 0.30
+  parking_stations:
+    - id: park_1
+      pose: {x: -2.0, y: 1.0, yaw: 1.57}
+  safe_waiting_areas: []
+
+policies:
+  assignment: priority_fifo_nearest_eligible
+  preemption_priority: HIGH
+  max_preemptions: 2
+  extra_swap_enabled: false
+  automatic_retry: false
+  automatic_reassignment: false
+  charge_target_soc_percent: 80
+  charge_queue: lowest_soc_fifo
+  emergency_soc_percent: 8.0
+  low_soc_percent: 25.0
+  safety_margin_wh: 10.0

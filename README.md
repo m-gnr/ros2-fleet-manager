@@ -92,6 +92,8 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [C2.1 Doğrulama Raporu](docs/validation/c2/c2-1-validation-2026-10-24.md)
 - [C2.2 Doğrulama Raporu](docs/validation/c2/c2-2-validation-2026-10-24.md)
 - [C2.3 Doğrulama Raporu](docs/validation/c2/c2-3-validation-2026-10-24.md)
+- [C3 Fleet Manager Kararları](docs/c3-fleet-manager-decisions-2026-10-24.md)
+- [C3.1 Doğrulama Raporu](docs/validation/c3/c3-1-validation-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)
@@ -103,7 +105,8 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [x] **C2.1 — Robot Executor Durum Makinesi:** `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve ROS 2 bağımsız durum makinesi (**DOĞRULANDI**)
 - [x] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** `RobotExecutorNode` ActionServer, Nav2 `NavigateToPose` istemcisi, launch ve entegrasyon testleri (**DOĞRULANDI**)
 - [x] **C2.3 — Canlı Simülasyon Doğrulaması:** Gazebo Fortress + Nav2 + Robot Executor tek robotlu entegrasyonu, 7 senaryo ve Option A hata kurtarma (**DOĞRULANDI**)
-- [ ] **C3 — Fleet Manager:** Öncelik/FIFO, preemption, SQLite Outbox (Planlanan)
+- [x] **C3.1 — Fleet Manager Çekirdeği:** Saf Python domain modelleri, FIFO/öncelik kuyruğu, Wh enerji uygunluğu, güvenli preemption, T01–T09 senaryoları (**DOĞRULANDI**)
+- [ ] **C3.2 — Fleet Manager ROS 2 & Outbox:** SQLite Outbox, tek consumer olay döngüsü, ROS 2 action/topic entegrasyonu (Planlanan)
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)
 

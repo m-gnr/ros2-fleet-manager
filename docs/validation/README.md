@@ -15,5 +15,6 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C2.1 | [Rapor](c2/c2-1-validation-2026-10-24.md) | 49/49 durum makinesi ve IDL testi geçti; saf Python doğrulandı |
 | C2.2 | [Rapor](c2/c2-2-validation-2026-10-24.md) | 55/55 ROS 2 Humble düğüm ve yaşam döngüsü testi geçti; entegrasyon doğrulandı |
 | C2.3 | [Rapor](c2/c2-3-validation-2026-10-24.md) | 2/2 temiz canlı simülasyon koşusu geçti; 7/7 senaryo (lojistik döngü, preemption, hata kurtarma, Option A) doğrulandı |
+| C3.1 | [Rapor](c3/c3-1-validation-2026-10-24.md) | 25/25 saf Python çekirdek, FIFO/öncelik, Wh enerji, Karar 08 T01-T09 ve rezervasyon testi geçti |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.

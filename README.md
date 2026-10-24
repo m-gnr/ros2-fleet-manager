@@ -96,6 +96,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [C3.1 Doğrulama Raporu](docs/validation/c3/c3-1-validation-2026-10-24.md)
 - [C3.2 Doğrulama Raporu](docs/validation/c3/c3-2-validation-2026-10-24.md)
 - [C3.3.1 Doğrulama Raporu](docs/validation/c3/c3-3-1-validation-2026-10-24.md)
+- [C3.3.2 Adaptör Entegrasyon Kararları](docs/c3-3-2-ros2-adapter-decisions-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)

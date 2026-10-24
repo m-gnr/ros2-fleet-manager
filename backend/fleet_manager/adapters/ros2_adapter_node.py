@@ -65,7 +65,7 @@ class FleetROS2Adapter:
         from .status_subscriber import RobotStatusSubscriberBridge
 
         for r_id in self.robot_ids:
-            # 1. Status Subscriber (/{robot_id}/status)
+            # 1. Status Subscriber (/{robot_id}/robot_status - C3.3.3-DEC-01)
             status_bridge = RobotStatusSubscriberBridge(
                 consumer=self.consumer,
                 loop=self.loop,
@@ -73,12 +73,12 @@ class FleetROS2Adapter:
             self.status_bridges[r_id] = status_bridge
             self.node.create_subscription(
                 RobotStatus,
-                f"/{r_id}/status",
+                f"/{r_id}/robot_status",
                 status_bridge.handle_status_msg,
                 10,
             )
 
-            # 2. ExecuteTask ActionClient (/{robot_id}/execute_task)
+            # 2. ExecuteTask ActionClient (/{robot_id}/execute_task - C3.3.3-DEC-01)
             act_client = ActionClient(self.node, ExecuteTask, f"/{r_id}/execute_task")
             act_bridge = ExecuteTaskActionClientBridge(
                 robot_id=r_id,
@@ -88,15 +88,15 @@ class FleetROS2Adapter:
             )
             self.action_bridges[r_id] = act_bridge
 
-            # 3. ClearRobotError ServiceClient (/{robot_id}/clear_error)
-            srv_client = self.node.create_client(ClearRobotError, f"/{r_id}/clear_error")
+            # 3. ClearRobotError ServiceClient (/{robot_id}/clear_robot_error - C3.3.3-DEC-01)
+            srv_client = self.node.create_client(ClearRobotError, f"/{r_id}/clear_robot_error")
             clear_bridge = ClearRobotErrorServiceClient(
                 robot_id=r_id,
                 service_client=srv_client,
             )
             self.service_clients[r_id] = clear_bridge
 
-            # 4. Nav2 ComputePathToPose ActionClient (/{robot_id}/compute_path_to_pose)
+            # 4. Nav2 ComputePathToPose ActionClient (/{robot_id}/compute_path_to_pose - C3.3.3-DEC-01)
             nav2_client = ActionClient(self.node, ComputePathToPose, f"/{r_id}/compute_path_to_pose")
             self.route_resolver.register_robot_client(r_id, nav2_client)
 

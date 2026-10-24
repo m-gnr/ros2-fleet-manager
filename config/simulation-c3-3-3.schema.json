@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Stage C3.3.3 Dual-Robot Simulation Configuration Schema",
+  "type": "object",
+  "required": [
+    "fleet_config_path",
+    "map_path",
+    "nav2_template_path",
+    "executor_duplicate_record_capacity",
+    "sensor",
+    "room"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "fleet_config_path": {
+      "type": "string"
+    },
+    "map_path": {
+      "type": "string"
+    },
+    "nav2_template_path": {
+      "type": "string"
+    },
+    "executor_duplicate_record_capacity": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sensor": {
+      "type": "object",
+      "required": [
+        "pose",
+        "samples",
+        "min_angle_rad",
+        "max_angle_rad",
+        "min_range_m",
+        "max_range_m",
+        "resolution_m",
+        "update_rate_hz"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pose": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "samples": { "type": "integer", "minimum": 1 },
+        "min_angle_rad": { "type": "number" },
+        "max_angle_rad": { "type": "number" },
+        "min_range_m": { "type": "number", "minimum": 0 },
+        "max_range_m": { "type": "number", "minimum": 0 },
+        "resolution_m": { "type": "number", "minimum": 0 },
+        "update_rate_hz": { "type": "number", "minimum": 0 }
+      }
+    },
+    "room": {
+      "type": "object",
+      "required": [
+        "size_m",
+        "wall_thickness_m",
+        "wall_height_m"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "size_m": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "wall_thickness_m": { "type": "number", "minimum": 0 },
+        "wall_height_m": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

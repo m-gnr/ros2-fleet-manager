@@ -87,6 +87,19 @@ class RouteCache:
         )
 
         entry = self._entries.get(key)
+        if entry is None and not robot_id:
+            for k, v in self._entries.items():
+                if (
+                    k.cell_start_x == cell_sx
+                    and k.cell_start_y == cell_sy
+                    and k.cell_goal_x == cell_gx
+                    and k.cell_goal_y == cell_gy
+                    and k.map_revision == map_revision
+                ):
+                    entry = v
+                    key = k
+                    break
+
         if entry is None:
             return None
 

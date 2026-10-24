@@ -13,6 +13,7 @@ Bu dosyalar uygulamanın nihai üç servisli dağıtımı değildir. Komutlar de
 | B3 | DDS → A → `docker-compose.simulation-b3.yml` |
 | B3 Retry | DDS → A → `docker-compose.simulation-b3-retry.yml` |
 | C2.3 | DDS → A → `docker-compose.simulation-c2-3.yml` |
+| C3.3.3 | DDS → A → `docker-compose.simulation-c3-3-3.yml` |
 
 DDS için `DDS_TEST_PAYLOAD` zorunludur. Env dosyaları ve bind mount kaynakları depo kökündeki `config/` ve `docker/` dizinlerine gider. Container içindeki yollar, proje/servis/ağ adları ve image adları korunmuştur. Dosyaların yerinin değişmesiyle `.env` arama bağlamı da etkilenebilir; depoda `.env` yoktur. Başka çalışma dizini veya sonradan eklenen yerel env dosyası için ayrıca doğrulama gerekir.
 

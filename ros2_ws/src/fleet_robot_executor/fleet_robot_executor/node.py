@@ -127,10 +127,12 @@ class RobotExecutorNode(Node):
             self.robot_id = param_robot_id or robot_cfg.robot_id
             self.robot_namespace = self.get_parameter("robot_namespace").value or robot_cfg.namespace
             self.nav2_action_name = self.get_parameter("nav2_action_name").value or robot_cfg.nav2_action_name
+            self.initial_pose = getattr(robot_cfg, "initial_pose", (0.0, 0.0, 0.0))
         else:
             self.robot_id = param_robot_id or "robot_1"
             self.robot_namespace = self.get_parameter("robot_namespace").value or f"/{self.robot_id}"
             self.nav2_action_name = self.get_parameter("nav2_action_name").value or f"{self.robot_namespace}/navigate_to_pose"
+            self.initial_pose = (0.0, 0.0, 0.0)
 
         # ---------------------------------------------------------------------
         # State Machine Initialization
@@ -148,6 +150,15 @@ class RobotExecutorNode(Node):
             robot_id=self.robot_id,
             config=self.executor_config,
         )
+        if self.initial_pose != (0.0, 0.0, 0.0):
+            init_x, init_y, init_yaw = self.initial_pose
+            self.state_machine.current_pose = PoseStamped(
+                x=init_x,
+                y=init_y,
+                z=0.0,
+                yaw=init_yaw,
+                frame_id="map",
+            )
         self._lock = threading.Lock()
 
         # ---------------------------------------------------------------------
@@ -472,23 +483,38 @@ class RobotExecutorNode(Node):
         """Run Nav2 navigation, publish feedback, and handle preemption requests."""
         goal_uuid = self._uuid_to_str(goal_handle.goal_id.uuid)
 
-        # Readiness is not terminal task failure. Wait without inventing a timeout policy.
+        self.get_logger().info(f"Awaiting Nav2 server on '{self.nav2_action_name}'...")
         while not self._nav2_client.wait_for_server(timeout_sec=0.1):
             if self._stopping.is_set():
                 raise RuntimeError("Stopped while awaiting Nav2")
+        self.get_logger().info(f"Nav2 server '{self.nav2_action_name}' is ready. Sending goal...")
         nav2_goal = NavigateToPose.Goal()
         nav2_goal.pose = copy.deepcopy(target_pose)
-        nav2_goal.pose.header.stamp = self.get_clock().now().to_msg()
-        send_future = self._nav2_client.send_goal_async(nav2_goal)
-        while not send_future.done():
-            if self._stopping.wait(0.02):
-                raise RuntimeError("Stopped with unresolved Nav2 delivery")
-        nav2_goal_handle = send_future.result()
+
+        nav2_goal_handle = None
+        for attempt in range(5):
+            nav2_goal.pose.header.stamp = self.get_clock().now().to_msg()
+            send_future = self._nav2_client.send_goal_async(nav2_goal)
+            while not send_future.done():
+                if self._stopping.wait(0.02):
+                    raise RuntimeError("Stopped with unresolved Nav2 delivery")
+            nav2_goal_handle = send_future.result()
+            if nav2_goal_handle is not None and nav2_goal_handle.accepted:
+                break
+            if attempt < 4:
+                self.get_logger().warn(
+                    f"Nav2 goal rejected (attempt {attempt + 1}/5) on '{self.nav2_action_name}', retrying in 0.5s..."
+                )
+                if self._stopping.wait(0.5):
+                    raise RuntimeError("Stopped while awaiting Nav2 retry")
+
         if nav2_goal_handle is None:
             return self._hold_uncertain("Nav2 goal acceptance unknown")
         if not nav2_goal_handle.accepted:
+            self.get_logger().warn(f"Nav2 goal rejected after retries by '{self.nav2_action_name}' for goal {goal_uuid}")
             return False, self._navigation_failed(goal_uuid)
 
+        self.get_logger().info(f"Nav2 goal accepted by '{self.nav2_action_name}' for goal {goal_uuid}. Awaiting completion...")
         self._active_nav2_goal_handle = nav2_goal_handle
         result_future = nav2_goal_handle.get_result_async()
         while not result_future.done():
@@ -504,6 +530,7 @@ class RobotExecutorNode(Node):
 
         self._active_nav2_goal_handle = None
         nav2_res = result_future.result()
+        self.get_logger().info(f"Nav2 navigation completed with status {nav2_res.status} for goal {goal_uuid}")
         with self._lock:
             cancelling = self.state_machine.is_cancelling
         if cancelling:
@@ -629,12 +656,27 @@ class RobotExecutorNode(Node):
         lin_speed = math.hypot(vx, vy)
         ang_speed = msg.twist.twist.angular.z
 
+        # If odom frame is robot-local (not "map"), transform to map coordinates using initial_pose
+        if "odom" in (msg.header.frame_id or "").lower() and self.initial_pose != (0.0, 0.0, 0.0):
+            init_x, init_y, init_yaw = self.initial_pose
+            cos_i = math.cos(init_yaw)
+            sin_i = math.sin(init_yaw)
+            map_x = init_x + (px * cos_i - py * sin_i)
+            map_y = init_y + (px * sin_i + py * cos_i)
+            map_yaw = math.atan2(math.sin(init_yaw + yaw), math.cos(init_yaw + yaw))
+            frame_id = "map"
+        else:
+            map_x = px
+            map_y = py
+            map_yaw = yaw
+            frame_id = msg.header.frame_id or "map"
+
         pose_stamped = PoseStamped(
-            x=px,
-            y=py,
+            x=map_x,
+            y=map_y,
             z=pz,
-            yaw=yaw,
-            frame_id=msg.header.frame_id or "map",
+            yaw=map_yaw,
+            frame_id=frame_id,
             timestamp_sec=stamp_sec,
         )
         reading = OdometryReading(

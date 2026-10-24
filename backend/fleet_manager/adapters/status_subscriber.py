@@ -9,6 +9,7 @@ Conforms strictly to:
 import asyncio
 import logging
 import math
+import time
 from typing import Any, Callable, Optional
 import uuid
 
@@ -36,13 +37,16 @@ def quaternion_to_yaw(qx: float, qy: float, qz: float, qw: float) -> float:
     return math.atan2(siny_cosp, cosy_cosp)
 
 
-def ros_robot_status_to_dict(msg: Any) -> dict:
+def ros_robot_status_to_dict(msg: Any, receipt_time_sec: Optional[float] = None) -> dict:
     """Extract primitive Python dictionary from fleet_interfaces.msg.RobotStatus."""
     pos = msg.pose.pose.position
     ori = msg.pose.pose.orientation
     yaw = quaternion_to_yaw(ori.x, ori.y, ori.z, ori.w)
     frame_id = msg.pose.header.frame_id or "map"
-    stamp_sec = float(msg.header.stamp.sec) + float(msg.header.stamp.nanosec) * 1e-9
+    if receipt_time_sec is not None:
+        timestamp_sec = float(receipt_time_sec)
+    else:
+        timestamp_sec = float(msg.header.stamp.sec) + float(msg.header.stamp.nanosec) * 1e-9
 
     session_str = parse_uuid_to_str(msg.publisher_session_id)
 
@@ -58,7 +62,7 @@ def ros_robot_status_to_dict(msg: Any) -> dict:
         "battery_soc_percent": float(msg.battery_soc_percent),
         "battery_energy_wh": float(msg.battery_energy_wh),
         "current_task_id": msg.current_task_id if msg.current_task_id else None,
-        "timestamp_sec": stamp_sec,
+        "timestamp_sec": timestamp_sec,
     }
 
 
@@ -70,14 +74,17 @@ class RobotStatusSubscriberBridge:
         consumer: Any,
         loop: asyncio.AbstractEventLoop,
         on_outcome: Optional[Callable[[str, dict], None]] = None,
+        clock: Optional[Callable[[], float]] = None,
     ) -> None:
         self.consumer = consumer
         self.loop = loop
         self.on_outcome = on_outcome
+        self.clock = clock or time.monotonic
 
     def handle_status_msg(self, msg: Any) -> Any:
         """ROS callback entrypoint. Thread-safely dispatches event to asyncio consumer."""
-        payload = ros_robot_status_to_dict(msg)
+        receipt_time = self.clock() if self.clock is not None else None
+        payload = ros_robot_status_to_dict(msg, receipt_time_sec=receipt_time)
         event = Event(kind="ROBOT_STATUS", payload=payload)
         
         future = asyncio.run_coroutine_threadsafe(

@@ -99,6 +99,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [C3.3.2 Adaptör Entegrasyon Kararları](docs/c3-3-2-ros2-adapter-decisions-2026-10-24.md)
 - [C3.3.2 Doğrulama Raporu](docs/validation/c3/c3-3-2-validation-2026-10-24.md)
 - [C3.3.3 İki Robotlu Entegrasyon Kararları](docs/c3-3-3-dual-robot-integration-decisions-2026-10-24.md)
+- [C3.3.3 Doğrulama Raporu](docs/validation/c3/c3-3-3-validation-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)
@@ -114,7 +115,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [x] **C3.2 — SQLite Outbox ve Tek Consumer:** Atomik kayıt, olay süzme ve gönderim tekrarları (**DOĞRULANDI**, saf Python/SQLite kapsamı). [Sözleşme ve sınırlar](docs/c3-2-sqlite-outbox.md).
 - [x] **C3.3.1 — Robot Executor Güvenliği:** `status_seq`, `publisher_session_id`, duplicate koruması, Nav2 terminal iptali ve duruş teyidi (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-1-validation-2026-10-24.md).
 - [x] **C3.3.2 — Fleet Manager ROS 2 Adaptör Entegrasyonu:** RobotStatus subscriber, status_seq ve publisher_session_id oturum güvenliği, ExecuteTask ActionClient, Outbox göndericisi, task_review_holds ve Nav2 rota önbelleklemesi (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-2-validation-2026-10-24.md).
-- [ ] **C3.3.3 — İki Robotlu Canlı Entegrasyon:** İki robotlu Gazebo + Nav2 + Executor simülasyonu, eşzamanlı lojistik, preemption, istasyon tekil sahipliği ve izolasyon (Kararlar Onaylandı, Henüz Test Edilmedi). [Kararlar](docs/c3-3-3-dual-robot-integration-decisions-2026-10-24.md).
+- [x] **C3.3.3 — İki Robotlu Canlı Entegrasyon:** İki robotlu Gazebo + Nav2 + Executor simülasyonu, eşzamanlı lojistik, preemption, istasyon tekil sahipliği ve izolasyon (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-3-validation-2026-10-24.md).
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)
 

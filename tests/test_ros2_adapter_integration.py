@@ -72,12 +72,12 @@ def test_ros2_status_subscription_and_session_blocked(tmp_path):
 
         sub = node.create_subscription(
             RobotStatus,
-            "/robot_1/status",
+            "/robot_1/robot_status",
             bridge.handle_status_msg,
             10,
         )
 
-        pub = pub_node.create_publisher(RobotStatus, "/robot_1/status", 10)
+        pub = pub_node.create_publisher(RobotStatus, "/robot_1/robot_status", 10)
 
         # Background thread to spin pub_node and node
         executor = SingleThreadedExecutor()
@@ -281,12 +281,12 @@ def test_ros2_clear_robot_error_service_call(tmp_path):
         response.resulting_state = RobotState.STATE_IDLE
         return response
 
-    srv = server_node.create_service(ClearRobotError, "/robot_1/clear_error", clear_srv_cb)
+    srv = server_node.create_service(ClearRobotError, "/robot_1/clear_robot_error", clear_srv_cb)
 
     async def scenario():
         client_bridge = ClearRobotErrorServiceClient(
             robot_id="robot_1",
-            service_client=fm_node.create_client(ClearRobotError, "/robot_1/clear_error"),
+            service_client=fm_node.create_client(ClearRobotError, "/robot_1/clear_robot_error"),
         )
 
         executor = SingleThreadedExecutor()

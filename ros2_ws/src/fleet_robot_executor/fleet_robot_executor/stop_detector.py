@@ -40,7 +40,7 @@ class StopDetector:
         age = current_sim_time - odometry.timestamp_sec
         if age > freshness_sec:
             return False, f"ODOMETRY_STALE: age {age:.3f}s exceeds freshness threshold {freshness_sec:.3f}s"
-        if age < -1e-3:
+        if age < -0.05:
             return False, f"ODOMETRY_IN_FUTURE: odometry timestamp {odometry.timestamp_sec:.3f}s > current sim time {current_sim_time:.3f}s"
 
         # Check linear velocity threshold

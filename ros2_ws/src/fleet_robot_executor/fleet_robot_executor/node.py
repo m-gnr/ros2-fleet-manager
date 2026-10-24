@@ -347,7 +347,12 @@ class RobotExecutorNode(Node):
         )
 
         load_start = time.time()
+        stop_cmd = Twist()
         while time.time() - load_start < self.executor_config.loading_duration_sec:
+            try:
+                self._cmd_vel_pub.publish(stop_cmd)
+            except Exception:
+                pass
             self._publish_feedback(goal_handle, TaskPhase.PHASE_LOADING, 0.0)
             time.sleep(0.05)
 
@@ -380,6 +385,10 @@ class RobotExecutorNode(Node):
 
         unload_start = time.time()
         while time.time() - unload_start < self.executor_config.unloading_duration_sec:
+            try:
+                self._cmd_vel_pub.publish(stop_cmd)
+            except Exception:
+                pass
             self._publish_feedback(goal_handle, TaskPhase.PHASE_UNLOADING, 0.0)
             time.sleep(0.05)
 
@@ -428,6 +437,8 @@ class RobotExecutorNode(Node):
 
         nav2_goal = NavigateToPose.Goal()
         nav2_goal.pose = target_pose
+        # Always use current sim time so Nav2 transform lookup and costmaps use latest time
+        nav2_goal.pose.header.stamp = self.get_clock().now().to_msg()
 
         send_future = self._nav2_client.send_goal_async(nav2_goal)
         t_start = time.time()

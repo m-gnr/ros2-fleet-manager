@@ -1,0 +1,27 @@
+name: ros2-fleet-simulation-c2-3
+
+x-c2-3: &c2-3
+  image: ros2-fleet-simulation-nav2-check:humble-fortress
+  volumes:
+    - ../../config:/config:ro
+    - ../../docker/simulation-c2-3:/opt/simulation-c2-3:ro
+    - ../../interfaces:/workspace/src/interfaces:ro
+    - ../../ros2_ws/src:/workspace/src/ros2_ws:ro
+
+services:
+  simulation:
+    <<: *c2-3
+    environment:
+      SIM_CHECK_ROLE: simulation
+      DDS_TEST_TIMEOUT_SECONDS: "240"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      EGL_PLATFORM: surfaceless
+      IGN_GAZEBO_RENDER_ENGINE_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+      IGN_RENDERING_PLUGIN_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
+    command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --base-paths src && source install/setup.bash && python3 /opt/simulation-c2-3/check.py"]
+  backend:
+    <<: *c2-3
+    environment:
+      SIM_CHECK_ROLE: backend
+      DDS_TEST_TIMEOUT_SECONDS: "240"
+    command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --base-paths src && source install/setup.bash && python3 /opt/simulation-c2-3/check.py"]

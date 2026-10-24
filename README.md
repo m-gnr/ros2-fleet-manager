@@ -14,7 +14,7 @@ flowchart LR
 
 `simulation` robot başına düğümleri, `backend` görev ve kaynak yönetimini, `frontend` kullanıcı arayüzünü barındıracaktır. Taşıma akışı: Fleet Manager → ExecuteTask → Robot Executor → Nav2. Ayrıntı ve kaynak önceliği [dokümantasyon haritasındadır](docs/README.md).
 
-24 Ekim 2026 depo kontrolünde mevcut uygulama, DDS ve simülasyon doğrulama altyapısıdır. Fleet Manager, Robot Executor, Battery Simulator, FastAPI ve React uygulamaları henüz yoktur. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
+24 Ekim 2026 depo kontrolünde C1 (konfigürasyon altyapısı) ve C2 (Robot Executor: saf Python durum makinesi, ROS 2 Humble düğümü ve tek robotlu canlı Gazebo + Nav2 simülasyon doğrulaması) tamamlanıp doğrulanmıştır. Fleet Manager (C3), Battery Simulator (C4), FastAPI ve React uygulamaları (C5) henüz geliştirilmemiştir. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
 
 ## Gereksinimler
 
@@ -65,15 +65,19 @@ Yerel `backend/` ve `frontend/` dizinleri henüz boştur; Git boş dizinleri ta�
   ```sh
   PYTHONPATH="ros2_ws/src/fleet_robot_executor:." uv run --with-requirements requirements-c1.txt pytest tests/test_executor_state_machine.py ros2_ws/src/fleet_robot_executor/test/test_state_machine.py
   ```
-- **Tam Birim Test Koşusu (113 test):**
+- **Tam Birim Test Koşusu (120 test):**
   ```sh
   PYTHONPATH="ros2_ws/src/fleet_robot_executor:." uv run --with-requirements requirements-c1.txt pytest tests/
+  ```
+- **C2.3 Canlı Simülasyon Doğrulama Testi:**
+  ```sh
+  python3 scripts/run_c2_3.py --token c2-3-live-sim-run-6 --domain 46
   ```
 - **CLI Konfigürasyon Doğrulama:**
   ```sh
   PYTHONPATH=. uv run --with-requirements requirements-c1.txt python -m fleet_config config/fleet.yaml
   ```
-- **Simülasyon testleri:** Altı `test_config.py` dosyası ilgili `docker/` alt dizinlerinde bulunur; container içindeki `/config` ve `/opt` yollarını kullanır. Çalıştırma kayıtları [aşama raporlarının komut eklerindedir](docs/validation/README.md).
+- **Simülasyon testleri:** Yedi `test_config.py` dosyası ilgili `docker/` alt dizinlerinde bulunur; container içindeki `/config` ve `/opt` yollarını kullanır. Çalıştırma kayıtları [aşama raporlarının komut eklerindedir](docs/validation/README.md).
 
 ## Sorun giderme
 
@@ -87,6 +91,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [C2 Robot Executor Kararları](docs/c2-executor-decisions-2026-10-24.md)
 - [C2.1 Doğrulama Raporu](docs/validation/c2/c2-1-validation-2026-10-24.md)
 - [C2.2 Doğrulama Raporu](docs/validation/c2/c2-2-validation-2026-10-24.md)
+- [C2.3 Doğrulama Raporu](docs/validation/c2/c2-3-validation-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)
@@ -97,6 +102,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [x] **C1 — Konfigürasyon:** `fleet.yaml`, şema, Pydantic doğrulayıcı, 1-2-3 robot desteği (**DOĞRULANDI**)
 - [x] **C2.1 — Robot Executor Durum Makinesi:** `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve ROS 2 bağımsız durum makinesi (**DOĞRULANDI**)
 - [x] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** `RobotExecutorNode` ActionServer, Nav2 `NavigateToPose` istemcisi, launch ve entegrasyon testleri (**DOĞRULANDI**)
+- [x] **C2.3 — Canlı Simülasyon Doğrulaması:** Gazebo Fortress + Nav2 + Robot Executor tek robotlu entegrasyonu, 7 senaryo ve Option A hata kurtarma (**DOĞRULANDI**)
 - [ ] **C3 — Fleet Manager:** Öncelik/FIFO, preemption, SQLite Outbox (Planlanan)
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)

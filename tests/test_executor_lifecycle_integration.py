@@ -6,6 +6,8 @@ Tests the complete end-to-end action lifecycle:
 3. Nav2 abort: Aborted navigation -> STATUS_FAILED -> STATE_ERROR -> ClearRobotError recovery (Option A)
 """
 
+from __future__ import annotations
+
 import math
 import threading
 import time

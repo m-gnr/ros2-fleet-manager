@@ -1,5 +1,7 @@
 # C2 — Robot Executor Resmî Karar Kaydı
 
+> **24 Ekim 2026 ek kaydı:** [C3.3 teknik kararları](c3-3-integration-decisions-2026-10-24.md), kaynak sıra/oturum, belirsiz teslim, saat ayrımı ve açık goal reddi için sonraki kullanıcı kararlarını kaydeder. İlgili eski seçenekler ve uygulama sınırları bu kayıtta gerekçeleriyle açıklanır; C3.3 uygulaması veya entegrasyon başarısı iddia edilmez.
+
 **Tarih:** 24 Ekim 2026  
 **Durum:** ONAYLANDI / TEKNİK SÖZLEŞME  
 **Kapsam:** Aşama C2 — `fleet_robot_executor` ve `fleet_interfaces` arayüzleri  

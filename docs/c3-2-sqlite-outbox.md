@@ -1,5 +1,7 @@
 # C3.2 SQLite Outbox ve Tek Consumer
 
+> **24 Ekim 2026 ek kaydı:** [C3.3 teknik kararları](c3-3-integration-decisions-2026-10-24.md), kaynak sıra/oturum, belirsiz teslim, saat ayrımı ve açık goal reddi için sonraki kullanıcı kararlarını kaydeder. İlgili eski seçenekler ve uygulama sınırları bu kayıtta gerekçeleriyle açıklanır; C3.3 uygulaması veya entegrasyon başarısı iddia edilmez.
+
 **Tarih:** 24 Ekim 2026. Bu kayıt [C3 kararlarının](c3-fleet-manager-decisions-2026-10-24.md#23-sqlite-outbox-tek-consumer-ve-idempotency-sınırları) uygulama sözleşmesidir. Yeni mimari politika tanımlamaz. [Doğrulama raporu](validation/c3/c3-2-validation-2026-10-24.md) test kapsamını ayrı tutar.
 
 ## Uygulama sınırı

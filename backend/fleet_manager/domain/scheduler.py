@@ -182,6 +182,10 @@ class Scheduler:
         preemptible_candidates: List[Tuple[RobotRecord, Task, CandidateEvaluation]] = []
 
         for robot in active_robots:
+            # Must not be session blocked
+            if robot.session_blocked:
+                continue
+
             # Must not be stale
             if robot.is_stale(current_time):
                 continue

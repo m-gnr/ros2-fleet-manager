@@ -68,6 +68,43 @@ class FleetManagerCore:
         self._completed_tasks: Dict[str, Task] = {}
         self._failed_tasks: Dict[str, Task] = {}
 
+        # Tasks held for review due to explicit goal rejection (C3.3.2-DEC-03)
+        self._review_holds: Dict[str, dict] = {}
+
+    def has_review_hold(self, task_id: str) -> bool:
+        """Return True if task is currently held for review."""
+        return task_id in self._review_holds
+
+    def add_review_hold(
+        self,
+        task_id: str,
+        robot_id: str,
+        assignment_epoch: int,
+        goal_uuid: str,
+        reason: str,
+        held_at: float,
+    ) -> None:
+        """Place task on review hold following explicit goal rejection."""
+        self._review_holds[task_id] = {
+            "task_id": task_id,
+            "robot_id": robot_id,
+            "assignment_epoch": assignment_epoch,
+            "goal_uuid": goal_uuid,
+            "reason": reason,
+            "held_at": held_at,
+        }
+
+    def clear_review_hold(self, task_id: str) -> bool:
+        """Clear review hold on explicit operator intervention."""
+        if task_id in self._review_holds:
+            del self._review_holds[task_id]
+            return True
+        return False
+
+    def list_review_holds(self) -> List[dict]:
+        """List all active task review holds."""
+        return list(self._review_holds.values())
+
     # -------------------------------------------------------------------------
     # Configuration / Registration
     # -------------------------------------------------------------------------
@@ -135,6 +172,7 @@ class FleetManagerCore:
         current_epoch: int,
         current_task_id: Optional[str],
         timestamp_sec: float,
+        publisher_session_id: Optional[str] = None,
     ) -> Optional[RobotRecord]:
         """Process incoming 5 Hz RobotStatus message.
         
@@ -155,6 +193,17 @@ class FleetManagerCore:
         )
         if robot is None:
             return None
+
+        # Session tracking and session change safety (C3.3.2-DEC-04)
+        if publisher_session_id is not None:
+            if robot.session_id is None:
+                robot.session_id = publisher_session_id
+            elif robot.session_id != publisher_session_id:
+                robot.session_blocked = True
+                logger.error(
+                    "Robot %s publisher_session_id changed (%s -> %s). Robot transitioned to SESSION_BLOCKED.",
+                    robot_id, robot.session_id, publisher_session_id
+                )
 
         # Check departure from any station robot was occupying/releasing
         station = self.reservations.get_station_by_robot(robot_id)
@@ -290,6 +339,10 @@ class FleetManagerCore:
 
         # Iterate through queued tasks in Priority / FIFO order
         for task in self.queue.iter_assignable_tasks():
+            # Ineligible if under active review hold (C3.3.2-DEC-03)
+            if self.has_review_hold(task.task_id):
+                continue
+
             # 1. Look for available eligible IDLE or returning robots
             idle_robots = self.tracker.get_eligible_idle_robots(current_time)
             # Filter out robots currently in preemption handshake

@@ -104,9 +104,10 @@ class FleetEventLoop:
                 return "DUPLICATE"
             candidate = deepcopy(self._core, {id(self._core.scheduler): self._core.scheduler})
             outcome, stream, seq = self._apply(candidate, event)
-            if outcome == "APPLIED":
+            if outcome in ("APPLIED", "SESSION_BLOCKED"):
                 self.store.persist_core(candidate)
-                self._commands(candidate)
+                if outcome == "APPLIED":
+                    self._commands(candidate)
             p = event.payload
             db.execute(
                 "INSERT INTO processed_events(event_id,outcome,stream,status_seq,task_id,assignment_epoch,goal_uuid) "
@@ -115,7 +116,7 @@ class FleetEventLoop:
                  p.get("assignment_epoch", p.get("current_epoch")), p.get("goal_uuid")),
             )
         # Publish memory only after COMMIT; failed writes leave both states unchanged.
-        if outcome == "APPLIED":
+        if outcome in ("APPLIED", "SESSION_BLOCKED"):
             self._core = candidate
             if event.kind == "TICK":
                 for robot_id, severity, elapsed in candidate.tracker.check_communication_health(event.payload["current_time"]):
@@ -133,6 +134,17 @@ class FleetEventLoop:
                 raise ValueError("status_seq must be a nonnegative integer")
             stream = (f"status:{p['robot_id']}" if kind == "ROBOT_STATUS"
                       else f"feedback:{p['robot_id']}:{p['goal_uuid']}")
+            if kind == "ROBOT_STATUS":
+                robot = core.tracker.get_robot(p["robot_id"])
+                if robot is None:
+                    raise ValueError("Unknown robot")
+                session_id = p.get("publisher_session_id")
+                if session_id is not None:
+                    if robot.session_id is not None and robot.session_id != session_id:
+                        robot.session_blocked = True
+                        return "SESSION_BLOCKED", stream, seq
+                    if robot.session_blocked:
+                        return "SESSION_BLOCKED", stream, seq
             previous = self.store.connection.execute(
                 "SELECT MAX(status_seq) FROM processed_events WHERE stream=? AND outcome='APPLIED'", (stream,)
             ).fetchone()[0]
@@ -182,12 +194,59 @@ class FleetEventLoop:
                     core.queue.enqueue(pending)
             else:
                 TaskResultStatus(p["result_status"])  # Reject invalid results before mutation.
-                p["completed_epoch"] = p.pop("assignment_epoch")
+                completed_epoch = p.get("completed_epoch")
+                if completed_epoch is None:
+                    completed_epoch = p.pop("assignment_epoch", None)
+                else:
+                    p.pop("assignment_epoch", None)
+                if completed_epoch != task.assignment_epoch:
+                    logger.warning(
+                        "ACTION_RESULT completed_epoch mismatch for task %s: got %s, expected %s",
+                        task.task_id, completed_epoch, task.assignment_epoch
+                    )
+                    return "STALE", stream, seq
+                p["completed_epoch"] = completed_epoch
                 core.handle_action_result(**p)
                 # A natural completion/failure during cancellation must not strand HIGH.
                 pending = core._pending_preemption_assignments.pop(p["robot_id"], None)
                 if pending is not None:
                     core.queue.enqueue(pending)
+        elif kind == "GOAL_REJECTED":
+            task = core._active_tasks_by_robot.get(p["robot_id"])
+            if task is None or (task.task_id, task.assignment_epoch, task.goal_uuid) != (
+                p["task_id"], p["assignment_epoch"], p["goal_uuid"]
+            ):
+                return "STALE", stream, seq
+            core.add_review_hold(
+                task_id=p["task_id"],
+                robot_id=p["robot_id"],
+                assignment_epoch=p["assignment_epoch"],
+                goal_uuid=p["goal_uuid"],
+                reason=p.get("reason", "GoalResponse.REJECT"),
+                held_at=p.get("held_at", 0.0),
+            )
+            core._active_tasks_by_robot.pop(p["robot_id"], None)
+            core._active_tasks.pop(p["task_id"], None)
+            core.queue.enqueue(task)
+            self.store.connection.execute(
+                "UPDATE outbox_events SET state='HELD_FOR_REVIEW', last_error=? WHERE goal_uuid=? AND state IN ('PENDING','SENDING','RETRY')",
+                (p.get("reason", "GoalResponse.REJECT"), p["goal_uuid"]),
+            )
+            self.store.put_review_hold(
+                task_id=p["task_id"],
+                robot_id=p["robot_id"],
+                assignment_epoch=p["assignment_epoch"],
+                goal_uuid=p["goal_uuid"],
+                reason=p.get("reason", "GoalResponse.REJECT"),
+                held_at=p.get("held_at", 0.0),
+            )
+        elif kind == "CLEAR_REVIEW_HOLD":
+            core.clear_review_hold(p["task_id"])
+            self.store.clear_review_hold(p["task_id"])
+        elif kind == "ROUTE_RESOLVED":
+            provider = core.scheduler.route_provider
+            if hasattr(provider, "update_cache"):
+                provider.update_cache(**p)
         elif kind == "RESERVE":
             if core.tracker.get_robot(p["robot_id"]) is None:
                 raise ValueError("Unknown robot")

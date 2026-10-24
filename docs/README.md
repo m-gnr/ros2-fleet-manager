@@ -28,7 +28,8 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 - [C3.3 ROS 2 Entegrasyonu Teknik Karar Kaydı](c3-3-integration-decisions-2026-10-24.md): kaynak sıra/oturum, belirsiz teslim, saat ayrımı ve goal ret kararları; açık ayrıntılar ve entegrasyon önkoşulları. Uygulama henüz test edilmedi.
 - [C3.3.1 Executor Güvenliği Resmî Karar Kaydı](c3-3-1-executor-safety-decisions-2026-10-24.md): sıra/oturum tipleri, duplicate kayıt ömrü, restart/reset, gerçek terminal epoch ve güvenli iptal için yedi onaylı karar; açık ayrıntılar korunur.
 - [C3.3.1 Doğrulama Raporu](validation/c3/c3-3-1-validation-2026-10-24.md): Executor güvenlik kuralları, sıra/oturum sözleşmesi, duplicate koruması, Nav2 güvenli iptali ve canlı simülasyon kanıtı (189 host testi, 81 ROS 2/DDS testi, 7/7 canlı simülasyon senaryosu geçti).
-- [C3.3.2 ROS 2 Adaptör Entegrasyonu ve Uygulama Kararları](c3-3-2-ros2-adapter-decisions-2026-10-24.md): sayısal timeout'lar, Nav2 rota önbellekleme/geçersiz kılma, açık goal reddinde `task_review_holds`, restart/oturum mülkiyet koruması ve gerçek `completed_epoch` kararları. Henüz test edilmedi.
+- [C3.3.2 ROS 2 Adaptör Entegrasyonu ve Uygulama Kararları](c3-3-2-ros2-adapter-decisions-2026-10-24.md): sayısal timeout'lar, Nav2 rota önbellekleme/geçersiz kılma, açık goal reddinde `task_review_holds`, restart/oturum mülkiyet koruması ve gerçek `completed_epoch` kararları.
+- [C3.3.2 Doğrulama Raporu](validation/c3/c3-3-2-validation-2026-10-24.md): ROS 2 adaptörleri, `status_seq` ve oturum güvenliği, eylem istemcisi, Outbox göndericisi, `task_review_holds` ve canlı simülasyon kanıtı (212 host testi, 102 ROS 2/DDS testi, 7/7 canlı simülasyon senaryosu geçti).
 
 ## Doğrulama kanıtları
 

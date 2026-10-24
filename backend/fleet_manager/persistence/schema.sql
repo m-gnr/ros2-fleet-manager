@@ -42,8 +42,16 @@ CREATE TABLE IF NOT EXISTS outbox_events (
     goal_uuid TEXT NOT NULL,
     payload TEXT NOT NULL,
     state TEXT NOT NULL DEFAULT 'PENDING'
-        CHECK(state IN ('PENDING','SENDING','RETRY','SENT','SUPERSEDED')),
+        CHECK(state IN ('PENDING','SENDING','RETRY','SENT','SUPERSEDED','HELD_FOR_REVIEW')),
     attempts INTEGER NOT NULL DEFAULT 0,
     next_attempt_at REAL NOT NULL DEFAULT 0,
     last_error TEXT
+);
+CREATE TABLE IF NOT EXISTS task_review_holds (
+    task_id TEXT PRIMARY KEY,
+    robot_id TEXT NOT NULL,
+    assignment_epoch INTEGER NOT NULL,
+    goal_uuid TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    held_at REAL NOT NULL
 );

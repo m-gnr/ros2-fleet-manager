@@ -18,5 +18,6 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C3.1 | [Rapor](c3/c3-1-validation-2026-10-24.md) | 25/25 saf Python çekirdek, FIFO/öncelik, Wh enerji, Karar 08 T01-T09 ve rezervasyon testi geçti |
 | C3.2 | [Rapor](c3/c3-2-validation-2026-10-24.md) · [Komut eki](c3/c3-2-commands-2026-10-24.md) | 29 SQLite/consumer testi geçti; tam regresyonda 174 geçti, ROS ortamı gerektiren 10 test atlandı |
 | C3.3.1 | [Rapor](c3/c3-3-1-validation-2026-10-24.md) | Sıra/oturum sözleşmesi, duplicate koruması, Nav2 güvenli iptali ve canlı simülasyon doğrulandı (189 host, 81 ROS 2/DDS testi, 7/7 canlı senaryo geçti) |
+| C3.3.2 | [Rapor](c3/c3-3-2-validation-2026-10-24.md) | ROS 2 adaptör entegrasyonu doğrulandı: status subscriber, session order/SESSION_BLOCKED, eylem istemcisi, Outbox göndericisi, task_review_holds, 0.20m/30s rota önbelleği (212 host, 102 ROS 2/DDS testi, 7/7 canlı senaryo geçti) |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.

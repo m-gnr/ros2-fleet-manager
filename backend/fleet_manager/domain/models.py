@@ -98,6 +98,9 @@ class RobotRecord:
     active_goal_uuid: Optional[str] = None
     last_status_received_at: float = 0.0
     idle_start_timestamp: float = 0.0
+    session_id: Optional[str] = None
+    session_blocked: bool = False
+    initial_status_verified: bool = False
 
     def is_stale(self, current_time: float, threshold: float = ROBOT_STATUS_STALE_TIMEOUT_SEC) -> bool:
         """Return True if robot status has not been updated within threshold seconds (C3-DEC-01)."""
@@ -113,6 +116,10 @@ class RobotRecord:
 
     def is_eligible_for_new_assignment(self, current_time: float) -> bool:
         """Basic operational eligibility check before route and energy evaluations."""
+        if self.session_blocked:
+            return False
+        if not self.initial_status_verified:
+            return False
         if self.is_stale(current_time):
             return False
         if self.state == RobotState.STATE_ERROR:

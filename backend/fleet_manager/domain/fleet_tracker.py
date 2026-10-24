@@ -89,6 +89,10 @@ class FleetTracker:
         robot.current_task_id = current_task_id
         robot.last_status_received_at = timestamp_sec
 
+        # Initial status verification for clean startup (C3.3.2-DEC-04)
+        if not robot.session_blocked and state == RobotState.STATE_IDLE and not is_loaded and (not current_task_id or current_task_id == ""):
+            robot.initial_status_verified = True
+
         return robot
 
     def is_stale(

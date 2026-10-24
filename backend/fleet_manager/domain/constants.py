@@ -88,3 +88,13 @@ DEFAULT_LOW_SOC = 25.0  # Section 10 representative low battery threshold (%)
 DEFAULT_SAFETY_MARGIN_WH = 10.0  # Section 7 representative energy safety margin (Wh)
 DEFAULT_STATION_TOLERANCE_RADIUS_M = 0.30  # Station dock tolerance radius (metres)
 DEFAULT_DEPARTURE_MARGIN_M = 0.05  # Departure verification buffer margin (metres)
+
+# C3.3.2 approved timeouts and cache specifications (C3.3.2-DEC-01 & DEC-02)
+GOAL_ACCEPT_TIMEOUT_SEC = 5.0  # Monotonic timeout for ExecuteTask goal acceptance
+CANCEL_RESPONSE_TIMEOUT_SEC = 3.0  # Monotonic timeout for preemption cancel response
+NAV2_ROUTE_TIMEOUT_SEC = 2.0  # Monotonic timeout for Nav2 ComputePathToPose query
+ROUTE_CACHE_GRID_RESOLUTION_M = 0.20  # Coordinate grid snapping cell size (metres)
+ROUTE_CACHE_TTL_SEC = 30.0  # Route cache maximum monotonic time-to-live (seconds)
+ROUTE_CACHE_POSITION_TOLERANCE_M = 0.20  # Robot displacement invalidation threshold (metres)
+OUTBOX_STATE_HELD_FOR_REVIEW = "HELD_FOR_REVIEW"
+

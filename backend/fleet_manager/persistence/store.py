@@ -37,7 +37,7 @@ class SQLiteStore:
             raise
 
     def require_empty(self):
-        for table in ("tasks", "robots", "reservations", "outbox_events", "processed_events"):
+        for table in ("tasks", "robots", "reservations", "outbox_events", "processed_events", "task_review_holds"):
             if self.connection.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone():
                 raise ScenarioResetRequired(
                     "Scenario reset required; preserve this database and use a new database after reset"
@@ -68,6 +68,14 @@ class SQLiteStore:
                 (station.station_id, station.state, station.reserved_by_robot_id,
                  station.occupied_by_robot_id, encode(asdict(station))),
             )
+        for hold in core.list_review_holds():
+            self.connection.execute(
+                "INSERT INTO task_review_holds VALUES (?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET "
+                "robot_id=excluded.robot_id,assignment_epoch=excluded.assignment_epoch,goal_uuid=excluded.goal_uuid,"
+                "reason=excluded.reason,held_at=excluded.held_at",
+                (hold["task_id"], hold["robot_id"], hold["assignment_epoch"], hold["goal_uuid"],
+                 hold["reason"], hold["held_at"]),
+            )
 
     def add_command(self, kind, task):
         command_id = f"{kind}:{task.goal_uuid}"
@@ -93,10 +101,22 @@ class SQLiteStore:
             "SELECT * FROM outbox_events WHERE sequence=?", (row["sequence"],)
         ).fetchone())
 
-    def finish(self, command_id, attempt, error, retry_at):
+    def finish(self, command_id, attempt, error, retry_at, held_for_review=False):
+        state = "HELD_FOR_REVIEW" if held_for_review else ("SENT" if error is None else "RETRY")
         cursor = self.connection.execute(
             "UPDATE outbox_events SET state=?,last_error=?,next_attempt_at=? "
             "WHERE command_id=? AND attempts=? AND state='SENDING'",
-            ("SENT" if error is None else "RETRY", error, retry_at, command_id, attempt),
+            (state, error, retry_at, command_id, attempt),
         )
         return cursor.rowcount == 1
+
+    def put_review_hold(self, task_id, robot_id, assignment_epoch, goal_uuid, reason, held_at):
+        self.connection.execute(
+            "INSERT INTO task_review_holds VALUES (?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET "
+            "robot_id=excluded.robot_id,assignment_epoch=excluded.assignment_epoch,goal_uuid=excluded.goal_uuid,"
+            "reason=excluded.reason,held_at=excluded.held_at",
+            (task_id, robot_id, assignment_epoch, goal_uuid, reason, held_at),
+        )
+
+    def clear_review_hold(self, task_id):
+        return self.connection.execute("DELETE FROM task_review_holds WHERE task_id=?", (task_id,)).rowcount > 0

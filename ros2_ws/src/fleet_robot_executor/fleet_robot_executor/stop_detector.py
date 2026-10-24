@@ -5,6 +5,7 @@ fresh odometry readings before confirming preemption or safe recovery.
 """
 
 from typing import Tuple
+import math
 
 from .constants import (
     DEFAULT_ANGULAR_STOP_THRESHOLD_RAD_S,
@@ -36,11 +37,15 @@ class StopDetector:
         Returns:
             Tuple[bool, str]: (is_stopped, failure_reason)
         """
+        if not all(math.isfinite(v) for v in (current_sim_time, odometry.timestamp_sec,
+                odometry.linear_velocity, odometry.angular_velocity)):
+            return False, "NONFINITE_ODOMETRY"
+
         # Protect against stale odometry
         age = current_sim_time - odometry.timestamp_sec
         if age > freshness_sec:
             return False, f"ODOMETRY_STALE: age {age:.3f}s exceeds freshness threshold {freshness_sec:.3f}s"
-        if age < -0.05:
+        if age < 0:
             return False, f"ODOMETRY_IN_FUTURE: odometry timestamp {odometry.timestamp_sec:.3f}s > current sim time {current_sim_time:.3f}s"
 
         # Check linear velocity threshold

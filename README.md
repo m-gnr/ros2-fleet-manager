@@ -14,7 +14,7 @@ flowchart LR
 
 `simulation` robot başına düğümleri, `backend` görev ve kaynak yönetimini, `frontend` kullanıcı arayüzünü barındıracaktır. Taşıma akışı: Fleet Manager → ExecuteTask → Robot Executor → Nav2. Ayrıntı ve kaynak önceliği [dokümantasyon haritasındadır](docs/README.md).
 
-24 Ekim 2026 depo kontrolünde C1 (konfigürasyon altyapısı) ve C2 (Robot Executor: saf Python durum makinesi, ROS 2 Humble düğümü ve tek robotlu canlı Gazebo + Nav2 simülasyon doğrulaması) tamamlanıp doğrulanmıştır. Fleet Manager C3.1 domain çekirdeği ve C3.2 SQLite Outbox/tek consumer katmanı saf Python testleriyle doğrulanmıştır. Fleet Manager ROS 2 adaptörleri, Battery Simulator (C4), FastAPI ve React uygulamaları (C5) henüz geliştirilmemiştir. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
+24 Ekim 2026 depo kontrolünde C1 (konfigürasyon altyapısı) ve C2 (Robot Executor: saf Python durum makinesi, ROS 2 Humble düğümü ve tek robotlu canlı Gazebo + Nav2 simülasyon doğrulaması) tamamlanıp doğrulanmıştır. Fleet Manager C3.1 domain çekirdeği, C3.2 SQLite Outbox/tek consumer katmanı ve C3.3.1 Robot Executor güvenlik sözleşmeleri (sıra/oturum, duplicate koruması, terminal iptal) testlerle doğrulanmıştır. Fleet Manager ROS 2 adaptörleri, Battery Simulator (C4), FastAPI ve React uygulamaları (C5) henüz geliştirilmemiştir. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
 
 ## Gereksinimler
 
@@ -94,6 +94,8 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [C2.3 Doğrulama Raporu](docs/validation/c2/c2-3-validation-2026-10-24.md)
 - [C3 Fleet Manager Kararları](docs/c3-fleet-manager-decisions-2026-10-24.md)
 - [C3.1 Doğrulama Raporu](docs/validation/c3/c3-1-validation-2026-10-24.md)
+- [C3.2 Doğrulama Raporu](docs/validation/c3/c3-2-validation-2026-10-24.md)
+- [C3.3.1 Doğrulama Raporu](docs/validation/c3/c3-3-1-validation-2026-10-24.md)
 - [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
 - [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
 - [Doğrulama kayıtları](docs/validation/README.md)
@@ -107,6 +109,7 @@ Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayl
 - [x] **C2.3 — Canlı Simülasyon Doğrulaması:** Gazebo Fortress + Nav2 + Robot Executor tek robotlu entegrasyonu, 7 senaryo ve Option A hata kurtarma (**DOĞRULANDI**)
 - [x] **C3.1 — Fleet Manager Çekirdeği:** Saf Python domain modelleri, FIFO/öncelik kuyruğu, Wh enerji uygunluğu, güvenli preemption, T01–T09 senaryoları (**DOĞRULANDI**)
 - [x] **C3.2 — SQLite Outbox ve Tek Consumer:** Atomik kayıt, olay süzme ve gönderim tekrarları (**DOĞRULANDI**, saf Python/SQLite kapsamı). [Sözleşme ve sınırlar](docs/c3-2-sqlite-outbox.md).
+- [x] **C3.3.1 — Robot Executor Güvenliği:** `status_seq`, `publisher_session_id`, duplicate koruması, Nav2 terminal iptali ve duruş teyidi (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-1-validation-2026-10-24.md).
 - [ ] **Fleet Manager ROS 2 entegrasyonu:** Action/topic adaptörleri ve kaynak sıra numarası eşlemesi (Planlanan).
 - [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
 - [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)

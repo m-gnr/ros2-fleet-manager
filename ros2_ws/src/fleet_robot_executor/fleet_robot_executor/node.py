@@ -9,6 +9,7 @@ Provides the logistics adapter layer between Fleet Manager and Nav2:
 - Active zero-velocity braking and stop verification for safe preemption
 """
 
+import copy
 import math
 import threading
 import time
@@ -21,6 +22,8 @@ from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
+from rclpy.parameter import Parameter
+from rclpy.serialization import serialize_message
 
 from action_msgs.msg import GoalStatus
 from builtin_interfaces.msg import Time as RosTime
@@ -53,6 +56,7 @@ from .models import (
     TaskGoal,
 )
 from .state_machine import RobotExecutorStateMachine
+from .safety import ExecutorSafety
 
 
 def quaternion_to_yaw(x: float, y: float, z: float, w: float) -> float:
@@ -71,8 +75,17 @@ def yaw_to_quaternion(yaw: float) -> Tuple[float, float, float, float]:
 class RobotExecutorNode(Node):
     """ROS 2 node wrapping the pure Python RobotExecutorStateMachine."""
 
-    def __init__(self, node_name: str = "robot_executor") -> None:
-        super().__init__(node_name)
+    def __init__(self, node_name: str = "robot_executor", *, parameter_overrides=None,
+                 _test_reset_verified: bool = False) -> None:
+        super().__init__(node_name, parameter_overrides=parameter_overrides)
+        self.declare_parameter("duplicate_record_capacity", Parameter.Type.INTEGER)
+        self.safety = ExecutorSafety(self.get_parameter("duplicate_record_capacity").value)
+        if _test_reset_verified:
+            # In-process test seam only; no ROS parameter/service can open admission.
+            self.safety.blocked = False
+            self.safety.reason = ""
+        self._admission_pending = False
+        self._stopping = threading.Event()
 
         # ---------------------------------------------------------------------
         # Parameters Declaration
@@ -268,6 +281,10 @@ class RobotExecutorNode(Node):
 
         with self._lock:
             can_accept, reason = self.state_machine.can_accept_goal(candidate_goal)
+            can_accept = (can_accept and not self._admission_pending
+                          and self.safety.available(goal_request.task_id, goal_request.assignment_epoch))
+            if can_accept:
+                self._admission_pending = True
 
         if not can_accept:
             self.get_logger().warn(
@@ -285,7 +302,8 @@ class RobotExecutorNode(Node):
         goal_uuid = self._uuid_to_str(goal_handle.goal_id.uuid)
 
         with self._lock:
-            can_cancel, reason = self.state_machine.can_cancel_goal(goal_uuid)
+            can_cancel, reason = self.state_machine.request_cancel(
+                goal_uuid, self.get_clock().now().nanoseconds / 1e9)
 
         if not can_cancel:
             self.get_logger().warn(
@@ -296,7 +314,42 @@ class RobotExecutorNode(Node):
         self.get_logger().info(f"Accepted cancel request for goal {goal_uuid}. Initiating safe preemption.")
         return CancelResponse.ACCEPT
 
+    def _hold_uncertain(self, reason):
+        with self._lock:
+            self.safety.block(reason)
+        self.get_logger().error(reason)
+        # No unapproved timeout -> FAILED/ERROR transition. Ownership stays held.
+        while self.context.ok() and not self._stopping.wait(0.05):
+            pass
+        raise RuntimeError("Executor stopped with unresolved ownership")
+
     def _execute_task_callback(self, goal_handle: ServerGoalHandle) -> ExecuteTask.Result:
+        req = goal_handle.request
+        identity = (req.task_id, req.assignment_epoch, self._uuid_to_str(goal_handle.goal_id.uuid))
+        payload = serialize_message(req)
+        with self._lock:
+            admitted = self.safety.admit(identity, payload)
+        if not admitted:
+            return self._hold_uncertain("Accepted goal conflicts with assignment evidence")
+        try:
+            result = self._execute_task_body(goal_handle)
+            with self._lock:
+                valid = self.safety.finish(identity, payload, result)
+                if valid:
+                    self._admission_pending = False
+            if not valid:
+                return self._hold_uncertain("Terminal result does not match assignment")
+            if result.status == TaskResultStatus.STATUS_SUCCEEDED:
+                goal_handle.succeed()
+            elif result.status == TaskResultStatus.STATUS_PREEMPTED:
+                goal_handle.canceled()
+            else:
+                goal_handle.abort()
+            return result
+        except Exception as exc:
+            return self._hold_uncertain(f"Execution evidence unavailable: {exc}")
+
+    def _execute_task_body(self, goal_handle: ServerGoalHandle) -> ExecuteTask.Result:
         """Execute full logistics lifecycle: Pickup -> Load -> Dropoff -> Unload."""
         goal_uuid = self._uuid_to_str(goal_handle.goal_id.uuid)
         req = goal_handle.request
@@ -315,11 +368,8 @@ class RobotExecutorNode(Node):
         with self._lock:
             if not self.state_machine.accept_goal(task_goal):
                 self.get_logger().error(f"Failed to transition state machine into ACCEPTED for {goal_uuid}")
-                goal_handle.abort()
-                res = ExecuteTask.Result()
-                res.status = TaskResultStatus.STATUS_FAILED
-                res.error_reason = ErrorReason.REJECTED_ROBOT_NOT_IDLE
-                return res
+                self.safety.block("State machine rejected an accepted assignment")
+                raise RuntimeError("State machine admission mismatch")
 
         self.get_logger().info(
             f"Task {req.task_id} execution started (phase=MOVING_TO_PICKUP, UUID={goal_uuid})"
@@ -341,7 +391,8 @@ class RobotExecutorNode(Node):
         # Phase 2: Cargo Loading (Non-cancelable critical section)
         # ---------------------------------------------------------------------
         with self._lock:
-            self.state_machine.start_loading(goal_uuid)
+            if not self.state_machine.start_loading(goal_uuid):
+                raise RuntimeError("Pickup transition mismatch")
         self.get_logger().info(
             f"Robot {self.robot_id} arrived at pickup. Loading cargo ({self.executor_config.loading_duration_sec}s)..."
         )
@@ -402,10 +453,9 @@ class RobotExecutorNode(Node):
 
         result = ExecuteTask.Result()
         result.status = TaskResultStatus.STATUS_SUCCEEDED
-        result.completed_epoch = task_res.completed_epoch if task_res else req.assignment_epoch
+        result.completed_epoch = task_res.completed_epoch
         result.completion_stamp = self.get_clock().now().to_msg()
         result.error_reason = ""
-        goal_handle.succeed()
         return result
 
     # =========================================================================
@@ -422,149 +472,97 @@ class RobotExecutorNode(Node):
         """Run Nav2 navigation, publish feedback, and handle preemption requests."""
         goal_uuid = self._uuid_to_str(goal_handle.goal_id.uuid)
 
-        # Check Nav2 action server readiness
-        if not self._nav2_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().error(f"Nav2 action server '{self.nav2_action_name}' not available!")
-            now_sim = self.get_clock().now().nanoseconds / 1e9
-            with self._lock:
-                self.state_machine.report_task_error(goal_uuid, ErrorReason.NAV2_FAILED, now_sim)
-            goal_handle.abort()
-            res = ExecuteTask.Result()
-            res.status = TaskResultStatus.STATUS_FAILED
-            res.error_reason = ErrorReason.NAV2_FAILED
-            res.completion_stamp = self.get_clock().now().to_msg()
-            return False, res
-
+        # Readiness is not terminal task failure. Wait without inventing a timeout policy.
+        while not self._nav2_client.wait_for_server(timeout_sec=0.1):
+            if self._stopping.is_set():
+                raise RuntimeError("Stopped while awaiting Nav2")
         nav2_goal = NavigateToPose.Goal()
-        nav2_goal.pose = target_pose
-        # Always use current sim time so Nav2 transform lookup and costmaps use latest time
+        nav2_goal.pose = copy.deepcopy(target_pose)
         nav2_goal.pose.header.stamp = self.get_clock().now().to_msg()
-
         send_future = self._nav2_client.send_goal_async(nav2_goal)
-        t_start = time.time()
-        while not send_future.done() and (time.time() - t_start < 5.0):
-            time.sleep(0.02)
-
+        while not send_future.done():
+            if self._stopping.wait(0.02):
+                raise RuntimeError("Stopped with unresolved Nav2 delivery")
         nav2_goal_handle = send_future.result()
-        if not nav2_goal_handle or not nav2_goal_handle.accepted:
-            self.get_logger().error(f"Nav2 rejected navigation goal for {goal_uuid}")
-            now_sim = self.get_clock().now().nanoseconds / 1e9
-            with self._lock:
-                self.state_machine.report_task_error(goal_uuid, ErrorReason.NAV2_ABORTED, now_sim)
-            goal_handle.abort()
-            res = ExecuteTask.Result()
-            res.status = TaskResultStatus.STATUS_FAILED
-            res.error_reason = ErrorReason.NAV2_ABORTED
-            res.completion_stamp = self.get_clock().now().to_msg()
-            return False, res
+        if nav2_goal_handle is None:
+            return self._hold_uncertain("Nav2 goal acceptance unknown")
+        if not nav2_goal_handle.accepted:
+            return False, self._navigation_failed(goal_uuid)
 
         self._active_nav2_goal_handle = nav2_goal_handle
         result_future = nav2_goal_handle.get_result_async()
-
-        # Navigation loop
         while not result_future.done():
-            # Check preemption request
-            if goal_handle.is_cancel_requested:
-                terminal_res = self._execute_safe_cancel(
-                    goal_handle=goal_handle,
-                    goal_uuid=goal_uuid,
-                    nav2_goal_handle=nav2_goal_handle,
-                )
+            with self._lock:
+                cancelling = self.state_machine.is_cancelling
+            if cancelling:
+                terminal = self._execute_safe_cancel(goal_handle, goal_uuid, nav2_goal_handle, result_future)
                 self._active_nav2_goal_handle = None
-                return False, terminal_res
-
-            # Periodic feedback
-            dist = self._calculate_distance_to(target_model)
-            self._publish_feedback(goal_handle, phase, dist)
-            time.sleep(0.05)
+                return (True, None) if terminal is None else (False, terminal)
+            self._publish_feedback(goal_handle, phase, self._calculate_distance_to(target_model))
+            if self._stopping.wait(0.05):
+                raise RuntimeError("Stopped with active Nav2 goal")
 
         self._active_nav2_goal_handle = None
         nav2_res = result_future.result()
-        if nav2_res.status != GoalStatus.STATUS_SUCCEEDED:
-            self.get_logger().error(
-                f"Nav2 navigation failed with status {nav2_res.status} for {goal_uuid}"
-            )
-            now_sim = self.get_clock().now().nanoseconds / 1e9
+        with self._lock:
+            cancelling = self.state_machine.is_cancelling
+        if cancelling:
+            terminal = self._execute_safe_cancel(goal_handle, goal_uuid, nav2_goal_handle, result_future)
+            return (True, None) if terminal is None else (False, terminal)
+        if nav2_res.status == GoalStatus.STATUS_SUCCEEDED:
+            return True, None
+        if nav2_res.status == GoalStatus.STATUS_ABORTED:
+            return False, self._navigation_failed(goal_uuid)
+        return self._hold_uncertain("Unexpected Nav2 terminal status")
+
+    def _navigation_failed(self, goal_uuid):
+        with self._lock:
+            terminal = self.state_machine.report_task_error(
+                goal_uuid, ErrorReason.NAV2_ABORTED, self.get_clock().now().nanoseconds / 1e9)
+        if terminal is None:
+            return self._hold_uncertain("Nav2 failure identity mismatch")
+        return self._terminal_message(terminal)
+
+    def _terminal_message(self, terminal):
+        result = ExecuteTask.Result()
+        result.status = int(terminal.status)
+        result.completed_epoch = terminal.completed_epoch
+        result.completion_stamp = self.get_clock().now().to_msg()
+        result.error_reason = terminal.error_reason
+        return result
+
+    def _execute_safe_cancel(self, goal_handle, goal_uuid, nav2_goal_handle, result_future):
+        # The result future belongs to this exact Nav2 goal handle. The cancel
+        # service response, including ERROR_NONE, cannot establish termination.
+        if not result_future.done():
+            nav2_goal_handle.cancel_goal_async()
+        while not result_future.done():
+            self._cmd_vel_pub.publish(Twist())
+            if self._stopping.wait(0.02):
+                raise RuntimeError("Stopped while awaiting terminal Nav2 cancellation")
+        terminal = result_future.result()
+        if terminal.status == GoalStatus.STATUS_SUCCEEDED:
             with self._lock:
-                self.state_machine.report_task_error(goal_uuid, ErrorReason.NAV2_ABORTED, now_sim)
-            goal_handle.abort()
-            res = ExecuteTask.Result()
-            res.status = TaskResultStatus.STATUS_FAILED
-            res.error_reason = ErrorReason.NAV2_ABORTED
-            res.completion_stamp = self.get_clock().now().to_msg()
-            return False, res
-
-        return True, None
-
-    def _execute_safe_cancel(
-        self,
-        goal_handle: ServerGoalHandle,
-        goal_uuid: str,
-        nav2_goal_handle,
-    ) -> ExecuteTask.Result:
-        """Handle 3-criteria safe preemption with Nav2 abort, active brake, and odom stop check."""
-        now_sim = self.get_clock().now().nanoseconds / 1e9
+                self.state_machine.is_cancelling = False
+                self.state_machine.cancel_requested_at = None
+                self.state_machine.nav2_cancel_confirmed = False
+            # The pickup step succeeded naturally; continue its logistics phases.
+            return None
+        if terminal.status == GoalStatus.STATUS_ABORTED:
+            return self._navigation_failed(goal_uuid)
+        if terminal.status != GoalStatus.STATUS_CANCELED:
+            return self._hold_uncertain("Ambiguous terminal cancel outcome")
+        now = self.get_clock().now().nanoseconds / 1e9
         with self._lock:
-            self.state_machine.request_cancel(goal_uuid, now_sim)
-
-        self.get_logger().info(f"Cancelling Nav2 trajectory for task {goal_uuid}...")
-        nav2_cancel_ok = False
-        if nav2_goal_handle is not None:
-            cancel_future = nav2_goal_handle.cancel_goal_async()
-            t0 = time.time()
-            while not cancel_future.done() and (time.time() - t0 < 3.0):
-                time.sleep(0.02)
-            if cancel_future.done():
-                cancel_resp = cancel_future.result()
-                nav2_cancel_ok = getattr(cancel_resp, "return_code", 0) == 0
-                self.get_logger().info(f"Nav2 cancel response return_code: {getattr(cancel_resp, 'return_code', None)}, ok={nav2_cancel_ok}")
-            else:
-                self.get_logger().warn("Nav2 cancel request timed out!")
-
-        with self._lock:
-            terminal_task_res = self.state_machine.notify_nav2_cancel_result(
-                goal_uuid, nav2_cancel_ok, now_sim
-            )
-
-        # Active zero-velocity braking
-        stop_cmd = Twist()
-        try:
-            self._cmd_vel_pub.publish(stop_cmd)
-        except Exception:
-            pass
-
-        # Loop until stop confirmed or timeout
-        if terminal_task_res is None:
-            while True:
-                try:
-                    self._cmd_vel_pub.publish(stop_cmd)
-                except Exception:
-                    pass
-                curr_sim = self.get_clock().now().nanoseconds / 1e9
-                with self._lock:
-                    terminal_task_res = self.state_machine.check_cancel_timeout(curr_sim)
-                if terminal_task_res is not None:
-                    break
-                time.sleep(0.05)
-
-        res = ExecuteTask.Result()
-        res.status = terminal_task_res.status
-        res.completed_epoch = terminal_task_res.completed_epoch
-        res.completion_stamp = self.get_clock().now().to_msg()
-        res.error_reason = terminal_task_res.error_reason
-
-        if terminal_task_res.status == TaskResultStatus.STATUS_PREEMPTED:
-            self.get_logger().info(
-                f"Task {goal_uuid} safe preemption confirmed! Robot halted and returned to IDLE."
-            )
-            goal_handle.canceled()
-        else:
-            self.get_logger().error(
-                f"Preemption stop timeout for {goal_uuid}! Robot transitioned to STATE_ERROR."
-            )
-            goal_handle.abort()
-
-        return res
+            task_result = self.state_machine.notify_nav2_cancel_result(goal_uuid, True, now)
+        while task_result is None:
+            self._cmd_vel_pub.publish(Twist())
+            if self._stopping.wait(0.05):
+                raise RuntimeError("Stopped without fresh stationary odometry")
+            with self._lock:
+                task_result = self.state_machine.check_cancel_timeout(
+                    self.get_clock().now().nanoseconds / 1e9)
+        return self._terminal_message(task_result)
 
     # =========================================================================
     # Telemetry, Odometry & Periodic Callbacks
@@ -616,8 +614,6 @@ class RobotExecutorNode(Node):
     def _odom_callback(self, msg: Odometry) -> None:
         """Receive odometry messages, compute velocity and heading, and update state machine."""
         stamp_sec = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-        if stamp_sec <= 0:
-            stamp_sec = self.get_clock().now().nanoseconds / 1e9
 
         px = msg.pose.pose.position.x
         py = msg.pose.pose.position.y
@@ -665,11 +661,16 @@ class RobotExecutorNode(Node):
         now_sim = now_stamp.nanoseconds / 1e9
 
         with self._lock:
+            sequence = self.safety.next_status()
+            if sequence is None:
+                return
             snap = self.state_machine.get_status_snapshot(now_sim)
 
         msg = RobotStatus()
         msg.header.stamp = now_stamp.to_msg()
         msg.header.frame_id = snap.pose.frame_id or "map"
+        msg.status_seq = sequence
+        msg.publisher_session_id.uuid = list(self.safety.session_id.bytes)
         msg.robot_id = snap.robot_id
         msg.current_epoch = snap.current_epoch
         msg.state = snap.state
@@ -701,6 +702,11 @@ class RobotExecutorNode(Node):
         """Execute conditional error clearing preserving assignment_epoch (Option A)."""
         now_sim = self.get_clock().now().nanoseconds / 1e9
         with self._lock:
+            if self.safety.blocked:
+                response.accepted = False
+                response.reason = self.safety.reason
+                response.resulting_state = int(self.state_machine.state)
+                return response
             odom = self.state_machine.last_odometry
             res = self.state_machine.clear_robot_error(
                 robot_id=request.robot_id,
@@ -723,6 +729,11 @@ class RobotExecutorNode(Node):
             )
 
         return response
+
+
+    def destroy_node(self):
+        self._stopping.set()
+        return super().destroy_node()
 
 
 def main(args=None):

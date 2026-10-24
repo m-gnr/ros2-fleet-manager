@@ -6,7 +6,7 @@ Tests cover:
 - UUID and task matching (preventing stale results)
 - Cancel eligibility (HIGH task locked, pre-pickup restriction, load restriction)
 - Safe cancellation multi-criteria stop confirmation (Nav2 terminal cancel + fresh zero-velocity odom)
-- Cancel timeout fail-safe behavior (transition to STATE_ERROR)
+- Cancel uncertainty retains ownership without selecting an error policy
 - ClearRobotError validation, refusal if loaded, and epoch preservation (Option A)
 - Telemetry snapshots and feedback generation
 """
@@ -445,7 +445,7 @@ class TestSafeCancellationLifecycle:
         assert result.status == TaskResultStatus.STATUS_PREEMPTED
         assert sm.state == RobotState.STATE_IDLE
 
-    def test_nav2_cancel_failure_triggers_fail_safe_error(self):
+    def test_missing_terminal_cancel_preserves_ownership(self):
         sm = RobotExecutorStateMachine(robot_id="robot_1", initial_epoch=1)
         goal = create_goal(priority=TaskPriority.PRIORITY_MEDIUM, goal_uuid="task-c3")
         sm.accept_goal(goal)
@@ -454,12 +454,12 @@ class TestSafeCancellationLifecycle:
         # Nav2 fails to cancel
         result = sm.notify_nav2_cancel_result("task-c3", success=False, current_sim_time=1.5)
 
-        assert result is not None
-        assert result.status == TaskResultStatus.STATUS_FAILED
-        assert result.error_reason == ErrorReason.NAV2_CANCEL_FAILED
-        assert sm.state == RobotState.STATE_ERROR
+        assert result is None
+        assert sm.is_cancelling
+        assert sm.active_goal_uuid == "task-c3"
+        assert sm.state == RobotState.STATE_EXECUTING_TASK
 
-    def test_cancel_stop_timeout_triggers_fail_safe_error(self):
+    def test_cancel_stop_timeout_preserves_ownership(self):
         config = ExecutorConfig(cancel_stop_timeout_sec=2.0)
         sm = RobotExecutorStateMachine(robot_id="robot_1", config=config, initial_epoch=1)
         goal = create_goal(priority=TaskPriority.PRIORITY_MEDIUM, goal_uuid="task-c4")
@@ -472,11 +472,11 @@ class TestSafeCancellationLifecycle:
         moving_odom = OdometryReading(timestamp_sec=12.5, linear_velocity=0.15, angular_velocity=0.0)
         result = sm.update_odometry_and_check_cancel(moving_odom, current_sim_time=12.5)
 
-        # Must NOT be preempted, must be fail-safe ERROR!
-        assert result is not None
-        assert result.status == TaskResultStatus.STATUS_FAILED
-        assert result.error_reason == ErrorReason.CANCEL_STOP_TIMEOUT
-        assert sm.state == RobotState.STATE_ERROR
+        # No approved timeout-to-error policy; ownership must remain held.
+        assert result is None
+        assert sm.is_cancelling
+        assert sm.active_goal_uuid == "task-c4"
+        assert sm.state == RobotState.STATE_EXECUTING_TASK
 
 
 # =============================================================================

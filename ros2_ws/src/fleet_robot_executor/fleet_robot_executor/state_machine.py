@@ -264,20 +264,16 @@ class RobotExecutorStateMachine:
         success: bool,
         current_sim_time: float,
     ) -> Optional[TaskResult]:
-        """Receive Nav2 cancel_goal response.
+        """Receive evidence of the matching Nav2 terminal cancellation.
 
-        If Nav2 cancel fails, triggers fail-safe ERROR.
+        Missing evidence retains ownership without selecting an error policy.
         If Nav2 cancel succeeds, checks if odometry already confirmed physical stop.
         """
         if goal_uuid != self.active_goal_uuid or not self.is_cancelling:
             return None
 
         if not success:
-            # Nav2 failed to abort trajectory; fail-safe to ERROR
-            return self._transition_to_error(
-                reason=ErrorReason.NAV2_CANCEL_FAILED,
-                current_sim_time=current_sim_time,
-            )
+            return None
 
         self.nav2_cancel_confirmed = True
         return self._try_complete_cancel(current_sim_time)
@@ -309,22 +305,12 @@ class RobotExecutorStateMachine:
     ) -> Optional[TaskResult]:
         """Verify the 3 simultaneous criteria for safe preemption:
 
-        1. cancel_stop_timeout_sec has not expired (otherwise fail-safe ERROR)
+        1. Ownership remains held while terminal evidence is absent
         2. Nav2 terminal cancellation confirmed
         3. Odometry is fresh and zero-velocity thresholds are met
         """
         if not self.is_cancelling:
             return None
-
-        # 1. Timeout verification
-        if self.cancel_requested_at is not None:
-            elapsed = current_sim_time - self.cancel_requested_at
-            if elapsed > self.config.cancel_stop_timeout_sec:
-                # Robot failed to stop within timeout: Fail-Safe ERROR
-                return self._transition_to_error(
-                    reason=ErrorReason.CANCEL_STOP_TIMEOUT,
-                    current_sim_time=current_sim_time,
-                )
 
         # 2. Nav2 terminal cancellation check
         if not self.nav2_cancel_confirmed:

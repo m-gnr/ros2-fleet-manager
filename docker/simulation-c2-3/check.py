@@ -345,9 +345,10 @@ def simulation(config):
             "use_composition:=True",
         ],
         [
-            "ros2", "run", "fleet_robot_executor", "robot_executor_node",
+            "python3", "/opt/simulation-c2-3/executor_test_entry.py",
             "--ros-args",
             "-p", "fleet_config_path:=/config/fleet.yaml",
+            "-p", "duplicate_record_capacity:=" + str(config["executor_duplicate_record_capacity"]),
             "-p", "robot_id:=robot_1",
             "-p", "use_sim_time:=true",
             "-p", "loading_duration_sec:=1.5",

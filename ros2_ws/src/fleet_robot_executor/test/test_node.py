@@ -6,6 +6,7 @@ import pytest
 
 try:
     import rclpy
+    from rclpy.parameter import Parameter
     from rclpy.action import CancelResponse, GoalResponse
     from geometry_msgs.msg import Point, PoseStamped as RosPoseStamped, Quaternion
     from nav_msgs.msg import Odometry
@@ -38,7 +39,7 @@ def ros_context():
 @pytest.fixture
 def executor_node(ros_context):
     """Instantiate RobotExecutorNode with test robot parameters."""
-    node = RobotExecutorNode(node_name="test_executor_node")
+    node = RobotExecutorNode(node_name="test_executor_node", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
     node.robot_id = "robot_1"
     node.robot_namespace = "/robot_1"
     node.nav2_action_name = "/robot_1/navigate_to_pose"

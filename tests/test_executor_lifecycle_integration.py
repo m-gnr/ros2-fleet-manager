@@ -16,6 +16,7 @@ import pytest
 
 try:
     import rclpy
+    from rclpy.parameter import Parameter
     from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
     from rclpy.callback_groups import ReentrantCallbackGroup
     from rclpy.executors import MultiThreadedExecutor
@@ -102,7 +103,7 @@ def test_complete_task_lifecycle_happy_path(ros_env):
     mock_nav2_node = rclpy.create_node("mock_nav2_node")
     mock_nav2 = MockNav2Server(mock_nav2_node, "/robot_1/navigate_to_pose")
 
-    executor_node = RobotExecutorNode(node_name="test_robot_1_executor")
+    executor_node = RobotExecutorNode(node_name="test_robot_1_executor", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
     executor_node.robot_id = "robot_1"
     executor_node.robot_namespace = "/robot_1"
     executor_node.nav2_action_name = "/robot_1/navigate_to_pose"
@@ -201,7 +202,7 @@ def test_safe_preemption_lifecycle(ros_env):
     mock_nav2 = MockNav2Server(mock_nav2_node, "/robot_1/navigate_to_pose")
     mock_nav2.navigation_delay = 2.0  # Slow navigation to allow cancel
 
-    executor_node = RobotExecutorNode(node_name="test_robot_1_preempt")
+    executor_node = RobotExecutorNode(node_name="test_robot_1_preempt", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
     executor_node.robot_id = "robot_1"
     executor_node.robot_namespace = "/robot_1"
     executor_node.nav2_action_name = "/robot_1/navigate_to_pose"
@@ -304,7 +305,7 @@ def test_nav2_failure_and_clear_error_recovery(ros_env):
     mock_nav2.should_succeed = False  # Simulate Nav2 failure
     mock_nav2.navigation_delay = 0.1
 
-    executor_node = RobotExecutorNode(node_name="test_robot_1_fail")
+    executor_node = RobotExecutorNode(node_name="test_robot_1_fail", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
     executor_node.robot_id = "robot_1"
     executor_node.robot_namespace = "/robot_1"
     executor_node.nav2_action_name = "/robot_1/navigate_to_pose"

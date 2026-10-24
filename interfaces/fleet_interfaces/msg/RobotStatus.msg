@@ -1,4 +1,6 @@
 std_msgs/Header header
+uint64 status_seq
+unique_identifier_msgs/UUID publisher_session_id
 string robot_id
 uint64 current_epoch
 uint8 state

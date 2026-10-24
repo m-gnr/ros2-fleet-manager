@@ -7,6 +7,7 @@ import pytest
 # Skip if ROS 2 runtime dependencies are not installed in the current environment
 try:
     import rclpy
+    from rclpy.parameter import Parameter
     from rclpy.action import CancelResponse, GoalResponse
     from action_msgs.msg import GoalInfo
     from geometry_msgs.msg import PoseStamped as RosPoseStamped, Point, Quaternion
@@ -41,7 +42,7 @@ def ros_context():
 def executor_node(ros_context):
     """Instantiate RobotExecutorNode with test fleet config."""
     fleet_path = str(Path("config/fleet.yaml").resolve())
-    node = RobotExecutorNode(node_name="test_executor_node")
+    node = RobotExecutorNode(node_name="test_executor_node", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
     # Explicitly set test parameters
     node.robot_id = "robot_1"
     node.robot_namespace = "/robot_1"
@@ -215,5 +216,6 @@ def test_cancel_callback_preemption_rules(executor_node):
 
     # 4. Executing after loading has started -> REJECT
     with executor_node._lock:
-        executor_node.state_machine.start_loading(test_uuid_str)
+        assert not executor_node.state_machine.start_loading(test_uuid_str)
+        executor_node.state_machine.current_phase = TaskPhase.PHASE_LOADING
     assert executor_node._cancel_callback(mock_handle) == CancelResponse.REJECT

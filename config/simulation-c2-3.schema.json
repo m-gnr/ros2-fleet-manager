@@ -9,10 +9,12 @@
     "sensor",
     "room",
     "goals",
-    "check"
+    "check",
+    "executor_duplicate_record_capacity"
   ],
   "additionalProperties": false,
   "properties": {
+    "executor_duplicate_record_capacity": {"type": "integer", "minimum": 1, "description": "Yalnız test için kayıt adedi; ürün varsayılanı yoktur."},
     "robot": {
       "type": "object",
       "required": ["name", "namespace", "initial_pose", "odom_frame", "base_frame"],

@@ -1,0 +1,43 @@
+---
+title: "01 · Sistem ve Docker mimarisi · PARTIAL"
+---
+flowchart TB
+ subgraph UI["frontend • PLANNED"]
+ U["React + Konva • 2D panel"]:::ui
+ end
+ subgraph BACK["backend • PARTIAL"]
+ API["FastAPI / WebSocket • PLANNED"]:::ui
+ FM["Fleet Manager • tek consumer"]:::fm
+ DB[("SQLite + Outbox")]:::db
+ API <-->|"Olay ve komut"| FM
+ FM <-->|"Atomik kayıt"| DB
+ end
+ subgraph SIM["simulation • PARTIAL"]
+ CFG["fleet.yaml → robot başına namespace"]:::fm
+ EX["Robot Executor • fiziksel durum otoritesi"]:::executor
+ NAV["Nav2 / AMCL • robot başına"]:::nav
+ GZ["Gazebo headless / bridge / Map Server"]:::nav
+ BAT["Battery Simulator • PLANNED"]:::battery
+ CFG --> EX
+ CFG --> NAV
+ CFG --> BAT
+ EX -->|"NavigateToPose"| NAV
+ NAV <-->|"Odometri / sensör / hız"| GZ
+ GZ -->|"/clock ve odometri"| BAT
+ BAT -.->|"Hedef batarya yayını"| EX
+ end
+ U <-->|"HTTP / WebSocket"| API
+ FM -->|"DDS ExecuteTask / cancel / ClearRobotError"| EX
+ EX -->|"RobotStatus / feedback / result"| FM
+ FM <-->|"ComputePathToPose"| NAV
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

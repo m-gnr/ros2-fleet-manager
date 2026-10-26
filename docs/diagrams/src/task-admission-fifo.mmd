@@ -1,0 +1,32 @@
+---
+title: "02 · Görev kabulü ve atanabilir FIFO · IMPLEMENTED"
+---
+flowchart TD
+ A(["SUBMIT_TASK"]):::terminal --> B{"Kimlik yeni ve öncelik geçerli mi?"}:::decision
+ B -->|"Hayır"| X["Kabul hatası"]:::error
+ B -->|"Evet"| Q["Öncelik ve created_at ile kuyruğa ekle"]:::fm
+ Q --> T(["TICK"]):::terminal
+ T --> N["Sıradaki HIGH / MEDIUM / LOW görevi"]:::fm
+ N --> H{"İnceleme kilidi var mı?"}:::decision
+ H -->|"Evet"| SK["Bu tur atla; tarih ve öncelik aynı"]:::wait
+ H -->|"Hayır"| R{"Uygun boş / park dönüşü adayı?"}:::decision
+ R -->|"Var"| AS["Kuyruktan çıkar; epoch + UUID ile ata"]:::fm
+ R -->|"Yok"| P{"HIGH ve güvenli kesme adayı?"}:::decision
+ P -->|"Evet"| C["HIGH beklemeye; CANCEL_TASK üret"]:::fm
+ P -->|"Hayır"| SK
+ AS --> NEXT{"Taranacak görev kaldı mı?"}:::decision
+ C --> NEXT
+ SK --> NEXT
+ NEXT -->|"Evet"| N
+ NEXT -->|"Hayır"| END(["Yeni olay / TICK bekle"]):::terminal
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

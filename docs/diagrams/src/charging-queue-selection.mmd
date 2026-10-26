@@ -1,0 +1,25 @@
+---
+title: "11 · Şarj sırası ve istasyon seçimi · PLANNED"
+---
+flowchart TD
+ A(["Şarj ihtiyacı"]):::terminal --> Q["Şarj kuyruğu: düşük SoC → FIFO"]:::fm
+ Q --> FREE{"Uygun boş istasyon var mı?"}:::decision
+ FREE -->|"Hayır"| W["Park / güvenli bekleme<br/>Şarj talebi bekler"]:::wait
+ FREE -->|"Evet"| PICK["Sıra hakkı olan robot için<br/>uygun istasyon seç"]:::fm
+ PICK --> RES{"Tek sahipli rezervasyon başarılı mı?"}:::decision
+ RES -->|"Hayır"| W
+ RES -->|"Evet"| NAV["Executor üzerinden istasyona git<br/>Komut sözleşmesi henüz tamamlanmadı"]:::executor
+ NAV --> DOCK{"Konum + duruş + temas doğrulandı mı?"}:::decision
+ DOCK -->|"Hayır"| WAIT["Teyit bekle; enerji ekleme"]:::wait
+ DOCK -->|"Evet"| CH["OCCUPIED / şarj başlar"]:::battery
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

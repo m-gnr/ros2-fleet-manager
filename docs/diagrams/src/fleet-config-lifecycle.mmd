@@ -1,0 +1,27 @@
+---
+title: "15 · fleet.yaml yaşam döngüsü · PARTIAL"
+---
+flowchart TD
+ A(["fleet.yaml"]):::terminal --> Y["YAML: duplicate / anahtar kontrolü"]:::fm
+ Y --> J["JSON Schema → Pydantic semantik kontrol"]:::fm
+ J --> P["Harita image / Nav2 dosyaları ve use_sim_time"]:::fm
+ P --> OK{"Geçerli mi?"}:::decision
+ OK -->|"Hayır"| ERR["Açık hata ile dur"]:::error
+ OK -->|"Evet"| LOAD["Config'den robot / istasyon kayıtları"]:::fm
+ LOAD -.->|"PLANNED: web değişikliği"| DES["desired_revision / pending_revision"]:::ui
+ DES --> APPLY["POST /api/config/apply • PLANNED"]:::ui
+ APPLY --> SAFE{"Aktif görev yok ve yüklü robot yok mu?"}:::decision
+ SAFE -->|"Hayır"| WAIT["Apply engellenir"]:::wait
+ SAFE -->|"Evet"| RESTART["Kontrollü restart + hazır olma teyidi<br/>Operasyon ayrıntıları açık"]:::fm
+ RESTART --> RUN(["running_revision güncelle • PLANNED"]):::terminal
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

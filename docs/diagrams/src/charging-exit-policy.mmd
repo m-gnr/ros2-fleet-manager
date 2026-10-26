@@ -1,0 +1,27 @@
+---
+title: "12 · Şarjdan ayrılma ve yüzde 80 · PLANNED"
+---
+flowchart TD
+ A(["CHARGING"]):::terminal --> JOB{"Alınabilecek görev ve dinamik enerji yeterli mi?"}:::decision
+ JOB -->|"Evet"| DEPART["Görev için ayrılma<br/>%80 altı da olabilir"]:::fm
+ JOB -->|"Hayır"| SOC{"SoC ≥ %80 mi?"}:::decision
+ SOC -->|"Hayır"| STAY["Şarjda kal<br/>Yer vermek için zorla çıkarma yok"]:::battery
+ SOC -->|"Evet"| QUEUE{"Şarj bekleyen robot var mı?"}:::decision
+ QUEUE -->|"Hayır"| FULL["%100’e kadar kalabilir"]:::battery
+ QUEUE -->|"Evet"| EXIT["Park / bekleme için çıkış"]:::fm
+ DEPART --> REL["RELEASING • kaynak hâlâ sahipli"]:::fm
+ EXIT --> REL
+ REL --> P{"Fiziksel ayrılma doğrulandı mı?"}:::decision
+ P -->|"Hayır"| WAIT["FREE yapma; teyit bekle"]:::wait
+ P -->|"Evet"| FREE(["Kaynak FREE"]):::terminal
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

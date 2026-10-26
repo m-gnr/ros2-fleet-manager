@@ -1,0 +1,30 @@
+---
+title: "06 · RobotStatus sıra ve oturum yönetimi · PARTIAL"
+---
+flowchart TD
+ EX["Executor: oturum UUID; uint64 sıra 1’den başlar"]:::executor --> OV{"Sayaç taşar mı?"}:::decision
+ OV -->|"Evet"| EB["Executor kabulünü blokla"]:::error
+ OV -->|"Hayır"| CB["ROS callback → monotonik alım → consumer"]:::fm
+ CB --> S{"Oturum aynı / ilk oturum mu?"}:::decision
+ S -->|"Değişti veya zaten engelli"| BLOCK["SESSION_BLOCKED<br/>Atama ve kaynak bırakma kilidi"]:::error
+ BLOCK --> RESET["Operatör + kontrollü senaryo reset"]:::wait
+ S -->|"Evet"| SEQ{"Sıra önceki kabulden büyük mü?"}:::decision
+ SEQ -->|"Hayır"| ST["STALE: durumu değiştirme"]:::wait
+ SEQ -->|"Evet"| EP{"Epoch / aktif görev / alım zamanı uygun mu?"}:::decision
+ EP -->|"Hayır"| ST
+ EP -->|"Evet"| UPDATE["RobotStatus kopyasını güncelle<br/>Aktif sahipliği result gelene kadar koru"]:::fm
+ UPDATE --> FIRST{"İlk durumda IDLE + yüksüz + atamasız mı?"}:::decision
+ FIRST -->|"Hayır"| HOLD["İlk durum doğrulamasını bekle"]:::wait
+ FIRST -->|"Evet"| EL["Diğer uygunluk filtrelerine geç"]:::fm
+ EL --> TIME["2 sn kesinti: STALE<br/>5 sn aktif görev kesintisi: uyarı<br/>Otomatik FAILED / ERROR yok"]:::wait
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

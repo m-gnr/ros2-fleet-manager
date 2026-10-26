@@ -1,126 +1,107 @@
 # ROS 2 Fleet Manager
 
-ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini yönetmek ve web üzerinden izlemek için geliştirilen filo yönetim projesi.
+Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik, rota ve enerji uygunluğuna göre yöneten; web üzerinden izleme ve kontrol hedefleyen filo yönetim projesi.
 
-## Mimari özeti
+## Temel özellikler
 
-Üç servisli hedef **ONAYLANDI**; nihai uygulamanın uçtan uca çalışması **HENÜZ TEST EDİLMEDİ**.
+- **Mevcut:** Tek `fleet.yaml`, şema/Pydantic doğrulaması; robot başına Executor; HIGH/MEDIUM/LOW ve atanabilir FIFO; güvenli preemption; SQLite Outbox ve ROS 2 adaptörleri.
+- **Kısmi:** Enerji uygunluğu ve istasyon rezervasyonu kodu mevcut; fiziksel batarya, otomatik şarj/park orkestrasyonu tamamlanmadı.
+- **Planlanan:** Bağımsız Battery Simulator, FastAPI, WebSocket ve React + Konva 2D panel. Video akışı aktarılmayacak.
+
+## Mimari genel bakış
+
+Üç servisli hedef **ONAYLANDI**; nihai üç servis dağıtımı **HENÜZ TEST EDİLMEDİ**.
 
 ```mermaid
 flowchart LR
-    UI["frontend: React + Konva paneli"] <-->|"HTTP / WebSocket"| API["backend: Fleet Manager + FastAPI + SQLite"]
-    API <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2/AMCL + robot yürütücüleri + batarya simülatörleri"]
+    UI["frontend: React + Konva • planlanan"] <-->|"HTTP / WebSocket"| API["backend: Fleet Manager + SQLite<br/>FastAPI • planlanan"]
+    API <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator • planlanan"]
 ```
 
-`simulation` robot başına düğümleri, `backend` görev ve kaynak yönetimini, `frontend` kullanıcı arayüzünü barındıracaktır. Taşıma akışı: Fleet Manager → ExecuteTask → Robot Executor → Nav2. Ayrıntı ve kaynak önceliği [dokümantasyon haritasındadır](docs/README.md).
+`simulation`, robot başına bağımsız düğümleri barındırır. `backend`, görev/sahiplik kararlarını ve kalıcılığı yönetir. `frontend`, backend üzerinden telemetri ve görevleri gösterir; DDS ağına bağlanmaz.
 
-24 Ekim 2026 depo kontrolünde C1 (konfigürasyon altyapısı) ve C2 (Robot Executor: saf Python durum makinesi, ROS 2 Humble düğümü ve tek robotlu canlı Gazebo + Nav2 simülasyon doğrulaması) tamamlanıp doğrulanmıştır. Fleet Manager C3.1 domain çekirdeği, C3.2 SQLite Outbox/tek consumer katmanı, C3.3.1 Robot Executor güvenlik sözleşmeleri ve C3.3.2 Fleet Manager ROS 2 adaptör entegrasyonu (RobotStatus subscriber, ExecuteTask action client, Outbox göndericisi, ClearRobotError istemcisi, Nav2 rota önbelleklemesi, task_review_holds) testlerle doğrulanmıştır. Battery Simulator (C4), FastAPI ve React uygulamaları (C5) henüz geliştirilmemiştir. Testlerdeki `backend` servisi bir doğrulama istemcisidir.
+### Mimari ve algoritmalar
 
-## Gereksinimler
+[18 akışlık diyagram kataloğu](docs/diagrams/README.md), düzenlenebilir Mermaid ve SVG çıktılarıyla görev seçimi, iptal, epoch/session, Outbox, enerji, şarj/park ve panel akışlarını açıklar. Her akışın uygulama durumu ve kaynakları belirtilmiştir; [kod/karar farkları](docs/validation/organization/organization-validation-2026-10-26.md) ayrıca raporlanır.
 
-Docker ve Docker Compose gerekir. Kayıtlı deney ortamı linux/arm64, ROS 2 Humble ve Gazebo Fortress kullanır; headless yazılım render ayrıntıları ve sürümler [doğrulama kayıtlarındadır](docs/validation/README.md). Başka platformlarda çalışma doğrulanmadı.
+## Kullanılan teknolojiler
 
-## Hızlı başlangıç
+Mevcut altyapı: Python, Pydantic, JSON Schema, SQLite, ROS 2 Humble/rclpy, Cyclone DDS, Nav2/AMCL, Gazebo Fortress ve Docker Compose. Python bağımlılıkları [requirements-c1.txt](requirements-c1.txt), image/build tanımları [docker/](docker/) altında tutulur. FastAPI, React ve Konva C5 hedefidir.
 
-Henüz nihai uygulama Compose dosyası ve açılabilecek web paneli yoktur. Depo kökünde aşağıdaki komut yalnız DDS yapılandırmasını doğrular; container başlatmaz. 24 Ekim 2026 tarihinde çıkış kodu 0 ile kontrol edildi:
+Kayıtlı canlı deney ortamı Apple Silicon / linux-arm64 container'lardır. Diğer platformlar ayrıca doğrulama gerektirir. Headless yazılım render ve Nav2 image bağımlılıkları için [Compose kılavuzuna](docker/compose/README.md) bakın.
+
+## Klasör yapısı
+
+```text
+backend/fleet_manager/   Domain, tek consumer, SQLite ve ROS adaptörleri
+fleet_config/           Paylaşılan filo doğrulayıcı ve CLI
+frontend/               Planlanan arayüz; henüz uygulama yok, boş dizin Git'te taşınmaz
+ros2_ws/src/             Robot Executor ROS 2 paketi
+interfaces/             Ürün IDL ve ayrı DDS probe test arayüzü
+config/                 fleet.yaml, şema, harita ve test yapılandırmaları
+docker/compose/         Doğrulama Compose katmanları
+docker/                 Dockerfile ve container test araçları
+scripts/                Canlı test çalıştırıcıları
+tests/                  Host/ROS otomatik testleri
+docs/architecture/      Mimari kayıtlar ve kaynak dizini
+docs/decisions/         C2–C3.3.3 onaylı karar kayıtları
+docs/design/            Ayrıntılı tasarımlar ve Outbox sözleşmesi
+docs/diagrams/          Mermaid kaynakları, SVG ve kapsam kataloğu
+docs/validation/        Tarihli test raporları ve komut ekleri
+```
+
+PDF'ler, kişisel notlar ve tarihsel bağlantılar korunur. Ayrıntılı belge dizini [docs/README.md](docs/README.md) altındadır.
+
+## Kurulum ve çalıştırma
+
+Nihai uygulama Compose'u ve açılabilecek web paneli henüz yoktur. Depo kökünde `uv` ve Python ile aşağıdaki kontroller 26 Ekim 2026'da çalıştırıldı:
+
+```sh
+PYTHONPATH=. uv run --with-requirements requirements-c1.txt python -m fleet_config config/fleet.yaml
+PYTHONPATH=.:backend:ros2_ws/src/fleet_robot_executor uv run --with-requirements requirements-c1.txt pytest tests/ ros2_ws/src/fleet_robot_executor/test/ --import-mode=importlib -q
+```
+
+Docker/Compose kuruluysa yalnız yapılandırmayı kontrol eden, container başlatmayan komut:
 
 ```sh
 DDS_TEST_PAYLOAD=organization-audit docker compose -f docker/compose/docker-compose.dds.yml config --quiet
 ```
 
-Diğer test birleşimleri ve mevcut image bağımlılıkları için [Compose kılavuzuna](docker/compose/README.md) bakın. Canlı test komutları tarihsel kanıtlarda bulunur; bu organizasyon çalışmasında yeniden çalıştırılmadı.
+Canlı simülasyon için [katman sırası ve image önkoşullarını](docker/compose/README.md) izleyin. B2 ve sonraki katmanlarda `up --build` doğru Nav2 image'ını üretme garantisi vermez. Geçmiş canlı komutlar [doğrulama kayıtlarında](docs/validation/README.md) bulunur; bu düzenlemede yeniden koşulmadı.
 
-## Konfigürasyon
+Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belgesinde](docs/configuration-c1.md) açıklanır. 1/2/3 robot config doğrulaması canlı hot-add veya üç robot performans kanıtı değildir.
 
-[config/](config/) mevcut test JSON dosyalarını, şemalarını, Nav2 parametrelerini, haritayı ve C1 çıktısı olan tek filo tanım kaynağını içerir:
-- [config/fleet.yaml](config/fleet.yaml): Filo, harita, batarya modelleri, istasyonlar ve operasyon politikalarının tek tanım kaynağı.
-- [config/fleet.schema.json](config/fleet.schema.json): Draft 2020-12 uyumlu JSON şeması.
-- Doğrulayıcı paket: [fleet_config/](fleet_config/) (Pydantic veri sözleşmesi ve varlık kontrolü). Ayrıntılar [C1 dokümanında](docs/configuration-c1.md).
+## Görev yürütme akışı
 
-DDS ortam ayarları [dds.env](config/dds.env) ve [dds-action.env](config/dds-action.env) içindedir. Yeni robot ekleme yalnız YAML konfigürasyonu ile doğrulanmıştır; ancak 3+ robotun canlı simülasyon performansı henüz test edilmemiştir.
+1. Fleet Manager görevi öncelik/FIFO sırasına alır; rota ve Wh uygunluğuna göre en yakın uygun robotu seçer.
+2. Atama ve Outbox atomik kaydedilir. `ExecuteTask` robotun Executor'ına gönderilir.
+3. Executor, Nav2 ile pickup → yükleme → dropoff → boşaltma adımlarını yürütür.
+4. `RobotStatus` fiziksel durumu bildirir; eşleşen epoch/UUID ile terminal result görevi kapatır. İptal kabulü terminal `PREEMPTED` yerine geçmez.
 
-## Proje yapısı
+## Mevcut geliştirme durumu
 
-| Dizin | İçerik |
-|---|---|
-| [docker/compose/](docker/compose/) | Sekiz doğrulama Compose dosyası |
-| [docker/](docker/) | Dockerfile, doğrulama kodları ve bunların testleri |
-| [config/](config/) | Test ayarları, şemalar, filo tanımı (`fleet.yaml`) ve harita |
-| [fleet_config/](fleet_config/) | C1 konfigürasyon veri modelleri, yükleyici ve CLI doğrulayıcı |
-| [interfaces/](interfaces/) | `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve geçici DDS `dds_probe_interfaces` |
-| [ros2_ws/src/](ros2_ws/src/) | Robot Executor paketi (`fleet_robot_executor` saf Python durum makinesi) |
-| [scripts/](scripts/) | B3 Retry çalıştırma ve kaynak ölçüm betiği |
-| [tests/](tests/) | C1 sözleşme (`test_config.py`) ve C2.1 durum makinesi (`test_executor_state_machine.py`) testleri |
-| [docs/](docs/README.md) | Mimari, karar geçmişi, konfigürasyon ve doğrulama kayıtları |
+| Aşama | Kod / uygulama | Kanıt ve sınır |
+|---|---|---|
+| C1 | Konfigürasyon doğrulayıcı mevcut | 1, 2, 3 robot sözleşme testleri; Apply API yok |
+| C2 | Executor ve ürün IDL mevcut | Tek robot canlı simülasyon tarihsel kanıtı |
+| C3–C3.3.3 | Domain, Outbox, adaptör ve iki robot test altyapısı mevcut | Tarihsel canlı rapor var; statik incelemede açık güvenlik/entegrasyon farkları bulundu |
+| C4 | Kısmi enerji/rezervasyon altyapısı | Battery Simulator ve otomatik şarj/park yönetimi yok; test bataryası kalibrasyon değildir |
+| C5 | Planlanan | API, WebSocket ve frontend yok |
 
-Yerel `backend/` ve `frontend/` dizinleri henüz boştur; Git boş dizinleri taşımaz.
+## Testler ve doğrulama sonuçları
 
-## Geliştirme
+26 Ekim host koşusunda **224 geçti, 19 atlandı**; atlanan ROS bağımlı testler başarı sayılmaz. Filo CLI ve on Compose birleşiminin yapılandırması doğrulandı. [Bu çalışmanın raporu](docs/validation/organization/organization-validation-2026-10-26.md) komutları ve sınırları içerir.
 
-- **C1 Konfigürasyon Testleri (74 test):**
-  ```sh
-  PYTHONPATH=. uv run --with-requirements requirements-c1.txt pytest tests/test_config.py
-  ```
-- **C2.1 Robot Executor Durum Makinesi Testleri (49 test):**
-  ```sh
-  PYTHONPATH="ros2_ws/src/fleet_robot_executor:." uv run --with-requirements requirements-c1.txt pytest tests/test_executor_state_machine.py ros2_ws/src/fleet_robot_executor/test/test_state_machine.py
-  ```
-- **Tam Birim Test Koşusu (120 test):**
-  ```sh
-  PYTHONPATH="ros2_ws/src/fleet_robot_executor:." uv run --with-requirements requirements-c1.txt pytest tests/
-  ```
-- **C2.3 Canlı Simülasyon Doğrulama Testi:**
-  ```sh
-  python3 scripts/run_c2_3.py --token c2-3-live-sim-run-6 --domain 46
-  ```
-- **CLI Konfigürasyon Doğrulama:**
-  ```sh
-  PYTHONPATH=. uv run --with-requirements requirements-c1.txt python -m fleet_config config/fleet.yaml
-  ```
-- **Simülasyon testleri:** Yedi `test_config.py` dosyası ilgili `docker/` alt dizinlerinde bulunur; container içindeki `/config` ve `/opt` yollarını kullanır. Çalıştırma kayıtları [aşama raporlarının komut eklerindedir](docs/validation/README.md).
-
-## Sorun giderme
-
-Compose dosyaları tek başına uygulama kurulumu değildir; [belirtilen sırayla](docker/compose/README.md) birleştirilir. B2 ve sonraki testler önceden hazırlanmış Nav2 image'ına dayanır; miras alınan build tarifi nedeniyle gelişigüzel yeniden derleme yapılmamalıdır. DDS keşfi ve render sorunları başarısız koşularıyla birlikte korunmuştur.
-
-## Dokümantasyon bağlantıları
-
-- [Dokümantasyon haritası](docs/README.md)
-- [C1 Konfigürasyon Belgesi](docs/configuration-c1.md)
-- [C1 Doğrulama Raporu](docs/validation/c1/c1-validation-2026-10-24.md)
-- [C2 Robot Executor Kararları](docs/c2-executor-decisions-2026-10-24.md)
-- [C2.1 Doğrulama Raporu](docs/validation/c2/c2-1-validation-2026-10-24.md)
-- [C2.2 Doğrulama Raporu](docs/validation/c2/c2-2-validation-2026-10-24.md)
-- [C2.3 Doğrulama Raporu](docs/validation/c2/c2-3-validation-2026-10-24.md)
-- [C3 Fleet Manager Kararları](docs/c3-fleet-manager-decisions-2026-10-24.md)
-- [C3.1 Doğrulama Raporu](docs/validation/c3/c3-1-validation-2026-10-24.md)
-- [C3.2 Doğrulama Raporu](docs/validation/c3/c3-2-validation-2026-10-24.md)
-- [C3.3.1 Doğrulama Raporu](docs/validation/c3/c3-3-1-validation-2026-10-24.md)
-- [C3.3.2 Adaptör Entegrasyon Kararları](docs/c3-3-2-ros2-adapter-decisions-2026-10-24.md)
-- [C3.3.2 Doğrulama Raporu](docs/validation/c3/c3-3-2-validation-2026-10-24.md)
-- [C3.3.3 İki Robotlu Entegrasyon Kararları](docs/c3-3-3-dual-robot-integration-decisions-2026-10-24.md)
-- [C3.3.3 Doğrulama Raporu](docs/validation/c3/c3-3-3-validation-2026-10-24.md)
-- [Birincil nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf)
-- [Kalıcı proje bağlamı](docs/project-context.md) ve [çalışma kuralları](AGENTS.md)
-- [Doğrulama kayıtları](docs/validation/README.md)
-- [Önceki README arşivi](docs/archive/readme-v2.x.md)
+Tarihsel kanıtlar: C2.3 tek robotta 7/7 senaryo; C3.3.3 raporunda 10/10 senaryo; B3 Retry'da 2/2 temiz koşu. AMCL kasıtlı ofset testi **1 geçti / 1 kaldı**. Bunlar küresel çarpışmasız trafik, dar koridor deadlock, 3+ robot ölçeği veya nihai üç servis dağıtımı kanıtı değildir. [Tüm kayıtlar](docs/validation/README.md).
 
 ## Yol haritası
 
-- [x] **C1 — Konfigürasyon:** `fleet.yaml`, şema, Pydantic doğrulayıcı, 1-2-3 robot desteği (**DOĞRULANDI**)
-- [x] **C2.1 — Robot Executor Durum Makinesi:** `fleet_interfaces` (`ExecuteTask`, `RobotStatus`, `ClearRobotError`) ve ROS 2 bağımsız durum makinesi (**DOĞRULANDI**)
-- [x] **C2.2 — Robot Executor ROS 2 Entegrasyonu:** `RobotExecutorNode` ActionServer, Nav2 `NavigateToPose` istemcisi, launch ve entegrasyon testleri (**DOĞRULANDI**)
-- [x] **C2.3 — Canlı Simülasyon Doğrulaması:** Gazebo Fortress + Nav2 + Robot Executor tek robotlu entegrasyonu, 7 senaryo ve Option A hata kurtarma (**DOĞRULANDI**)
-- [x] **C3.1 — Fleet Manager Çekirdeği:** Saf Python domain modelleri, FIFO/öncelik kuyruğu, Wh enerji uygunluğu, güvenli preemption, T01–T09 senaryoları (**DOĞRULANDI**)
-- [x] **C3.2 — SQLite Outbox ve Tek Consumer:** Atomik kayıt, olay süzme ve gönderim tekrarları (**DOĞRULANDI**, saf Python/SQLite kapsamı). [Sözleşme ve sınırlar](docs/c3-2-sqlite-outbox.md).
-- [x] **C3.3.1 — Robot Executor Güvenliği:** `status_seq`, `publisher_session_id`, duplicate koruması, Nav2 terminal iptali ve duruş teyidi (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-1-validation-2026-10-24.md).
-- [x] **C3.3.2 — Fleet Manager ROS 2 Adaptör Entegrasyonu:** RobotStatus subscriber, status_seq ve publisher_session_id oturum güvenliği, ExecuteTask ActionClient, Outbox göndericisi, task_review_holds ve Nav2 rota önbelleklemesi (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-2-validation-2026-10-24.md).
-- [x] **C3.3.3 — İki Robotlu Canlı Entegrasyon:** İki robotlu Gazebo + Nav2 + Executor simülasyonu, eşzamanlı lojistik, preemption, istasyon tekil sahipliği ve izolasyon (**DOĞRULANDI**). [Rapor](docs/validation/c3/c3-3-3-validation-2026-10-24.md).
-- [ ] **C4 — Batarya ve Enerji:** Wh modeli, Battery Simulator, şarj/park yöneticisi (Planlanan)
-- [ ] **C5 — API ve Panel:** FastAPI, WebSocket, React + Konva 2D arayüz (Planlanan)
+C1 → C2 → C3 temel uygulamaları mevcut. Sonraki aşamalar: belgelenen uygulama farklarının ayrı görevlerde ele alınması; C4 bağımsız batarya ve şarj/park yönetimi; C5 API/panel ve nihai üç servis doğrulaması. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır; MVP'de takas kapalıdır.
 
-Kabul ölçütleri [nihai mimari belgede](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md#14-c-aşaması-c1c5-geliştirme-yol-haritası) tanımlıdır.
+## Dokümantasyon bağlantıları
 
-## Lisans ve katkı
+- [Dokümantasyon haritası](docs/README.md) ve [diyagram kataloğu](docs/diagrams/README.md)
+- [Nihai mimari PDF](docs/ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.pdf), [sonraki kararlar](docs/decisions/README.md) ve [mimari kaynaklar](docs/architecture/README.md)
+- [Kalıcı proje bağlamı](docs/project-context.md), [AGENTS.md](AGENTS.md) ve [doğrulama kayıtları](docs/validation/README.md)
 
-[Apache-2.0](LICENSE). Değişikliklerde [AGENTS.md](AGENTS.md) kuralları ve mevcut kanıtların korunması esastır.
+Lisans: [Apache-2.0](LICENSE).

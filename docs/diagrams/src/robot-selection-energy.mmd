@@ -1,0 +1,25 @@
+---
+title: "03 · Robot seçimi ve Wh uygunluğu · PARTIAL"
+---
+flowchart TD
+ A(["Aday robot"]):::terminal --> F{"Güncel / oturum açık / yüksüz / atanabilir mi?"}:::decision
+ F -->|"Hayır"| NO["Adayı ele; görevi FAILED yapma"]:::wait
+ F -->|"Evet"| L["L1: robot→pickup; L2: pickup→dropoff<br/>L3: dropoff→safe_charge"]:::nav
+ L --> R{"Üç rota geçerli mi?"}:::decision
+ R -->|"Hayır"| NO
+ R -->|"Evet"| EN["E_required = k × L1 + k × L2 + k × L3 + margin<br/>E_available = C × SoC/100 − C × reserve/100"]:::battery
+ EN --> OK{"E_required ≤ E_available?"}:::decision
+ OK -->|"Hayır"| NO
+ OK -->|"Evet"| SORT["En küçük L1<br/>Eşitlik: en uzun IDLE, sonra robot_id"]:::fm
+ SORT --> OUT(["Seçilen aday"]):::terminal
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

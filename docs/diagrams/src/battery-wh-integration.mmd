@@ -1,0 +1,24 @@
+---
+title: "10 · Wh batarya hesabı · PLANNED"
+---
+flowchart TD
+ A(["Simülasyon örneği /clock"]):::terminal --> IN["delta_s metre; delta_t saniye<br/>Önceki enerji Wh"]:::battery
+ IN --> USE["E = E − k × delta_s − P_idle × delta_t / 3600<br/>Yükleme / boşaltmada da tüketim"]:::battery
+ USE --> C{"İstasyon yarıçapında + hareketsiz<br/>+ dock_contact true mu?"}:::decision
+ C -->|"Evet"| CH["E = E + P_charge × delta_t / 3600"]:::battery
+ C -->|"Hayır"| LIM["Enerjiyi fiziksel kapasite sınırlarında tut"]:::battery
+ CH --> LIM
+ LIM --> SOC["SoC = 100 × E / C_usable"]:::battery
+ SOC --> PUB["battery_energy_wh / battery_soc_percent<br/>battery_capacity_wh / is_charging / battery_stamp"]:::battery
+ PUB --> NEXT(["Sonraki simülasyon örneği"]):::terminal
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

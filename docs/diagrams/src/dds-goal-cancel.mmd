@@ -1,0 +1,29 @@
+---
+title: "07 · DDS goal ve cancel protokolü · IMPLEMENTED"
+---
+flowchart TD
+ O[("Outbox komutu")]:::db --> SEND["ExecuteTask: sabit UUID / task / epoch / yük"]:::fm
+ SEND --> RES{"Goal yanıtı?"}:::decision
+ RES -->|"5 sn içinde yok"| RET["RETRY • aynı komut kimliği ve yük"]:::wait
+ RET --> SEND
+ RES -->|"Açık REJECT"| HOLD[("HELD_FOR_REVIEW<br/>task_review_holds")]:::db
+ HOLD --> OP["Operatör incelemesi; kör reassignment yok"]:::wait
+ RES -->|"ACCEPT"| AC["Goal handle + result / feedback aboneliği<br/>SENT görev tamamlandı demek değildir"]:::fm
+ AC --> C["Kesme gerekiyorsa aynı goal handle ile cancel"]:::fm
+ C --> CR{"Cancel yanıtı?"}:::decision
+ CR -->|"3 sn içinde yok"| RT["Cancel RETRY; sahiplik korunur"]:::wait
+ CR -->|"Ret"| RQ["Bekleyen HIGH kuyruğa döner"]:::fm
+ CR -->|"Kabul"| WAIT["Terminal PREEMPTED ve duruş kanıtını bekle"]:::wait
+ AC -->|"Result"| MATCH["Epoch / UUID uzlaştırması"]:::fm
+ WAIT --> MATCH
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

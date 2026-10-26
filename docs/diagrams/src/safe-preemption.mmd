@@ -1,0 +1,33 @@
+---
+title: "05 · Güvenli preemption ve N=2 · IMPLEMENTED"
+---
+flowchart TD
+ H(["Yeni HIGH"]):::terminal --> ID{"Uygun IDLE / boş aday var mı?"}:::decision
+ ID -->|"Evet"| DIR["Doğrudan ata"]:::fm
+ ID -->|"Hayır"| V{"LOW/MED + pickup öncesi + yüksüz<br/>N < 2 + güncel + rota/enerji uygun?"}:::decision
+ V -->|"Hayır"| W["HIGH kuyrukta bekler"]:::wait
+ V -->|"Evet"| C["En kısa pickup adayına cancel<br/>HIGH için yeni atama henüz yok"]:::fm
+ C --> X{"Executor yerel faz kilidiyle kabul eder mi?"}:::decision
+ X -->|"Hayır"| W
+ X -->|"Evet"| NAV["İlgili Nav2 goal'u iptal et; fren uygula"]:::nav
+ NAV --> T{"Gerçek Nav2 terminal sonucu?"}:::decision
+ T -->|"SUCCEEDED"| N["Gerçek faz akışına devam<br/>PREEMPTED üretme"]:::executor
+ T -->|"ABORTED"| E["FAILED / ERROR; HIGH yeniden değerlendirilir"]:::error
+ T -->|"Belirsiz"| B["Sahipliği tut; güvenli blokaj"]:::wait
+ T -->|"STATUS_CANCELED"| O{"Güncel odometri ve sıfır hız?"}:::decision
+ O -->|"Hayır"| BRAKE["Frenle ve teyit bekle"]:::wait
+ BRAKE --> O
+ O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor
+ R --> Q["Kurban sayaç +1; orijinal created_at ile kuyruk<br/>N=2 ise üçüncü çalışmada koruma"]:::fm
+ Q --> NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

@@ -22,3 +22,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C3.3.3 | [Rapor](c3/c3-3-3-validation-2026-10-24.md) | İki robotlu uçtan uca canlı simülasyon ve DDS entegrasyonu doğrulandı: Gazebo Fortress headless + iki Nav2 + iki Executor + Fleet Manager (214 host testi, T01–T10 senaryolarının tamamı 10/10 temiz geçti) |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
+
+## Depo ve dokümantasyon denetimleri
+
+- [26 Ekim 2026 düzenleme ve diyagram doğrulaması](organization/organization-validation-2026-10-26.md) · [komut eki](organization/organization-commands-2026-10-26.md)

@@ -1,0 +1,25 @@
+---
+title: "14 · FAILED / ERROR ve operatör kurtarma · PARTIAL"
+---
+flowchart TD
+ A(["Hata / belirsizlik"]):::terminal --> TYPE{"Hangi aşama?"}:::decision
+ TYPE -->|"Atama öncesi rota yok"| Q["Adayı ele; görev kuyrukta"]:::wait
+ TYPE -->|"İletişim timeout / oturum değişimi"| W["Uyarı / güvenli blokaj<br/>Otomatik FAILED / ERROR yok"]:::wait
+ TYPE -->|"Etkin taşıma terminal Nav2 hatası"| E["Executor ERROR + görev FAILED<br/>İşgal edilen kaynak BLOCKED"]:::error
+ E --> OP["Operatör: ClearRobotError"]:::ui
+ OP --> C{"Robot ID ve expected_epoch doğru<br/>ERROR + yüksüz + güncel güvenli duruş?"}:::decision
+ C -->|"Hayır"| R["İsteği reddet"]:::error
+ C -->|"Evet"| ID["Executor IDLE; epoch korunur<br/>FAILED görev yeniden başlamaz"]:::executor
+ ID --> FM["FM yeni RobotStatus bekler"]:::fm
+ FM --> PH["Kaynak için ayrıca fiziksel ayrılma teyidi<br/>Kurtarma orkestrasyonu eksik"]:::wait
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

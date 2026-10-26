@@ -1,0 +1,26 @@
+---
+title: "04 · Robot Executor görev yaşam döngüsü · IMPLEMENTED"
+---
+flowchart TD
+ A(["ExecuteTask goal"]):::terminal --> G{"Reset / duplicate / kimlik / durum uygun mu?"}:::decision
+ G -->|"Hayır"| RE["Goal reddi veya güvenli blokaj"]:::error
+ G -->|"Evet"| P["MOVING_TO_PICKUP → Nav2"]:::nav
+ P -->|"Başarı + faz kilidi"| LOAD["LOADING / PICKING_UP<br/>Kesilemez"]:::executor
+ LOAD -->|"Yükleme tamam"| D["Yüklü MOVING_TO_DROPOFF → Nav2"]:::nav
+ D -->|"Başarı"| UN["UNLOADING • kesilemez"]:::executor
+ UN -->|"Boşaltma tamam"| END(["SUCCEEDED + gerçek completed_epoch<br/>Executor IDLE, yüksüz"]):::terminal
+ P -->|"Güvenli kesme"| C["Preemption alt akışı"]:::executor
+ P -->|"Kesin terminal hata"| ERR["FAILED + ERROR"]:::error
+ D -->|"Kesin terminal hata"| ERR
+ P -->|"Teslim / sonuç belirsiz"| W["Sahipliği tut; blokaj"]:::wait
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

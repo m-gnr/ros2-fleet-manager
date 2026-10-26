@@ -1,0 +1,25 @@
+---
+title: "16 · REST / WebSocket ve 2D panel · PLANNED"
+---
+flowchart LR
+ U["Kullanıcı / React + Konva"]:::ui -->|"HTTP görev isteği"| API["FastAPI REST"]:::ui
+ API -->|"Komut olayı"| Q["FM tek consumer"]:::fm
+ Q -->|"Görev kabul / kimlik"| API
+ Q -->|"ExecuteTask"| EX["Robot Executor"]:::executor
+ EX -->|"RobotStatus / result"| Q
+ Q -->|"Kalıcı görev ve olay"| DB[("SQLite")]:::db
+ Q -->|"Durum görünümü"| WS["WebSocket snapshot / stream / replay"]:::ui
+ DB -.->|"Replay ayrıntısı C5'te"| WS
+ WS -->|"Koordinat / durum / görev"| U
+ NAV["ROS harita / rota"]:::nav -->|"Backend adaptasyonu"| WS
+
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
+ classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
+ classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
+ classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
+ classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
+ classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
+ classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;

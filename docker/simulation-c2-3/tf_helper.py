@@ -7,6 +7,7 @@ Publishes transforms to:
 """
 import sys
 import rclpy
+from rclpy.signals import SignalHandlerOptions
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy
@@ -90,7 +91,7 @@ class SingleRobotTfHelper(Node):
 
 
 def main():
-    rclpy.init()
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     node = SingleRobotTfHelper()
     try:
         rclpy.spin(node)

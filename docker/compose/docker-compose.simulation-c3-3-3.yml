@@ -3,6 +3,7 @@ name: ros2-fleet-simulation-c3-3-3
 x-c3-3-3: &c3-3-3
   image: ros2-fleet-simulation-nav2-check:humble-fortress
   volumes:
+    - ../../docker/simulation-common:/opt/fleet-live-validation:ro
     - ../../config:/config:ro
     - ../../config:/workspace/config:ro
     - ../../docker/simulation-c3-3-3:/opt/simulation-c3-3-3:ro
@@ -15,6 +16,7 @@ x-c3-3-3: &c3-3-3
 services:
   simulation:
     <<: *c3-3-3
+    stop_grace_period: 40s
     environment:
       SIM_CHECK_ROLE: simulation
       DDS_TEST_TIMEOUT_SECONDS: "300"
@@ -22,7 +24,7 @@ services:
       EGL_PLATFORM: surfaceless
       IGN_GAZEBO_RENDER_ENGINE_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
       IGN_RENDERING_PLUGIN_PATH: /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins
-    command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH && python3 /opt/simulation-c3-3-3/check.py"]
+    command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/opt/fleet-live-validation:/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH && exec python3 /opt/simulation-c3-3-3/check.py"]
   backend:
     <<: *c3-3-3
     image: ros2-fleet-simulation-c3-3-3-backend:humble-fortress
@@ -31,7 +33,8 @@ services:
       dockerfile: docker/simulation-c3-3-3/Dockerfile
     environment:
       SIM_CHECK_ROLE: backend
+      C333_HIGH_PREEMPTION: "${C333_HIGH_PREEMPTION:-0}"
       C333_AUTO_ROUTES: "${C333_AUTO_ROUTES:-0}"
       C333_ENERGY_POLICY: "${C333_ENERGY_POLICY:-0}"
       DDS_TEST_TIMEOUT_SECONDS: "300"
-    command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH && python3 /opt/simulation-c3-3-3/check.py"]
+    command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH && exec python3 /opt/simulation-c3-3-3/check.py"]

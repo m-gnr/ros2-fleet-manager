@@ -101,6 +101,10 @@ class RobotExecutorNode(Node):
         self.declare_parameter("angular_stop_threshold_rad_s", DEFAULT_ANGULAR_STOP_THRESHOLD_RAD_S)
         self.declare_parameter("odometry_freshness_sec", DEFAULT_ODOMETRY_FRESHNESS_SEC)
         self.declare_parameter("cancel_stop_timeout_sec", DEFAULT_CANCEL_STOP_TIMEOUT_SEC)
+        self.declare_parameter("nav2_cancel_result_timeout_sec", 3.0)
+        self._nav2_cancel_result_timeout_sec = self.get_parameter("nav2_cancel_result_timeout_sec").value
+        if not math.isfinite(self._nav2_cancel_result_timeout_sec) or self._nav2_cancel_result_timeout_sec <= 0:
+            raise ValueError("nav2_cancel_result_timeout_sec must be finite and positive")
         self.declare_parameter("cmd_vel_topic_name", "cmd_vel")
         self.declare_parameter("odom_topic_name", "odom")
         self.declare_parameter("status_topic_name", "robot_status")
@@ -325,13 +329,15 @@ class RobotExecutorNode(Node):
         self.get_logger().info(f"Accepted cancel request for goal {goal_uuid}. Initiating safe preemption.")
         return CancelResponse.ACCEPT
 
-    def _hold_uncertain(self, reason):
+    def _hold_uncertain(self, reason, *, brake_until=None):
         with self._lock:
             self.safety.block(reason)
         self.get_logger().error(reason)
         # No unapproved timeout -> FAILED/ERROR transition. Ownership stays held.
-        while self.context.ok() and not self._stopping.wait(0.05):
-            pass
+        interval = 0.02 if brake_until is not None else 0.05
+        while self.context.ok() and not self._stopping.wait(interval):
+            if brake_until is not None and not brake_until.done():
+                self._cmd_vel_pub.publish(Twist())
         raise RuntimeError("Executor stopped with unresolved ownership")
 
     def _execute_task_callback(self, goal_handle: ServerGoalHandle) -> ExecuteTask.Result:
@@ -521,7 +527,7 @@ class RobotExecutorNode(Node):
             with self._lock:
                 cancelling = self.state_machine.is_cancelling
             if cancelling:
-                terminal = self._execute_safe_cancel(goal_handle, goal_uuid, nav2_goal_handle, result_future)
+                terminal = self._execute_safe_cancel(goal_uuid, nav2_goal_handle, result_future)
                 self._active_nav2_goal_handle = None
                 return (True, None) if terminal is None else (False, terminal)
             self._publish_feedback(goal_handle, phase, self._calculate_distance_to(target_model))
@@ -534,7 +540,7 @@ class RobotExecutorNode(Node):
         with self._lock:
             cancelling = self.state_machine.is_cancelling
         if cancelling:
-            terminal = self._execute_safe_cancel(goal_handle, goal_uuid, nav2_goal_handle, result_future)
+            terminal = self._execute_safe_cancel(goal_uuid, nav2_goal_handle, result_future)
             return (True, None) if terminal is None else (False, terminal)
         if nav2_res.status == GoalStatus.STATUS_SUCCEEDED:
             return True, None
@@ -558,15 +564,22 @@ class RobotExecutorNode(Node):
         result.error_reason = terminal.error_reason
         return result
 
-    def _execute_safe_cancel(self, goal_handle, goal_uuid, nav2_goal_handle, result_future):
+    def _execute_safe_cancel(self, goal_uuid, nav2_goal_handle, result_future):
         # The result future belongs to this exact Nav2 goal handle. The cancel
         # service response, including ERROR_NONE, cannot establish termination.
         if not result_future.done():
+            deadline = time.monotonic() + self._nav2_cancel_result_timeout_sec
             nav2_goal_handle.cancel_goal_async()
-        while not result_future.done():
-            self._cmd_vel_pub.publish(Twist())
-            if self._stopping.wait(0.02):
-                raise RuntimeError("Stopped while awaiting terminal Nav2 cancellation")
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return self._hold_uncertain("Timed out awaiting terminal Nav2 cancellation",
+                                                brake_until=result_future)
+                if result_future.done():
+                    break
+                self._cmd_vel_pub.publish(Twist())
+                if self._stopping.wait(min(0.02, remaining)):
+                    raise RuntimeError("Stopped while awaiting terminal Nav2 cancellation")
         terminal = result_future.result()
         if terminal.status == GoalStatus.STATUS_SUCCEEDED:
             with self._lock:
@@ -781,10 +794,10 @@ class RobotExecutorNode(Node):
         return super().destroy_node()
 
 
-def main(args=None):
+def main(args=None, *, _test_reset_verified=False):
     """Entry point for robot_executor_node."""
     rclpy.init(args=args)
-    node = RobotExecutorNode()
+    node = RobotExecutorNode(_test_reset_verified=_test_reset_verified)
     executor = MultiThreadedExecutor()
     executor.add_node(node)
 
@@ -793,8 +806,10 @@ def main(args=None):
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        rclpy.try_shutdown()
+        node._stopping.set()
+        executor.shutdown()
         node.destroy_node()
-        rclpy.shutdown()
 
 
 if __name__ == "__main__":

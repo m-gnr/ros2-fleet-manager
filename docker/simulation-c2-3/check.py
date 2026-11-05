@@ -17,8 +17,6 @@ import json
 import math
 import os
 from pathlib import Path
-import signal
-import subprocess
 import sys
 import time
 
@@ -173,6 +171,12 @@ def prepare_world(config):
         <pose>-0.2 0 -0.15 0 0 0</pose>
         <inertial><mass>0.05</mass><inertia><ixx>0.00005</ixx><iyy>0.00005</iyy><izz>0.00005</izz></inertia></inertial>
         <collision name="caster"><geometry><sphere><radius>0.05</radius></sphere></geometry><surface><friction><ode><mu>0</mu><mu2>0</mu2></ode></friction></surface></collision>
+        <!-- Front anti-tip contact, 1 mm above the nominal wheel contact plane. -->
+        <collision name="front_support">
+          <pose>0.4 0 0.001 0 0 0</pose>
+          <geometry><sphere><radius>0.05</radius></sphere></geometry>
+          <surface><friction><ode><mu>0</mu><mu2>0</mu2></ode></friction></surface>
+        </collision>
       </link>
 
       <joint name="left_joint" type="revolute">
@@ -307,6 +311,8 @@ def read_cgroup_metrics():
 
 def simulation(config):
     """Run Gazebo, ros_gz_bridge, tf_helper, Nav2, and RobotExecutorNode."""
+    from live_processes import bridge_executable, run_simulation
+
     engines = list(Path("/usr/lib").glob("*/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5"))
     if len(engines) != 1:
         raise RuntimeError(f"Expected one packaged Fortress DART engine, found {engines}")
@@ -325,7 +331,7 @@ def simulation(config):
             "/tmp/c2-world.sdf"
         ],
         [
-            "ros2", "run", "ros_gz_bridge", "parameter_bridge",
+            bridge_executable(),
             "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
             "/world/c2_validation_world/dynamic_pose/info@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V",
             "/robot_1/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan",
@@ -342,7 +348,7 @@ def simulation(config):
             "map:=" + config["map_path"],
             "params_file:=" + params_file,
             "slam:=False",
-            "use_composition:=True",
+            "use_composition:=False",
         ],
         [
             "python3", "/opt/simulation-c2-3/executor_test_entry.py",
@@ -360,47 +366,9 @@ def simulation(config):
         ],
     ]
 
-    stopped = False
-
-    def stop(signum, frame):
-        nonlocal stopped
-        stopped = True
-
-    signal.signal(signal.SIGTERM, stop)
-    signal.signal(signal.SIGINT, stop)
-
-    children = []
-    try:
-        for command in commands:
-            emit("PROCESS_START", command=command)
-            children.append(subprocess.Popen(command, start_new_session=True))
-        while not stopped:
-            for child in children:
-                if child.poll() is not None:
-                    raise RuntimeError(f"Child {child.args[0]} exited unexpectedly: {child.returncode}")
-            time.sleep(0.2)
-        return 0
-    finally:
-        for child in children:
-            if child.poll() is None:
-                try:
-                    os.killpg(child.pid, signal.SIGINT)
-                except ProcessLookupError:
-                    pass
-        for child in children:
-            try:
-                child.wait(timeout=2.0)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(child.pid, signal.SIGKILL)
-                    child.wait(timeout=1.0)
-                    emit("FORCED_KILL", command=child.args[0])
-                except Exception:
-                    pass
-            emit("PROCESS_EXIT", command=child.args[0], code=child.returncode)
-
-        sim_cgroup = read_cgroup_metrics()
-        emit("SIMULATION_CONTAINER_CGROUP", source="simulation_container_cgroup", **sim_cgroup)
+    result = run_simulation(zip(('gazebo', 'bridge', 'tf_helper', 'nav2_robot_1', 'executor_robot_1'), commands), ("robot_1",), emit)
+    emit("SIMULATION_CONTAINER_CGROUP", source="simulation_container_cgroup", **read_cgroup_metrics())
+    return result
 
 
 def backend(config, timeout):

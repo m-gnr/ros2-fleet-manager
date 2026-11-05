@@ -17,8 +17,6 @@ import json
 import math
 import os
 from pathlib import Path
-import signal
-import subprocess
 import sys
 import threading
 import time
@@ -198,6 +196,12 @@ def prepare_world(config, fleet_data):
         <pose>-0.2 0 -0.15 0 0 0</pose>
         <inertial><mass>0.05</mass><inertia><ixx>0.00005</ixx><iyy>0.00005</iyy><izz>0.00005</izz></inertia></inertial>
         <collision name="caster"><geometry><sphere><radius>0.05</radius></sphere></geometry><surface><friction><ode><mu>0</mu><mu2>0</mu2></ode></friction></surface></collision>
+        <!-- Front anti-tip contact, 1 mm above the nominal wheel contact plane. -->
+        <collision name="front_support">
+          <pose>0.4 0 0.001 0 0 0</pose>
+          <geometry><sphere><radius>0.05</radius></sphere></geometry>
+          <surface><friction><ode><mu>0</mu><mu2>0</mu2></ode></friction></surface>
+        </collision>
       </link>
 
       <joint name="left_joint" type="revolute">
@@ -301,6 +305,8 @@ def prepare_world(config, fleet_data):
 
 def simulation(config, fleet_data):
     """Run dual-robot Gazebo + Nav2 + Executors + Temporary Battery Feeder simulation."""
+    from live_processes import bridge_executable, run_simulation
+
     engines = list(Path("/usr/lib").glob("*/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5"))
     if not engines:
         engines = list(Path("/usr/lib").glob("*/*/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5"))
@@ -326,7 +332,7 @@ def simulation(config, fleet_data):
         ],
         # 2. ros_gz_bridge parameter bridge
         [
-            "ros2", "run", "ros_gz_bridge", "parameter_bridge",
+            bridge_executable(),
             "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock",
             "/world/c3_3_3_validation_world/dynamic_pose/info@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V",
             "/robot_1/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan",
@@ -348,7 +354,7 @@ def simulation(config, fleet_data):
             "map:=" + config["map_path"],
             "params_file:=" + params_files["robot_1"],
             "slam:=False",
-            "use_composition:=True",
+            "use_composition:=False",
         ],
         # 5. Nav2 bringup robot_2
         [
@@ -360,7 +366,7 @@ def simulation(config, fleet_data):
             "map:=" + config["map_path"],
             "params_file:=" + params_files["robot_2"],
             "slam:=False",
-            "use_composition:=True",
+            "use_composition:=False",
         ],
         # 6. Robot Executor robot_1
         [
@@ -402,52 +408,40 @@ def simulation(config, fleet_data):
         ["python3", "/opt/simulation-c3-3-3/mock_battery_feeder.py"],
     ]
 
-    stopped = False
-
-    def stop(signum, frame):
-        nonlocal stopped
-        stopped = True
-
-    signal.signal(signal.SIGTERM, stop)
-    signal.signal(signal.SIGINT, stop)
-
-    children = []
-    try:
-        for command in commands:
-            emit("PROCESS_START", command=command[0], full=command)
-            children.append(subprocess.Popen(command, start_new_session=True))
-        while not stopped:
-            for child in children:
-                if child.poll() is not None:
-                    raise RuntimeError(f"Child {child.args[0]} exited unexpectedly: {child.returncode}")
-            time.sleep(0.2)
-        return 0
-    finally:
-        for child in children:
-            if child.poll() is None:
-                try:
-                    os.killpg(child.pid, signal.SIGINT)
-                except ProcessLookupError:
-                    pass
-        for child in children:
-            try:
-                child.wait(timeout=2.0)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(child.pid, signal.SIGKILL)
-                    child.wait(timeout=1.0)
-                    emit("FORCED_KILL", command=child.args[0])
-                except Exception:
-                    pass
-            emit("PROCESS_EXIT", command=child.args[0], code=child.returncode)
+    return run_simulation(zip(('gazebo', 'bridge', 'tf_helper', 'nav2_robot_1', 'nav2_robot_2', 'executor_robot_1', 'executor_robot_2', 'battery_feeder'), commands), ("robot_1", "robot_2"), emit)
 
 
 def backend(config, fleet_data, timeout):
+    import rclpy
+    from rclpy.executors import MultiThreadedExecutor
+    from rclpy.parameter import Parameter
+
+    rclpy.init()
+    node = rclpy.create_node(
+        "c3_3_3_backend_orchestrator",
+        parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)],
+    )
+
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    executor_thread = threading.Thread(target=executor.spin, daemon=True)
+    executor_thread.start()
+
+    try:
+        return run_scenarios(config, fleet_data, node, executor)
+    finally:
+        executor.shutdown()
+        executor_thread.join()
+        for ros_node in executor.get_nodes():
+            ros_node.destroy_node()
+        rclpy.try_shutdown()
+
+
+def run_scenarios(config, fleet_data, node, executor):
     """Execute live simulation validation suite covering scenarios T01 - T10."""
     import logging
     import rclpy
     from rclpy.action import ActionClient
-    from rclpy.executors import MultiThreadedExecutor
     from rclpy.parameter import Parameter
     from action_msgs.msg import GoalStatus
     from rosgraph_msgs.msg import Clock
@@ -484,19 +478,9 @@ def backend(config, fleet_data, timeout):
 
     auto_routes = os.environ.get("C333_AUTO_ROUTES") == "1"
     robot_namespaces = {robot["id"]: robot["namespace"] for robot in fleet_data["robots"]}
-    if auto_routes:
+    high_preemption = os.environ.get("C333_HIGH_PREEMPTION") == "1"
+    if auto_routes or high_preemption:
         logging.basicConfig(level=logging.INFO)
-
-    rclpy.init()
-    node = rclpy.create_node(
-        "c3_3_3_backend_orchestrator",
-        parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)],
-    )
-
-    executor = MultiThreadedExecutor()
-    executor.add_node(node)
-    executor_thread = threading.Thread(target=executor.spin, daemon=True)
-    executor_thread.start()
 
     emit("WARMUP_START")
     start_time = time.monotonic()
@@ -570,15 +554,10 @@ def backend(config, fleet_data, timeout):
     if os.environ.get("C333_ENERGY_POLICY") == "1":
         from energy_policy_check import check_energy_policy
 
-        try:
-            asyncio.run(check_energy_policy(
-                config["fleet_config_path"], robot_namespaces, executor,
-                {"robot_1": path_client_r1, "robot_2": path_client_r2}, emit,
-            ))
-        finally:
-            executor.shutdown()
-            node.destroy_node()
-            rclpy.shutdown()
+        asyncio.run(check_energy_policy(
+            config["fleet_config_path"], robot_namespaces, executor,
+            {"robot_1": path_client_r1, "robot_2": path_client_r2}, emit,
+        ))
         return 0
 
     # Shared route cache and resolver
@@ -644,6 +623,13 @@ def backend(config, fleet_data, timeout):
 
     asyncio.run(run_t01())
     emit("SCENARIO_PASSED", test="T01", details="Verified clean startup, session tracking, and initial verification gate")
+
+    if high_preemption:
+        from preemption_e2e_check import check_high_preemption
+
+        asyncio.run(check_high_preemption(config["fleet_config_path"], robot_namespaces, executor,
+                                          node, odom_records, status_records, emit))
+        return 0
 
     # -------------------------------------------------------------------------
     # T02: Eşzamanlı İki Bağımsız Lojistik Görev
@@ -798,9 +784,6 @@ def backend(config, fleet_data, timeout):
     asyncio.run(run_t02())
     emit("SCENARIO_PASSED", test=t02_name, details="Concurrent execution of 2 tasks succeeded on robot_1 and robot_2")
     if auto_routes:
-        executor.shutdown()
-        node.destroy_node()
-        rclpy.shutdown()
         return 0
 
     # -------------------------------------------------------------------------
@@ -1312,13 +1295,6 @@ def backend(config, fleet_data, timeout):
     emit("SCENARIO_PASSED", test="T10", details="Verified namespace isolation, no root leakage, and separated TF trees")
 
     emit("ALL_C3_3_3_TESTS_PASSED", token=os.environ.get("DDS_TEST_PAYLOAD"))
-    try:
-        executor.shutdown()
-        node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
-    except Exception:
-        pass
     return 0
 
 

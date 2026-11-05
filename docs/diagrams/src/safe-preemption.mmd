@@ -10,10 +10,10 @@ flowchart TD
  C --> X{"Executor yerel faz kilidiyle kabul eder mi?"}:::decision
  X -->|"Hayır"| W
  X -->|"Evet"| NAV["İlgili Nav2 goal'u iptal et; fren uygula"]:::nav
- NAV --> T{"Gerçek Nav2 terminal sonucu?"}:::decision
+ NAV --> T{"Monotonik sınır içinde<br/>gerçek Nav2 terminal sonucu?"}:::decision
  T -->|"SUCCEEDED"| N["Gerçek faz akışına devam<br/>PREEMPTED üretme"]:::executor
  T -->|"ABORTED"| E["FAILED / ERROR; HIGH yeniden değerlendirilir"]:::error
- T -->|"Belirsiz"| B["Sahipliği tut; güvenli blokaj"]:::wait
+ T -->|"Belirsiz veya süre doldu"| B["Sahipliği tut; güvenli blokaj<br/>Geç sonuç otomatik açmaz"]:::wait
  T -->|"STATUS_CANCELED"| O{"Güncel odometri ve sıfır hız?"}:::decision
  O -->|"Hayır"| BRAKE["Frenle ve teyit bekle"]:::wait
  BRAKE --> O

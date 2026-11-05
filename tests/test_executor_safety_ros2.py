@@ -25,8 +25,9 @@ def wait(future, seconds=8):
 
 
 class ControlledNav2:
-    def __init__(self, node, outcome):
+    def __init__(self, node, outcome, *, accept_cancel=True):
         self.outcome = outcome
+        self.accept_cancel = accept_cancel
         self.cancel_seen = threading.Event()
         self.release = threading.Event()
         self.started = threading.Event()
@@ -37,7 +38,7 @@ class ControlledNav2:
 
     def cancel(self, handle):
         self.cancel_seen.set()
-        return CancelResponse.ACCEPT
+        return CancelResponse.ACCEPT if self.accept_cancel else CancelResponse.REJECT
 
     def execute(self, handle):
         self.count += 1
@@ -153,6 +154,48 @@ def test_terminal_cancel_waits_for_fresh_stopped_odometry(rig):
     stopped = Odometry(); stopped.header.stamp = node.get_clock().now().to_msg()
     node._odom_callback(stopped)
     assert wait(future).result.status == 3
+
+
+@pytest.mark.parametrize("outcome,accept_cancel", [
+    (None, True), (None, False), ("cancel", True), ("success", True), ("abort", True),
+])
+def test_terminal_cancel_deadline_holds_ownership_with_paused_clock(rig, outcome, accept_cancel):
+    node, peer, client, servers = rig
+    node.set_parameters([Parameter("use_sim_time", value=True)])
+    node._nav2_cancel_result_timeout_sec = .5
+    nav = ControlledNav2(peer, outcome, accept_cancel=accept_cancel)
+    servers.append(nav)
+    request = goal()
+    handle = wait(client.send_goal_async(request))
+    assert handle.accepted and nav.started.wait(5)
+    result_future = handle.get_result_async()
+    assert wait(handle.cancel_goal_async()).goals_canceling
+    assert nav.cancel_seen.wait(5)
+    assert not result_future.done()
+    deadline = time.monotonic() + 3.0
+    while not node.safety.blocked and time.monotonic() < deadline:
+        time.sleep(.01)
+    assert node.safety.reason == "Timed out awaiting terminal Nav2 cancellation"
+    assert node.get_clock().now().nanoseconds == 0
+
+    if outcome is not None:
+        nav.release.set()
+        expected = {"cancel": GoalStatus.STATUS_CANCELED, "success": GoalStatus.STATUS_SUCCEEDED,
+                    "abort": GoalStatus.STATUS_ABORTED}[outcome]
+        deadline = time.monotonic() + 3.0
+        while node._active_nav2_goal_handle.status != expected and time.monotonic() < deadline:
+            time.sleep(.01)
+        assert node._active_nav2_goal_handle.status == expected
+
+    next_goal = goal(10)
+    next_goal.task_id = "another-task"
+    assert not wait(client.send_goal_async(next_goal)).accepted
+    assert not result_future.done()
+    assert node.state_machine.state == RobotState.STATE_EXECUTING_TASK
+    assert node.state_machine.current_task_id == request.task_id
+    assert node.state_machine.current_epoch == 9
+    assert next(iter(node.safety.records.values())).terminal is None
+    assert nav.count == 1
 
 
 def test_startup_session_and_overflow_gate(rig):

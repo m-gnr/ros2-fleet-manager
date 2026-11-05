@@ -21,6 +21,10 @@ C3.3.3 çalıştırıcısının `--auto-routes` seçeneği aynı Compose katmanl
 
 `--energy-policy` seçeneği ayrı **YAML-ENERGY-POLICY** koşusunu başlatır. Aynı canlı Nav2 mesafeleri ve iki Executor'dan alınan SoC ile iki YAML marjını karşılaştırır. Kabul ölçütü SQLite görevi ve Outbox kaydıdır. [Görev 7 komutları](../../docs/validation/c3/c3-3-4-task-7-commands-2026-11-05.md)
 
+`--high-preemption` seçeneği ayrı **T04-HIGH-E2E** koşusunu başlatır. İki Executor gerçek taşıma başlatır. Fleet Manager, boş rota önbelleğiyle Nav2'ye sorgu gönderir ve güvenli terminal iptalden sonra HIGH görevi tamamlatır. Bu koşuda tarihsel T04'teki kontrollü mesafeler kullanılmaz. [C4 geçiş kanıtı](../../docs/validation/c3/c3-3-4-final-c4-gate-2026-11-05.md)
+
+C2.3 ve C3.3.3 çalıştırıcıları `--domain` değerini DDS env dosyası üzerinden iki servise geçirir. Docker init, test supervisor'ına durdurma sinyali iletir. Supervisor Executor'ları ve geçici besleyiciyi durdurur, navigasyon ve lokalizasyon lifecycle yöneticilerini sırayla kapatır, ardından ayrı Nav2 süreçlerini launch üzerinden bekler. TF ve bridge'den sonra Gazebo kapanır. Compose'un 40 sn süresi bu sıralı kapanışın üst sınırıdır. Runner hem backend sonucu hem simulation kapanış işaretini ve launch alt süreç hatalarını denetler.
+
 ## Image bağımlılıkları
 
 DDS image'ı temel alınır; A, B1 ve Nav2 image'ları aşamalı hazırlanır. Action image'ı da DDS tabanına bağlıdır. B2/AMCL/B3/Retry katmanları Nav2 image adını kullanırken A katmanının build tarifini miras alır. Bu mevcut davranış organizasyon sırasında değiştirilmedi. Bu birleşimlerde `build` veya `up --build` doğru Nav2 bağımlılık image'ını üretme garantisi vermez; [B2 hazırlık kanıtı](../../docs/validation/simulation/b2/simulation-stage-b2-2026-10-23.md) esas alınmalıdır.

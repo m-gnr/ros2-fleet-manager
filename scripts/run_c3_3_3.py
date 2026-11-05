@@ -136,6 +136,7 @@ def main():
     scenario = parser.add_mutually_exclusive_group()
     scenario.add_argument('--auto-routes', action='store_true', help='Run the separate T02 automatic route variant')
     scenario.add_argument('--energy-policy', action='store_true', help='Run the separate YAML energy policy acceptance')
+    scenario.add_argument('--high-preemption', action='store_true', help='Run T04-HIGH-E2E with real Nav2 routes and delivery')
     args = parser.parse_args()
 
     docker_bin = shutil.which('docker') or '/usr/local/bin/docker'
@@ -161,6 +162,7 @@ def main():
     env['DDS_TEST_PAYLOAD'] = args.token
     env['ROS_DOMAIN_ID'] = str(args.domain)
     env['ROS_LOCALHOST_ONLY'] = '0'
+    env['C333_HIGH_PREEMPTION'] = '1' if args.high_preemption else '0'
     env['C333_AUTO_ROUTES'] = '1' if args.auto_routes else '0'
     env['C333_ENERGY_POLICY'] = '1' if args.energy_policy else '0'
     env['PATH'] = env.get('PATH', '') + ':/usr/local/bin:/opt/homebrew/bin'
@@ -178,10 +180,17 @@ def main():
         bufsize=1
     )
 
+    shutdown_clean = False
+    launch_failure = False
     for line in iter(proc.stdout.readline, ''):
         print(line, end='', flush=True)
+        if '"event": "SIMULATION_SHUTDOWN"' in line:
+            shutdown_clean = '"clean": true' in line
+        if 'process has died' in line:
+            launch_failure = True
 
     proc.wait()
+    exit_code = proc.returncode or int(not shutdown_clean or launch_failure)
     t_run_end = time.time()
 
     time.sleep(1.0)
@@ -192,7 +201,9 @@ def main():
     report = {
         'run_token': args.token,
         'domain_id': int(args.domain),
-        'exit_code': proc.returncode,
+        'exit_code': exit_code,
+        'compose_exit_code': proc.returncode,
+        'simulation_shutdown_clean': shutdown_clean and not launch_failure,
         'run_duration_s': round(t_run_end - t_run_start, 2),
         'entire_run_stats': entire_stats,
     }
@@ -202,7 +213,7 @@ def main():
     print(json.dumps(report, indent=2), flush=True)
     print('=' * 60, flush=True)
 
-    return proc.returncode
+    return exit_code
 
 
 if __name__ == '__main__':

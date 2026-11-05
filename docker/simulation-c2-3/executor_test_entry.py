@@ -2,17 +2,7 @@
 
 Never install this as a production executable or use it to resume a scenario.
 """
-import rclpy
-from rclpy.executors import MultiThreadedExecutor
-from fleet_robot_executor.node import RobotExecutorNode
+from fleet_robot_executor.node import main
 
-rclpy.init()
-node = RobotExecutorNode(_test_reset_verified=True)
-executor = MultiThreadedExecutor()
-executor.add_node(node)
-try:
-    executor.spin()
-finally:
-    node.destroy_node()
-    executor.shutdown()
-    rclpy.shutdown()
+if __name__ == "__main__":
+    main(_test_reset_verified=True)

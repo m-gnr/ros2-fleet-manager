@@ -176,14 +176,21 @@ def main():
         bufsize=1
     )
 
+    shutdown_clean = False
+    launch_failure = False
     for line in iter(proc.stdout.readline, ''):
         print(line, end='', flush=True)
+        if '"event": "SIMULATION_SHUTDOWN"' in line:
+            shutdown_clean = '"clean": true' in line
+        if 'process has died' in line:
+            launch_failure = True
         if 'NAVIGATION_WINDOW_START' in line:
             t_nav_start = time.time()
         elif 'NAVIGATION_WINDOW_END' in line:
             t_nav_end = time.time()
 
     proc.wait()
+    exit_code = proc.returncode or int(not shutdown_clean or launch_failure)
     t_run_end = time.time()
 
     time.sleep(1.0)
@@ -195,7 +202,9 @@ def main():
     report = {
         'run_token': args.token,
         'domain_id': int(args.domain),
-        'exit_code': proc.returncode,
+        'exit_code': exit_code,
+        'compose_exit_code': proc.returncode,
+        'simulation_shutdown_clean': shutdown_clean and not launch_failure,
         'run_duration_s': round(t_run_end - t_run_start, 2),
         'nav_duration_s': round(t_nav_end - t_nav_start, 2) if (t_nav_start and t_nav_end) else None,
         'entire_run_stats': entire_stats,
@@ -207,7 +216,7 @@ def main():
     print(json.dumps(report, indent=2), flush=True)
     print('=' * 60, flush=True)
 
-    return proc.returncode
+    return exit_code
 
 
 if __name__ == '__main__':

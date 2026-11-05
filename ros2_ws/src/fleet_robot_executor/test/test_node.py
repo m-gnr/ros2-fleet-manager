@@ -94,6 +94,30 @@ def test_status_timer_publisher(executor_node):
     assert msg.robot_id == "robot_1"
     assert msg.state == int(RobotState.STATE_IDLE)
     assert msg.current_phase == int(TaskPhase.PHASE_NONE)
+    assert msg.pose.header.stamp.sec == msg.pose.header.stamp.nanosec == 0
+
+
+@pytest.mark.parametrize("frame, published_frame", [
+    ("robot_1/odom", "map"),
+    ("other_robot/odom", "other_robot/odom"),
+    ("", ""),
+])
+def test_status_republishes_measurement_time_and_frame(executor_node, frame, published_frame):
+    messages = []
+    executor_node._status_pub.publish = messages.append
+    odom = Odometry()
+    odom.header.frame_id = frame
+    odom.header.stamp.sec = 200
+    odom.header.stamp.nanosec = 123456789
+    odom.pose.pose.orientation.w = 1.0
+    executor_node._odom_callback(odom)
+    executor_node._status_timer_callback()
+    executor_node._status_timer_callback()
+
+    assert messages[1].status_seq > messages[0].status_seq
+    for message in messages:
+        assert message.pose.header.frame_id == published_frame
+        assert message.pose.header.stamp == odom.header.stamp
 
 
 def test_clear_error_option_a(executor_node):

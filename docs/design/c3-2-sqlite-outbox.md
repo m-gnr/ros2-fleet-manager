@@ -53,15 +53,26 @@ JSON görüntüleri domain alanlarını korur; çalıştırılabilir nesne seril
 | `ACTION_RESULT` | Robot kimliği, görev/`assignment_epoch`/UUID, Executor'ın ilettiği `completed_epoch`, geçerli terminal `result_status`, isteğe bağlı `error_reason`. |
 | `CANCEL_RESPONSE` | Robot kimliği, görev/epoch/UUID, `accepted`, ilgili Outbox kaydının `cancel_command_id` değeri. |
 | `RESERVE`, `OCCUPIED`, `RELEASE` | `station_id`, `robot_id`. Consumer, `SESSION_BLOCKED` robot için `processed_events` tablosuna `REJECTED` yazar ve mevcut sahipliği korur. OCCUPIED mevcut sahipliği ve bilinen robot pozunu kontrol eder. Domain fiziksel ayrılmayı kabul edilen ROBOT_STATUS ile doğrular. |
+| `UNBLOCK` | `station_id`, `robot_id`. Açık operatör isteğini temsil eden iç olay. Consumer kanıtı robotun kabul edilmiş telemetrisinden alır ve kendi monotonik saatiyle denetler. |
 | `OUTBOX_CLAIM`, `OUTBOX_FINISH` | Göndericinin iç komutları; claim zamanı veya komut kimliği/deneme numarası/hata/tekrar zamanı. |
 
-Sonuçlar `APPLIED`, `DUPLICATE`, `STALE` veya `REJECTED` olur. Geçersiz alanlar/komutlar exception üretir ve transaction geri alınır. Olay API'si bir REST giriş doğrulayıcısı değildir.
+Domain olayları `APPLIED`, `DUPLICATE`, `STALE`, `SESSION_BLOCKED` veya `REJECTED` döndürür. Geçersiz alanlar/komutlar exception üretir ve transaction geri alınır. Olay API'si bir REST giriş doğrulayıcısı değildir.
 
 Action olaylarında üçlü kimlik aktif atamayla eşleşmelidir. Telemetri sırası robot başına, feedback sırası robot/goal başına kontrol edilir. Terminal sonuç feedback sıra numarasına bağımlı değildir. Eski epoch, eski sıra veya geriye giden telemetri zamanı uygulanmaz. İptal yanıtı ayrıca en son iptal komutuyla eşleşir; önceki iptal isteğinin geç yanıtı yeni isteği kapatamaz.
 
 `SUCCEEDED`, `FAILED` ve `PREEMPTED` için `completed_epoch` gerçek bir tam sayı olmalı ve aktif atamanın epoch'u ile eşleşmelidir. Eksik, geçersiz veya uyuşmayan değer uyarı logu ve `processed_events` kaydında `STALE` üretir. Görev, robot, rezervasyon ve Outbox kayıtları ile bekleyen preemption korunur. [C3.3.2-DEC-05](../decisions/c3-3-2-ros2-adapter-decisions-2026-10-24.md#c332-dec-05-gerçek-completed_epoch-doğrulaması)
 
-**Entegrasyon sınırı:** Mevcut `RobotStatus.msg` içinde `status_seq` yoktur. C3.2 bunu yalnız iç olay zarfında zorunlu tutar. Kaynak sırasını koruyan ROS eşlemesi sonraki adaptör işidir; geliş sırasına yeni numara vermek ağda sırasız teslimi çözmez. Bu değişiklik ROS IDL veya adaptör eklemez. `timestamp_sec`, `current_time` ve rota verisi çağıran tarafından tutarlı sağlanmalıdır; rota sağlayıcı senkron ve yan etkisiz bir mesafe sorgusu olmalıdır.
+**Saatler ve sıra:** C3.3 ile `status_seq` ve `publisher_session_id` doğrudan `RobotStatus.msg` alanlarından alınır. ROS adaptörü olayın `timestamp_sec` değerini monotonik alım saatinden üretir. Zamanlayıcının `current_time` değeri aynı saati kullanır. Rota sağlayıcı senkron ve yan etkisiz bir mesafe sorgusu olmalıdır.
+
+### İstasyon bırakma ve BLOCKED kurtarma
+
+Normal `RELEASE`, mevcut sahibin kaynağını `RELEASING` yapar. `OCCUPIED` veya `RELEASING` kaynak, sahibinin kabul edilmiş geçerli pozuyla istasyondan uzaklığı `tolerance_radius + departure_margin` değerini aştığında `FREE` olur. Eşiğe eşit mesafede sahiplik korunur. `BLOCKED` kaynak hem normal `RELEASE` isteğine hem otomatik fiziksel bırakmaya kapalıdır.
+
+Operatör önce Executor üzerinden `ClearRobotError` yürütür. Ardından, robot alanı terk ettiğinde `UNBLOCK` iç olayı tek tüketicide işlenebilir. İstasyonun blokajdaki sahibi ile istekteki robot eşleşmeli. FM aynı yayıncı oturumunda geçerli bir `STATE_ERROR` yayını ve ardından hata dışı RobotStatus içinde o ERROR yayınından daha yeni bir konum ölçümü görmüş olmalı. Olay yükündeki kimlikler yalnızca kayıt seçer. Kanıt, tüketicinin tuttuğu RobotStatus kaydından gelir.
+
+ROS tarafında `RobotStatus.header.stamp` yayın zamanıdır. `RobotStatus.pose.header.stamp` Executor'ın kullandığı odometri ölçüm zamanıdır. Sıfır damga ölçümün bulunmadığını gösterir. Adaptör robot kimliğini abonelikle eşler, ROS saatinde poz ve yayın damgalarını sıralar, ölçüm yaşını 2 saniyelik pencereye göre sınar. Consumer poz için kalan pencereyi monotonik saatle uygular. Sıra, epoch ve oturum filtreleri geçerlidir. Aynı veya geriye giden ölçüm damgası kanıtı yenilemez. Poz sonlu olmalı, istasyonla aynı boş olmayan koordinat çerçevesinde bulunmalı ve mesafe kesin olarak eşikten büyük olmalı.
+
+Değişen veya blokaj anında bilinmeyen oturumda kaynak sahipliği korunur. Operatör olayı için ret nedeni loglanır ve `processed_events` tablosuna `REJECTED` yazılır. Başarılı olay, sahiplik temizliğiyle aynı transaction'da kaydedilir. Kayıt ancak COMMIT sonrası belleğe yansır. Eski Executor sürümleri ölçüm yerine yayın zamanını yazdığı için bu kanıt sözleşmesi Executor ile FM adaptörünün birlikte güncellenmesini gerektirir.
 
 ## Outbox gönderim ve tekrar deneme
 

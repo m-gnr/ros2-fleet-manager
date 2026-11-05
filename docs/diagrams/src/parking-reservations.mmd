@@ -14,7 +14,12 @@ flowchart TD
  REL --> P{"Kabul edilen RobotStatus ile mesafe<br/>> tolerance_radius + departure_margin?"}:::decision
  P -->|"Hayır"| WAIT["Sahipliği koru"]:::wait
  P -->|"Evet"| FREE(["FREE"]):::terminal
- OCC -->|"ERROR"| BLOCK["BLOCKED; operatör ve fiziksel teyit gerekir"]:::error
+ OCC -->|"ERROR"| BLOCK["BLOCKED · sahiplik korunur"]:::error
+ REL -->|"ERROR"| BLOCK
+ BLOCK --> OP["Operatör isteği · UNBLOCK"]:::ui
+ OP --> PROOF{"Aynı oturumda ERROR sonrası güncel<br/>ve geçerli poz ile fiziksel ayrılma var mı?"}:::decision
+ PROOF -->|"Hayır"| BLOCK
+ PROOF -->|"Evet · atomik kayıt"| FREE
  SESSION["SESSION_BLOCKED<br/>Kaynak olaylarını reddet"]:::error --> WAIT
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;

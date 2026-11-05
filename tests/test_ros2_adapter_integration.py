@@ -38,7 +38,7 @@ if HAS_ROS2:
     from backend.fleet_manager.adapters.ros2_adapter_node import FleetROS2Adapter
     from backend.fleet_manager.adapters.service_client import ClearRobotErrorServiceClient
     from backend.fleet_manager.adapters.status_subscriber import RobotStatusSubscriberBridge
-    from backend.fleet_manager.domain.constants import RobotState, TaskPriority, TaskResultStatus
+    from backend.fleet_manager.domain.constants import RobotState, StationType, TaskPriority, TaskResultStatus
     from backend.fleet_manager.domain.fleet_manager_core import FleetManagerCore
     from backend.fleet_manager.domain.models import Pose2D
     from backend.fleet_manager.domain.scheduler import RouteDistanceProvider
@@ -51,7 +51,7 @@ if HAS_ROS2:
 
 
 def test_ros2_status_subscription_and_session_blocked(tmp_path):
-    """Verify real ROS 2 RobotStatus pub/sub and session change detection."""
+    """Verify real ROS 2 station recovery and session change detection."""
     rclpy.init()
     node = Node("test_fm_status_node")
     pub_node = Node("test_robot_publisher_node")
@@ -60,6 +60,7 @@ def test_ros2_status_subscription_and_session_blocked(tmp_path):
     store = SQLiteStore(db_path)
     core = FleetManagerCore(MockRoutes(), Pose2D())
     core.register_robot("robot_1")
+    core.register_station("dock", StationType.CHARGING, Pose2D())
 
     async def scenario():
         loop = FleetEventLoop(store, core)
@@ -68,6 +69,8 @@ def test_ros2_status_subscription_and_session_blocked(tmp_path):
         bridge = RobotStatusSubscriberBridge(
             consumer=loop,
             loop=asyncio.get_running_loop(),
+            robot_id="robot_1",
+            ros_clock_ns=lambda: node.get_clock().now().nanoseconds,
         )
 
         sub = node.create_subscription(
@@ -111,6 +114,24 @@ def test_ros2_status_subscription_and_session_blocked(tmp_path):
         assert r_rec.session_id == str(sess_1)
         assert r_rec.initial_status_verified is True
         assert r_rec.session_blocked is False
+
+        station = {"station_id": "dock", "robot_id": "robot_1"}
+        assert await loop.submit(Event("RESERVE", station)) == "APPLIED"
+        msg1.status_seq = 2
+        msg1.state = RobotState.STATE_ERROR
+        msg1.header.stamp = pub_node.get_clock().now().to_msg()
+        pub.publish(msg1)
+        await asyncio.sleep(0.3)
+        assert await loop.submit(Event("UNBLOCK", station)) == "REJECTED"
+
+        msg1.status_seq = 3
+        msg1.state = RobotState.STATE_IDLE
+        msg1.pose.pose.position.x = 1.0
+        msg1.pose.header.stamp = pub_node.get_clock().now().to_msg()
+        msg1.header.stamp = pub_node.get_clock().now().to_msg()
+        pub.publish(msg1)
+        await asyncio.sleep(0.3)
+        assert await loop.submit(Event("UNBLOCK", station)) == "APPLIED"
 
         # Send second message with changed session UUID (Executor restart!)
         sess_2 = uuid.uuid4()

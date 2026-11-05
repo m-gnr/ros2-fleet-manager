@@ -6,6 +6,7 @@ uint64 current_epoch
 uint8 state
 uint8 current_phase
 bool is_loaded
+# Pose header stamp is the measurement time. Zero means no measured pose yet.
 geometry_msgs/PoseStamped pose
 float32 battery_soc_percent
 float64 battery_energy_wh

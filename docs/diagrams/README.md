@@ -737,7 +737,7 @@ flowchart TD
 
 **Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_fleet_manager_outbox.py](../../tests/test_fleet_manager_outbox.py)
 
-**Sınır / fark:** Otomatik görev sonrası park/şarj yöneticisi yoktur. Mevcut nearest-free primitive Öklid mesafesi kullanır. `unblock()` doğrudan FREE yapar; hedef ayrılma teyidini sağlamaz ve consumer üzerinden tamamlanmış kurtarma akışı değildir.
+**Sınır / fark:** Otomatik görev sonrası park/şarj yöneticisi planlanıyor. Boş kaynak araması Öklid mesafesi kullanır. Normal bırakma ve operatörün iç `UNBLOCK` olayı ayrı akışlardır. [Fiziksel kanıt koşulları](../design/c3-2-sqlite-outbox.md#istasyon-bırakma-ve-blocked-kurtarma)
 
 ![Park rezervasyonu ve güvenli bekleme](svg/parking-reservations.svg)
 
@@ -761,7 +761,12 @@ flowchart TD
  REL --> P{"Kabul edilen RobotStatus ile mesafe<br/>> tolerance_radius + departure_margin?"}:::decision
  P -->|"Hayır"| WAIT["Sahipliği koru"]:::wait
  P -->|"Evet"| FREE(["FREE"]):::terminal
- OCC -->|"ERROR"| BLOCK["BLOCKED; operatör ve fiziksel teyit gerekir"]:::error
+ OCC -->|"ERROR"| BLOCK["BLOCKED · sahiplik korunur"]:::error
+ REL -->|"ERROR"| BLOCK
+ BLOCK --> OP["Operatör isteği · UNBLOCK"]:::ui
+ OP --> PROOF{"Aynı oturumda ERROR sonrası güncel<br/>ve geçerli poz ile fiziksel ayrılma var mı?"}:::decision
+ PROOF -->|"Hayır"| BLOCK
+ PROOF -->|"Evet · atomik kayıt"| FREE
  SESSION["SESSION_BLOCKED<br/>Kaynak olaylarını reddet"]:::error --> WAIT
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
@@ -794,7 +799,7 @@ flowchart TD
 
 **Test / kanıt:** [test_clear_robot_error_client.py](../../tests/test_clear_robot_error_client.py) · [test_executor_state_machine.py](../../tests/test_executor_state_machine.py)
 
-**Sınır / fark:** Node odometriyle denetler; saf state_machine.clear_robot_error çağrısında odometri verilmezse duruş kontrolü atlanabilir. Kaynak unblock primitive’i ayrıca fiziksel kontrol yapmaz. Bu farklar düzeltilmedi.
+**Sınır / fark:** ROS node, ClearRobotError isteğinde duruşu odometriyle denetler. Saf state machine çağrısında odometri verilmezse bu kontrol atlanabilir. Kaynak kurtarma için FM ayrıca operatör isteği ve fiziksel ayrılma kanıtı arar. [İstasyon kurtarma sözleşmesi](../design/c3-2-sqlite-outbox.md#istasyon-bırakma-ve-blocked-kurtarma)
 
 ![FAILED / ERROR ve operatör kurtarma](svg/failure-operator-recovery.svg)
 
@@ -815,7 +820,7 @@ flowchart TD
  C -->|"Hayır"| R["İsteği reddet"]:::error
  C -->|"Evet"| ID["Executor IDLE; epoch korunur<br/>FAILED görev yeniden başlamaz"]:::executor
  ID --> FM["FM yeni RobotStatus bekler"]:::fm
- FM --> PH["Kaynak için ayrıca fiziksel ayrılma teyidi<br/>Kurtarma orkestrasyonu eksik"]:::wait
+ FM --> PH["Operatör UNBLOCK isteği<br/>Aynı oturumda güncel fiziksel ayrılma kanıtı"]:::wait
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

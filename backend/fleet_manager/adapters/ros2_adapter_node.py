@@ -69,6 +69,8 @@ class FleetROS2Adapter:
             status_bridge = RobotStatusSubscriberBridge(
                 consumer=self.consumer,
                 loop=self.loop,
+                ros_clock_ns=lambda: self.node.get_clock().now().nanoseconds,
+                robot_id=r_id,
             )
             self.status_bridges[r_id] = status_bridge
             self.node.create_subscription(

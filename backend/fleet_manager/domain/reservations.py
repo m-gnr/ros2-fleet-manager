@@ -4,15 +4,21 @@ Implements strict single ownership, physical departure confirmation,
 and BLOCKED containment rules (DOC-ARCH Sec 9, C3-DEC Sec 2.2).
 """
 
+import logging
+import math
 from typing import Dict, List, Optional
 
 from .constants import (
     DEFAULT_DEPARTURE_MARGIN_M,
     DEFAULT_STATION_TOLERANCE_RADIUS_M,
     ReservationState,
+    RobotState,
     StationType,
 )
-from .models import Pose2D, StationRecord
+from .models import Pose2D, RobotRecord, StationRecord
+
+logger = logging.getLogger(__name__)
+_RECOVERED_STATES = set(RobotState) - {RobotState.STATE_ERROR}
 
 
 class ReservationManager:
@@ -92,7 +98,7 @@ class ReservationManager:
         if station.state == ReservationState.BLOCKED:
             return False
 
-        if station.state == ReservationState.RESERVED and station.reserved_by_robot_id != robot_id:
+        if station.state != ReservationState.FREE and not station.has_owner(robot_id):
             return False
 
         station.state = ReservationState.OCCUPIED
@@ -113,7 +119,7 @@ class ReservationManager:
         if station.state == ReservationState.BLOCKED:
             return False
 
-        if station.occupied_by_robot_id != robot_id and station.reserved_by_robot_id != robot_id:
+        if not station.has_owner(robot_id):
             return False
 
         # Transition to RELEASING
@@ -140,44 +146,73 @@ class ReservationManager:
         if station.state not in (ReservationState.RELEASING, ReservationState.OCCUPIED, ReservationState.RESERVED):
             return False
 
-        if not station.is_physically_occupied(robot_pose):
-            # Robot has physically departed!
-            station.state = ReservationState.FREE
-            station.reserved_by_robot_id = None
-            station.occupied_by_robot_id = None
+        if station.is_physically_departed(robot_pose):
+            self._free(station)
             return True
 
         # Still physically occupied within tolerance
         return False
 
-    def mark_blocked(self, station_id: str, robot_id: str) -> bool:
+    def mark_blocked(
+        self, station_id: str, robot_id: str, *,
+        session_id: Optional[str] = None, error_status_ns: Optional[int] = None,
+    ) -> bool:
         """Mark station as BLOCKED due to an error on the occupying/reserving robot.
         
         STRICT CONTRACT (C3-DEC §2.2):
         When a robot enters STATE_ERROR, its physical resource is BLOCKED
         and cannot be allocated to another robot until operator intervention.
+        A zero error timestamp discards the recovery fence; None preserves it.
         """
         station = self._stations.get(station_id)
         if station is None:
             return False
-
-        station.state = ReservationState.BLOCKED
-        station.reserved_by_robot_id = robot_id
-        station.occupied_by_robot_id = robot_id
-        return True
-
-    def unblock(self, station_id: str) -> bool:
-        """Operator action to unblock a station after clearing error."""
-        station = self._stations.get(station_id)
-        if station is None:
+        if station.state == ReservationState.FREE:
+            station.reserved_by_robot_id = station.occupied_by_robot_id = robot_id
+        elif not station.has_owner(robot_id):
             return False
 
-        if station.state == ReservationState.BLOCKED:
-            station.state = ReservationState.FREE
-            station.reserved_by_robot_id = None
-            station.occupied_by_robot_id = None
+        if station.state != ReservationState.BLOCKED:
+            station.blocked_session_id = session_id
+        if error_status_ns == 0:
+            station.blocked_after_ns = 0
+        elif error_status_ns is not None and session_id and station.blocked_session_id == session_id:
+            station.blocked_after_ns = max(station.blocked_after_ns, error_status_ns)
+        station.state = ReservationState.BLOCKED
+        return True
+
+    def unblock(
+        self, station_id: str, robot: Optional[RobotRecord] = None, *, now: float = 0.0,
+    ) -> bool:
+        """Recover a blocked station using its owner's accepted RobotStatus."""
+        station = self._stations.get(station_id)
+        if station is None or station.state != ReservationState.BLOCKED:
+            reason = "station is not blocked"
+        elif robot is None or not station.has_owner(robot.robot_id):
+            reason = "station owner is required"
+        elif robot.session_blocked or not robot.session_id or robot.session_id != station.blocked_session_id:
+            reason = "owner session cannot be verified"
+        elif (robot.state not in _RECOVERED_STATES or not station.blocked_after_ns
+              or robot.last_pose_sample_ns <= station.blocked_after_ns
+              or not math.isfinite(now)
+              or not robot.last_status_received_at <= now <= robot.station_pose_valid_until
+              or robot.is_stale(now)):
+            reason = "fresh pose after owner error recovery is required"
+        elif not station.is_physically_departed(robot.pose):
+            reason = "physical departure could not be verified"
+        else:
+            self._free(station)
             return True
+        logger.warning("UNBLOCK rejected station=%s reason=%s", station_id, reason)
         return False
+
+    @staticmethod
+    def _free(station: StationRecord) -> None:
+        station.state = ReservationState.FREE
+        station.reserved_by_robot_id = None
+        station.occupied_by_robot_id = None
+        station.blocked_session_id = None
+        station.blocked_after_ns = 0
 
     def find_nearest_free_station(
         self,

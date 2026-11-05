@@ -57,7 +57,7 @@ class FleetTracker:
         state: int,
         current_phase: int,
         is_loaded: bool,
-        pose: Pose2D,
+        pose: Optional[Pose2D],
         battery_soc_percent: float,
         battery_energy_wh: float,
         current_epoch: int,
@@ -82,7 +82,8 @@ class FleetTracker:
         robot.state = state
         robot.current_phase = current_phase
         robot.is_loaded = is_loaded
-        robot.pose = pose
+        if pose is not None:
+            robot.pose = pose
         robot.battery_soc_percent = battery_soc_percent
         robot.battery_energy_wh = battery_energy_wh
         robot.current_epoch = current_epoch

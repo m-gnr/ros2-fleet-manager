@@ -181,13 +181,16 @@ class FleetManagerCore:
         state: int,
         current_phase: int,
         is_loaded: bool,
-        pose: Pose2D,
+        pose: Optional[Pose2D],
         battery_soc_percent: float,
         battery_energy_wh: float,
         current_epoch: int,
         current_task_id: Optional[str],
         timestamp_sec: float,
         publisher_session_id: Optional[str] = None,
+        source_status_ns: int = 0,
+        pose_sample_ns: int = 0,
+        pose_valid_until: Optional[float] = None,
     ) -> Optional[RobotRecord]:
         """Process incoming 5 Hz RobotStatus message.
         
@@ -197,6 +200,9 @@ class FleetManagerCore:
         robot = self.tracker.get_robot(robot_id)
         if robot is None or not self.check_status_session(robot, publisher_session_id):
             return robot
+
+        if not isinstance(pose, Pose2D) or not pose.has_finite_coordinates():
+            pose = None
 
         self.tracker.update_robot_status(
             robot_id=robot_id,
@@ -213,13 +219,26 @@ class FleetManagerCore:
         if robot.session_id is None:
             robot.session_id = publisher_session_id
 
+        # A newer heartbeat cannot renew a repeated measurement or retain old proof.
+        robot.station_pose_valid_until = 0.0
+        if (pose is not None and publisher_session_id and pose_valid_until
+                and pose_sample_ns > robot.last_pose_sample_ns):
+            robot.last_pose_sample_ns = pose_sample_ns
+            robot.station_pose_valid_until = pose_valid_until
+
         # Check departure from any station robot was occupying/releasing
         station = self.reservations.get_station_by_robot(robot_id)
         if station is not None:
             if state == RobotState.STATE_ERROR:
                 # Robot errored at station -> mark resource BLOCKED (C3-DEC §2.2)
-                self.reservations.mark_blocked(station.station_id, robot_id)
-            elif station.state in (ReservationState.RELEASING, ReservationState.OCCUPIED):
+                self.reservations.mark_blocked(
+                    station.station_id, robot_id, session_id=robot.session_id,
+                    error_status_ns=source_status_ns if publisher_session_id else 0,
+                )
+            elif (station.has_owner(robot_id)
+                  and station.state in (ReservationState.RELEASING, ReservationState.OCCUPIED)
+                  and pose is not None
+                  and (pose_valid_until is None or robot.station_pose_valid_until)):
                 self.reservations.update_physical_departure(station.station_id, pose)
 
         return robot
@@ -327,7 +346,11 @@ class FleetManagerCore:
             # Mark occupied station BLOCKED if any
             station = self.reservations.get_station_by_robot(robot_id)
             if station is not None:
-                self.reservations.mark_blocked(station.station_id, robot_id)
+                self.reservations.mark_blocked(
+                    station.station_id, robot_id, session_id=robot.session_id,
+                    # A result can precede ERROR telemetry. It cannot establish the recovery fence.
+                    error_status_ns=None if robot.state == RobotState.STATE_ERROR else 0,
+                )
 
             return True, task
 

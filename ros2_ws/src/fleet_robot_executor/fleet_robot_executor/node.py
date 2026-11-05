@@ -656,8 +656,9 @@ class RobotExecutorNode(Node):
         lin_speed = math.hypot(vx, vy)
         ang_speed = msg.twist.twist.angular.z
 
-        # If odom frame is robot-local (not "map"), transform to map coordinates using initial_pose
-        if "odom" in (msg.header.frame_id or "").lower() and self.initial_pose != (0.0, 0.0, 0.0):
+        # The configured spawn transform applies only to this robot's odometry.
+        odom_frame = msg.header.frame_id.lstrip("/")
+        if odom_frame in ("odom", f"{self.robot_namespace.strip('/')}/odom"):
             init_x, init_y, init_yaw = self.initial_pose
             cos_i = math.cos(init_yaw)
             sin_i = math.sin(init_yaw)
@@ -669,7 +670,7 @@ class RobotExecutorNode(Node):
             map_x = px
             map_y = py
             map_yaw = yaw
-            frame_id = msg.header.frame_id or "map"
+            frame_id = msg.header.frame_id
 
         pose_stamped = PoseStamped(
             x=map_x,
@@ -710,7 +711,7 @@ class RobotExecutorNode(Node):
 
         msg = RobotStatus()
         msg.header.stamp = now_stamp.to_msg()
-        msg.header.frame_id = snap.pose.frame_id or "map"
+        msg.header.frame_id = snap.pose.frame_id
         msg.status_seq = sequence
         msg.publisher_session_id.uuid = list(self.safety.session_id.bytes)
         msg.robot_id = snap.robot_id
@@ -719,7 +720,9 @@ class RobotExecutorNode(Node):
         msg.current_phase = snap.current_phase
         msg.is_loaded = snap.is_loaded
 
-        msg.pose.header.stamp = msg.header.stamp
+        # Preserve measurement time when a heartbeat republishes cached odometry.
+        pose_ns = round(snap.pose.timestamp_sec * 10**9)
+        msg.pose.header.stamp.sec, msg.pose.header.stamp.nanosec = divmod(pose_ns, 10**9)
         msg.pose.header.frame_id = msg.header.frame_id
         msg.pose.pose.position.x = snap.pose.x
         msg.pose.pose.position.y = snap.pose.y

@@ -14,6 +14,7 @@ from typing import Any, Callable, Optional
 import uuid
 
 from ..domain.models import Pose2D
+from ..domain.constants import ROBOT_STATUS_STALE_TIMEOUT_SEC
 from ..event_loop import Event
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def ros_robot_status_to_dict(msg: Any, receipt_time_sec: Optional[float] = None)
     pos = msg.pose.pose.position
     ori = msg.pose.pose.orientation
     yaw = quaternion_to_yaw(ori.x, ori.y, ori.z, ori.w)
-    frame_id = msg.pose.header.frame_id or "map"
+    frame_id = msg.pose.header.frame_id
     if receipt_time_sec is not None:
         timestamp_sec = float(receipt_time_sec)
     else:
@@ -75,16 +76,34 @@ class RobotStatusSubscriberBridge:
         loop: asyncio.AbstractEventLoop,
         on_outcome: Optional[Callable[[str, dict], None]] = None,
         clock: Optional[Callable[[], float]] = None,
+        ros_clock_ns: Optional[Callable[[], int]] = None,
+        robot_id: Optional[str] = None,
     ) -> None:
         self.consumer = consumer
         self.loop = loop
         self.on_outcome = on_outcome
         self.clock = clock or time.monotonic
+        self.ros_clock_ns = ros_clock_ns
+        self.robot_id = robot_id
 
     def handle_status_msg(self, msg: Any) -> Any:
         """ROS callback entrypoint. Thread-safely dispatches event to asyncio consumer."""
-        receipt_time = self.clock() if self.clock is not None else None
+        if self.robot_id is not None and msg.robot_id != self.robot_id:
+            logger.warning("ROBOT_STATUS rejected topic_robot=%s message_robot=%s", self.robot_id, msg.robot_id)
+            return None
+        receipt_time = self.clock()
         payload = ros_robot_status_to_dict(msg, receipt_time_sec=receipt_time)
+        payload["pose_valid_until"] = 0.0
+        if self.ros_clock_ns is not None and uuid.UUID(payload["publisher_session_id"]).int:
+            status_ns = msg.header.stamp.sec * 10**9 + msg.header.stamp.nanosec
+            sample_ns = msg.pose.header.stamp.sec * 10**9 + msg.pose.header.stamp.nanosec
+            now_ns = self.ros_clock_ns()
+            if 0 <= now_ns - status_ns <= ROBOT_STATUS_STALE_TIMEOUT_SEC * 10**9 and status_ns > 0:
+                payload["source_status_ns"] = status_ns
+            age_sec = (now_ns - sample_ns) / 10**9
+            if 0 < sample_ns <= status_ns <= now_ns and age_sec <= ROBOT_STATUS_STALE_TIMEOUT_SEC:
+                payload["pose_sample_ns"] = sample_ns
+                payload["pose_valid_until"] = receipt_time + ROBOT_STATUS_STALE_TIMEOUT_SEC - age_sec
         event = Event(kind="ROBOT_STATUS", payload=payload)
         
         future = asyncio.run_coroutine_threadsafe(

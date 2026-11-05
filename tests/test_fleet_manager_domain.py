@@ -654,6 +654,16 @@ class TestTieBreaking:
 class TestReservations:
     """Tests for station reservation rules, physical departure, and BLOCKED containment."""
 
+    def test_unblock_by_station_id_cannot_clear_physical_ownership(self):
+        mgr = ReservationManager()
+        station = mgr.register_station("dock", StationType.CHARGING, Pose2D())
+        assert mgr.reserve("dock", "r1")
+        assert mgr.mark_occupied("dock", "r1")
+        assert mgr.mark_blocked("dock", "r1")
+        assert not mgr.unblock("dock")
+        assert station.state == ReservationState.BLOCKED
+        assert station.reserved_by_robot_id == station.occupied_by_robot_id == "r1"
+
     def test_single_ownership_enforcement(self) -> None:
         mgr = ReservationManager()
         mgr.register_station("dock_1", StationType.CHARGING, Pose2D(0, 0), tolerance_radius=0.30)

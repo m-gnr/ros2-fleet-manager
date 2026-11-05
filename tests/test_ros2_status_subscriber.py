@@ -13,6 +13,7 @@ Verifies C3.3-DEC-01 & C3.3.2-DEC-04:
 """
 
 import asyncio
+from contextlib import closing
 from dataclasses import dataclass
 from typing import Any
 import uuid
@@ -362,5 +363,53 @@ def test_robot_status_subscriber_bridge_threadsafety(tmp_path):
 
         await loop.close()
         store.close()
+
+    asyncio.run(scenario())
+
+
+def test_recovery_bridge_checks_measurement_age_frame_and_topic(tmp_path):
+    async def scenario():
+        now_ros = [101 * 10**9]
+        with closing(SQLiteStore(tmp_path / "recovery.db")) as store:
+            core = FleetManagerCore(SimpleRoutes(), Pose2D())
+            core.register_robot("robot_1")
+            core.register_robot("robot_2")
+            core.register_station("dock", StationType.CHARGING, Pose2D())
+            consumer = FleetEventLoop(store, core, clock=lambda: 11)
+            await consumer.start()
+            bridge = RobotStatusSubscriberBridge(
+                consumer, asyncio.get_running_loop(), clock=lambda: 11,
+                ros_clock_ns=lambda: now_ros[0], robot_id="robot_1",
+            )
+            session = MockUUID(uuid=list(uuid.uuid4().bytes))
+
+            def msg(seq, status_time, sample_time, *, state=RobotState.STATE_IDLE, frame="map"):
+                status_msg = MockRobotStatusMsg(
+                    status_seq=seq, publisher_session_id=session, state=state,
+                    header=MockHeader(status_time, 0),
+                )
+                status_msg.pose.header = MockHeader(sample_time, 0, frame)
+                return status_msg
+
+            station = {"station_id": "dock", "robot_id": "robot_1"}
+            await consumer.submit(Event("RESERVE", station))
+            error = msg(1, 101, 0, state=RobotState.STATE_ERROR)
+            assert await asyncio.wrap_future(bridge.handle_status_msg(error)) == "APPLIED"
+            now_ros[0] = 106 * 10**9
+            for status_msg in (
+                msg(2, 106, 101),           # Current status wrapping old odometry.
+                msg(3, 106, 107),           # Future odometry.
+                msg(4, 106, 0),             # No measurement.
+                msg(5, 106, 104, frame=""), # Missing frame must never default to map.
+            ):
+                assert await asyncio.wrap_future(bridge.handle_status_msg(status_msg)) == "APPLIED"
+                assert await consumer.submit(Event("UNBLOCK", station)) == "REJECTED"
+            wrong_robot = msg(6, 106, 105)
+            wrong_robot.robot_id = "robot_2"
+            assert bridge.handle_status_msg(wrong_robot) is None
+            assert await consumer.submit(Event("UNBLOCK", station)) == "REJECTED"
+            assert await asyncio.wrap_future(bridge.handle_status_msg(msg(6, 106, 105))) == "APPLIED"
+            assert await consumer.submit(Event("UNBLOCK", station)) == "APPLIED"
+            await consumer.close()
 
     asyncio.run(scenario())

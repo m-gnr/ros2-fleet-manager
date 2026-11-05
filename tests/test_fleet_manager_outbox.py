@@ -30,11 +30,12 @@ def runtime(tmp_path):
     store.close()
 
 
-def status(robot="r1", seq=1, epoch=0, task=None, state=1, phase=0, pose=None, timestamp=10, session=None):
+def status(robot="r1", seq=1, epoch=0, task=None, state=1, phase=0, pose=None, timestamp=10, session=None,
+           **source):
     return Event("ROBOT_STATUS", dict(robot_id=robot, status_seq=seq, current_epoch=epoch,
         current_task_id=task, state=state, current_phase=phase, is_loaded=False,
         pose=pose or Pose2D(), battery_soc_percent=100, battery_energy_wh=100,
-        timestamp_sec=timestamp, publisher_session_id=session))
+        timestamp_sec=timestamp, publisher_session_id=session, **source))
 
 
 def submit(task="t1", priority=3, created_at=1):
@@ -167,6 +168,188 @@ def test_trusted_session_release_requires_ordered_physical_departure(runtime):
         assert await runtime.submit(reserve) == "DUPLICATE"
         assert rows(runtime, "reservations")[0]["state"] == "FREE"
         await runtime.close()
+    asyncio.run(scenario())
+
+
+def recovery_status(seq, pose, *, state=RobotState.STATE_IDLE, session="original",
+                    timestamp=10, source_ns=None, valid_until=12):
+    source_ns = seq * 10**9 if source_ns is None else source_ns
+    event = status(seq=seq, state=state, pose=pose, session=session, timestamp=timestamp,
+                   source_status_ns=source_ns, pose_sample_ns=source_ns, pose_valid_until=valid_until)
+    event.payload["pose"] = pose
+    return event
+
+
+async def block_dock(runtime, *, session="original", occupied=True):
+    station = {"station_id": "dock", "robot_id": "r1"}
+    assert await runtime.submit(recovery_status(1, Pose2D(), session=session)) == "APPLIED"
+    assert await runtime.submit(Event("RESERVE", station)) == "APPLIED"
+    if occupied:
+        assert await runtime.submit(Event("OCCUPIED", station)) == "APPLIED"
+    assert await runtime.submit(
+        recovery_status(2, Pose2D(), state=RobotState.STATE_ERROR, session=session)
+    ) == "APPLIED"
+    assert rows(runtime, "reservations")[0]["state"] == "BLOCKED"
+    return station
+
+
+@pytest.mark.parametrize("pose, accepted", [
+    (Pose2D(), False),
+    (Pose2D(0.30), False),
+    (Pose2D(0.34), False),
+    (Pose2D(0.35), False),
+    (Pose2D(0.35001), True),
+    (None, False),
+    (Pose2D(float("nan")), False),
+    (Pose2D(float("inf")), False),
+    (Pose2D(1, float("-inf")), False),
+    (Pose2D("invalid"), False),
+    (Pose2D(1, frame_id="odom"), False),
+    (Pose2D(1, frame_id=""), False),
+])
+def test_unblock_requires_physical_departure_and_preserves_ownership(runtime, monkeypatch, pose, accepted):
+    monkeypatch.setattr(runtime, "_clock", lambda: 11)
+
+    async def scenario():
+        await runtime.start()
+        station = await block_dock(runtime)
+        before = rows(runtime, "reservations")
+        assert await runtime.submit(Event("RELEASE", station)) == "REJECTED"
+        assert await runtime.submit(recovery_status(3, pose)) == "APPLIED"
+        assert rows(runtime, "reservations") == before  # Status never unblocks by itself.
+        event = Event("UNBLOCK", station)
+        outcome = "APPLIED" if accepted else "REJECTED"
+        assert await runtime.submit(event) == outcome
+        assert rows(runtime, "processed_events")[-1]["outcome"] == outcome
+        assert await runtime.submit(event) == "DUPLICATE"
+        if accepted:
+            record = runtime.core.reservations.get_station("dock")
+            assert record.state == ReservationState.FREE
+            assert record.reserved_by_robot_id is record.occupied_by_robot_id is None
+        else:
+            assert rows(runtime, "reservations") == before
+            record = runtime.core.reservations.get_station("dock")
+            assert record.state == ReservationState.BLOCKED
+            assert record.reserved_by_robot_id == record.occupied_by_robot_id == "r1"
+        assert await runtime.submit(Event("RESERVE", {**station, "robot_id": "r2"})) == outcome
+        await runtime.close()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("case", [
+    "stale_receipt", "expired_pose", "still_error", "session_change", "unbound_owner",
+    "other_robot", "duplicate", "old_seq", "old_receipt", "replayed_sample", "anonymous",
+    "older_sample",
+])
+def test_unblock_rejects_untrusted_evidence(runtime, monkeypatch, case):
+    now = [11.0]
+    monkeypatch.setattr(runtime, "_clock", lambda: now[0])
+
+    async def scenario():
+        await runtime.start()
+        station = await block_dock(runtime, session=None if case == "unbound_owner" else "original",
+                                   occupied=False)
+        before = rows(runtime, "reservations")
+        departed = recovery_status(3, Pose2D(1))
+        expected_status = "APPLIED"
+        if case == "stale_receipt":
+            # Apply while fresh, then age out before the operator event.
+            now[0] = 10.5
+        elif case == "expired_pose":
+            departed.payload["pose_valid_until"] = 10.5
+        elif case == "still_error":
+            departed.payload["state"] = RobotState.STATE_ERROR
+        elif case == "session_change":
+            # Even a previously valid sample cannot be used after session change.
+            assert await runtime.submit(departed) == "APPLIED"
+            departed = recovery_status(4, Pose2D(1), session="restart")
+            expected_status = "SESSION_BLOCKED"
+        elif case == "other_robot":
+            departed.payload["robot_id"] = "r2"
+        elif case in ("duplicate", "old_seq"):
+            departed.payload["status_seq"] = 2 if case == "duplicate" else 1
+            expected_status = "STALE"
+        elif case == "old_receipt":
+            departed.payload["timestamp_sec"] = 9
+            expected_status = "STALE"
+        elif case == "replayed_sample":
+            departed.payload["pose_sample_ns"] = 2 * 10**9
+        elif case == "older_sample":
+            departed.payload["pose_sample_ns"] = 10**9
+        elif case == "anonymous":
+            departed.payload["publisher_session_id"] = None
+        assert await runtime.submit(departed) == expected_status
+        if case == "stale_receipt":
+            now[0] = 12.01
+        if case == "other_robot":
+            assert await runtime.submit(Event("UNBLOCK", {**station, "robot_id": "r2"})) == "REJECTED"
+        assert await runtime.submit(Event("UNBLOCK", station)) == "REJECTED"
+        assert await runtime.submit(Event("RESERVE", {**station, "robot_id": "r2"})) == "REJECTED"
+        assert rows(runtime, "reservations")[0]["state"] == "BLOCKED"
+        assert rows(runtime, "reservations")[0]["reserved_by"] == "r1"
+        assert rows(runtime, "reservations")[0]["occupied_by"] is None
+        if case != "still_error":
+            assert rows(runtime, "reservations") == before
+        await runtime.close()
+
+    asyncio.run(scenario())
+
+
+def test_unblock_commit_failure_preserves_state_and_can_retry(runtime, monkeypatch):
+    monkeypatch.setattr(runtime, "_clock", lambda: 11)
+
+    async def scenario():
+        await runtime.start()
+        station = await block_dock(runtime)
+        assert await runtime.submit(recovery_status(3, Pose2D(1))) == "APPLIED"
+        event = Event("UNBLOCK", station)
+        tables = ("reservations", "robots", "processed_events", "outbox_events")
+        before = {table: rows(runtime, table) for table in tables}
+        connection = runtime.store.connection
+        deny = True
+
+        def deny_commit(operation, argument, *_):
+            if deny and operation == sqlite3.SQLITE_TRANSACTION and argument == "COMMIT":
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        connection.set_authorizer(deny_commit)
+        with pytest.raises(sqlite3.DatabaseError):
+            await runtime.submit(event)
+        deny = False
+        assert {table: rows(runtime, table) for table in tables} == before
+        assert runtime.core.reservations.get_station("dock").state == ReservationState.BLOCKED
+        assert await runtime.submit(event) == "APPLIED"
+        assert rows(runtime, "reservations")[0]["state"] == "FREE"
+        await runtime.close()
+
+    asyncio.run(scenario())
+
+
+def test_failed_result_requires_observed_error_before_recovery(runtime, monkeypatch):
+    monkeypatch.setattr(runtime, "_clock", lambda: 11)
+
+    async def scenario():
+        await runtime.start()
+        station = {"station_id": "dock", "robot_id": "r1"}
+        await runtime.submit(recovery_status(1, Pose2D()))
+        await runtime.submit(Event("RESERVE", station))
+        await runtime.submit(submit())
+        await runtime.submit(Event("TICK", {"current_time": 10}))
+        assert await runtime.submit(action(runtime, result_status=2)) == "APPLIED"
+        for seq, state, expected in [
+            (2, RobotState.STATE_IDLE, "REJECTED"),
+            (3, RobotState.STATE_ERROR, "REJECTED"),
+            (4, RobotState.STATE_IDLE, "APPLIED"),
+        ]:
+            telemetry = recovery_status(seq, Pose2D(1), state=state)
+            telemetry.payload["current_epoch"] = 1
+            assert await runtime.submit(telemetry) == "APPLIED"
+            assert await runtime.submit(Event("UNBLOCK", station)) == expected
+        assert rows(runtime, "tasks")[0]["status"] == "FAILED"
+        await runtime.close()
+
     asyncio.run(scenario())
 
 

@@ -36,6 +36,13 @@ class Pose2D:
         """Calculate Euclidean straight-line distance (for departure/proximity only)."""
         return math.hypot(self.x - other.x, self.y - other.y)
 
+    def has_finite_coordinates(self) -> bool:
+        try:
+            return all(type(value) in (float, int) and math.isfinite(value)
+                       for value in (self.x, self.y, self.yaw))
+        except OverflowError:
+            return False
+
 
 @dataclass
 class Task:
@@ -97,6 +104,8 @@ class RobotRecord:
     current_task_id: Optional[str] = None
     active_goal_uuid: Optional[str] = None
     last_status_received_at: float = 0.0
+    last_pose_sample_ns: int = 0
+    station_pose_valid_until: float = 0.0
     idle_start_timestamp: float = 0.0
     session_id: Optional[str] = None
     session_blocked: bool = False
@@ -144,11 +153,27 @@ class StationRecord:
     state: ReservationState = ReservationState.FREE
     reserved_by_robot_id: Optional[str] = None
     occupied_by_robot_id: Optional[str] = None
+    blocked_session_id: Optional[str] = None
+    blocked_after_ns: int = 0
+
+    def has_owner(self, robot_id: str) -> bool:
+        owners = {self.reserved_by_robot_id, self.occupied_by_robot_id} - {None}
+        return owners == {robot_id}
+
+    def _distance_to_pose(self, robot_pose: Optional[Pose2D]) -> float:
+        if (not isinstance(robot_pose, Pose2D) or not robot_pose.frame_id
+                or robot_pose.frame_id != self.pose.frame_id
+                or not robot_pose.has_finite_coordinates()):
+            return math.nan
+        return self.pose.distance_to(robot_pose)
 
     def is_physically_occupied(self, robot_pose: Pose2D) -> bool:
         """Check whether robot is within tolerance radius plus margin of the station."""
-        dist = self.pose.distance_to(robot_pose)
-        return dist <= (self.tolerance_radius + self.departure_margin)
+        return self._distance_to_pose(robot_pose) <= self.tolerance_radius + self.departure_margin
+
+    def is_physically_departed(self, robot_pose: Optional[Pose2D]) -> bool:
+        distance = self._distance_to_pose(robot_pose)
+        return math.isfinite(distance) and distance > self.tolerance_radius + self.departure_margin
 
 
 @dataclass(frozen=True)

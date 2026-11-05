@@ -8,9 +8,11 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 import math
 import logging
+import time
 from uuid import uuid4
 
 from .domain import TaskResultStatus
+from .domain.constants import ROBOT_STATUS_STALE_TIMEOUT_SEC
 from .persistence.store import SQLiteStore
 
 logger = logging.getLogger(__name__)
@@ -24,8 +26,9 @@ class Event:
 
 
 class FleetEventLoop:
-    def __init__(self, store: SQLiteStore, core):
+    def __init__(self, store: SQLiteStore, core, *, clock=time.monotonic):
         self.store = store
+        self._clock = clock
         self._core = deepcopy(core, {id(core.scheduler): core.scheduler})
         self._queue = asyncio.Queue()
         self._worker = None
@@ -165,6 +168,13 @@ class FleetEventLoop:
                 return "STALE", stream, seq
             if p["timestamp_sec"] < robot.last_status_received_at:
                 return "STALE", stream, seq
+            if p.get("pose_valid_until") is not None:
+                now = self._clock()
+                if seq == 0 or not 0 <= now - p["timestamp_sec"] <= ROBOT_STATUS_STALE_TIMEOUT_SEC:
+                    p["source_status_ns"] = 0
+                    p["pose_valid_until"] = 0.0
+                elif now > p["pose_valid_until"]:
+                    p["pose_valid_until"] = 0.0
             core.handle_robot_status(**p)
             if active:
                 robot.current_task_id = active.task_id
@@ -240,6 +250,10 @@ class FleetEventLoop:
             provider = core.scheduler.route_provider
             if hasattr(provider, "update_cache"):
                 provider.update_cache(**p)
+        elif kind == "UNBLOCK":
+            robot = core.tracker.get_robot(p["robot_id"])
+            if not core.reservations.unblock(p["station_id"], robot, now=self._clock()):
+                return "REJECTED", stream, seq
         elif kind in ("RESERVE", "OCCUPIED", "RELEASE"):
             robot = core.tracker.get_robot(p["robot_id"])
             if robot is None and kind == "RESERVE":

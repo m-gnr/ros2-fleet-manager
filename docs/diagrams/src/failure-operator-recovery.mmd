@@ -11,7 +11,7 @@ flowchart TD
  C -->|"Hayır"| R["İsteği reddet"]:::error
  C -->|"Evet"| ID["Executor IDLE; epoch korunur<br/>FAILED görev yeniden başlamaz"]:::executor
  ID --> FM["FM yeni RobotStatus bekler"]:::fm
- FM --> PH["Kaynak için ayrıca fiziksel ayrılma teyidi<br/>Kurtarma orkestrasyonu eksik"]:::wait
+ FM --> PH["Operatör UNBLOCK isteği<br/>Aynı oturumda güncel fiziksel ayrılma kanıtı"]:::wait
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

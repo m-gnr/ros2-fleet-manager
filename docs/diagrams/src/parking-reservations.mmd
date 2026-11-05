@@ -11,10 +11,11 @@ flowchart TD
  SAFE -->|"Evet"| RES
  RES --> OCC["Varış: OCCUPIED"]:::fm
  OCC -->|"Her öncelikte yeni görev / ayrılma"| REL["RELEASING"]:::fm
- REL --> P{"Mesafe > tolerance_radius + departure_margin?"}:::decision
+ REL --> P{"Kabul edilen RobotStatus ile mesafe<br/>> tolerance_radius + departure_margin?"}:::decision
  P -->|"Hayır"| WAIT["Sahipliği koru"]:::wait
  P -->|"Evet"| FREE(["FREE"]):::terminal
  OCC -->|"ERROR"| BLOCK["BLOCKED; operatör ve fiziksel teyit gerekir"]:::error
+ SESSION["SESSION_BLOCKED<br/>Kaynak olaylarını reddet"]:::error --> WAIT
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

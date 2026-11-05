@@ -52,7 +52,7 @@ JSON görüntüleri domain alanlarını korur; çalıştırılabilir nesne seril
 | `ACTION_FEEDBACK` | Robot kimliği, görev/epoch/UUID, faz ve `status_seq`. |
 | `ACTION_RESULT` | Robot kimliği, görev/`assignment_epoch`/UUID, Executor'ın ilettiği `completed_epoch`, geçerli terminal `result_status`, isteğe bağlı `error_reason`. |
 | `CANCEL_RESPONSE` | Robot kimliği, görev/epoch/UUID, `accepted`, ilgili Outbox kaydının `cancel_command_id` değeri. |
-| `RESERVE`, `OCCUPIED`, `RELEASE` | `station_id`, `robot_id`. OCCUPIED mevcut sahipliği ve bilinen robot pozunu kontrol eder. Fiziksel ayrılma ROBOT_STATUS üzerinden domain tarafından doğrulanır. |
+| `RESERVE`, `OCCUPIED`, `RELEASE` | `station_id`, `robot_id`. Consumer, `SESSION_BLOCKED` robot için `processed_events` tablosuna `REJECTED` yazar ve mevcut sahipliği korur. OCCUPIED mevcut sahipliği ve bilinen robot pozunu kontrol eder. Domain fiziksel ayrılmayı kabul edilen ROBOT_STATUS ile doğrular. |
 | `OUTBOX_CLAIM`, `OUTBOX_FINISH` | Göndericinin iç komutları; claim zamanı veya komut kimliği/deneme numarası/hata/tekrar zamanı. |
 
 Sonuçlar `APPLIED`, `DUPLICATE`, `STALE` veya `REJECTED` olur. Geçersiz alanlar/komutlar exception üretir ve transaction geri alınır. Olay API'si bir REST giriş doğrulayıcısı değildir.

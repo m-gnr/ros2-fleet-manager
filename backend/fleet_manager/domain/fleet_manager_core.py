@@ -160,6 +160,21 @@ class FleetManagerCore:
     # -------------------------------------------------------------------------
     # Telemetry and Event Handlers
     # -------------------------------------------------------------------------
+    @staticmethod
+    def check_status_session(robot: RobotRecord, publisher_session_id: Optional[str]) -> bool:
+        """Latch a session change before status can affect ownership."""
+        if not robot.session_blocked and (
+            publisher_session_id is not None
+            and robot.session_id is not None
+            and robot.session_id != publisher_session_id
+        ):
+            robot.session_blocked = True
+            logger.error(
+                "Robot %s publisher_session_id changed (%s -> %s). Robot transitioned to SESSION_BLOCKED.",
+                robot.robot_id, robot.session_id, publisher_session_id,
+            )
+        return not robot.session_blocked
+
     def handle_robot_status(
         self,
         robot_id: str,
@@ -179,7 +194,11 @@ class FleetManagerCore:
         Strictly preserves the Robot Executor as the single authority of physical state.
         Also checks physical departure from stations and marks BLOCKED if robot entered ERROR.
         """
-        robot = self.tracker.update_robot_status(
+        robot = self.tracker.get_robot(robot_id)
+        if robot is None or not self.check_status_session(robot, publisher_session_id):
+            return robot
+
+        self.tracker.update_robot_status(
             robot_id=robot_id,
             state=state,
             current_phase=current_phase,
@@ -191,19 +210,8 @@ class FleetManagerCore:
             current_task_id=current_task_id,
             timestamp_sec=timestamp_sec,
         )
-        if robot is None:
-            return None
-
-        # Session tracking and session change safety (C3.3.2-DEC-04)
-        if publisher_session_id is not None:
-            if robot.session_id is None:
-                robot.session_id = publisher_session_id
-            elif robot.session_id != publisher_session_id:
-                robot.session_blocked = True
-                logger.error(
-                    "Robot %s publisher_session_id changed (%s -> %s). Robot transitioned to SESSION_BLOCKED.",
-                    robot_id, robot.session_id, publisher_session_id
-                )
+        if robot.session_id is None:
+            robot.session_id = publisher_session_id
 
         # Check departure from any station robot was occupying/releasing
         station = self.reservations.get_station_by_robot(robot_id)
@@ -304,8 +312,10 @@ class FleetManagerCore:
             # 4. Check if a HIGH task was waiting for this robot
             pending_high = self._pending_preemption_assignments.pop(robot_id, None)
             if pending_high is not None:
-                # Dispatch the waiting HIGH task now that robot is confirmed PREEMPTED/stopped
-                self._dispatch_assignment(robot, pending_high)
+                if robot.session_blocked:
+                    self.queue.enqueue(pending_high)
+                else:
+                    self._dispatch_assignment(robot, pending_high)
 
             return True, task
 

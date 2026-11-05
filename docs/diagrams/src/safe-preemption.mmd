@@ -19,7 +19,9 @@ flowchart TD
  BRAKE --> O
  O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor
  R --> Q["Kurban sayaç +1; orijinal created_at ile kuyruk<br/>N=2 ise üçüncü çalışmada koruma"]:::fm
- Q --> NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
+ Q --> SES{"Robot SESSION_BLOCKED mı?"}:::decision
+ SES -->|"Evet"| W
+ SES -->|"Hayır"| NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

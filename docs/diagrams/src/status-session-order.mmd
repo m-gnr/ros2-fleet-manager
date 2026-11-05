@@ -6,7 +6,8 @@ flowchart TD
  OV -->|"Evet"| EB["Executor kabulünü blokla"]:::error
  OV -->|"Hayır"| CB["ROS callback → monotonik alım → consumer"]:::fm
  CB --> S{"Oturum aynı / ilk oturum mu?"}:::decision
- S -->|"Değişti veya zaten engelli"| BLOCK["SESSION_BLOCKED<br/>Atama ve kaynak bırakma kilidi"]:::error
+ S -->|"Değişti veya zaten engelli"| BLOCK["SESSION_BLOCKED<br/>Telemetri ve yeni atama kilidi"]:::error
+ BLOCK --> KEEP["RESERVE, OCCUPIED, RELEASE reddedilir<br/>Mevcut istasyon sahipliği korunur"]:::db
  BLOCK --> RESET["Operatör + kontrollü senaryo reset"]:::wait
  S -->|"Evet"| SEQ{"Sıra önceki kabulden büyük mü?"}:::decision
  SEQ -->|"Hayır"| ST["STALE: durumu değiştirme"]:::wait

@@ -5,7 +5,7 @@ import sqlite3
 
 import pytest
 
-from backend.fleet_manager.domain import FleetManagerCore, Pose2D, StationType
+from backend.fleet_manager.domain import FleetManagerCore, Pose2D, ReservationState, StationType
 from backend.fleet_manager.event_loop import Event, FleetEventLoop, OutboxDispatcher
 from backend.fleet_manager.persistence import SQLiteStore, ScenarioResetRequired
 
@@ -27,10 +27,11 @@ def runtime(tmp_path):
     store.close()
 
 
-def status(robot="r1", seq=1, epoch=0, task=None, state=1, phase=0, pose=None, timestamp=10):
+def status(robot="r1", seq=1, epoch=0, task=None, state=1, phase=0, pose=None, timestamp=10, session=None):
     return Event("ROBOT_STATUS", dict(robot_id=robot, status_seq=seq, current_epoch=epoch,
         current_task_id=task, state=state, current_phase=phase, is_loaded=False,
-        pose=pose or Pose2D(), battery_soc_percent=100, battery_energy_wh=100, timestamp_sec=timestamp))
+        pose=pose or Pose2D(), battery_soc_percent=100, battery_energy_wh=100,
+        timestamp_sec=timestamp, publisher_session_id=session))
 
 
 def submit(task="t1", priority=3, created_at=1):
@@ -76,6 +77,110 @@ def test_atomic_assignment_reservation_and_outbox(runtime):
         command = rows(runtime, "outbox_events")[0]
         assert command["state"] == "PENDING"
         assert json.loads(command["payload"])["goal_uuid"] == runtime.core._active_tasks["t1"].goal_uuid
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("kind, initial_state", [
+    ("RESERVE", ReservationState.FREE),
+    ("OCCUPIED", ReservationState.RESERVED),
+    ("RELEASE", ReservationState.RESERVED),
+    ("RELEASE", ReservationState.OCCUPIED),
+])
+def test_blocked_session_rejects_station_events(runtime, kind, initial_state):
+    async def scenario():
+        await runtime.start()
+        station = {"station_id": "dock", "robot_id": "r1"}
+        assert await runtime.submit(status(session="original")) == "APPLIED"
+        assert await runtime.submit(status("r2", session="other")) == "APPLIED"
+        if initial_state != ReservationState.FREE:
+            assert await runtime.submit(Event("RESERVE", station)) == "APPLIED"
+        if initial_state == ReservationState.OCCUPIED:
+            assert await runtime.submit(Event("OCCUPIED", station)) == "APPLIED"
+        await runtime.submit(submit())
+        tables = ("robots", "tasks", "reservations", "outbox_events")
+        initial_reservations = rows(runtime, "reservations")
+        assert await runtime.submit(status(session="restart", pose=Pose2D(5, 0))) == "SESSION_BLOCKED"
+        assert await runtime.submit(status(seq=2, session="restart")) == "SESSION_BLOCKED"
+        assert await runtime.submit(status(seq=3, session="original")) == "SESSION_BLOCKED"
+        assert runtime.core.tracker.get_robot("r1").session_id == "original"
+        assert rows(runtime, "reservations") == initial_reservations
+        before = {name: rows(runtime, name) for name in tables}
+        event = Event(kind, station)
+        assert await runtime.submit(event) == "REJECTED"
+        assert await runtime.submit(event) == "DUPLICATE"
+        assert [row["outcome"] for row in rows(runtime, "processed_events")
+                if row["event_id"] == event.event_id] == ["REJECTED"]
+        if initial_state != ReservationState.FREE:
+            assert await runtime.submit(Event("RESERVE", {**station, "robot_id": "r2"})) == "REJECTED"
+        assert {name: rows(runtime, name) for name in tables} == before
+        assert runtime.core.reservations.get_station("dock").state == initial_state
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("through_consumer", [True, False], ids=["consumer", "domain"])
+def test_blocked_session_cannot_apply_departure(runtime, through_consumer):
+    async def scenario():
+        await runtime.start()
+        station = {"station_id": "dock", "robot_id": "r1"}
+        await runtime.submit(status(session="original"))
+        await runtime.submit(Event("RESERVE", station))
+        await runtime.submit(Event("OCCUPIED", station))
+        assert await runtime.submit(Event("RELEASE", station)) == "APPLIED"
+        restart = status(session="restart", pose=Pose2D(5, 0))
+        if through_consumer:
+            assert await runtime.submit(restart) == "SESSION_BLOCKED"
+            anonymous = status(seq=2, pose=Pose2D(5, 0))
+            assert await runtime.submit(anonymous) == "SESSION_BLOCKED"
+            assert rows(runtime, "reservations")[0]["state"] == "RELEASING"
+            core = runtime.core
+        else:
+            core = runtime.core
+            payload = {key: value for key, value in restart.payload.items() if key != "status_seq"}
+            core.handle_robot_status(**payload)
+        record = core.reservations.get_station("dock")
+        assert record.state == ReservationState.RELEASING
+        assert record.reserved_by_robot_id == record.occupied_by_robot_id == "r1"
+        assert core.tracker.get_robot("r1").pose == Pose2D()
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+def test_trusted_session_release_requires_ordered_physical_departure(runtime):
+    async def scenario():
+        await runtime.start()
+        station = {"station_id": "dock", "robot_id": "r1"}
+        await runtime.submit(status(seq=2, session="original"))
+        reserve = Event("RESERVE", station)
+        assert await runtime.submit(reserve) == "APPLIED"
+        assert await runtime.submit(Event("OCCUPIED", station)) == "APPLIED"
+        assert await runtime.submit(Event("RELEASE", station)) == "APPLIED"
+        for seq in (1, 2):
+            late = status(seq=seq, session="original", pose=Pose2D(5, 0))
+            assert await runtime.submit(late) == "STALE"
+        assert rows(runtime, "reservations")[0]["state"] == "RELEASING"
+        assert await runtime.submit(status(seq=3, session="original", pose=Pose2D(5, 0))) == "APPLIED"
+        assert await runtime.submit(reserve) == "DUPLICATE"
+        assert rows(runtime, "reservations")[0]["state"] == "FREE"
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+def test_blocked_session_pending_preemption_does_not_start_resource_release(runtime):
+    async def scenario():
+        await runtime.start()
+        await runtime.submit(status(session="original"))
+        await preempt(runtime)
+        station = {"station_id": "dock", "robot_id": "r1"}
+        await runtime.submit(Event("RESERVE", station))
+        await runtime.submit(Event("OCCUPIED", station))
+        restart = status(session="restart", epoch=1, task="t1")
+        assert await runtime.submit(restart) == "SESSION_BLOCKED"
+        assert await runtime.submit(action(runtime, result_status=3)) == "APPLIED"
+        assert rows(runtime, "reservations")[0]["state"] == "OCCUPIED"
+        assert runtime.core.queue.get("high") is not None
+        assert not runtime.core._active_tasks_by_robot
         await runtime.close()
     asyncio.run(scenario())
 

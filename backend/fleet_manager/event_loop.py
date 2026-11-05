@@ -138,13 +138,8 @@ class FleetEventLoop:
                 robot = core.tracker.get_robot(p["robot_id"])
                 if robot is None:
                     raise ValueError("Unknown robot")
-                session_id = p.get("publisher_session_id")
-                if session_id is not None:
-                    if robot.session_id is not None and robot.session_id != session_id:
-                        robot.session_blocked = True
-                        return "SESSION_BLOCKED", stream, seq
-                    if robot.session_blocked:
-                        return "SESSION_BLOCKED", stream, seq
+                if not core.check_status_session(robot, p.get("publisher_session_id")):
+                    return "SESSION_BLOCKED", stream, seq
             previous = self.store.connection.execute(
                 "SELECT MAX(status_seq) FROM processed_events WHERE stream=? AND outcome='APPLIED'", (stream,)
             ).fetchone()[0]
@@ -245,23 +240,25 @@ class FleetEventLoop:
             provider = core.scheduler.route_provider
             if hasattr(provider, "update_cache"):
                 provider.update_cache(**p)
-        elif kind == "RESERVE":
-            if core.tracker.get_robot(p["robot_id"]) is None:
-                raise ValueError("Unknown robot")
-            if not core.reservations.reserve(**p):
-                return "REJECTED", stream, seq
-        elif kind == "OCCUPIED":
-            station = core.reservations.get_station(p["station_id"])
+        elif kind in ("RESERVE", "OCCUPIED", "RELEASE"):
             robot = core.tracker.get_robot(p["robot_id"])
-            if (station is None or robot is None
-                    or station.reserved_by_robot_id not in (None, robot.robot_id)
-                    or station.occupied_by_robot_id not in (None, robot.robot_id)
-                    or not station.is_physically_occupied(robot.pose)):
+            if robot is None and kind == "RESERVE":
+                raise ValueError("Unknown robot")
+            if robot is None or robot.session_blocked:
                 return "REJECTED", stream, seq
-            if not core.reservations.mark_occupied(**p):
-                return "REJECTED", stream, seq
-        elif kind == "RELEASE":
-            if not core.reservations.initiate_release(**p):
+            if kind == "RESERVE":
+                applied = core.reservations.reserve(**p)
+            elif kind == "RELEASE":
+                applied = core.reservations.initiate_release(**p)
+            else:
+                station = core.reservations.get_station(p["station_id"])
+                if (station is None
+                        or station.reserved_by_robot_id not in (None, robot.robot_id)
+                        or station.occupied_by_robot_id not in (None, robot.robot_id)
+                        or not station.is_physically_occupied(robot.pose)):
+                    return "REJECTED", stream, seq
+                applied = core.reservations.mark_occupied(**p)
+            if not applied:
                 return "REJECTED", stream, seq
         else:
             raise ValueError(f"Unknown event kind: {kind}")

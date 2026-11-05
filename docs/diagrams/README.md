@@ -317,7 +317,9 @@ flowchart TD
  BRAKE --> O
  O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor
  R --> Q["Kurban sayaç +1; orijinal created_at ile kuyruk<br/>N=2 ise üçüncü çalışmada koruma"]:::fm
- Q --> NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
+ Q --> SES{"Robot SESSION_BLOCKED mı?"}:::decision
+ SES -->|"Evet"| W
+ SES -->|"Hayır"| NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
@@ -365,7 +367,8 @@ flowchart TD
  OV -->|"Evet"| EB["Executor kabulünü blokla"]:::error
  OV -->|"Hayır"| CB["ROS callback → monotonik alım → consumer"]:::fm
  CB --> S{"Oturum aynı / ilk oturum mu?"}:::decision
- S -->|"Değişti veya zaten engelli"| BLOCK["SESSION_BLOCKED<br/>Atama ve kaynak bırakma kilidi"]:::error
+ S -->|"Değişti veya zaten engelli"| BLOCK["SESSION_BLOCKED<br/>Telemetri ve yeni atama kilidi"]:::error
+ BLOCK --> KEEP["RESERVE, OCCUPIED, RELEASE reddedilir<br/>Mevcut istasyon sahipliği korunur"]:::db
  BLOCK --> RESET["Operatör + kontrollü senaryo reset"]:::wait
  S -->|"Evet"| SEQ{"Sıra önceki kabulden büyük mü?"}:::decision
  SEQ -->|"Hayır"| ST["STALE: durumu değiştirme"]:::wait
@@ -754,10 +757,11 @@ flowchart TD
  SAFE -->|"Evet"| RES
  RES --> OCC["Varış: OCCUPIED"]:::fm
  OCC -->|"Her öncelikte yeni görev / ayrılma"| REL["RELEASING"]:::fm
- REL --> P{"Mesafe > tolerance_radius + departure_margin?"}:::decision
+ REL --> P{"Kabul edilen RobotStatus ile mesafe<br/>> tolerance_radius + departure_margin?"}:::decision
  P -->|"Hayır"| WAIT["Sahipliği koru"]:::wait
  P -->|"Evet"| FREE(["FREE"]):::terminal
  OCC -->|"ERROR"| BLOCK["BLOCKED; operatör ve fiziksel teyit gerekir"]:::error
+ SESSION["SESSION_BLOCKED<br/>Kaynak olaylarını reddet"]:::error --> WAIT
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

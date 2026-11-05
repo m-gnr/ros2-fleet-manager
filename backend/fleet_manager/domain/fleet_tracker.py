@@ -6,9 +6,11 @@ Adheres strictly to:
 - Executor physical state authority: Fleet Manager holds an updated replica.
 """
 
+from math import isclose, isfinite
 from typing import Dict, List, Optional, Tuple
 
 from .constants import (
+    BATTERY_TELEMETRY_TIMEOUT_SEC,
     COMMUNICATION_ALERT_SEC,
     COMMUNICATION_WARNING_SEC,
     ROBOT_STATUS_STALE_TIMEOUT_SEC,
@@ -28,6 +30,8 @@ class FleetTracker:
         robot_id: str,
         specs: Optional[RobotBatterySpecs] = None,
         initial_pose: Optional[Pose2D] = None,
+        *,
+        requires_battery_telemetry: bool = False,
     ) -> RobotRecord:
         """Register a robot from fleet configuration."""
         if robot_id in self._robots:
@@ -39,7 +43,10 @@ class FleetTracker:
             pose=initial_pose or Pose2D(),
             state=RobotState.STATE_IDLE,
             idle_start_timestamp=0.0,
+            requires_battery_telemetry=requires_battery_telemetry,
         )
+        if requires_battery_telemetry:
+            record.battery_soc_percent = record.battery_energy_wh = 0.0
         self._robots[robot_id] = record
         return record
 
@@ -63,6 +70,8 @@ class FleetTracker:
         current_epoch: int,
         current_task_id: Optional[str],
         timestamp_sec: float,
+        battery_sample_ns: int = 0,
+        battery_valid_until: float = 0.0,
     ) -> Optional[RobotRecord]:
         """Update robot record from incoming RobotStatus message (5 Hz).
         
@@ -84,8 +93,8 @@ class FleetTracker:
         robot.is_loaded = is_loaded
         if pose is not None:
             robot.pose = pose
-        robot.battery_soc_percent = battery_soc_percent
-        robot.battery_energy_wh = battery_energy_wh
+        self._update_battery(robot, battery_soc_percent, battery_energy_wh,
+                             battery_sample_ns, battery_valid_until, timestamp_sec)
         robot.current_epoch = current_epoch
         robot.current_task_id = current_task_id
         robot.last_status_received_at = timestamp_sec
@@ -95,6 +104,31 @@ class FleetTracker:
             robot.initial_status_verified = True
 
         return robot
+
+    @staticmethod
+    def _update_battery(robot, soc, energy, sample_ns, valid_until, received_at):
+        if not robot.requires_battery_telemetry:
+            robot.battery_soc_percent = soc
+            robot.battery_energy_wh = energy
+            return
+
+        capacity = robot.specs.usable_capacity_wh
+        if (not 0 < sample_ns or sample_ns < robot.battery_sample_ns
+                or not isfinite(valid_until) or not received_at <= valid_until <= received_at + BATTERY_TELEMETRY_TIMEOUT_SEC
+                or not 0 <= energy <= capacity or not 0 <= soc <= 100
+                or not isclose(soc, 100.0 * (energy / capacity), rel_tol=0.0, abs_tol=5e-6)
+                or (robot.battery_sample_ns and energy > robot.battery_energy_wh)):
+            robot.battery_valid_until = 0.0
+        elif sample_ns == robot.battery_sample_ns:
+            if (energy, soc) != (robot.battery_energy_wh, robot.battery_soc_percent):
+                robot.battery_valid_until = 0.0
+            else:
+                robot.battery_valid_until = min(robot.battery_valid_until, valid_until)
+        else:
+            robot.battery_soc_percent = soc
+            robot.battery_energy_wh = energy
+            robot.battery_sample_ns = sample_ns
+            robot.battery_valid_until = valid_until
 
     def is_stale(
         self,

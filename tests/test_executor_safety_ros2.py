@@ -57,7 +57,7 @@ class ControlledNav2:
 def rig():
     rclpy.init()
     node = RobotExecutorNode(parameter_overrides=[Parameter('duplicate_record_capacity', value=2)],
-                             _test_reset_verified=True)
+                             _test_reset_verified=True, _legacy_test_battery=True)
     node.executor_config.loading_duration_sec = .05
     node.executor_config.unloading_duration_sec = .05
     peer = rclpy.create_node('safety_peer')

@@ -1,0 +1,24 @@
+# Validation only. Layer after C4.1. PID sharing allows a temporary publisher outage.
+name: ros2-fleet-simulation-c4-2
+
+x-c4-2: &c4-2
+  volumes:
+    - ../../docker/simulation-c4-2:/opt/simulation-c4-2:ro
+  command:
+    - bash
+    - -c
+    - >-
+      set -e;
+      source /opt/ros/humble/setup.bash;
+      cd /workspace;
+      colcon build --base-paths src;
+      source install/setup.bash;
+      export PYTHONPATH=/workspace:/opt/fleet-live-validation:/opt/simulation-c3-3-3:/opt/simulation-c4-1:$$PYTHONPATH;
+      exec python3 /opt/simulation-c4-2/integration_check.py
+
+services:
+  simulation:
+    <<: *c4-2
+  backend:
+    <<: *c4-2
+    pid: service:simulation

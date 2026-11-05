@@ -39,7 +39,7 @@ def ros_context():
 @pytest.fixture
 def executor_node(ros_context):
     """Instantiate RobotExecutorNode with test robot parameters."""
-    node = RobotExecutorNode(node_name="test_executor_node", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
+    node = RobotExecutorNode(node_name="test_executor_node", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True, _legacy_test_battery=True)
     node.robot_id = "robot_1"
     node.robot_namespace = "/robot_1"
     node.nav2_action_name = "/robot_1/navigate_to_pose"

@@ -14,7 +14,7 @@ from typing import Any, Callable, Optional
 import uuid
 
 from ..domain.models import Pose2D
-from ..domain.constants import ROBOT_STATUS_STALE_TIMEOUT_SEC
+from ..domain.constants import BATTERY_TELEMETRY_TIMEOUT_SEC, ROBOT_STATUS_STALE_TIMEOUT_SEC
 from ..event_loop import Event
 
 logger = logging.getLogger(__name__)
@@ -78,6 +78,7 @@ class RobotStatusSubscriberBridge:
         clock: Optional[Callable[[], float]] = None,
         ros_clock_ns: Optional[Callable[[], int]] = None,
         robot_id: Optional[str] = None,
+        battery_clock_ns: Optional[Callable[[], int]] = None,
     ) -> None:
         self.consumer = consumer
         self.loop = loop
@@ -85,6 +86,7 @@ class RobotStatusSubscriberBridge:
         self.clock = clock or time.monotonic
         self.ros_clock_ns = ros_clock_ns
         self.robot_id = robot_id
+        self.battery_clock_ns = battery_clock_ns
 
     def handle_status_msg(self, msg: Any) -> Any:
         """ROS callback entrypoint. Thread-safely dispatches event to asyncio consumer."""
@@ -104,6 +106,14 @@ class RobotStatusSubscriberBridge:
             if 0 < sample_ns <= status_ns <= now_ns and age_sec <= ROBOT_STATUS_STALE_TIMEOUT_SEC:
                 payload["pose_sample_ns"] = sample_ns
                 payload["pose_valid_until"] = receipt_time + ROBOT_STATUS_STALE_TIMEOUT_SEC - age_sec
+        if self.battery_clock_ns is not None and payload.get("source_status_ns"):
+            stamp = msg.battery_stamp
+            battery_ns = stamp.sec * 10**9 + stamp.nanosec
+            age_sec = (self.battery_clock_ns() - battery_ns) / 10**9
+            if (0 <= stamp.nanosec < 10**9 and 0 < battery_ns <= status_ns
+                    and 0 <= age_sec <= BATTERY_TELEMETRY_TIMEOUT_SEC):
+                payload["battery_sample_ns"] = battery_ns
+                payload["battery_valid_until"] = receipt_time + (BATTERY_TELEMETRY_TIMEOUT_SEC - age_sec)
         event = Event(kind="ROBOT_STATUS", payload=payload)
         
         future = asyncio.run_coroutine_threadsafe(

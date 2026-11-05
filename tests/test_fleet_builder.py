@@ -84,7 +84,7 @@ def test_builder_energy_policies_change_assignment(fleet_yaml, policy, value, so
         def get_path_distance(self, robot_id, start, goal):
             return 4.0
 
-    core, _ = build_fleet_manager_from_config(fleet_yaml, FourMetreRoutes())
+    core, _ = build_fleet_manager_from_config(fleet_yaml, FourMetreRoutes(), _legacy_test_battery=True)
     core.handle_robot_status(
         robot_id="robot_1", state=RobotState.STATE_IDLE, current_phase=TaskPhase.PHASE_NONE,
         is_loaded=False, pose=Pose2D(),

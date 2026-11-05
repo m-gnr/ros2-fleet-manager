@@ -32,15 +32,18 @@ def simulation(test_config, fleet):
         ])
 
     commands = [("gazebo", gazebo_command(world_path)), ("bridge", bridge)]
-    battery_executable = ("/workspace/install/fleet_battery_simulator/lib/"
-                          "fleet_battery_simulator/battery_simulator")
-    commands.extend(
-        (f"battery_{robot.id}", [battery_executable,
-                                "--fleet-config", test_config["fleet_config_path"],
+    commands.extend(battery_commands(test_config, fleet))
+    return run_simulation(commands, (), emit)
+
+
+def battery_commands(test_config, fleet):
+    executable = ("/workspace/install/fleet_battery_simulator/lib/"
+                  "fleet_battery_simulator/battery_simulator")
+    return [
+        (f"battery_{robot.id}", [executable, "--fleet-config", test_config["fleet_config_path"],
                                 "--robot-id", robot.id])
         for robot in fleet.robots
-    )
-    return run_simulation(commands, (), emit)
+    ]
 
 
 def validate(node, fleet, timeout):

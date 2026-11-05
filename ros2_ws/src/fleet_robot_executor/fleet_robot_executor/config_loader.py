@@ -25,6 +25,7 @@ class RobotConfig:
     battery_model: str
     use_sim_time: bool = True
     nav2_params_path: str = ""
+    usable_capacity_wh: Optional[float] = None
 
 
 def _find_fleet_yaml(path: Optional[Union[str, Path]] = None) -> Path:
@@ -115,6 +116,7 @@ def load_all_robots_from_fleet(
                     battery_model=r.battery_model,
                     use_sim_time=use_sim_time,
                     nav2_params_path=r.nav2_params_path,
+                    usable_capacity_wh=fleet_cfg.fleet.battery_models[r.battery_model].usable_capacity_wh,
                 )
             )
         return robots

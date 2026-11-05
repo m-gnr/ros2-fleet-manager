@@ -42,7 +42,7 @@ def ros_context():
 def executor_node(ros_context):
     """Instantiate RobotExecutorNode with test fleet config."""
     fleet_path = str(Path("config/fleet.yaml").resolve())
-    node = RobotExecutorNode(node_name="test_executor_node", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True)
+    node = RobotExecutorNode(node_name="test_executor_node", parameter_overrides=[Parameter("duplicate_record_capacity", value=32)], _test_reset_verified=True, _legacy_test_battery=True)
     # Explicitly set test parameters
     node.robot_id = "robot_1"
     node.robot_namespace = "/robot_1"

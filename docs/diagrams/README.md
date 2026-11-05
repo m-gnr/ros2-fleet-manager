@@ -26,7 +26,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 7 | Güvenlik — [DDS goal ve cancel protokolü](#07-dds-goal-cancel) | IMPLEMENTED | [Mermaid](src/dds-goal-cancel.mmd) · [SVG](svg/dds-goal-cancel.svg) |
 | 8 | Güvenlik — [Assignment epoch ve UUID uzlaştırması](#08-assignment-reconciliation) | IMPLEMENTED | [Mermaid](src/assignment-reconciliation.mmd) · [SVG](svg/assignment-reconciliation.svg) |
 | 9 | Kalıcılık — [SQLite Outbox ve tek consumer](#09-sqlite-outbox-consumer) | IMPLEMENTED | [Mermaid](src/sqlite-outbox-consumer.mmd) · [SVG](svg/sqlite-outbox-consumer.svg) |
-| 10 | Enerji — [Wh batarya hesabı](#10-battery-wh-integration) | PARTIAL | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
+| 10 | Enerji — [Wh batarya hesabı ve telemetri](#10-battery-wh-integration) | IMPLEMENTED | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
 | 11 | Enerji — [Şarj sırası ve istasyon seçimi](#11-charging-queue-selection) | PLANNED | [Mermaid](src/charging-queue-selection.mmd) · [SVG](svg/charging-queue-selection.svg) |
 | 12 | Enerji — [Şarjdan ayrılma ve yüzde 80](#12-charging-exit-policy) | PLANNED | [Mermaid](src/charging-exit-policy.mmd) · [SVG](svg/charging-exit-policy.svg) |
 | 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | PARTIAL | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
@@ -52,7 +52,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 
 **Test / kanıt:** [c3-3-3-validation-2026-10-24.md](../validation/c3/c3-3-3-validation-2026-10-24.md)
 
-**Sınır / fark:** Kök üç servis Compose yoktur. C3.3.3 geçici besleyiciyi kullanır. C4.1 tüketim yayını ayrı [Fortress doğrulamasında](../validation/c4/c4-1-validation-2026-11-06.md) çalışır.
+**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager bağlantısı ayrı [C4.2 Fortress koşusunda](../validation/c4/c4-2-validation-2026-11-06.md) doğrulandı.
 
 ![Sistem ve Docker mimarisi](svg/system-architecture.svg)
 
@@ -79,14 +79,14 @@ flowchart TB
  EX["Robot Executor • fiziksel durum otoritesi"]:::executor
  NAV["Nav2 / AMCL • robot başına"]:::nav
  GZ["Gazebo headless / bridge / Map Server"]:::nav
- BAT["Battery Simulator • C4.1 tüketim"]:::battery
+ BAT["Battery Simulator • C4.2 tüketim ve telemetri"]:::battery
  CFG --> EX
  CFG --> NAV
  CFG --> BAT
  EX -->|"NavigateToPose"| NAV
  NAV <-->|"Odometri / sensör / hız"| GZ
  GZ -->|"/clock ve odometri"| BAT
- BAT -.->|"Executor bağlantısı planlanan"| EX
+ BAT -->|"BatteryState • robot başına"| EX
  end
  U <-->|"HTTP / WebSocket"| API
  FM -->|"DDS ExecuteTask / cancel / ClearRobotError"| EX
@@ -181,7 +181,7 @@ flowchart TD
 
 **Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_fleet_builder.py](../../tests/test_fleet_builder.py)
 
-**Sınır / fark.** Builder güvenli kaçış hedefi olarak ilk şarj istasyonunu seçer. Çoklu istasyon erişim seçimi planlanan kapsamdır. Scheduler filo YAML'ındaki doğrulanmış acil rezervi ve güvenlik marjını robotun batarya modeli, güncel SoC ve üç Nav2 rota mesafesiyle birlikte değerlendirir.
+**Sınır / fark.** Builder güvenli kaçış hedefi olarak ilk şarj istasyonunu seçer. Çoklu istasyon erişim seçimi planlanan kapsamdır. Scheduler filo YAML'ındaki doğrulanmış acil rezervi ve güvenlik marjını robotun batarya modeli, doğrulanmış kalan Wh ve üç Nav2 rota mesafesiyle birlikte değerlendirir.
 
 ![Robot seçimi ve Wh uygunluğu](svg/robot-selection-energy.svg)
 
@@ -193,14 +193,14 @@ flowchart TD
 title: "03 · Robot seçimi ve Wh uygunluğu · PARTIAL"
 ---
 flowchart TD
- A(["Aday robot"]):::terminal --> F{"Güncel / oturum açık / yüksüz / atanabilir mi?"}:::decision
+ A(["Aday robot"]):::terminal --> F{"RobotStatus ve batarya güncel mi?<br/>Oturum açık, yüksüz ve atanabilir mi?"}:::decision
  F -->|"Hayır"| NO["Adayı ele; görevi FAILED yapma"]:::wait
  F -->|"Evet"| L["L1: robot→pickup; L2: pickup→dropoff<br/>L3: dropoff→safe_charge"]:::nav
  L --> R{"Üç rota geçerli mi?"}:::decision
  R -->|"Hayır"| NO
- R -->|"Evet"| EN["E_required = k × L1 + k × L2 + k × L3 + margin<br/>E_available = C × SoC/100 − C × reserve/100"]:::battery
+ R -->|"Evet"| EN["E_required = k × L1 + k × L2 + k × L3 + margin<br/>E_available = Ölçülen Wh − C × reserve/100"]:::battery
  P["Doğrulanmış filo YAML<br/>Acil rezerv (%) ve güvenlik marjı (Wh)"]:::fm --> EN
- B["Robotun batarya modeli ve güncel SoC"]:::battery --> EN
+ B["Robotun batarya modeli ve doğrulanmış Wh"]:::battery --> EN
  EN --> OK{"E_required ≤ E_available?"}:::decision
  OK -->|"Hayır"| NO
  OK -->|"Evet"| SORT["En küçük L1<br/>Eşitlik: en uzun IDLE, sonra robot_id"]:::fm
@@ -567,7 +567,7 @@ flowchart TD
 
 ## 10. Wh batarya hesabı
 
-**Durum:** PARTIAL. C4.1 fiziksel tüketimi ve ROS yayınını uygular. Şarj hesabı ve Executor bağlantısı sonraki aşamalardadır.
+**Durum:** IMPLEMENTED. C4.1 fiziksel tüketimi, C4.2 ise Executor ve Fleet Manager telemetri akışını uygular.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
@@ -577,9 +577,9 @@ flowchart TD
 
 **Kaynak kod:** [Batarya çekirdeği](../../ros2_ws/src/fleet_battery_simulator/fleet_battery_simulator/consumption.py) · [ROS düğümü](../../ros2_ws/src/fleet_battery_simulator/fleet_battery_simulator/node.py)
 
-**Test / kanıt:** [C4.1 doğrulama raporu](../validation/c4/c4-1-validation-2026-11-06.md)
+**Test / kanıt:** [C4.1 tüketim raporu](../validation/c4/c4-1-validation-2026-11-06.md) · [C4.2 entegrasyon raporu](../validation/c4/c4-2-validation-2026-11-06.md)
 
-**Sınır / fark:** Her düğüm bir robotu izler. Geri sarmada batarya korunur ve odometri referansı yeniden kurulur. C4.1 yayınında `is_charging` her zaman `false` değerindedir.
+**Sınır / fark:** Her düğüm bir robotu izler. Geri sarmada simülatör enerjiyi korur, Executor ve Fleet Manager ise yeni atamayı senaryo resetine kadar kilitler. Şarj sonraki aşamaların kapsamıdır.
 
 ![Wh batarya hesabı](svg/battery-wh-integration.svg)
 
@@ -588,7 +588,7 @@ flowchart TD
 
 ```mermaid
 ---
-title: "10 · Wh batarya hesabı · PARTIAL"
+title: "10 · Wh batarya hesabı ve telemetri · IMPLEMENTED"
 ---
 flowchart TD
  O["Robot odometrisi<br/>Sıralı örnekleri beklet"]:::battery --> D
@@ -598,15 +598,20 @@ flowchart TD
  T -->|"İleri"| D["Saate yetişen odometriyi işle<br/>Kopuk veya geçersiz adımı sayma"]:::battery
  D --> E["E = max(0, E − k × delta_s − P_idle × delta_t / 3600)"]:::battery
  E --> S["SoC = 100 × E / C_usable"]:::battery
- S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, simülasyon damgası"]:::battery
+ S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, ölçüm damgası ve yayıncı oturumu"]:::battery
  R --> P
  P --> W
- P -.-> F["Executor bağlantısı ve şarj akışı<br/>Sonraki C4 aşamaları"]:::planned
+ P --> EX{"Executor: kaynak tek ve aynı mı?<br/>Robot, Wh, SoC ve ölçüm damgası geçerli mi?"}:::decision
+ EX -->|"Evet"| RS["RobotStatus: ölçülen Wh ve SoC<br/>Özgün batarya ölçüm damgası"]:::executor
+ EX -->|"Kaynak yok, belirsiz veya ölçüm eski"| NO["Ölçüm güncel değil<br/>Yeni atamaya kapalı"]:::wait
+ RS --> FM["Fleet Manager: sıra, oturum ve ölçüm yaşı<br/>Rota ve güncel Wh ile uygunluk"]:::fm
 
  classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
  classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
  classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;
- classDef planned fill:#f1f5f9,stroke:#64748b,stroke-dasharray:5 3;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
 ```
 
 </details>

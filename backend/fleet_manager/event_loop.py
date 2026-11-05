@@ -47,6 +47,12 @@ class FleetEventLoop:
         """Return a detached snapshot; producers cannot mutate the consumer state."""
         return deepcopy(self._core, {id(self._core.scheduler): self._core.scheduler})
 
+    def bind_battery_clock(self, clock_ns):
+        if self._core.scheduler.battery_clock_ns is not None or self._closed:
+            raise RuntimeError("Consumer cannot attach a second battery clock or attach after close")
+        self._core.scheduler = copy(self._core.scheduler)
+        self._core.scheduler.battery_clock_ns = clock_ns
+
     def enable_live_routing(self, query):
         from .adapters.route_cache import CachedRouteDistanceProvider
         from .adapters.route_planning import LiveRoutePlanning
@@ -215,6 +221,10 @@ class FleetEventLoop:
                     p["pose_valid_until"] = 0.0
                 elif now > p["pose_valid_until"]:
                     p["pose_valid_until"] = 0.0
+            if robot.requires_battery_telemetry:
+                now = self._clock()
+                if seq == 0 or not p["timestamp_sec"] <= now <= p.get("battery_valid_until", 0.0):
+                    p["battery_valid_until"] = 0.0
             core.handle_robot_status(**p)
             if active:
                 robot.current_task_id = active.task_id

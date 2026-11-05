@@ -1,5 +1,7 @@
 # Energy estimate for one simulated robot at the Gazebo clock stamp.
 string robot_id
+# Generated once per Battery Simulator process.
+unique_identifier_msgs/UUID publisher_session_id
 float64 battery_energy_wh
 float32 battery_soc_percent
 float64 battery_capacity_wh

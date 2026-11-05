@@ -43,7 +43,7 @@ async def check_energy_policy(fleet_path, robot_namespaces, executor, path_clien
         ]:
             data["policies"]["safety_margin_wh"] = margin
             variant.write_text(yaml.safe_dump(data))
-            core, robot_ids = build_fleet_manager_from_config(variant, provider)
+            core, robot_ids = build_fleet_manager_from_config(variant, provider, _legacy_test_battery=True)
             assert len(robot_ids) == 2
             node = rclpy.create_node(
                 f"fm_energy_policy_{case}",

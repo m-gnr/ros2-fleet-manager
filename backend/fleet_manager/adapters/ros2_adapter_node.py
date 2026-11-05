@@ -8,6 +8,7 @@ Conforms strictly to:
 
 import asyncio
 import logging
+import threading
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,27 @@ class FleetROS2Adapter:
         self.service_clients: Dict[str, ClearRobotErrorServiceClient] = {}
         self.outbox_sender = ROS2OutboxSender(action_clients=self.action_bridges)
 
+        self._battery_clock_ns = None
+        if node is not None and any(robot.requires_battery_telemetry for robot in consumer.core.tracker.list_robots()):
+            from rclpy.clock import JumpThreshold
+            from rclpy.duration import Duration
+
+            if not node.get_parameter("use_sim_time").value:
+                raise ValueError("Fleet battery telemetry requires use_sim_time=true")
+            clock = node.get_clock()
+            clock_changed = threading.Event()
+            self._battery_clock_guard = clock.create_jump_callback(
+                JumpThreshold(min_forward=None, min_backward=Duration(nanoseconds=-1), on_clock_change=True),
+                pre_callback=clock_changed.set,
+            )
+
+            def battery_clock_ns():
+                now_ns = clock.now().nanoseconds
+                return 0 if clock_changed.is_set() else now_ns
+
+            self._battery_clock_ns = battery_clock_ns
+            self.consumer.bind_battery_clock(battery_clock_ns)
+
         self._setup_robot_interfaces()
         if enable_live_routing and node is not None and isinstance(provider, CachedRouteDistanceProvider):
             self.consumer.enable_live_routing(self.route_resolver.compute_route)
@@ -84,6 +106,7 @@ class FleetROS2Adapter:
                 loop=self.loop,
                 ros_clock_ns=lambda: self.node.get_clock().now().nanoseconds,
                 robot_id=r_id,
+                battery_clock_ns=self._battery_clock_ns,
             )
             self.status_bridges[r_id] = status_bridge
             self.node.create_subscription(

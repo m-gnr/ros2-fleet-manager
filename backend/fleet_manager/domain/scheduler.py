@@ -69,6 +69,7 @@ class Scheduler:
         self._emergency_soc_percent = emergency_soc_percent
         self._safety_margin_wh = safety_margin_wh
         self.route_lookup = None
+        self.battery_clock_ns = None
         self.pending_route_tasks: set[str] = set()
 
     def evaluate_robot_for_task(
@@ -82,7 +83,8 @@ class Scheduler:
         Returns CandidateEvaluation if route and energy are valid, else None.
         Strictly enforces NO Euclidean fallback if route planner fails.
         """
-        if not 0.0 <= robot.battery_soc_percent <= 100.0:
+        sim_ns = self.battery_clock_ns() if self.battery_clock_ns is not None else None
+        if not robot.has_fresh_battery(current_time, sim_ns) or not 0.0 <= robot.battery_soc_percent <= 100.0:
             return None
 
         legs = (
@@ -111,6 +113,7 @@ class Scheduler:
             d_escape_m=d_escape,
             emergency_soc_percent=self._emergency_soc_percent,
             safety_margin_wh=self._safety_margin_wh,
+            battery_energy_wh=robot.battery_energy_wh if robot.requires_battery_telemetry else None,
         )
 
         if not energy_res.is_eligible:

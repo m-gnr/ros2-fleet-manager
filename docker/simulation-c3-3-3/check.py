@@ -325,8 +325,10 @@ def gazebo_command(world_path):
     ]
 
 
-def simulation(config, fleet_data):
-    """Run dual-robot Gazebo + Nav2 + Executors + Temporary Battery Feeder simulation."""
+def simulation(config, fleet_data, *, executor_entry=None, battery_commands=None):
+    """Run the dual-robot Gazebo, Nav2 and Executor validation world."""
+    if executor_entry is None:
+        executor_entry = "/opt/simulation-c3-3-3/executor_test_entry.py"
     from live_processes import bridge_executable, run_simulation
 
     world_path = prepare_world(config, fleet_data)
@@ -375,7 +377,7 @@ def simulation(config, fleet_data):
         ],
         # 6. Robot Executor robot_1
         [
-            "python3", "/opt/simulation-c3-3-3/executor_test_entry.py",
+            "python3", executor_entry,
             "--ros-args", "-r", "__node:=robot_executor_robot_1",
             "-p", "fleet_config_path:=" + config["fleet_config_path"],
             "-p", "robot_id:=robot_1",
@@ -393,7 +395,7 @@ def simulation(config, fleet_data):
         ],
         # 7. Robot Executor robot_2
         [
-            "python3", "/opt/simulation-c3-3-3/executor_test_entry.py",
+            "python3", executor_entry,
             "--ros-args", "-r", "__node:=robot_executor_robot_2",
             "-p", "fleet_config_path:=" + config["fleet_config_path"],
             "-p", "robot_id:=robot_2",
@@ -409,11 +411,13 @@ def simulation(config, fleet_data):
             "-p", "battery_state_topic_name:=battery_state",
             "-p", "duplicate_record_capacity:=" + str(config["executor_duplicate_record_capacity"]),
         ],
-        # 8. Temporary test battery feeder (pre-C4, C3.3.3-DEC-03)
-        ["python3", "/opt/simulation-c3-3-3/mock_battery_feeder.py"],
     ]
 
-    return run_simulation(zip(('gazebo', 'bridge', 'tf_helper', 'nav2_robot_1', 'nav2_robot_2', 'executor_robot_1', 'executor_robot_2', 'battery_feeder'), commands), ("robot_1", "robot_2"), emit)
+    names = ("gazebo", "bridge", "tf_helper", "nav2_robot_1", "nav2_robot_2",
+             "executor_robot_1", "executor_robot_2")
+    if battery_commands is None:
+        battery_commands = [("battery_feeder", ["python3", "/opt/simulation-c3-3-3/mock_battery_feeder.py"])]
+    return run_simulation([*zip(names, commands), *battery_commands], ("robot_1", "robot_2"), emit)
 
 
 def backend(config, fleet_data, timeout):
@@ -577,7 +581,7 @@ def run_scenarios(config, fleet_data, node, executor):
     if os.path.exists(db_t01):
         os.remove(db_t01)
 
-    core_t01, robot_ids_t01 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider)
+    core_t01, robot_ids_t01 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider, _legacy_test_battery=True)
     store_t01 = SQLiteStore(db_t01)
 
     async def run_t01():
@@ -647,6 +651,7 @@ def run_scenarios(config, fleet_data, node, executor):
 
     core_t02, robot_ids_t02 = build_fleet_manager_from_config(
         config["fleet_config_path"], route_provider=None if auto_routes else shared_route_provider,
+        _legacy_test_battery=True,
     )
     store_t02 = SQLiteStore(db_t02)
 
@@ -843,7 +848,7 @@ def run_scenarios(config, fleet_data, node, executor):
     if os.path.exists(db_t04):
         os.remove(db_t04)
 
-    core_t04, robot_ids_t04 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider)
+    core_t04, robot_ids_t04 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider, _legacy_test_battery=True)
     store_t04 = SQLiteStore(db_t04)
 
     async def run_t04():
@@ -1013,7 +1018,7 @@ def run_scenarios(config, fleet_data, node, executor):
     # -------------------------------------------------------------------------
     emit("SCENARIO_START", test="T05", name="preemption_n2_immunity_limit")
 
-    core_t05, _ = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider)
+    core_t05, _ = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider, _legacy_test_battery=True)
     task_n2 = Task(
         task_id="task_immune",
         pickup_pose=Pose2D(-1.0, 0.0),
@@ -1104,7 +1109,7 @@ def run_scenarios(config, fleet_data, node, executor):
     # -------------------------------------------------------------------------
     emit("SCENARIO_START", test="T07", name="telemetry_interruption_and_recovery")
 
-    core_t07, _ = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider)
+    core_t07, _ = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider, _legacy_test_battery=True)
     sess_id_t07 = str(uuid.uuid4())
     t_base = time.monotonic()
 
@@ -1156,7 +1161,7 @@ def run_scenarios(config, fleet_data, node, executor):
     if os.path.exists(db_t08):
         os.remove(db_t08)
 
-    core_t08, robot_ids_t08 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider)
+    core_t08, robot_ids_t08 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider, _legacy_test_battery=True)
     store_t08 = SQLiteStore(db_t08)
 
     async def run_t08():

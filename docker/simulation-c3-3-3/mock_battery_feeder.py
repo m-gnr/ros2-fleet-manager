@@ -7,10 +7,11 @@ Strict compliance with C3.3.3-DEC-03:
 - DOC-ARCH Section 7 single authority will be implemented in Stage C4.
 """
 
-import sys
+import signal
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
+from rclpy.signals import SignalHandlerOptions
 from fleet_interfaces.msg import RobotStatus
 
 
@@ -38,16 +39,22 @@ class MockBatteryFeeder(Node):
 
 
 def main():
-    rclpy.init()
+    stopping = False
+
+    def stop(signum, frame):
+        nonlocal stopping
+        stopping = True
+
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
     node = MockBatteryFeeder()
     try:
-        rclpy.spin(node)
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        pass
+        while rclpy.ok() and not stopping:
+            rclpy.spin_once(node, timeout_sec=0.2)
     finally:
         node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

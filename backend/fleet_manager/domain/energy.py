@@ -91,6 +91,8 @@ def check_energy_eligibility(
     d_escape_m: Optional[float],
     emergency_soc_percent: float = DEFAULT_EMERGENCY_SOC,
     safety_margin_wh: float = DEFAULT_SAFETY_MARGIN_WH,
+    *,
+    battery_energy_wh: Optional[float] = None,
 ) -> EnergyEligibilityResult:
     """Check whether a robot satisfies the dynamic Wh energy eligibility condition:
     
@@ -101,8 +103,9 @@ def check_energy_eligibility(
     Euclidean fallback MUST NOT be used under any circumstances.
     Energy eligibility must immediately FAIL.
     """
-    e_rem = calculate_remaining_energy(specs.usable_capacity_wh, battery_soc_percent)
-    e_avail = calculate_available_energy(specs.usable_capacity_wh, battery_soc_percent, emergency_soc_percent)
+    e_rem = (calculate_remaining_energy(specs.usable_capacity_wh, battery_soc_percent)
+             if battery_energy_wh is None else battery_energy_wh)
+    e_avail = e_rem - calculate_emergency_reserve(specs.usable_capacity_wh, emergency_soc_percent)
 
     if d_total_m is None or d_escape_m is None:
         return EnergyEligibilityResult(

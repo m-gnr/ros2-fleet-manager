@@ -5,4 +5,4 @@ Never install this as a production executable or use it to resume a scenario.
 from fleet_robot_executor.node import main
 
 if __name__ == "__main__":
-    main(_test_reset_verified=True)
+    main(_test_reset_verified=True, _legacy_test_battery=True)

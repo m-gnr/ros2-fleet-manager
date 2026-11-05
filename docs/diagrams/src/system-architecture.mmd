@@ -17,14 +17,14 @@ flowchart TB
  EX["Robot Executor • fiziksel durum otoritesi"]:::executor
  NAV["Nav2 / AMCL • robot başına"]:::nav
  GZ["Gazebo headless / bridge / Map Server"]:::nav
- BAT["Battery Simulator • C4.1 tüketim"]:::battery
+ BAT["Battery Simulator • C4.2 tüketim ve telemetri"]:::battery
  CFG --> EX
  CFG --> NAV
  CFG --> BAT
  EX -->|"NavigateToPose"| NAV
  NAV <-->|"Odometri / sensör / hız"| GZ
  GZ -->|"/clock ve odometri"| BAT
- BAT -.->|"Executor bağlantısı planlanan"| EX
+ BAT -->|"BatteryState • robot başına"| EX
  end
  U <-->|"HTTP / WebSocket"| API
  FM -->|"DDS ExecuteTask / cancel / ClearRobotError"| EX

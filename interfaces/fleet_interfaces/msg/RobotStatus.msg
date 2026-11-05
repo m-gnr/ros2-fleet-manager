@@ -10,6 +10,8 @@ bool is_loaded
 geometry_msgs/PoseStamped pose
 float32 battery_soc_percent
 float64 battery_energy_wh
+# Battery measurement time. Zero means unavailable for assignment.
+builtin_interfaces/Time battery_stamp
 string current_task_id
 
 uint8 STATE_IDLE = 1

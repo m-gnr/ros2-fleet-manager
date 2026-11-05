@@ -120,9 +120,13 @@ class FleetManagerCore:
         robot_id: str,
         specs: Optional[RobotBatterySpecs] = None,
         initial_pose: Optional[Pose2D] = None,
+        *,
+        requires_battery_telemetry: bool = False,
     ) -> RobotRecord:
         """Register a robot from fleet configuration."""
-        return self.tracker.register_robot(robot_id, specs=specs, initial_pose=initial_pose)
+        return self.tracker.register_robot(
+            robot_id, specs=specs, initial_pose=initial_pose, requires_battery_telemetry=requires_battery_telemetry,
+        )
 
     def register_station(
         self,
@@ -198,6 +202,8 @@ class FleetManagerCore:
         source_status_ns: int = 0,
         pose_sample_ns: int = 0,
         pose_valid_until: Optional[float] = None,
+        battery_sample_ns: int = 0,
+        battery_valid_until: float = 0.0,
     ) -> Optional[RobotRecord]:
         """Process incoming 5 Hz RobotStatus message.
         
@@ -222,6 +228,8 @@ class FleetManagerCore:
             current_epoch=current_epoch,
             current_task_id=current_task_id,
             timestamp_sec=timestamp_sec,
+            battery_sample_ns=battery_sample_ns,
+            battery_valid_until=battery_valid_until,
         )
         if robot.session_id is None:
             robot.session_id = publisher_session_id

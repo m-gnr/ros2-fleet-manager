@@ -1278,7 +1278,7 @@ def test_yaml_policy_rechecks_preemption_and_commits_one_assignment(energy_polic
             return 4.0
 
     async def scenario():
-        core, _ = build_fleet_manager_from_config(energy_policy_yaml, Routes())
+        core, _ = build_fleet_manager_from_config(energy_policy_yaml, Routes(), _legacy_test_battery=True)
         with closing(SQLiteStore(tmp_path / "policy.db")) as store:
             loop = FleetEventLoop(store, core)
             await loop.start()
@@ -1350,7 +1350,7 @@ def test_yaml_energy_policy_and_robot_models_after_automatic_routes(energy_polic
     from backend.fleet_manager.builder import build_fleet_manager_from_config
 
     async def scenario():
-        core, _ = build_fleet_manager_from_config(energy_policy_yaml)
+        core, _ = build_fleet_manager_from_config(energy_policy_yaml, _legacy_test_battery=True)
         with closing(SQLiteStore(tmp_path / "policy.db")) as store:
             loop = FleetEventLoop(store, core, clock=lambda: 10.0)
 

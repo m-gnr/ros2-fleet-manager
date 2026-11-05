@@ -11,6 +11,7 @@ Provides the logistics adapter layer between Fleet Manager and Nav2:
 
 import copy
 import math
+import signal
 import threading
 import time
 from typing import Optional, Tuple
@@ -20,10 +21,13 @@ import rclpy
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.clock import Clock, ClockType, JumpThreshold
+from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.serialization import serialize_message
+from rclpy.signals import SignalHandlerOptions
 
 from action_msgs.msg import GoalStatus
 from builtin_interfaces.msg import Time as RosTime
@@ -31,10 +35,11 @@ from geometry_msgs.msg import PoseStamped as RosPoseStamped, Twist
 from nav_msgs.msg import Odometry
 
 from fleet_interfaces.action import ExecuteTask
-from fleet_interfaces.msg import RobotStatus
+from fleet_interfaces.msg import BatteryState, RobotStatus
 from fleet_interfaces.srv import ClearRobotError
 from nav2_msgs.action import NavigateToPose
 
+from .battery import BatteryTelemetry
 from .config_loader import load_robot_fleet_config
 from .constants import (
     DEFAULT_ANGULAR_STOP_THRESHOLD_RAD_S,
@@ -76,7 +81,7 @@ class RobotExecutorNode(Node):
     """ROS 2 node wrapping the pure Python RobotExecutorStateMachine."""
 
     def __init__(self, node_name: str = "robot_executor", *, parameter_overrides=None,
-                 _test_reset_verified: bool = False) -> None:
+                 _test_reset_verified: bool = False, _legacy_test_battery: bool = False) -> None:
         super().__init__(node_name, parameter_overrides=parameter_overrides)
         self.declare_parameter("duplicate_record_capacity", Parameter.Type.INTEGER)
         self.safety = ExecutorSafety(self.get_parameter("duplicate_record_capacity").value)
@@ -123,6 +128,8 @@ class RobotExecutorNode(Node):
                 f"Successfully loaded configuration from {fleet_config_path} for robot '{robot_cfg.robot_id}'"
             )
         except Exception as e:
+            if not _legacy_test_battery:
+                raise
             self.get_logger().warn(
                 f"Could not load fleet configuration ({e}). Falling back to ROS parameters."
             )
@@ -164,6 +171,24 @@ class RobotExecutorNode(Node):
                 frame_id="map",
             )
         self._lock = threading.Lock()
+        self._battery = None
+        self._battery_endpoint_gid = None
+        self._battery_clock_changed = threading.Event()
+        if not _legacy_test_battery:
+            if (not robot_cfg.use_sim_time or not self.get_parameter("use_sim_time").value
+                    or robot_cfg.usable_capacity_wh is None):
+                raise ValueError("C4 battery telemetry requires validated fleet config and use_sim_time=true")
+            self._battery_topic = f"{robot_cfg.namespace}/battery_state"
+            if (self.robot_namespace != robot_cfg.namespace
+                    or self.get_namespace() not in ("/", robot_cfg.namespace)
+                    or self.resolve_topic_name(self._battery_topic) != self._battery_topic):
+                raise ValueError("C4 BatteryState must stay in the configured robot namespace")
+            self._battery = BatteryTelemetry(self.robot_id, robot_cfg.usable_capacity_wh)
+            self.state_machine.update_battery(0.0, 0.0)
+            self._battery_clock_guard = self.get_clock().create_jump_callback(
+                JumpThreshold(min_forward=None, min_backward=Duration(nanoseconds=-1), on_clock_change=True),
+                pre_callback=self._battery_clock_changed.set,
+            )
 
         # ---------------------------------------------------------------------
         # ROS 2 Interfaces (Callback Groups & Endpoints)
@@ -200,6 +225,7 @@ class RobotExecutorNode(Node):
             1.0 / status_rate_hz,
             self._status_timer_callback,
             callback_group=self.cb_group,
+            clock=Clock(clock_type=ClockType.STEADY_TIME) if self._battery is not None else None,
         )
         self.get_logger().info(f"Publishing RobotStatus at {status_rate_hz} Hz on '{status_topic}'")
 
@@ -228,15 +254,17 @@ class RobotExecutorNode(Node):
         cmd_vel_topic = self._qualify(str(self.get_parameter("cmd_vel_topic_name").value))
         self._cmd_vel_pub = self.create_publisher(Twist, cmd_vel_topic, 10)
 
-        # Battery State Subscriber (for future C4 battery_simulator integration)
-        battery_topic = self._qualify(str(self.get_parameter("battery_state_topic_name").value))
-        self._battery_sub = self.create_subscription(
-            RobotStatus,  # generic telemetry container or fallback
-            battery_topic,
-            self._battery_callback,
-            10,
-            callback_group=self.cb_group,
-        )
+        if self._battery is not None:
+            self._battery_sub = self.create_subscription(
+                BatteryState, self._battery_topic, self._battery_callback, 10,
+                callback_group=self.cb_group,
+            )
+        else:
+            battery_topic = self._qualify(str(self.get_parameter("battery_state_topic_name").value))
+            self._battery_sub = self.create_subscription(
+                RobotStatus, battery_topic, self._legacy_battery_callback, 10,
+                callback_group=self.cb_group,
+            )
 
         self._active_nav2_goal_handle = None
 
@@ -298,6 +326,9 @@ class RobotExecutorNode(Node):
             can_accept, reason = self.state_machine.can_accept_goal(candidate_goal)
             can_accept = (can_accept and not self._admission_pending
                           and self.safety.available(goal_request.task_id, goal_request.assignment_epoch))
+            if (can_accept and self._battery is not None
+                    and not self._fresh_battery_stamp(self.get_clock().now().nanoseconds)):
+                can_accept, reason = False, "Fresh BatteryState required"
             if can_accept:
                 self._admission_pending = True
 
@@ -703,13 +734,50 @@ class RobotExecutorNode(Node):
         with self._lock:
             self.state_machine.update_odometry(reading)
 
-    def _battery_callback(self, msg) -> None:
-        """Receive battery state updates from battery simulator node."""
-        soc = getattr(msg, "battery_soc_percent", None)
-        energy = getattr(msg, "battery_energy_wh", None)
-        if soc is not None and energy is not None:
-            with self._lock:
-                self.state_machine.update_battery(float(soc), float(energy))
+    def _battery_source_available(self) -> bool:
+        """Check the discovered source while holding the Executor lock."""
+        if self._battery.blocked_reason:
+            return False
+        if self._battery_clock_changed.is_set():
+            self._battery.blocked_reason = "Simulation clock rewound or changed source"
+        else:
+            endpoints = self.get_publishers_info_by_topic(self._battery_topic)
+            if not endpoints:
+                return False
+            endpoint = endpoints[0]
+            gid = bytes(endpoint.endpoint_gid)
+            if (len(endpoints) == 1 and any(gid)
+                    and endpoint.topic_type == "fleet_interfaces/msg/BatteryState"
+                    and self._battery_endpoint_gid in (None, gid)):
+                # DDS writer discovery can precede its association with a ROS node.
+                if endpoint.node_name in ("_NODE_NAME_UNKNOWN_", "_CREATED_BY_BARE_DDS_APP_"):
+                    return False
+                if endpoint.node_name == "battery_simulator" and endpoint.node_namespace == self.robot_namespace:
+                    self._battery_endpoint_gid = gid
+                    return True
+            self._battery.blocked_reason = "Conflicting or replaced BatteryState publisher"
+        self.get_logger().error(f"{self._battery.blocked_reason}. Scenario reset required.")
+        return False
+
+    def _battery_callback(self, msg: BatteryState) -> None:
+        with self._lock:
+            if not self._battery_source_available():
+                return
+            if self._battery.observe(msg, self.get_clock().now().nanoseconds, time.monotonic()):
+                self.state_machine.update_battery(msg.battery_soc_percent, msg.battery_energy_wh)
+            elif self._battery.blocked_reason:
+                self.get_logger().error(f"{self._battery.blocked_reason}. Scenario reset required.")
+
+    def _legacy_battery_callback(self, msg: RobotStatus) -> None:
+        if msg.robot_id != self.robot_id:
+            return
+        with self._lock:
+            self.state_machine.update_battery(msg.battery_soc_percent, msg.battery_energy_wh)
+
+    def _fresh_battery_stamp(self, sim_ns: int) -> int:
+        if self._battery is not None and self._battery_source_available():
+            return self._battery.fresh_stamp(sim_ns, time.monotonic())
+        return 0
 
     def _status_timer_callback(self) -> None:
         """Publish 5 Hz RobotStatus telemetry snapshot."""
@@ -721,6 +789,7 @@ class RobotExecutorNode(Node):
             if sequence is None:
                 return
             snap = self.state_machine.get_status_snapshot(now_sim)
+            battery_stamp_ns = self._fresh_battery_stamp(now_stamp.nanoseconds)
 
         msg = RobotStatus()
         msg.header.stamp = now_stamp.to_msg()
@@ -748,6 +817,7 @@ class RobotExecutorNode(Node):
 
         msg.battery_soc_percent = float(snap.battery_soc_percent)
         msg.battery_energy_wh = float(snap.battery_energy_wh)
+        msg.battery_stamp.sec, msg.battery_stamp.nanosec = divmod(battery_stamp_ns, 10**9)
         msg.current_task_id = snap.current_task_id
 
         self._status_pub.publish(msg)
@@ -794,22 +864,35 @@ class RobotExecutorNode(Node):
         return super().destroy_node()
 
 
-def main(args=None, *, _test_reset_verified=False):
+def main(args=None, *, _test_reset_verified=False, _legacy_test_battery=False):
     """Entry point for robot_executor_node."""
-    rclpy.init(args=args)
-    node = RobotExecutorNode(_test_reset_verified=_test_reset_verified)
-    executor = MultiThreadedExecutor()
-    executor.add_node(node)
+    stopping = False
 
+    def stop(signum, frame):
+        nonlocal stopping
+        stopping = True
+
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
+    node = None
+    executor = MultiThreadedExecutor()
     try:
-        executor.spin()
+        node = RobotExecutorNode(
+            _test_reset_verified=_test_reset_verified, _legacy_test_battery=_legacy_test_battery,
+        )
+        executor.add_node(node)
+        while rclpy.ok() and not stopping:
+            executor.spin_once(timeout_sec=0.2)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        rclpy.try_shutdown()
-        node._stopping.set()
+        if node is not None:
+            node._stopping.set()
         executor.shutdown()
-        node.destroy_node()
+        if node is not None:
+            node.destroy_node()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

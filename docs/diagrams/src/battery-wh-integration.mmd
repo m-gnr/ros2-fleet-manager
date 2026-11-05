@@ -1,5 +1,5 @@
 ---
-title: "10 · Wh batarya hesabı · PARTIAL"
+title: "10 · Wh batarya hesabı ve telemetri · IMPLEMENTED"
 ---
 flowchart TD
  O["Robot odometrisi<br/>Sıralı örnekleri beklet"]:::battery --> D
@@ -9,12 +9,17 @@ flowchart TD
  T -->|"İleri"| D["Saate yetişen odometriyi işle<br/>Kopuk veya geçersiz adımı sayma"]:::battery
  D --> E["E = max(0, E − k × delta_s − P_idle × delta_t / 3600)"]:::battery
  E --> S["SoC = 100 × E / C_usable"]:::battery
- S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, simülasyon damgası"]:::battery
+ S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, ölçüm damgası ve yayıncı oturumu"]:::battery
  R --> P
  P --> W
- P -.-> F["Executor bağlantısı ve şarj akışı<br/>Sonraki C4 aşamaları"]:::planned
+ P --> EX{"Executor: kaynak tek ve aynı mı?<br/>Robot, Wh, SoC ve ölçüm damgası geçerli mi?"}:::decision
+ EX -->|"Evet"| RS["RobotStatus: ölçülen Wh ve SoC<br/>Özgün batarya ölçüm damgası"]:::executor
+ EX -->|"Kaynak yok, belirsiz veya ölçüm eski"| NO["Ölçüm güncel değil<br/>Yeni atamaya kapalı"]:::wait
+ RS --> FM["Fleet Manager: sıra, oturum ve ölçüm yaşı<br/>Rota ve güncel Wh ile uygunluk"]:::fm
 
  classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
  classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
  classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;
- classDef planned fill:#f1f5f9,stroke:#64748b,stroke-dasharray:5 3;
+ classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+ classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+ classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;

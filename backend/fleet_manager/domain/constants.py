@@ -78,6 +78,7 @@ class StationType(str, Enum):
 
 # Architectural limits and locked policy thresholds
 MAX_PREEMPTIONS = 2  # N=2 preemption protection limit (Karar 08, DOC-ARCH Sec 6.2)
+BATTERY_TELEMETRY_TIMEOUT_SEC = 2.0
 ROBOT_STATUS_STALE_TIMEOUT_SEC = 2.0  # C3-DEC-01 locked stale threshold
 COMMUNICATION_WARNING_SEC = 5.0  # C3-DEC-02 warning threshold
 COMMUNICATION_ALERT_SEC = 10.0  # C3-DEC-02 notice threshold (no automatic FAILED/ERROR)

@@ -10,6 +10,7 @@ import math
 from typing import Optional
 
 from .constants import (
+    BATTERY_TELEMETRY_TIMEOUT_SEC,
     DEFAULT_DEPARTURE_MARGIN_M,
     DEFAULT_STATION_TOLERANCE_RADIUS_M,
     MAX_PREEMPTIONS,
@@ -111,6 +112,17 @@ class RobotRecord:
     session_id: Optional[str] = None
     session_blocked: bool = False
     initial_status_verified: bool = False
+    requires_battery_telemetry: bool = False
+    battery_sample_ns: int = 0
+    battery_valid_until: float = 0.0
+
+    def has_fresh_battery(self, current_time: float, sim_ns: Optional[int] = None) -> bool:
+        if not self.requires_battery_telemetry:
+            return True
+        return (self.battery_sample_ns > 0 and self.battery_valid_until > 0
+                and 0.0 <= self.battery_valid_until - current_time <= BATTERY_TELEMETRY_TIMEOUT_SEC
+                and (sim_ns is None
+                     or 0 <= sim_ns - self.battery_sample_ns <= BATTERY_TELEMETRY_TIMEOUT_SEC * 10**9))
 
     def is_stale(self, current_time: float, threshold: float = ROBOT_STATUS_STALE_TIMEOUT_SEC) -> bool:
         """Return True if robot status has not been updated within threshold seconds (C3-DEC-01)."""
@@ -130,7 +142,7 @@ class RobotRecord:
             return False
         if not self.initial_status_verified:
             return False
-        if self.is_stale(current_time):
+        if self.is_stale(current_time) or not self.has_fresh_battery(current_time):
             return False
         if self.state == RobotState.STATE_ERROR:
             return False

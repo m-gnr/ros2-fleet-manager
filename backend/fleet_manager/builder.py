@@ -18,6 +18,8 @@ from .domain.scheduler import RouteDistanceProvider
 def build_fleet_manager_from_config(
     fleet_config_path: Union[str, Path] = "config/fleet.yaml",
     route_provider: Optional[RouteDistanceProvider] = None,
+    *,
+    _legacy_test_battery: bool = False,
 ) -> Tuple[FleetManagerCore, List[str]]:
     """Construct FleetManagerCore and register all robots and stations dynamically from fleet.yaml."""
     from fleet_config.loader import load_config
@@ -50,7 +52,10 @@ def build_fleet_manager_from_config(
             charge_power_w=b_model.charge_power_w,
         )
         init_pose = Pose2D(x=r.initial_pose.x, y=r.initial_pose.y, yaw=r.initial_pose.yaw)
-        core.register_robot(robot_id=r.id, specs=specs, initial_pose=init_pose)
+        core.register_robot(
+            robot_id=r.id, specs=specs, initial_pose=init_pose,
+            requires_battery_telemetry=not _legacy_test_battery,
+        )
         robot_ids.append(r.id)
 
     for cs in cfg.stations.charging_stations:

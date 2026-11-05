@@ -37,7 +37,7 @@ async def check_high_preemption(config_path, robot_namespaces, executor, node, o
     import rclpy
 
     emit("SCENARIO_START", test=TEST, name="real_high_delivery_after_safe_preemption")
-    core, robot_ids = build_fleet_manager_from_config(config_path)
+    core, robot_ids = build_fleet_manager_from_config(config_path, _legacy_test_battery=True)
     # Seed a blocked resource in the fresh DB to verify that task preemption cannot free it.
     park = next(iter(core.reservations.list_stations(StationType.PARKING)))
     assert core.reservations.mark_blocked(park.station_id, "robot_1")

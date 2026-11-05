@@ -2,6 +2,7 @@
 
 import argparse
 from math import hypot
+from uuid import uuid4
 
 import rclpy
 from fleet_interfaces.msg import BatteryState
@@ -12,6 +13,7 @@ from rclpy.parameter import Parameter
 from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from rclpy.signals import SignalHandlerOptions
 from rosgraph_msgs.msg import Clock
+from unique_identifier_msgs.msg import UUID
 
 from fleet_config.loader import load_config
 from fleet_config.models import BatteryModel, Robot
@@ -37,6 +39,7 @@ class BatterySimulatorNode(Node):
             use_global_arguments=False,
         )
         self._robot_id = robot.id
+        self._session_id = UUID(uuid=list(uuid4().bytes))
         self._battery = BatteryConsumption(model)
         self._last_published_ns = None
         self._publisher = self.create_publisher(BatteryState, "battery_state", 10)
@@ -73,6 +76,7 @@ class BatterySimulatorNode(Node):
 
         self._publisher.publish(BatteryState(
             robot_id=self._robot_id,
+            publisher_session_id=self._session_id,
             battery_energy_wh=self._battery.remaining_wh,
             battery_soc_percent=self._battery.soc_percent,
             battery_capacity_wh=self._battery.capacity_wh,

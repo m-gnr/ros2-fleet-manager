@@ -1,4 +1,4 @@
-"""Process supervision shared by the C2.3 and C3.3.3 live test harnesses."""
+"""Process supervision shared by the live simulation test harnesses."""
 
 import os
 import signal
@@ -99,7 +99,7 @@ def run_simulation(commands, namespaces, emit):
             return stop_processes([(name, children[name]) for name in names if name in children], timeout, emit)
 
         # Keep the bridge and simulator alive for lifecycle deactivation and zero velocity.
-        helpers = [name for name in children if name.startswith("executor") or name == "battery_feeder"]
+        helpers = [name for name in children if name.startswith(("executor", "battery_"))]
         clean = stop_group(helpers, 3.0)
         nav2 = [name for name in children if name.startswith("nav2")]
         if nav2:

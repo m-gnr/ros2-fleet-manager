@@ -26,7 +26,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 7 | Güvenlik — [DDS goal ve cancel protokolü](#07-dds-goal-cancel) | IMPLEMENTED | [Mermaid](src/dds-goal-cancel.mmd) · [SVG](svg/dds-goal-cancel.svg) |
 | 8 | Güvenlik — [Assignment epoch ve UUID uzlaştırması](#08-assignment-reconciliation) | IMPLEMENTED | [Mermaid](src/assignment-reconciliation.mmd) · [SVG](svg/assignment-reconciliation.svg) |
 | 9 | Kalıcılık — [SQLite Outbox ve tek consumer](#09-sqlite-outbox-consumer) | IMPLEMENTED | [Mermaid](src/sqlite-outbox-consumer.mmd) · [SVG](svg/sqlite-outbox-consumer.svg) |
-| 10 | Enerji — [Wh batarya hesabı](#10-battery-wh-integration) | PLANNED | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
+| 10 | Enerji — [Wh batarya hesabı](#10-battery-wh-integration) | PARTIAL | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
 | 11 | Enerji — [Şarj sırası ve istasyon seçimi](#11-charging-queue-selection) | PLANNED | [Mermaid](src/charging-queue-selection.mmd) · [SVG](svg/charging-queue-selection.svg) |
 | 12 | Enerji — [Şarjdan ayrılma ve yüzde 80](#12-charging-exit-policy) | PLANNED | [Mermaid](src/charging-exit-policy.mmd) · [SVG](svg/charging-exit-policy.svg) |
 | 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | PARTIAL | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
@@ -52,7 +52,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 
 **Test / kanıt:** [c3-3-3-validation-2026-10-24.md](../validation/c3/c3-3-3-validation-2026-10-24.md)
 
-**Sınır / fark:** Kök üç servis Compose yoktur. C3.3.3 iki servis testinde geçici batarya besleyicisi kullanılır; gerçek Battery Simulator değildir.
+**Sınır / fark:** Kök üç servis Compose yoktur. C3.3.3 geçici besleyiciyi kullanır. C4.1 tüketim yayını ayrı [Fortress doğrulamasında](../validation/c4/c4-1-validation-2026-11-06.md) çalışır.
 
 ![Sistem ve Docker mimarisi](svg/system-architecture.svg)
 
@@ -79,14 +79,14 @@ flowchart TB
  EX["Robot Executor • fiziksel durum otoritesi"]:::executor
  NAV["Nav2 / AMCL • robot başına"]:::nav
  GZ["Gazebo headless / bridge / Map Server"]:::nav
- BAT["Battery Simulator • PLANNED"]:::battery
+ BAT["Battery Simulator • C4.1 tüketim"]:::battery
  CFG --> EX
  CFG --> NAV
  CFG --> BAT
  EX -->|"NavigateToPose"| NAV
  NAV <-->|"Odometri / sensör / hız"| GZ
  GZ -->|"/clock ve odometri"| BAT
- BAT -.->|"Hedef batarya yayını"| EX
+ BAT -.->|"Executor bağlantısı planlanan"| EX
  end
  U <-->|"HTTP / WebSocket"| API
  FM -->|"DDS ExecuteTask / cancel / ClearRobotError"| EX
@@ -567,19 +567,19 @@ flowchart TD
 
 ## 10. Wh batarya hesabı
 
-**Durum:** PLANNED. **Amaç:** C4 fiziksel tüketim ve şarj hesabının birimlerini açıklamak.
+**Durum:** PARTIAL. C4.1 fiziksel tüketimi ve ROS yayınını uygular. Şarj hesabı ve Executor bağlantısı sonraki aşamalardadır.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
-| /clock, odometri mesafesi, k Wh/m, güç W, kapasite Wh, temas | Wh, yüzde SoC ve batarya yayın alanları | Şarj için yarıçap + tam duruş + dock_contact; tüketim sürekli. |
+| Gazebo /clock, odometri, k Wh/m, taban güç W, kapasite Wh | Kalan Wh, yüzde SoC, kapasite ve simülasyon damgası | Zaman tüketimi ileri saatte işler. Mesafe yalnız ardışık, geçerli odometri örneklerinden gelir. |
 
-**Kaynak belge:** [ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md](../ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md) · [configuration-c1.md](../configuration-c1.md)
+**Kaynak belge:** [Nihai mimari kararlar, bölüm 8](../ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md#8-battery-simulator-mimarisi-ve-hesaplama-kuralları)
 
-**Kaynak kod:** Ürün uygulaması / bu akışa ait doğrulama henüz yok.
+**Kaynak kod:** [Batarya çekirdeği](../../ros2_ws/src/fleet_battery_simulator/fleet_battery_simulator/consumption.py) · [ROS düğümü](../../ros2_ws/src/fleet_battery_simulator/fleet_battery_simulator/node.py)
 
-**Test / kanıt:** Ürün uygulaması / bu akışa ait doğrulama henüz yok.
+**Test / kanıt:** [C4.1 doğrulama raporu](../validation/c4/c4-1-validation-2026-11-06.md)
 
-**Sınır / fark:** Bağımsız Battery Simulator yoktur. /clock geri sıçrama ve kesinti ayrıntıları açık kalır; diyagram yeni timeout politikası seçmez. C3 enerji uygunluğu bu fiziksel integratör değildir.
+**Sınır / fark:** Her düğüm bir robotu izler. Geri sarmada batarya korunur ve odometri referansı yeniden kurulur. C4.1 yayınında `is_charging` her zaman `false` değerindedir.
 
 ![Wh batarya hesabı](svg/battery-wh-integration.svg)
 
@@ -588,29 +588,25 @@ flowchart TD
 
 ```mermaid
 ---
-title: "10 · Wh batarya hesabı · PLANNED"
+title: "10 · Wh batarya hesabı · PARTIAL"
 ---
 flowchart TD
- A(["Simülasyon örneği /clock"]):::terminal --> IN["delta_s metre; delta_t saniye<br/>Önceki enerji Wh"]:::battery
- IN --> USE["E = E − k × delta_s − P_idle × delta_t / 3600<br/>Yükleme / boşaltmada da tüketim"]:::battery
- USE --> C{"İstasyon yarıçapında + hareketsiz<br/>+ dock_contact true mu?"}:::decision
- C -->|"Evet"| CH["E = E + P_charge × delta_t / 3600"]:::battery
- C -->|"Hayır"| LIM["Enerjiyi fiziksel kapasite sınırlarında tut"]:::battery
- CH --> LIM
- LIM --> SOC["SoC = 100 × E / C_usable"]:::battery
- SOC --> PUB["battery_energy_wh / battery_soc_percent<br/>battery_capacity_wh / is_charging / battery_stamp"]:::battery
- PUB --> NEXT(["Sonraki simülasyon örneği"]):::terminal
+ O["Robot odometrisi<br/>Sıralı örnekleri beklet"]:::battery --> D
+ C(["Gazebo /clock"]):::terminal --> T{"Saat nasıl değişti?"}:::decision
+ T -->|"İlk örnek veya geri sarma"| R["Zaman ve odometri referansını kur<br/>Enerjiyi koru"]:::battery
+ T -->|"Aynı veya geçersiz"| W(["Sonraki geçerli saat örneği"]):::terminal
+ T -->|"İleri"| D["Saate yetişen odometriyi işle<br/>Kopuk veya geçersiz adımı sayma"]:::battery
+ D --> E["E = max(0, E − k × delta_s − P_idle × delta_t / 3600)"]:::battery
+ E --> S["SoC = 100 × E / C_usable"]:::battery
+ S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, simülasyon damgası"]:::battery
+ R --> P
+ P --> W
+ P -.-> F["Executor bağlantısı ve şarj akışı<br/>Sonraki C4 aşamaları"]:::planned
 
- classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
- classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
- classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
  classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
- classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
- classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;
  classDef decision fill:#fff,stroke:#334155,color:#0f172a,stroke-width:2px;
- classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
- classDef wait fill:#fff7ed,stroke:#c2410c,color:#7c2d12,stroke-dasharray:5 3;
  classDef terminal fill:#dcfce7,stroke:#15803d,color:#14532d,stroke-width:2px;
+ classDef planned fill:#f1f5f9,stroke:#64748b,stroke-dasharray:5 3;
 ```
 
 </details>
@@ -1064,4 +1060,4 @@ Mermaid CLI 11.12.0 ile kaynaklar SVG'ye çevrilir; bu araç ürün bağımlıl�
 
 ## Eksik akışlar
 
-C4 fiziksel batarya, şarj kuyruğu, erken ayrılma ve otomatik park orkestrasyonu; C5 REST/WS/panel; kontrollü Apply ve ürün reset prosedürü tamamlanmamıştır. Genişletilmiş iki robotlu takas MVP'de kapalıdır; onaysız yürütme algoritması çizilmedi. Küresel trafik/deadlock çözücüsü kapsam dışıdır.
+C4 şarj kuyruğu, erken ayrılma ve otomatik park orkestrasyonu; C5 REST/WS/panel; kontrollü Apply ve ürün reset prosedürü tamamlanmamıştır. Genişletilmiş iki robotlu takas MVP'de kapalıdır; onaysız yürütme algoritması çizilmedi. Küresel trafik/deadlock çözücüsü kapsam dışıdır.

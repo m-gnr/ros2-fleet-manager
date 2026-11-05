@@ -5,8 +5,8 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
 ## Temel özellikler
 
 - **Mevcut:** Tek `fleet.yaml`, şema/Pydantic doğrulaması; robot başına Executor; HIGH/MEDIUM/LOW ve atanabilir FIFO; güvenli preemption; SQLite Outbox ve ROS 2 adaptörleri.
-- **Kısmi:** Enerji uygunluğu ve istasyon rezervasyonu kodu mevcut; fiziksel batarya, otomatik şarj/park orkestrasyonu tamamlanmadı.
-- **Planlanan:** Bağımsız Battery Simulator, FastAPI, WebSocket ve React + Konva 2D panel. Video akışı aktarılmayacak.
+- **Kısmi:** Enerji uygunluğu ve istasyon rezervasyonu mevcut. C4.1 Battery Simulator tüketimi ve batarya yayını iki robotla doğrulandı.
+- **Planlanan:** Battery Simulator–Executor bağlantısı, otomatik şarj/park orkestrasyonu, FastAPI, WebSocket ve React + Konva 2D panel. Video akışı aktarılmayacak.
 
 ## Mimari genel bakış
 
@@ -15,7 +15,7 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
 ```mermaid
 flowchart LR
     UI["frontend: React + Konva • planlanan"] <-->|"HTTP / WebSocket"| API["backend: Fleet Manager + SQLite<br/>FastAPI • planlanan"]
-    API <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator • planlanan"]
+    API <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator • C4.1 tüketim"]
 ```
 
 `simulation`, robot başına bağımsız düğümleri barındırır. `backend`, görev/sahiplik kararlarını ve kalıcılığı yönetir. `frontend`, backend üzerinden telemetri ve görevleri gösterir; DDS ağına bağlanmaz.
@@ -36,7 +36,7 @@ Kayıtlı canlı deney ortamı Apple Silicon / linux-arm64 container'lardır. Di
 backend/fleet_manager/   Domain, tek consumer, SQLite ve ROS adaptörleri
 fleet_config/           Paylaşılan filo doğrulayıcı ve CLI
 frontend/               Planlanan arayüz; henüz uygulama yok, boş dizin Git'te taşınmaz
-ros2_ws/src/             Robot Executor ROS 2 paketi
+ros2_ws/src/             Robot Executor ve Battery Simulator ROS 2 paketleri
 interfaces/             Ürün IDL ve ayrı DDS probe test arayüzü
 config/                 fleet.yaml, şema, harita ve test yapılandırmaları
 docker/compose/         Doğrulama Compose katmanları
@@ -54,11 +54,12 @@ PDF'ler, kişisel notlar ve tarihsel bağlantılar korunur. Ayrıntılı belge d
 
 ## Kurulum ve çalıştırma
 
-Nihai uygulama Compose'u ve açılabilecek web paneli henüz yoktur. Depo kökünde `uv` ve Python ile aşağıdaki kontroller 26 Ekim 2026'da çalıştırıldı:
+Nihai uygulama Compose'u ve açılabilecek web paneli henüz yoktur. Python bağımlılıkları kurulu ortamda aşağıdaki komutlar 6 Kasım 2026'da depo kökünden çalıştırıldı.
 
 ```sh
-PYTHONPATH=. uv run --with-requirements requirements-c1.txt python -m fleet_config config/fleet.yaml
-PYTHONPATH=.:backend:ros2_ws/src/fleet_robot_executor uv run --with-requirements requirements-c1.txt pytest tests/ ros2_ws/src/fleet_robot_executor/test/ --import-mode=importlib -q
+export PYTHONPATH=.:backend:ros2_ws/src/fleet_robot_executor:ros2_ws/src/fleet_battery_simulator
+python3 -m fleet_config config/fleet.yaml
+python3 -m pytest -q -rs tests/ ros2_ws/src/fleet_robot_executor/test
 ```
 
 Docker/Compose kuruluysa yalnız yapılandırmayı kontrol eden, container başlatmayan komut:
@@ -67,7 +68,7 @@ Docker/Compose kuruluysa yalnız yapılandırmayı kontrol eden, container başl
 DDS_TEST_PAYLOAD=organization-audit docker compose -f docker/compose/docker-compose.dds.yml config --quiet
 ```
 
-Canlı simülasyon için [katman sırası ve image önkoşullarını](docker/compose/README.md) izleyin. B2 ve sonraki katmanlarda `up --build` doğru Nav2 image'ını üretme garantisi vermez. Geçmiş canlı komutlar [doğrulama kayıtlarında](docs/validation/README.md) bulunur; bu düzenlemede yeniden koşulmadı.
+Canlı simülasyon için [katman sırası ve image önkoşullarını](docker/compose/README.md) izleyin. C4.1 ve C2.3/C3.3.3 regresyon komutları [C4.1 komut ekinde](docs/validation/c4/c4-1-commands-2026-11-06.md) bulunur.
 
 Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belgesinde](docs/configuration-c1.md) açıklanır. 1/2/3 robot config doğrulaması canlı hot-add veya üç robot performans kanıtı değildir.
 
@@ -85,18 +86,18 @@ Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belg
 | C1 | Konfigürasyon doğrulayıcı mevcut | 1, 2, 3 robot sözleşme testleri; Apply API yok |
 | C2 | Executor ve ürün IDL mevcut | Tek robot canlı simülasyon tarihsel kanıtı |
 | C3–C3.3.3 | Domain, Outbox, adaptör ve iki robot test altyapısı mevcut | Tarihsel canlı rapor var; statik incelemede açık güvenlik/entegrasyon farkları bulundu |
-| C4 | Kısmi enerji/rezervasyon altyapısı | Battery Simulator ve otomatik şarj/park yönetimi yok; test bataryası kalibrasyon değildir |
+| C4 | C4.1 robot başına tüketim ve ROS yayını | İki robotlu Fortress doğrulandı. Executor bağlantısı ve şarj/park yönetimi sonraki aşamalarda |
 | C5 | Planlanan | API, WebSocket ve frontend yok |
 
 ## Testler ve doğrulama sonuçları
 
-26 Ekim host koşusunda **224 geçti, 19 atlandı**; atlanan ROS bağımlı testler başarı sayılmaz. Filo CLI ve on Compose birleşiminin yapılandırması doğrulandı. [Bu çalışmanın raporu](docs/validation/organization/organization-validation-2026-10-26.md) komutları ve sınırları içerir.
+6 Kasım C4.1 doğrulamasında hostta **343 geçti, 26 atlandı**. Humble/CycloneDDS üzerinde **379 geçti**. İki robotlu C4.1, C3.3.3 T01–T10, T02-AUTO-ROUTES ve C2.3 T01–T07 canlı koşuları temiz kapandı. [C4.1 doğrulama raporu](docs/validation/c4/c4-1-validation-2026-11-06.md)
 
 Tarihsel kanıtlar: C2.3 tek robotta 7/7 senaryo; C3.3.3 raporunda 10/10 senaryo; B3 Retry'da 2/2 temiz koşu. AMCL kasıtlı ofset testi **1 geçti / 1 kaldı**. Bunlar küresel çarpışmasız trafik, dar koridor deadlock, 3+ robot ölçeği veya nihai üç servis dağıtımı kanıtı değildir. [Tüm kayıtlar](docs/validation/README.md).
 
 ## Yol haritası
 
-C1 → C2 → C3 temel uygulamaları mevcut. Sonraki aşamalar: belgelenen uygulama farklarının ayrı görevlerde ele alınması; C4 bağımsız batarya ve şarj/park yönetimi; C5 API/panel ve nihai üç servis doğrulaması. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır; MVP'de takas kapalıdır.
+C4.1'den sonra batarya telemetrisinin Executor'a bağlanması ve şarj/park yönetimi gelir. C5, API/panel ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
 
 ## Dokümantasyon bağlantıları
 

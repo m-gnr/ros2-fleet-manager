@@ -1,0 +1,24 @@
+# Validation only. Layer on DDS, A and C3.3.3. Use existing images with --no-build.
+name: ros2-fleet-simulation-c4-1
+
+x-c4-1: &c4-1
+  image: ros2-fleet-simulation-c3-3-3-backend:humble-fortress
+  volumes:
+    - ../../docker/simulation-c4-1:/opt/simulation-c4-1:ro
+  command:
+    - bash
+    - -c
+    - >-
+      set -e;
+      source /opt/ros/humble/setup.bash;
+      cd /workspace;
+      colcon build --base-paths src;
+      source install/setup.bash;
+      export PYTHONPATH=/workspace:/opt/fleet-live-validation:/opt/simulation-c3-3-3:$$PYTHONPATH;
+      exec python3 /opt/simulation-c4-1/battery_check.py
+
+services:
+  simulation:
+    <<: *c4-1
+  backend:
+    <<: *c4-1

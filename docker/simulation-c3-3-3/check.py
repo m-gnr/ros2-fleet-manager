@@ -145,6 +145,7 @@ def prepare_world(config, fleet_data):
     robot_models_sdf = []
     for r in fleet_data["robots"]:
         r_id = r["id"]
+        namespace = r["namespace"]
         init_p = r["initial_pose"]
         pose_str = f"{init_p['x']} {init_p['y']} 0.21 0 0 {init_p['yaw']}"
         sensor_pose_str = " ".join(map(str, sensor["pose"]))
@@ -219,8 +220,8 @@ def prepare_world(config, fleet_data):
         <right_joint>right_joint</right_joint>
         <wheel_separation>0.4</wheel_separation>
         <wheel_radius>0.1</wheel_radius>
-        <topic>/{r_id}/cmd_vel</topic>
-        <odom_topic>/{r_id}/odom</odom_topic>
+        <topic>{namespace}/cmd_vel</topic>
+        <odom_topic>{namespace}/odom</odom_topic>
         <frame_id>{r_id}/odom</frame_id>
         <child_frame_id>{r_id}/base_link</child_frame_id>
         <odom_publish_frequency>30</odom_publish_frequency>
@@ -303,10 +304,7 @@ def prepare_world(config, fleet_data):
     return str(target)
 
 
-def simulation(config, fleet_data):
-    """Run dual-robot Gazebo + Nav2 + Executors + Temporary Battery Feeder simulation."""
-    from live_processes import bridge_executable, run_simulation
-
+def gazebo_command(world_path):
     engines = list(Path("/usr/lib").glob("*/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5"))
     if not engines:
         engines = list(Path("/usr/lib").glob("*/*/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5"))
@@ -319,17 +317,24 @@ def simulation(config, fleet_data):
     if not render_engines:
         raise RuntimeError("Fortress OGRE2 render engine plugin not found")
 
+    return [
+        "ign", "gazebo", "-s", "-r", "-v", "3", "--headless-rendering",
+        "--physics-engine", str(engines[0]),
+        "--render-engine-server", str(render_engines[0]),
+        world_path,
+    ]
+
+
+def simulation(config, fleet_data):
+    """Run dual-robot Gazebo + Nav2 + Executors + Temporary Battery Feeder simulation."""
+    from live_processes import bridge_executable, run_simulation
+
     world_path = prepare_world(config, fleet_data)
     params_files = generate_params_for_robots(config, fleet_data)
 
     commands = [
         # 1. Gazebo Fortress Headless
-        [
-            "ign", "gazebo", "-s", "-r", "-v", "3", "--headless-rendering",
-            "--physics-engine", str(engines[0]),
-            "--render-engine-server", str(render_engines[0]),
-            world_path,
-        ],
+        gazebo_command(world_path),
         # 2. ros_gz_bridge parameter bridge
         [
             bridge_executable(),

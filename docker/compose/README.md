@@ -14,6 +14,7 @@ Bu dosyalar uygulamanın nihai üç servisli dağıtımı değildir. Komutlar de
 | B3 Retry | DDS → A → `docker-compose.simulation-b3-retry.yml` |
 | C2.3 | DDS → A → `docker-compose.simulation-c2-3.yml` |
 | C3.3.3 | DDS → A → `docker-compose.simulation-c3-3-3.yml` |
+| C4.1 | DDS → A → C3.3.3 → `docker-compose.simulation-c4-1.yml` |
 
 DDS için `DDS_TEST_PAYLOAD` zorunludur. Env dosyaları ve bind mount kaynakları depo kökündeki `config/` ve `docker/` dizinlerine gider. Container içindeki yollar, proje/servis/ağ adları ve image adları korunmuştur. Dosyaların yerinin değişmesiyle `.env` arama bağlamı da etkilenebilir; depoda `.env` yoktur. Başka çalışma dizini veya sonradan eklenen yerel env dosyası için ayrıca doğrulama gerekir.
 
@@ -26,6 +27,8 @@ C3.3.3 çalıştırıcısının `--auto-routes` seçeneği aynı Compose katmanl
 C2.3 ve C3.3.3 çalıştırıcıları `--domain` değerini DDS env dosyası üzerinden iki servise geçirir. Docker init, test supervisor'ına durdurma sinyali iletir. Supervisor Executor'ları ve geçici besleyiciyi durdurur, navigasyon ve lokalizasyon lifecycle yöneticilerini sırayla kapatır, ardından ayrı Nav2 süreçlerini launch üzerinden bekler. TF ve bridge'den sonra Gazebo kapanır. Compose'un 40 sn süresi bu sıralı kapanışın üst sınırıdır. Runner hem backend sonucu hem simulation kapanış işaretini ve launch alt süreç hatalarını denetler.
 
 ## Image bağımlılıkları
+
+C4.1 doğrulaması iki robotlu Gazebo dünyasını ve ortak kapanış supervisor'ını kullanır. Yalnız Gazebo, bridge, robot başına Battery Simulator ve DDS gözlemcisi çalışır. Katman iki servis için C1 bağımlılıklarını içeren C3.3.3 backend image'ını kullanır. Ayrı DDS domain'i ve `--no-build` ile [C4.1 komut ekini](../../docs/validation/c4/c4-1-commands-2026-11-06.md) izleyin.
 
 DDS image'ı temel alınır; A, B1 ve Nav2 image'ları aşamalı hazırlanır. Action image'ı da DDS tabanına bağlıdır. B2/AMCL/B3/Retry katmanları Nav2 image adını kullanırken A katmanının build tarifini miras alır. Bu mevcut davranış organizasyon sırasında değiştirilmedi. Bu birleşimlerde `build` veya `up --build` doğru Nav2 bağımlılık image'ını üretme garantisi vermez; [B2 hazırlık kanıtı](../../docs/validation/simulation/b2/simulation-stage-b2-2026-10-23.md) esas alınmalıdır.
 

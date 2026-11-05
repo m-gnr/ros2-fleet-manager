@@ -26,6 +26,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C3.3.4 Görev 5+6 | [Rapor](c3/c3-3-4-task-5-6-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-5-6-commands-2026-11-05.md) | Robot bazlı canlı rota, SQL COMMIT güvenliği, C3.3.3/C2.3 regresyonları ve ayrı T02-AUTO-ROUTES koşuları |
 | C3.3.4 Görev 7 | [Rapor](c3/c3-3-4-task-7-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-7-commands-2026-11-05.md) | YAML enerji politikalarının Scheduler'a aktarımı ve ayrı YAML-ENERGY-POLICY kabul koşusu |
 | C3.3.4-FINAL | [C4 geçiş kontrolü](c3/c3-3-4-final-c4-gate-2026-11-05.md) · [Komut eki](c3/c3-3-4-final-commands-2026-11-05.md) | İki ardışık temiz C3.3.3 koşusu 10/10, gerçek HIGH teslimatı ve temiz kapanış doğrulandı; C4'e geçiş onaylandı |
+| C4.1 | [Rapor](c4/c4-1-validation-2026-11-06.md) · [Komut eki](c4/c4-1-commands-2026-11-06.md) | İki robotlu Fortress tüketim hesabı ve DDS izolasyonu doğrulandı. C2.3 ve C3.3.3 regresyonları geçti |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

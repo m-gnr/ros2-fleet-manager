@@ -66,7 +66,9 @@ Görev yönetimi ve operasyon politikaları:
 
 Fleet Manager başlarken builder, zorunlu `emergency_soc_percent` ve `safety_margin_wh` alanlarını C1 doğrulayıcısından alıp Scheduler'a aktarır. Scheduler normal atamada, preemption aday seçiminde ve terminal sonuç ya da canlı rota sonrası yeniden zamanlamada aynı değerleri kullanır. Geçersiz dosya veya eksik doğrulayıcı bağımlılığı başlangıç hatası üretir. Doğrudan domain nesnesi oluşturan çağrılar temsili varsayılanları kullanabilir.
 
-Scheduler son kabul edilen `RobotStatus` SoC'sini, robotun kendi batarya kapasitesini ve Wh/m katsayısını kullanır. Nav2'nin pickup, taşıma ve şarja kaçış mesafelerine ait enerjiye güvenlik marjı bir kez eklenir. Rezerv, kalan enerjiden düşülür. Zamana bağlı tüketim ve şarj hesabı C4 Battery Simulator kapsamındadır.
+Scheduler son kabul edilen `RobotStatus` SoC'sini, robotun kendi batarya kapasitesini ve Wh/m katsayısını kullanır. Nav2'nin pickup, taşıma ve şarja kaçış mesafelerine ait enerjiye güvenlik marjı bir kez eklenir. Rezerv, kalan enerjiden düşülür.
+
+C4.1 Battery Simulator mevcut modeli doğrudan yükler. Senaryo başlangıcındaki enerji `usable_capacity_wh` değeridir. Bu aşama için YAML şeması değişmedi. Tüketim hesabı ve ROS yayını [C4.1 raporunda](validation/c4/c4-1-validation-2026-11-06.md) açıklanır.
 
 ## 3. Doğrulama Seviyeleri ve Kuralları
 

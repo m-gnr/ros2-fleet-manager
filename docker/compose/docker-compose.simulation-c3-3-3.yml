@@ -27,5 +27,6 @@ services:
     <<: *c3-3-3
     environment:
       SIM_CHECK_ROLE: backend
+      C333_AUTO_ROUTES: "${C333_AUTO_ROUTES:-0}"
       DDS_TEST_TIMEOUT_SECONDS: "300"
     command: ["bash", "-c", "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH && python3 /opt/simulation-c3-3-3/check.py"]

@@ -17,6 +17,8 @@ Bu dosyalar uygulamanın nihai üç servisli dağıtımı değildir. Komutlar de
 
 DDS için `DDS_TEST_PAYLOAD` zorunludur. Env dosyaları ve bind mount kaynakları depo kökündeki `config/` ve `docker/` dizinlerine gider. Container içindeki yollar, proje/servis/ağ adları ve image adları korunmuştur. Dosyaların yerinin değişmesiyle `.env` arama bağlamı da etkilenebilir; depoda `.env` yoktur. Başka çalışma dizini veya sonradan eklenen yerel env dosyası için ayrıca doğrulama gerekir.
 
+C3.3.3 çalıştırıcısının `--auto-routes` seçeneği aynı Compose katmanlarıyla ayrı **T02-AUTO-ROUTES** koşusunu başlatır. Backend, bu koşuda T01 başlangıç denetiminden sonra boş önbellekten canlı planner sorguları yürütür. Tarihsel T01–T10 seçkisi için seçenek verilmez. [Komutlar ve ölçütler](../../docs/validation/c3/c3-3-4-task-5-6-commands-2026-11-05.md)
+
 ## Image bağımlılıkları
 
 DDS image'ı temel alınır; A, B1 ve Nav2 image'ları aşamalı hazırlanır. Action image'ı da DDS tabanına bağlıdır. B2/AMCL/B3/Retry katmanları Nav2 image adını kullanırken A katmanının build tarifini miras alır. Bu mevcut davranış organizasyon sırasında değiştirilmedi. Bu birleşimlerde `build` veya `up --build` doğru Nav2 bağımlılık image'ını üretme garantisi vermez; [B2 hazırlık kanıtı](../../docs/validation/simulation/b2/simulation-stage-b2-2026-10-23.md) esas alınmalıdır.

@@ -23,25 +23,35 @@ class FleetROS2Adapter:
         loop: asyncio.AbstractEventLoop,
         robot_ids: List[str],
         route_cache: Optional[Any] = None,
+        *,
+        robot_namespaces: Optional[Dict[str, str]] = None,
+        enable_live_routing: bool = True,
     ) -> None:
         self.node = node
         self.consumer = consumer
         self.loop = loop
         self.robot_ids = robot_ids
+        self.robot_namespaces = (
+            {robot_id: f"/{robot_id}" for robot_id in robot_ids}
+            if robot_namespaces is None else robot_namespaces
+        )
+        if set(self.robot_namespaces) != set(robot_ids):
+            raise ValueError("Robot namespace mapping must cover the configured robot IDs")
 
         from .action_client import ExecuteTaskActionClientBridge
         from .outbox_sender import ROS2OutboxSender
-        from .route_cache import RouteCache
+        from .route_cache import CachedRouteDistanceProvider, RouteCache
         from .route_resolver import AsyncRouteResolver
         from .service_client import ClearRobotErrorServiceClient
         from .status_subscriber import RobotStatusSubscriberBridge
 
-        self.route_cache = route_cache or RouteCache()
-        self.route_resolver = AsyncRouteResolver(
-            cache=self.route_cache,
-            consumer=self.consumer,
-            loop=self.loop,
-        )
+        provider = consumer.core.scheduler.route_provider
+        if isinstance(provider, CachedRouteDistanceProvider):
+            if route_cache is not None and route_cache is not provider.cache:
+                raise ValueError("ROS adapter and Scheduler must share the same route cache")
+            route_cache = provider.cache
+        self.route_cache = route_cache if route_cache is not None else RouteCache()
+        self.route_resolver = AsyncRouteResolver(cache=self.route_cache)
 
         self.status_bridges: Dict[str, RobotStatusSubscriberBridge] = {}
         self.action_bridges: Dict[str, ExecuteTaskActionClientBridge] = {}
@@ -49,6 +59,8 @@ class FleetROS2Adapter:
         self.outbox_sender = ROS2OutboxSender(action_clients=self.action_bridges)
 
         self._setup_robot_interfaces()
+        if enable_live_routing and node is not None and isinstance(provider, CachedRouteDistanceProvider):
+            self.consumer.enable_live_routing(self.route_resolver.compute_route)
 
     def _setup_robot_interfaces(self) -> None:
         if self.node is None:
@@ -65,6 +77,7 @@ class FleetROS2Adapter:
         from .status_subscriber import RobotStatusSubscriberBridge
 
         for r_id in self.robot_ids:
+            namespace = self.robot_namespaces[r_id]
             # 1. Status Subscriber (/{robot_id}/robot_status - C3.3.3-DEC-01)
             status_bridge = RobotStatusSubscriberBridge(
                 consumer=self.consumer,
@@ -75,13 +88,13 @@ class FleetROS2Adapter:
             self.status_bridges[r_id] = status_bridge
             self.node.create_subscription(
                 RobotStatus,
-                f"/{r_id}/robot_status",
+                f"{namespace}/robot_status",
                 status_bridge.handle_status_msg,
                 10,
             )
 
             # 2. ExecuteTask ActionClient (/{robot_id}/execute_task - C3.3.3-DEC-01)
-            act_client = ActionClient(self.node, ExecuteTask, f"/{r_id}/execute_task")
+            act_client = ActionClient(self.node, ExecuteTask, f"{namespace}/execute_task")
             act_bridge = ExecuteTaskActionClientBridge(
                 robot_id=r_id,
                 consumer=self.consumer,
@@ -91,7 +104,7 @@ class FleetROS2Adapter:
             self.action_bridges[r_id] = act_bridge
 
             # 3. ClearRobotError ServiceClient (/{robot_id}/clear_robot_error - C3.3.3-DEC-01)
-            srv_client = self.node.create_client(ClearRobotError, f"/{r_id}/clear_robot_error")
+            srv_client = self.node.create_client(ClearRobotError, f"{namespace}/clear_robot_error")
             clear_bridge = ClearRobotErrorServiceClient(
                 robot_id=r_id,
                 service_client=srv_client,
@@ -99,7 +112,7 @@ class FleetROS2Adapter:
             self.service_clients[r_id] = clear_bridge
 
             # 4. Nav2 ComputePathToPose ActionClient (/{robot_id}/compute_path_to_pose - C3.3.3-DEC-01)
-            nav2_client = ActionClient(self.node, ComputePathToPose, f"/{r_id}/compute_path_to_pose")
+            nav2_client = ActionClient(self.node, ComputePathToPose, f"{namespace}/compute_path_to_pose")
             self.route_resolver.register_robot_client(r_id, nav2_client)
 
         logger.info("Initialized ROS 2 interfaces for robots: %s", self.robot_ids)

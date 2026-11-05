@@ -443,6 +443,7 @@ def simulation(config, fleet_data):
 
 def backend(config, fleet_data, timeout):
     """Execute live simulation validation suite covering scenarios T01 - T10."""
+    import logging
     import rclpy
     from rclpy.action import ActionClient
     from rclpy.executors import MultiThreadedExecutor
@@ -479,6 +480,11 @@ def backend(config, fleet_data, timeout):
     from backend.fleet_manager.domain.models import Pose2D, Task
     from backend.fleet_manager.event_loop import Event, FleetEventLoop, OutboxDispatcher
     from backend.fleet_manager.persistence.store import SQLiteStore
+
+    auto_routes = os.environ.get("C333_AUTO_ROUTES") == "1"
+    robot_namespaces = {robot["id"]: robot["namespace"] for robot in fleet_data["robots"]}
+    if auto_routes:
+        logging.basicConfig(level=logging.INFO)
 
     rclpy.init()
     node = rclpy.create_node(
@@ -589,6 +595,8 @@ def backend(config, fleet_data, timeout):
             loop=asyncio.get_running_loop(),
             robot_ids=robot_ids_t01,
             route_cache=shared_route_cache,
+            robot_namespaces=robot_namespaces,
+            enable_live_routing=False,
         )
 
         # Await status from both robots
@@ -625,12 +633,15 @@ def backend(config, fleet_data, timeout):
     # -------------------------------------------------------------------------
     # T02: Eşzamanlı İki Bağımsız Lojistik Görev
     # -------------------------------------------------------------------------
-    emit("SCENARIO_START", test="T02", name="concurrent_independent_logistics_tasks")
-    db_t02 = "/tmp/c3_3_3_t02.db"
+    t02_name = "T02-AUTO-ROUTES" if auto_routes else "T02"
+    emit("SCENARIO_START", test=t02_name, name="concurrent_independent_logistics_tasks")
+    db_t02 = f"/tmp/c3_3_3_{t02_name.lower()}.db"
     if os.path.exists(db_t02):
         os.remove(db_t02)
 
-    core_t02, robot_ids_t02 = build_fleet_manager_from_config(config["fleet_config_path"], route_provider=shared_route_provider)
+    core_t02, robot_ids_t02 = build_fleet_manager_from_config(
+        config["fleet_config_path"], route_provider=None if auto_routes else shared_route_provider,
+    )
     store_t02 = SQLiteStore(db_t02)
 
     async def run_t02():
@@ -645,7 +656,8 @@ def backend(config, fleet_data, timeout):
             consumer=loop,
             loop=asyncio.get_running_loop(),
             robot_ids=robot_ids_t02,
-            route_cache=shared_route_cache,
+            robot_namespaces=robot_namespaces,
+            enable_live_routing=auto_routes,
         )
 
         outbox_disp = OutboxDispatcher(
@@ -663,16 +675,24 @@ def backend(config, fleet_data, timeout):
                 break
             await asyncio.sleep(0.2)
 
-        # Pre-seed cache with obstacle-free routes for T02
-        # robot_1 starts at (-2.0, -0.5, 0.0) -> pickup (-1.5, -0.5) -> dropoff (-1.0, -0.5)
-        # robot_2 starts at (1.0, 2.5, 3.1415) -> pickup (0.5, 2.5) -> dropoff (0.0, 2.5)
-        shared_route_cache.put("robot_1", Pose2D(-2.0, -0.5), Pose2D(-1.5, -0.5), 0.5)
-        shared_route_cache.put("robot_1", Pose2D(-1.5, -0.5), Pose2D(-1.0, -0.5), 0.5)
-        shared_route_cache.put("robot_1", Pose2D(-1.0, -0.5), Pose2D(0.5, -2.0), 2.0)
+        if auto_routes:
+            c = loop.core
+            assert all(c.tracker.get_robot(robot_id).is_eligible_for_new_assignment(time.monotonic())
+                       for robot_id in robot_ids_t02)
+            assert len(adapter.route_cache) == 0
+            assert store_t02.connection.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
+            emit("AUTO_ROUTE_START_VERIFIED", cache_entries=0, robots=robot_ids_t02)
+        else:
+            # Pre-seed cache with obstacle-free routes for T02
+            # robot_1 starts at (-2.0, -0.5, 0.0) -> pickup (-1.5, -0.5) -> dropoff (-1.0, -0.5)
+            # robot_2 starts at (1.0, 2.5, 3.1415) -> pickup (0.5, 2.5) -> dropoff (0.0, 2.5)
+            shared_route_cache.put("robot_1", Pose2D(-2.0, -0.5), Pose2D(-1.5, -0.5), 0.5)
+            shared_route_cache.put("robot_1", Pose2D(-1.5, -0.5), Pose2D(-1.0, -0.5), 0.5)
+            shared_route_cache.put("robot_1", Pose2D(-1.0, -0.5), Pose2D(0.5, -2.0), 2.0)
 
-        shared_route_cache.put("robot_2", Pose2D(1.0, 2.5), Pose2D(0.5, 2.5), 0.5)
-        shared_route_cache.put("robot_2", Pose2D(0.5, 2.5), Pose2D(0.0, 2.5), 0.5)
-        shared_route_cache.put("robot_2", Pose2D(0.0, 2.5), Pose2D(0.5, -2.0), 3.0)
+            shared_route_cache.put("robot_2", Pose2D(1.0, 2.5), Pose2D(0.5, 2.5), 0.5)
+            shared_route_cache.put("robot_2", Pose2D(0.5, 2.5), Pose2D(0.0, 2.5), 0.5)
+            shared_route_cache.put("robot_2", Pose2D(0.0, 2.5), Pose2D(0.5, -2.0), 3.0)
 
         print(f"[DEBUG] T02 tracker: r1={loop.core.tracker.get_robot('robot_1').pose}, r2={loop.core.tracker.get_robot('robot_2').pose}", flush=True)
 
@@ -694,8 +714,12 @@ def backend(config, fleet_data, timeout):
             "created_at": time.monotonic(),
         }))
 
-        # Run schedule tick
-        await loop.submit(Event("TICK", {"current_time": time.monotonic()}))
+        if auto_routes:
+            deadline = time.monotonic() + 15.0
+            while len(loop.core._active_tasks) < 2 and time.monotonic() < deadline:
+                await asyncio.sleep(0.1)
+        else:
+            await loop.submit(Event("TICK", {"current_time": time.monotonic()}))
 
         c = loop.core
         print(f"[DEBUG] T02 active={list(c._active_tasks.keys())}, queue={[t.task_id for t in c.queue.iter_assignable_tasks()]}", flush=True)
@@ -709,8 +733,8 @@ def backend(config, fleet_data, timeout):
         emit("CONCURRENT_TASKS_ASSIGNED", task1=t1.task_id, robot1=t1.assigned_robot_id, task2=t2.task_id, robot2=t2.assigned_robot_id)
 
         # Dispatch both commands from Outbox
-        await outbox_disp.send_one()
-        await outbox_disp.send_one()
+        assert await outbox_disp.send_one()
+        assert await outbox_disp.send_one()
 
         # Follow execution until both complete
         t_start = time.monotonic()
@@ -741,13 +765,28 @@ def backend(config, fleet_data, timeout):
         assert len(rows) == 2
         for r in rows:
             assert r["status"] == "COMPLETED"
+        if auto_routes:
+            commands = store_t02.connection.execute(
+                "SELECT task_id, json_extract(payload, '$.assigned_robot_id'), state "
+                "FROM outbox_events WHERE kind='EXECUTE_TASK' ORDER BY task_id"
+            ).fetchall()
+            assert [tuple(row) for row in commands] == [
+                ("task_t02_r1", "robot_1", "SENT"), ("task_t02_r2", "robot_2", "SENT"),
+            ]
+            emit("AUTO_ROUTE_SQLITE_COMPLETED", tasks=[tuple(row) for row in rows],
+                 commands=[tuple(row) for row in commands])
 
         await loop.close()
         store_t02.close()
         executor.remove_node(sub_node_t02)
 
     asyncio.run(run_t02())
-    emit("SCENARIO_PASSED", test="T02", details="Concurrent execution of 2 tasks succeeded on robot_1 and robot_2")
+    emit("SCENARIO_PASSED", test=t02_name, details="Concurrent execution of 2 tasks succeeded on robot_1 and robot_2")
+    if auto_routes:
+        executor.shutdown()
+        node.destroy_node()
+        rclpy.shutdown()
+        return 0
 
     # -------------------------------------------------------------------------
     # T03: Dinamik Nav2 Rota ve Wh Enerji Ataması
@@ -817,6 +856,8 @@ def backend(config, fleet_data, timeout):
             loop=asyncio.get_running_loop(),
             robot_ids=robot_ids_t04,
             route_cache=shared_route_cache,
+            robot_namespaces=robot_namespaces,
+            enable_live_routing=False,
         )
 
         outbox_disp = OutboxDispatcher(

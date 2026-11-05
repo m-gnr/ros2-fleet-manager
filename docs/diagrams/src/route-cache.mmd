@@ -1,17 +1,20 @@
 ---
-title: "17 · Asenkron rota ve önbellek · PARTIAL"
+title: "17 · Robot bazlı canlı Nav2 rotası · IMPLEMENTED"
 ---
 flowchart TD
- A(["Rota ihtiyacı"]):::terminal --> K["robot_id + start/goal hücreleri + map_revision"]:::fm
- K --> HIT{"Önbellek geçerli mi?<br/>TTL ≤ 30 sn; yer değiştirme ≤ 0.20 m"}:::decision
- HIT -->|"Evet"| D(["Yol uzunluğu m"]):::terminal
- HIT -->|"Hayır"| N["Consumer dışında ComputePathToPose"]:::nav
- N --> RES{"2 sn içinde geçerli sonuç?"}:::decision
- RES -->|"Hayır"| NONE["None; görev bekler; Euclidean yok"]:::wait
- RES -->|"Evet"| LEN["Path segment uzunluklarını topla"]:::nav
- LEN --> EVENT["ROUTE_RESOLVED → consumer → cache"]:::fm
- EVENT --> D
- INV["Hedef / harita / poz / görev değişimi<br/>Onaylı invalidation tetikleyicileri"]:::fm -.-> K
+ A(["Görev veya güncel telemetri"]):::terminal --> S["Adayları ve üç rota ayağını değerlendir"]:::fm
+ S --> K{"Robot, başlangıç/hedef hücreleri<br/>ve harita revizyonu eşleşiyor mu?"}:::decision
+ K -->|"Geçerli kayıt · TTL < 30 sn"| E{"Güncel telemetri ve Wh yeterli mi?"}:::decision
+ K -->|"Eksik rota"| C["İsteği COMMIT sonrasına bırak"]:::db
+ C --> Q["Robotun kendi ComputePathToPose uç noktası<br/>Robot başına tek etkin sorgu"]:::nav
+ Q --> R{"2 sn içinde geçerli Path?"}:::decision
+ R -->|"Hayır"| W["Adayı ele, sonraki geçişte<br/>aynı anahtar için 2 sn bekle"]:::wait
+ R -->|"Evet"| V{"Olay, harita nesli ve<br/>görev/robot bağlamı güncel mi?"}:::decision
+ V -->|"Hayır"| X["Eski sonucu at"]:::wait
+ V -->|"Evet"| P["Olay COMMIT edildikten sonra<br/>mesafeyi önbelleğe yaz"]:::db
+ P -->|"Yeniden zamanla"| S
+ E -->|"Evet"| O["Atama ve ExecuteTask Outbox kaydı<br/>aynı transaction"]:::db
+ E -->|"Hayır"| W2["Görev kuyrukta kalır"]:::wait
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

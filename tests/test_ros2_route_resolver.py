@@ -4,11 +4,12 @@ Verifies C3.3.2-DEC-01 & C3.3.2-DEC-02:
 - Grid snapping (0.20m)
 - Cache hit, monotonic TTL (30.0s), and invalidation triggers
 - Euclidean fallback ban (strictly returns None on failure/miss)
-- AsyncRouteResolver timeout (2.0s) and ROUTE_RESOLVED event dispatch
+- AsyncRouteResolver success, planner failures and cancellation
 """
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from types import SimpleNamespace
+from unittest.mock import MagicMock, Mock
 import pytest
 
 from backend.fleet_manager.adapters.route_cache import (
@@ -20,13 +21,7 @@ from backend.fleet_manager.adapters.route_resolver import (
     AsyncRouteResolver,
     calculate_path_length,
 )
-from backend.fleet_manager.domain.constants import (
-    NAV2_ROUTE_TIMEOUT_SEC,
-    ROUTE_CACHE_GRID_RESOLUTION_M,
-    ROUTE_CACHE_TTL_SEC,
-)
 from backend.fleet_manager.domain.models import Pose2D
-from backend.fleet_manager.event_loop import Event
 
 
 def test_grid_snapping_precision():
@@ -73,7 +68,7 @@ def test_route_cache_monotonic_ttl():
     assert cache.get("r1", start, goal, now=129.9) == 20.0
 
     # Expired at 30.1s
-    assert cache.get("r1", start, goal, now=130.1) is None
+    assert cache.get("r1", start, goal, now=130.0) is None
 
 
 def test_route_cache_displacement_invalidation():
@@ -114,17 +109,17 @@ def test_route_cache_map_revision_invalidation():
 def test_cached_route_distance_provider_euclidean_ban():
     """Verify CachedRouteDistanceProvider strictly returns None on miss (no Euclidean fallback)."""
     cache = RouteCache()
-    provider = CachedRouteDistanceProvider(cache=cache, robot_id="r1", map_revision="v1.0", clock=lambda: 50.0)
+    provider = CachedRouteDistanceProvider(cache=cache, clock=lambda: 50.0)
 
     p1 = Pose2D(0.0, 0.0)
     p2 = Pose2D(3.0, 4.0)  # Euclidean distance would be 5.0m
 
     # Must return None, never 5.0m!
-    assert provider.get_path_distance(p1, p2) is None
+    assert provider.get_path_distance("r1", p1, p2) is None
 
     # After update_cache
-    provider.update_cache("r1", p1, p2, distance=7.5, map_revision="v1.0", timestamp=50.0)
-    assert provider.get_path_distance(p1, p2) == 7.5
+    cache.put("r1", p1, p2, distance=7.5, now=50.0)
+    assert provider.get_path_distance("r1", p1, p2) == 7.5
 
 
 def test_calculate_path_length():
@@ -148,44 +143,113 @@ def test_calculate_path_length():
     assert pytest.approx(calculate_path_length(path), 0.001) == 7.0
 
 
-def test_async_route_resolver_success_and_timeout():
-    """Verify AsyncRouteResolver handles cache, query timeout (2.0s), and event dispatch."""
+def path(*coords):
+    return SimpleNamespace(
+        header=SimpleNamespace(frame_id="map"),
+        poses=[SimpleNamespace(pose=SimpleNamespace(position=SimpleNamespace(x=x, y=y)))
+               for x, y in coords],
+    )
+
+
+@pytest.mark.parametrize("coords", [
+    (), ((0, 0),), ((0, 0), (float("nan"), 1)), ((0, 0), (0, float("inf"))),
+    ((-1e308, 0), (1e308, 0)),
+])
+def test_invalid_paths(coords):
+    assert calculate_path_length(path(*coords)) is None
+    assert calculate_path_length(None) is None
+
+
+@pytest.fixture
+def resolver(monkeypatch):
+    monkeypatch.setattr(
+        "backend.fleet_manager.adapters.route_resolver._make_goal",
+        lambda start, goal, planner_id, use_start: (start, goal, planner_id, use_start),
+    )
+    return AsyncRouteResolver(RouteCache())
+
+
+def test_query_uses_only_registered_ready_client_and_requires_success(resolver):
     async def scenario():
-        cache = RouteCache()
-        consumer = AsyncMock()
         loop = asyncio.get_running_loop()
-
-        now_val = 100.0
-        def clock():
-            nonlocal now_val
-            return now_val
-
-        resolver = AsyncRouteResolver(
-            cache=cache,
-            consumer=consumer,
-            loop=loop,
-            clock=clock,
-            timeout_sec=2.0,
-        )
-
-        # Client not registered -> None
-        start = Pose2D(0, 0)
-        goal = Pose2D(5, 5)
+        start, goal = Pose2D(), Pose2D(1, 0)
+        client = Mock()
+        client.server_is_ready.return_value = False
+        resolver.register_robot_client("r1", client)
+        assert await resolver.query_route("", start, goal) is None
+        assert await resolver.query_route("r2", start, goal) is None
         assert await resolver.query_route("r1", start, goal) is None
+        client.send_goal_async.assert_not_called()
 
-        # Register mock action client
-        mock_client = MagicMock()
-        mock_send_future = loop.create_future()
-        mock_client.send_goal_async.return_value = mock_send_future
+        client.server_is_ready.return_value = True
+        send_future = loop.create_future()
+        result_future = loop.create_future()
+        client.send_goal_async.return_value = send_future
+        handle = Mock(accepted=True)
+        handle.get_result_async.return_value = result_future
+        send_future.set_result(handle)
+        response = SimpleNamespace(status=6, result=SimpleNamespace(path=path((0, 0), (3, 4))))
+        result_future.set_result(response)
+        assert await resolver.query_route("r1", start, goal) is None
+        assert len(resolver.cache) == 0
 
-        resolver.register_robot_client("r1", mock_client)
-
-        # Test query timeout (> 2.0s)
-        query_task = asyncio.create_task(resolver.query_route("r1", start, goal))
-        await asyncio.sleep(0.01)
-        now_val += 2.5  # Monotonic time advances past 2.0s
-        await asyncio.sleep(0.05)
-
-        res = await query_task
-        assert res is None  # Timed out and returned None (Euclidean ban)
+        response.status = 4
+        assert await resolver.query_route("r1", start, goal) == 5.0
+        assert await resolver.query_route("r1", start, goal) == 5.0
+        assert resolver.cache.get("r2", start, goal) is None
+        assert client.send_goal_async.call_count == 2
+        assert client.send_goal_async.call_args.args[0] == (start, goal, "GridBased", True)
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("stage", ["acceptance", "result"])
+def test_async_route_resolver_discards_timeout_and_cancels_late_acceptance(resolver, stage):
+    async def scenario():
+        loop = asyncio.get_running_loop()
+        now = [100.0]
+        resolver.clock = lambda: now[0]
+        client = Mock()
+        send_future = loop.create_future()
+        result_future = loop.create_future()
+        handle = Mock(accepted=True)
+        handle.get_result_async.return_value = result_future
+        client.send_goal_async.return_value = send_future
+        resolver.register_robot_client("r1", client)
+        if stage == "result":
+            send_future.set_result(handle)
+
+        task = asyncio.create_task(resolver.query_route("r1", Pose2D(), Pose2D(1, 0)))
+        await asyncio.sleep(0)
+        now[0] += 2.0
+        assert await task is None
+        if stage == "acceptance":
+            handle.cancel_goal_async.assert_not_called()
+            send_future.set_result(handle)
+        result_future.set_result(SimpleNamespace(
+            status=4, result=SimpleNamespace(path=path((0, 0), (1, 0))),
+        ))
+        await asyncio.sleep(0)
+        handle.cancel_goal_async.assert_called_once()
+        assert len(resolver.cache) == 0
+    asyncio.run(scenario())
+
+
+def test_route_cache_does_not_find_another_robot_for_missing_identity():
+    cache = RouteCache()
+    start, goal = Pose2D(), Pose2D(1, 0)
+    cache.put("r1", start, goal, 1.0)
+    assert cache.get("", start, goal) is None
+    assert cache.get("r2", start, goal) is None
+    cache.put("r2", start, goal, 4.0)
+    provider = CachedRouteDistanceProvider(cache)
+    assert provider.get_path_distance("r1", start, goal) == 1.0
+    assert provider.get_path_distance("r2", start, goal) == 4.0
+    assert provider.get_path_distance("", start, goal) is None
+
+
+@pytest.mark.parametrize("bad_distance", [float("nan"), float("inf"), -1.0])
+def test_route_cache_rejects_invalid_distance(bad_distance):
+    cache = RouteCache()
+    start, goal = Pose2D(), Pose2D(1, 0)
+    cache.put("r1", start, goal, bad_distance)
+    assert cache.get("r1", start, goal) is None

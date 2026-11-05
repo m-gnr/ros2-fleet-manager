@@ -24,7 +24,7 @@ flowchart LR
 
 Her olay için domain durumu ayrı kopyada hesaplanır. `BEGIN IMMEDIATE` içinde görev, robot, rezervasyon, Outbox ve işlenen olay birlikte yazılır. Başarılı `COMMIT` sonrasında kopya canlı bellek olur. Yazma veya COMMIT hatası hem kalıcı hem bellek durumunu korur; olay kimliği tüketilmez ve çağıran hatayı alır. Hatalı bir olay consumer döngüsünü kapatmaz. Dış gönderim transaction içinde yapılmaz.
 
-Zamanlayıcı aktif görev sahipliğini denetler. Terminal sonuçtan önce gelen IDLE telemetrisi ikinci atama yaptıramaz. Eşleşen `PREEMPTED` işlemi kurbanın sayacını artırır, eski sahipliği kapatır, bekleyen HIGH ile kurbanı orijinal `created_at` değerleriyle kuyruğa alır ve gönderilmemiş eski komutları geçersiz kılar. Sonraki `TICK` güncel RobotStatus, sahiplik, üç rota ayağı ve Wh yeterliliği üzerinden normal atama kurallarını uygular. Yeni epoch, UUID ve `EXECUTE_TASK` kaydı başarılı atamanın transaction'ında oluşturulur. İptal kabulü tek başına atama başlatmaz. İptal reddi veya iptal beklerken doğal tamamlanma/hata, bekleyen HIGH görevi kuyruğa döndürür.
+Zamanlayıcı aktif görev sahipliğini denetler. Terminal sonuçtan önce gelen IDLE telemetrisi ikinci atama yaptıramaz. Eşleşen `PREEMPTED` işlemi kurbanın sayacını artırır, eski sahipliği kapatır, bekleyen HIGH ile kurbanı orijinal `created_at` değerleriyle kuyruğa alır ve gönderilmemiş eski komutları geçersiz kılar. Sonraki zamanlama geçişi güncel RobotStatus, sahiplik, üç rota ayağı ve Wh yeterliliği üzerinden normal atama kurallarını uygular. Yeni epoch, UUID ve `EXECUTE_TASK` kaydı başarılı atamanın transaction'ında oluşturulur. İptal kabulü tek başına atama başlatmaz. İptal reddi veya iptal beklerken doğal tamamlanma/hata, bekleyen HIGH görevi kuyruğa döndürür.
 
 ## SQLite şeması
 
@@ -54,15 +54,24 @@ JSON görüntüleri domain alanlarını korur; çalıştırılabilir nesne seril
 | `CANCEL_RESPONSE` | Robot kimliği, görev/epoch/UUID, `accepted`, ilgili Outbox kaydının `cancel_command_id` değeri. |
 | `RESERVE`, `OCCUPIED`, `RELEASE` | `station_id`, `robot_id`. Consumer, `SESSION_BLOCKED` robot için `processed_events` tablosuna `REJECTED` yazar ve mevcut sahipliği korur. OCCUPIED mevcut sahipliği ve bilinen robot pozunu kontrol eder. Domain fiziksel ayrılmayı kabul edilen ROBOT_STATUS ile doğrular. |
 | `UNBLOCK` | `station_id`, `robot_id`. Açık operatör isteğini temsil eden iç olay. Consumer kanıtı robotun kabul edilmiş telemetrisinden alır ve kendi monotonik saatiyle denetler. |
+| `ROUTE_RESOLVED` | Robot kimliği, mesafe veya rota yok sonucu, monotonik sonuç zamanı. Olay kimliği başlatılan sorgunun UUID'sidir. |
 | `OUTBOX_CLAIM`, `OUTBOX_FINISH` | Göndericinin iç komutları; claim zamanı veya komut kimliği/deneme numarası/hata/tekrar zamanı. |
 
-Domain olayları `APPLIED`, `DUPLICATE`, `STALE`, `SESSION_BLOCKED` veya `REJECTED` döndürür. Geçersiz alanlar/komutlar exception üretir ve transaction geri alınır. Olay API'si bir REST giriş doğrulayıcısı değildir.
+Domain olayları `APPLIED`, `DUPLICATE`, `STALE`, `SESSION_BLOCKED` veya `REJECTED` döndürür. Eşleşen planner sonucu `ROUTE_APPLIED` olarak kaydedilir. Geçersiz alanlar/komutlar exception üretir ve transaction geri alınır. Olay API'si bir REST giriş doğrulayıcısı değildir.
 
 Action olaylarında üçlü kimlik aktif atamayla eşleşmelidir. Telemetri sırası robot başına, feedback sırası robot/goal başına kontrol edilir. Terminal sonuç feedback sıra numarasına bağımlı değildir. Eski epoch, eski sıra veya geriye giden telemetri zamanı uygulanmaz. İptal yanıtı ayrıca en son iptal komutuyla eşleşir; önceki iptal isteğinin geç yanıtı yeni isteği kapatamaz.
 
 `SUCCEEDED`, `FAILED` ve `PREEMPTED` için `completed_epoch` gerçek bir tam sayı olmalı ve aktif atamanın epoch'u ile eşleşmelidir. Eksik, geçersiz veya uyuşmayan değer uyarı logu ve `processed_events` kaydında `STALE` üretir. Görev, robot, rezervasyon ve Outbox kayıtları ile bekleyen preemption korunur. [C3.3.2-DEC-05](../decisions/c3-3-2-ros2-adapter-decisions-2026-10-24.md#c332-dec-05-gerçek-completed_epoch-doğrulaması)
 
 **Saatler ve sıra:** C3.3 ile `status_seq` ve `publisher_session_id` doğrudan `RobotStatus.msg` alanlarından alınır. ROS adaptörü olayın `timestamp_sec` değerini monotonik alım saatinden üretir. Zamanlayıcının `current_time` değeri aynı saati kullanır. Rota sağlayıcı senkron ve yan etkisiz bir mesafe sorgusu olmalıdır.
+
+### Canlı Nav2 rota çözümü
+
+Fleet YAML kurucusu varsayılan olarak robot bazlı önbellek sağlar. ROS adaptörü aynı önbelleği kullanır. Filo konfigürasyonundaki robot kimliği ve namespace eşlemesi adaptöre verilir. Her planner istemcisi ilgili namespace altında `compute_path_to_pose` çağırır. Geçerli sonuçlar robot kimliği, `map` koordinat çerçevesindeki başlangıç ve hedef hücreleri ve harita revizyonuyla ayrılır. Hücre 0,20 m, monotonik TTL 30 saniye ve planner zaman aşımı 2 saniyedir. Harita revizyonu değişikliği önceki revizyonu ve bekleyen sonuçlarını geçersiz kılar. Canlı harita değişikliği bildirimi mevcut çalışma ortamına bağlıdır.
+
+Scheduler güncel RobotStatus ve görev sahipliğiyle adayları filtreler. İlk ayak robotun güncel pozundan pickup'a, ikinci ayak pickup'tan dropoff'a, üçüncü ayak dropoff'tan güvenli şarj istasyonuna gider. Hareketli başlangıç ayağı için pozun aynı hücrede olması gerekir. Kaynak RobotStatus poz damgası geçersizse rota değerlendirmesi yapılmaz. Bir adayın gerekli rotası çözülürken o görev için diğer adayların daha erken gelen yanıtları seçim sırasını değiştirmez. Planner başarısızlığı ilgili adayı o geçişte eler. Wh modeli güncel SoC, üç mesafe, acil rezerv ve mevcut marjı kullanır.
+
+Consumer transaction içinde önbelleği okur ve eksik rota isteklerini toplar. COMMIT sonrasında robot başına bir sorgu yürütülür. Aynı robot ve hücre anahtarı için birden fazla görev aynı sorguyu bekleyebilir. Sonuç, istek kimliği, harita nesli ve hâlâ geçerli görev/robot bağlamı üzerinden consumer kuyruğunda doğrulanır. Önbellek sonucu ancak olayın COMMIT işlemi başarılı olunca yayımlanır. Sonraki `TICK` normal zamanlama kurallarını uygular. Atama, epoch/UUID ve Outbox ile atomik olarak kaydedilir. Görev kuyruktan çıktığında ilgili önbellek kayıtları atılır. Başarısız sorgudan sonra aynı anahtar, iki saniye dolmadan yeniden istenmez. Daha sonraki zamanlama geçişi yeniden sorgulayabilir. Ayrı bir arka plan retry döngüsü kurulmaz. Ayrıntılı kanıt [Görev 5+6 raporundadır](../validation/c3/c3-3-4-task-5-6-validation-2026-11-05.md).
 
 ### İstasyon bırakma ve BLOCKED kurtarma
 

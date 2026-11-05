@@ -106,6 +106,7 @@ class RobotRecord:
     last_status_received_at: float = 0.0
     last_pose_sample_ns: int = 0
     station_pose_valid_until: float = 0.0
+    route_pose_valid_until: float = 0.0
     idle_start_timestamp: float = 0.0
     session_id: Optional[str] = None
     session_blocked: bool = False

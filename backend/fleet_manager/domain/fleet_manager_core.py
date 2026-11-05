@@ -219,6 +219,14 @@ class FleetManagerCore:
         if robot.session_id is None:
             robot.session_id = publisher_session_id
 
+        # Route planning may reuse a fresh sample repeated by RobotStatus.
+        robot.route_pose_valid_until = 0.0
+        if pose is not None:
+            robot.route_pose_valid_until = (
+                timestamp_sec + ROBOT_STATUS_STALE_TIMEOUT_SEC
+                if pose_valid_until is None else pose_valid_until
+            )
+
         # A newer heartbeat cannot renew a repeated measurement or retain old proof.
         robot.station_pose_valid_until = 0.0
         if (pose is not None and publisher_session_id and pose_valid_until
@@ -400,7 +408,8 @@ class FleetManagerCore:
 
             # 2. If task is HIGH priority and no IDLE robot was available:
             #    Attempt safe preemption of a running LOW/MEDIUM task
-            if task.priority == TaskPriority.PRIORITY_HIGH:
+            if (task.priority == TaskPriority.PRIORITY_HIGH
+                    and task.task_id not in self.scheduler.pending_route_tasks):
                 active_robots = [
                     r for r in self.tracker.list_robots()
                     if r.robot_id in self._active_tasks_by_robot

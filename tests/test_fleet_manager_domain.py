@@ -70,7 +70,7 @@ class MockRouteProvider:
         key = ((round(start.x, 3), round(start.y, 3)), (round(goal.x, 3), round(goal.y, 3)))
         self.route_overrides[key] = distance
 
-    def get_path_distance(self, start: Pose2D, goal: Pose2D) -> float | None:
+    def get_path_distance(self, robot_id, start: Pose2D, goal: Pose2D) -> float | None:
         key = ((round(start.x, 3), round(start.y, 3)), (round(goal.x, 3), round(goal.y, 3)))
         if key in self.route_overrides:
             return self.route_overrides[key]

@@ -9,7 +9,7 @@ from backend.fleet_manager.domain.scheduler import RouteDistanceProvider
 
 
 class DummyRouteProvider(RouteDistanceProvider):
-    def get_path_distance(self, start: Pose2D, goal: Pose2D):
+    def get_path_distance(self, robot_id, start: Pose2D, goal: Pose2D):
         return 5.0
 
 

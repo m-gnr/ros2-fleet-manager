@@ -46,7 +46,7 @@ if HAS_ROS2:
     from backend.fleet_manager.persistence.store import SQLiteStore
 
     class MockRoutes(RouteDistanceProvider):
-        def get_path_distance(self, start: Pose2D, goal: Pose2D):
+        def get_path_distance(self, robot_id, start: Pose2D, goal: Pose2D):
             return 10.0
 
 
@@ -349,4 +349,92 @@ def test_ros2_clear_robot_error_service_call(tmp_path):
     try:
         asyncio.run(scenario())
     finally:
+        rclpy.shutdown()
+
+
+def test_live_routes_use_configured_namespaces_and_distinct_planner_paths(tmp_path):
+    from nav2_msgs.action import ComputePathToPose
+    from backend.fleet_manager.adapters.route_cache import CachedRouteDistanceProvider, RouteCache
+
+    rclpy.init()
+    fm_node = Node("test_fm_live_routes")
+    server_node = Node("test_namespaced_planners")
+    executor = SingleThreadedExecutor()
+    executor.add_node(fm_node)
+    executor.add_node(server_node)
+    thread = threading.Thread(target=executor.spin, daemon=True)
+
+    namespaces = {"r1": "/west", "r2": "/east"}
+    requests = {"r1": [], "r2": []}
+
+    def make_planner(robot_id, detour):
+        def plan(handle):
+            request = handle.request
+            start, goal = request.start, request.goal
+            requests[robot_id].append((start.pose.position.x, goal.pose.position.x, request.use_start))
+            middle = PoseStamped()
+            middle.header.frame_id = "map"
+            middle.pose.position.x = (start.pose.position.x + goal.pose.position.x) / 2
+            middle.pose.position.y = detour
+            result = ComputePathToPose.Result()
+            result.path.header.frame_id = "map"
+            result.path.poses = [start, middle, goal]
+            handle.succeed()
+            return result
+        return ActionServer(server_node, ComputePathToPose,
+                            f"{namespaces[robot_id]}/compute_path_to_pose", plan)
+
+    servers = [make_planner("r1", 5.0), make_planner("r2", 0.0)]
+    store = SQLiteStore(tmp_path / "ros_routes.db")
+    core = FleetManagerCore(CachedRouteDistanceProvider(RouteCache()), Pose2D(3, 0))
+    for robot_id in namespaces:
+        core.register_robot(robot_id)
+    thread.start()
+
+    async def scenario():
+        loop = FleetEventLoop(store, core)
+        adapter = FleetROS2Adapter(fm_node, loop, asyncio.get_running_loop(), list(namespaces),
+                                   robot_namespaces=namespaces)
+        await loop.start()
+        try:
+            # Planner servers can take a moment to appear in the DDS graph.
+            deadline = time.monotonic() + 5
+            while not all(client.server_is_ready()
+                          for client in adapter.route_resolver._action_clients.values()):
+                assert time.monotonic() < deadline
+                await asyncio.sleep(0.02)
+
+            for robot_id in namespaces:
+                await loop.submit(Event("ROBOT_STATUS", {
+                    "robot_id": robot_id, "status_seq": 1, "publisher_session_id": str(uuid.uuid4()),
+                    "current_epoch": 0, "state": 1, "current_phase": 0, "is_loaded": False,
+                    "pose": Pose2D(), "battery_soc_percent": 100, "battery_energy_wh": 100,
+                    "current_task_id": None, "timestamp_sec": time.monotonic(),
+                }))
+            assert len(adapter.route_cache) == 0
+            await loop.submit(Event("SUBMIT_TASK", {
+                "task_id": "live_route", "pickup_pose": Pose2D(1, 0), "dropoff_pose": Pose2D(2, 0),
+                "priority": TaskPriority.PRIORITY_LOW, "created_at": time.monotonic(),
+            }))
+            deadline = time.monotonic() + 2
+            while "live_route" not in loop.core._active_tasks:
+                assert time.monotonic() < deadline, requests
+                await asyncio.sleep(0.02)
+
+            assert loop.core._active_tasks["live_route"].assigned_robot_id == "r2"
+            assert requests == {robot: [(0, 1, True), (1, 2, True), (2, 3, True)] for robot in namespaces}
+            assert store.connection.execute("SELECT COUNT(*) FROM outbox_events").fetchone()[0] == 1
+        finally:
+            await loop.close()
+
+    try:
+        asyncio.run(scenario())
+    finally:
+        store.close()
+        executor.shutdown()
+        thread.join(timeout=5)
+        for server in servers:
+            server.destroy()
+        fm_node.destroy_node()
+        server_node.destroy_node()
         rclpy.shutdown()

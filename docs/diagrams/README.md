@@ -33,7 +33,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 14 | Kurtarma — [FAILED / ERROR ve operatör kurtarma](#14-failure-operator-recovery) | PARTIAL | [Mermaid](src/failure-operator-recovery.mmd) · [SVG](svg/failure-operator-recovery.svg) |
 | 15 | Konfigürasyon — [fleet.yaml yaşam döngüsü](#15-fleet-config-lifecycle) | PARTIAL | [Mermaid](src/fleet-config-lifecycle.mmd) · [SVG](svg/fleet-config-lifecycle.svg) |
 | 16 | Panel — [REST / WebSocket ve 2D panel](#16-rest-websocket-gui) | PLANNED | [Mermaid](src/rest-websocket-gui.mmd) · [SVG](svg/rest-websocket-gui.svg) |
-| 17 | Rota — [Asenkron rota ve önbellek](#17-route-cache) | PARTIAL | [Mermaid](src/route-cache.mmd) · [SVG](svg/route-cache.svg) |
+| 17 | Rota — [Asenkron rota ve önbellek](#17-route-cache) | IMPLEMENTED | [Mermaid](src/route-cache.mmd) · [SVG](svg/route-cache.svg) |
 | 18 | Güvenlik — [Duplicate kayıtları ve restart engeli](#18-duplicate-restart-guard) | PARTIAL | [Mermaid](src/duplicate-restart-guard.mmd) · [SVG](svg/duplicate-restart-guard.svg) |
 
 <a id="01-system-architecture"></a>
@@ -948,19 +948,19 @@ flowchart LR
 
 ## 17. Asenkron rota ve önbellek
 
-**Durum:** PARTIAL. **Amaç:** Ağ sorgusunun consumer transaction dışında kalmasını göstermek.
+**Durum:** IMPLEMENTED. Scheduler robot kimliğini üç rota ayağında korur. Ağ sorgusu ve önbelleğe yayın ilgili COMMIT işlemlerinden sonra yapılır.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
-| Robot, start/goal, map_revision, monotonik zaman | Nav2 yol uzunluğu veya None | 0.20 m hücre, 30 sn TTL, 2 sn sorgu timeout; Euclidean fallback yok. |
+| RobotStatus, görev pozları, harita revizyonu, monotonik zaman | Nav2 mesafeleri ve yeniden zamanlama | 0,20 m hücre, 30 sn TTL, 2 sn sorgu timeout. |
 
-**Kaynak belge:** [c3-3-2-ros2-adapter-decisions-2026-10-24.md](../decisions/c3-3-2-ros2-adapter-decisions-2026-10-24.md)
+**Kaynak belge:** [C3.3.2 kararları](../decisions/c3-3-2-ros2-adapter-decisions-2026-10-24.md) · [Outbox ve rota tasarımı](../design/c3-2-sqlite-outbox.md#canlı-nav2-rota-çözümü)
 
-**Kaynak kod:** [route_cache.py](../../backend/fleet_manager/adapters/route_cache.py) · [route_resolver.py](../../backend/fleet_manager/adapters/route_resolver.py) · [ros2_adapter_node.py](../../backend/fleet_manager/adapters/ros2_adapter_node.py)
+**Kaynak kod:** [route_planning.py](../../backend/fleet_manager/adapters/route_planning.py) · [route_cache.py](../../backend/fleet_manager/adapters/route_cache.py) · [route_resolver.py](../../backend/fleet_manager/adapters/route_resolver.py)
 
-**Test / kanıt:** [test_ros2_route_resolver.py](../../tests/test_ros2_route_resolver.py)
+**Test / kanıt:** [Görev 5+6 doğrulama raporu](../validation/c3/c3-3-4-task-5-6-validation-2026-11-05.md)
 
-**Sınır / fark:** Resolver önce cache’e doğrudan yazar, ardından consumer’a olay gönderir; diyagramdaki olay yolu tek yazma yolu değildir. Cache API ve sorgu kodu mevcut; görev atama/iptal/çıkışındaki tüm invalidation tetikleyicilerinin canlı bağlantısı kanıtlanmış değildir. Boş robot_id sorgusu başka robot kaydıyla eşleşebilir; tam robot izolasyonu diye sunulmaz.
+**Sınır / fark:** Canlı harita revizyonu bildiriminin kaynağı çalışma ortamına bağlıdır. T03 bağımsız planner sondası kendi önbelleğini yönetir.
 
 ![Asenkron rota ve önbellek](svg/route-cache.svg)
 
@@ -969,19 +969,22 @@ flowchart LR
 
 ```mermaid
 ---
-title: "17 · Asenkron rota ve önbellek · PARTIAL"
+title: "17 · Robot bazlı canlı Nav2 rotası · IMPLEMENTED"
 ---
 flowchart TD
- A(["Rota ihtiyacı"]):::terminal --> K["robot_id + start/goal hücreleri + map_revision"]:::fm
- K --> HIT{"Önbellek geçerli mi?<br/>TTL ≤ 30 sn; yer değiştirme ≤ 0.20 m"}:::decision
- HIT -->|"Evet"| D(["Yol uzunluğu m"]):::terminal
- HIT -->|"Hayır"| N["Consumer dışında ComputePathToPose"]:::nav
- N --> RES{"2 sn içinde geçerli sonuç?"}:::decision
- RES -->|"Hayır"| NONE["None; görev bekler; Euclidean yok"]:::wait
- RES -->|"Evet"| LEN["Path segment uzunluklarını topla"]:::nav
- LEN --> EVENT["ROUTE_RESOLVED → consumer → cache"]:::fm
- EVENT --> D
- INV["Hedef / harita / poz / görev değişimi<br/>Onaylı invalidation tetikleyicileri"]:::fm -.-> K
+ A(["Görev veya güncel telemetri"]):::terminal --> S["Adayları ve üç rota ayağını değerlendir"]:::fm
+ S --> K{"Robot, başlangıç/hedef hücreleri<br/>ve harita revizyonu eşleşiyor mu?"}:::decision
+ K -->|"Geçerli kayıt · TTL < 30 sn"| E{"Güncel telemetri ve Wh yeterli mi?"}:::decision
+ K -->|"Eksik rota"| C["İsteği COMMIT sonrasına bırak"]:::db
+ C --> Q["Robotun kendi ComputePathToPose uç noktası<br/>Robot başına tek etkin sorgu"]:::nav
+ Q --> R{"2 sn içinde geçerli Path?"}:::decision
+ R -->|"Hayır"| W["Adayı ele, sonraki geçişte<br/>aynı anahtar için 2 sn bekle"]:::wait
+ R -->|"Evet"| V{"Olay, harita nesli ve<br/>görev/robot bağlamı güncel mi?"}:::decision
+ V -->|"Hayır"| X["Eski sonucu at"]:::wait
+ V -->|"Evet"| P["Olay COMMIT edildikten sonra<br/>mesafeyi önbelleğe yaz"]:::db
+ P -->|"Yeniden zamanla"| S
+ E -->|"Evet"| O["Atama ve ExecuteTask Outbox kaydı<br/>aynı transaction"]:::db
+ E -->|"Hayır"| W2["Görev kuyrukta kalır"]:::wait
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

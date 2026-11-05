@@ -4,7 +4,7 @@ Producers submit values, never callbacks. Network sends happen outside transacti
 The route provider must be a synchronous, read-only distance lookup.
 """
 import asyncio
-from copy import deepcopy
+from copy import copy, deepcopy
 from dataclasses import dataclass, field
 import math
 import logging
@@ -33,6 +33,7 @@ class FleetEventLoop:
         self._queue = asyncio.Queue()
         self._worker = None
         self._closed = False
+        self._route_planning = None
         with store.transaction():
             store.require_empty()
             store.persist_core(self._core)
@@ -45,6 +46,17 @@ class FleetEventLoop:
     def core(self):
         """Return a detached snapshot; producers cannot mutate the consumer state."""
         return deepcopy(self._core, {id(self._core.scheduler): self._core.scheduler})
+
+    def enable_live_routing(self, query):
+        from .adapters.route_cache import CachedRouteDistanceProvider
+        from .adapters.route_planning import LiveRoutePlanning
+
+        if self._route_planning is not None or self._closed:
+            raise RuntimeError("Consumer cannot attach a second planner or attach after close")
+        provider = self._core.scheduler.route_provider
+        if not isinstance(provider, CachedRouteDistanceProvider):
+            raise ValueError("Live routing requires a robot-specific cache provider")
+        self._route_planning = LiveRoutePlanning(self, provider.cache, query, self._clock)
 
     async def start(self):
         if self._closed:
@@ -67,6 +79,8 @@ class FleetEventLoop:
                 await self._worker
             return
         self._closed = True
+        if self._route_planning is not None:
+            await self._route_planning.close()
         if self._worker is not None:
             self._queue.put_nowait(None)
             await self._worker
@@ -89,6 +103,8 @@ class FleetEventLoop:
 
     def _process(self, event):
         db = self.store.connection
+        routes = self._route_planning
+        plan = resolved_route = None
         with self.store.transaction():
             if event.kind == "OUTBOX_CLAIM":
                 return self.store.claim(**event.payload)
@@ -106,7 +122,24 @@ class FleetEventLoop:
             if db.execute("SELECT 1 FROM processed_events WHERE event_id=?", (event.event_id,)).fetchone():
                 return "DUPLICATE"
             candidate = deepcopy(self._core, {id(self._core.scheduler): self._core.scheduler})
-            outcome, stream, seq = self._apply(candidate, event)
+            if event.kind == "ROUTE_RESOLVED":
+                if routes is not None:
+                    resolved_route = routes.current_result(candidate, event)
+                outcome, stream, seq = ("ROUTE_APPLIED" if resolved_route else "STALE", None, None)
+            else:
+                outcome, stream, seq = self._apply(candidate, event)
+            if outcome == "APPLIED" and routes is not None and event.kind in (
+                "TICK", "SUBMIT_TASK", "ROBOT_STATUS", "ACTION_RESULT", "CLEAR_REVIEW_HOLD",
+            ):
+                if len(candidate.queue):
+                    now = self._clock()
+                    plan = routes.planning_pass(now)
+                    scheduler = candidate.scheduler
+                    candidate.scheduler = copy(scheduler)
+                    candidate.scheduler.route_lookup = plan.lookup
+                    candidate.scheduler.pending_route_tasks = plan.pending
+                    candidate.schedule_tick(current_time=now)
+                    candidate.scheduler = scheduler
             if outcome in ("APPLIED", "SESSION_BLOCKED"):
                 self.store.persist_core(candidate)
                 if outcome == "APPLIED":
@@ -121,10 +154,16 @@ class FleetEventLoop:
         # Publish memory only after COMMIT; failed writes leave both states unchanged.
         if outcome in ("APPLIED", "SESSION_BLOCKED"):
             self._core = candidate
+            if routes is not None:
+                moved_robot = (candidate.tracker.get_robot(event.payload["robot_id"])
+                               if event.kind == "ROBOT_STATUS" and outcome == "APPLIED" else None)
+                routes.after_commit(candidate, plan, moved_robot)
             if event.kind == "TICK":
                 for robot_id, severity, elapsed in candidate.tracker.check_communication_health(event.payload["current_time"]):
                     if robot_id in candidate._active_tasks_by_robot:
                         logger.warning("COMMUNICATION_WARNING robot=%s severity=%s elapsed=%s", robot_id, severity, elapsed)
+        if resolved_route is not None:
+            routes.publish_result(resolved_route, event.payload["distance"], event.payload["timestamp"])
         return outcome
 
     def _apply(self, core, event):
@@ -153,7 +192,8 @@ class FleetEventLoop:
                 raise ValueError("task_id already exists in this scenario")
             core.submit_task(**p)
         elif kind == "TICK":
-            core.schedule_tick(**p)
+            if self._route_planning is None:
+                core.schedule_tick(**p)
         elif kind == "ROBOT_STATUS":
             robot = core.tracker.get_robot(p["robot_id"])
             if robot is None:
@@ -246,10 +286,6 @@ class FleetEventLoop:
         elif kind == "CLEAR_REVIEW_HOLD":
             core.clear_review_hold(p["task_id"])
             self.store.clear_review_hold(p["task_id"])
-        elif kind == "ROUTE_RESOLVED":
-            provider = core.scheduler.route_provider
-            if hasattr(provider, "update_cache"):
-                provider.update_cache(**p)
         elif kind == "UNBLOCK":
             robot = core.tracker.get_robot(p["robot_id"])
             if not core.reservations.unblock(p["station_id"], robot, now=self._clock()):

@@ -1,5 +1,6 @@
 """SQLite failure boundaries and real asyncio producer interleavings."""
 import asyncio
+from contextlib import asynccontextmanager, closing
 import json
 import sqlite3
 
@@ -14,7 +15,7 @@ from backend.fleet_manager.persistence import SQLiteStore, ScenarioResetRequired
 
 
 class Routes:
-    def get_path_distance(self, start, goal):
+    def get_path_distance(self, robot_id, start, goal):
         return 1.0
 
 
@@ -550,7 +551,7 @@ def test_preempted_high_rechecks_assignment_eligibility(tmp_path, blocker):
     async def scenario():
         now = [10.0]
         cache = RouteCache()
-        core = FleetManagerCore(CachedRouteDistanceProvider(cache, "r1", clock=lambda: now[0]), Pose2D())
+        core = FleetManagerCore(CachedRouteDistanceProvider(cache, clock=lambda: now[0]), Pose2D())
         core.register_robot("r1")
         core.register_station("dock", StationType.CHARGING, Pose2D())
         legs = [(Pose2D(), Pose2D(1, 0)), (Pose2D(1, 0), Pose2D(2, 0)), (Pose2D(2, 0), Pose2D())]
@@ -971,3 +972,277 @@ os._exit(17)
         assert reopened.connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
     finally:
         reopened.close()
+
+
+def test_live_routes_resolve_before_selecting_nearest_robot(tmp_path):
+    async def scenario():
+        cache = RouteCache()
+        provider = CachedRouteDistanceProvider(cache, clock=lambda: 10.0)
+        core = FleetManagerCore(provider, Pose2D(3, 0))
+        core.register_robot("r1")
+        core.register_robot("r2")
+        with closing(SQLiteStore(tmp_path / "live-routes.db")) as store:
+            loop = FleetEventLoop(store, core, clock=lambda: 10.0)
+            calls = []
+            release_r2 = asyncio.Event()
+
+            async def query(robot_id, start, goal):
+                assert not store.connection.in_transaction
+                calls.append((robot_id, start.x, goal.x))
+                if robot_id == "r2":
+                    await release_r2.wait()
+                return 4.0 if robot_id == "r1" else 1.0
+
+            loop.enable_live_routing(query)
+            await loop.start()
+            try:
+                await loop.submit(status(session="r1-session"))
+                await loop.submit(status("r2", session="r2-session"))
+                await loop.submit(submit())
+                await wait_for_routes(lambda: len(calls) == 4)
+                assert loop.core.queue.get("t1") is not None
+                assert not rows(loop, "outbox_events")
+                release_r2.set()
+                await wait_for_routes(lambda: bool(rows(loop, "outbox_events")))
+                assert loop.core._active_tasks["t1"].assigned_robot_id == "r2"
+                assert len(rows(loop, "outbox_events")) == 1
+                assert sorted(calls) == [(robot, start, start + 1) for robot in ("r1", "r2") for start in range(3)]
+            finally:
+                await loop.close()
+    asyncio.run(scenario())
+
+
+async def wait_for_routes(condition):
+    async def wait():
+        while not condition():
+            await asyncio.sleep(0.001)
+    await asyncio.wait_for(wait(), timeout=2)
+
+
+@asynccontextmanager
+async def live_routing_runtime(tmp_path, query, now):
+    cache = RouteCache()
+    core = FleetManagerCore(CachedRouteDistanceProvider(cache, clock=lambda: now[0]), Pose2D(3, 0))
+    core.register_robot("r1")
+    with closing(SQLiteStore(tmp_path / "routing.db")) as store:
+        loop = FleetEventLoop(store, core, clock=lambda: now[0])
+        loop.enable_live_routing(query)
+        await loop.start()
+        try:
+            await loop.submit(status(session="original"))
+            yield loop, cache
+        finally:
+            await loop.close()
+
+
+@pytest.mark.parametrize("missing_leg", [0, 1, 2])
+def test_live_route_failure_keeps_task_queued_and_retries_on_later_tick(tmp_path, missing_leg):
+    async def scenario():
+        now = [10.0]
+        calls = []
+        available = False
+
+        async def query(robot_id, start, goal):
+            calls.append(start.x)
+            return None if start.x == missing_leg and not available else 1.0
+
+        async with live_routing_runtime(tmp_path, query, now) as (loop, cache):
+            await loop.submit(submit())
+            await wait_for_routes(lambda: len(calls) == missing_leg + 1)
+            await wait_for_routes(lambda: sum(
+                row["outcome"] == "ROUTE_APPLIED" for row in rows(loop, "processed_events")
+            ) == missing_leg + 1)
+            for _ in range(3):
+                await loop.submit(Event("TICK", {"current_time": now[0]}))
+            assert calls.count(missing_leg) == 1
+            assert rows(loop, "tasks")[0]["status"] == "QUEUED"
+            assert not rows(loop, "outbox_events")
+            assert not loop.core._failed_tasks
+
+            available = True
+            now[0] += 2.0
+            await loop.submit(Event("TICK", {"current_time": now[0]}))
+            await wait_for_routes(lambda: bool(rows(loop, "outbox_events")))
+            assert calls.count(missing_leg) == 2
+            assert loop.core._active_tasks["t1"].assigned_robot_id == "r1"
+            assert len(cache) == 0  # Assignment invalidates the task's route keys.
+    asyncio.run(scenario())
+
+
+def test_live_route_uses_escape_distance_and_latest_soc(tmp_path):
+    async def scenario():
+        now = [10.0]
+        release = asyncio.Event()
+
+        async def query(robot_id, start, goal):
+            if start.x == 2:
+                await release.wait()
+                return 15.0
+            return 1.0
+
+        async with live_routing_runtime(tmp_path, query, now) as (loop, cache):
+            await loop.submit(submit())
+            await wait_for_routes(lambda: len(cache) == 2)
+            update = status(seq=2, session="original")
+            update.payload.update(battery_soc_percent=20.0, battery_energy_wh=20.0)
+            await loop.submit(update)
+            release.set()
+            await wait_for_routes(lambda: len(cache) == 3)
+            assert not rows(loop, "outbox_events")  # 12 Wh available, 13.4 Wh required.
+            assert loop.core.queue.get("t1") is not None
+            await loop.submit(status(seq=3, session="original"))
+            assert len(rows(loop, "outbox_events")) == 1
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("change", ["cell", "map", "session", "stale", "pose-sample"])
+def test_live_route_drops_results_from_old_context(tmp_path, change):
+    async def scenario():
+        now = [10.0]
+        started, release = asyncio.Event(), asyncio.Event()
+        calls = []
+
+        async def query(robot_id, start, goal):
+            calls.append(start)
+            started.set()
+            if len(calls) == 1:
+                await release.wait()
+                return 99.0
+            return 1.0
+
+        async with live_routing_runtime(tmp_path, query, now) as (loop, cache):
+            await loop.submit(submit())
+            await asyncio.wait_for(started.wait(), timeout=2)
+            if change == "cell":
+                await loop.submit(status(seq=2, pose=Pose2D(0.21, 0), session="original"))
+            elif change == "map":
+                cache.invalidate_map_revision("updated")
+                cache.invalidate_map_revision("v1.0")
+            elif change == "session":
+                assert await loop.submit(status(seq=2, session="restarted")) == "SESSION_BLOCKED"
+            elif change == "pose-sample":
+                await loop.submit(status(seq=2, session="original", pose_valid_until=0.0))
+            else:
+                now[0] += 2.1
+            release.set()
+
+            await wait_for_routes(lambda: any(
+                row["outcome"] == "STALE" and row["stream"] is None
+                for row in rows(loop, "processed_events")
+            ))
+            assert cache.get("r1", Pose2D(), Pose2D(1, 0), now=now[0]) != 99.0
+            if change in ("cell", "map"):
+                await wait_for_routes(lambda: len(rows(loop, "outbox_events")) == 1)
+                expected = Pose2D(0.21, 0) if change == "cell" else Pose2D()
+                assert calls[1] == expected
+            else:
+                assert not rows(loop, "outbox_events")
+                assert loop.core.queue.get("t1") is not None
+                assert calls == [Pose2D()]
+    asyncio.run(scenario())
+
+
+def test_live_route_commit_failure_publishes_neither_cache_nor_assignment(tmp_path, caplog):
+    async def scenario():
+        now = [10.0]
+        started, release = asyncio.Event(), asyncio.Event()
+
+        async def query(robot_id, start, goal):
+            started.set()
+            await release.wait()
+            return 1.0
+
+        async with live_routing_runtime(tmp_path, query, now) as (loop, cache):
+            await loop.submit(submit())
+            await asyncio.wait_for(started.wait(), timeout=2)
+            before = rows(loop, "processed_events")
+            connection = loop.store.connection
+
+            def deny_commit(operation, argument, *_):
+                if operation == sqlite3.SQLITE_TRANSACTION and argument == "COMMIT":
+                    return sqlite3.SQLITE_DENY
+                return sqlite3.SQLITE_OK
+
+            connection.set_authorizer(deny_commit)
+            try:
+                release.set()
+                await wait_for_routes(lambda: "Could not commit Nav2 route result" in caplog.text)
+                assert rows(loop, "processed_events") == before
+                assert len(cache) == 0
+                assert not rows(loop, "outbox_events")
+                assert loop.core.queue.get("t1") is not None
+            finally:
+                connection.set_authorizer(lambda *_: sqlite3.SQLITE_OK)
+
+            await loop.submit(Event("TICK", {"current_time": now[0]}))
+            await wait_for_routes(lambda: bool(rows(loop, "outbox_events")))
+            applied = [row for row in rows(loop, "processed_events") if row["outcome"] == "ROUTE_APPLIED"]
+            assert len(applied) == 3
+            replay = {"robot_id": "r1", "distance": 99.0, "timestamp": now[0]}
+            assert await loop.submit(Event("ROUTE_RESOLVED", replay, applied[0]["event_id"])) == "DUPLICATE"
+            assert await loop.submit(Event("ROUTE_RESOLVED", replay)) == "STALE"
+            assert len(rows(loop, "outbox_events")) == 1
+    asyncio.run(scenario())
+
+
+def test_live_routes_deduplicate_shared_legs_and_concurrent_ticks(tmp_path):
+    async def scenario():
+        now = [10.0]
+        started, release = asyncio.Event(), asyncio.Event()
+        calls = []
+
+        async def query(robot_id, start, goal):
+            calls.append((start.x, goal.x))
+            started.set()
+            await release.wait()
+            return 1.0
+
+        async with live_routing_runtime(tmp_path, query, now) as (loop, _):
+            await loop.submit(submit())
+            await asyncio.wait_for(started.wait(), timeout=2)
+            await loop.submit(submit("second"))
+            await asyncio.gather(*(
+                loop.submit(Event("TICK", {"current_time": now[0]})) for _ in range(5)
+            ))
+            assert calls == [(0.0, 1)]
+            release.set()
+            await wait_for_routes(lambda: bool(rows(loop, "outbox_events")))
+            assert calls == [(0.0, 1), (1, 2), (2, 3)]
+            assert loop.core.queue.get("second") is not None
+    asyncio.run(scenario())
+
+
+def test_live_route_replans_after_terminal_preemption_at_stopped_pose(tmp_path):
+    async def scenario():
+        now = [10.0]
+        calls = []
+        release = asyncio.Event()
+
+        async def query(robot_id, start, goal):
+            calls.append((start.x, goal.x))
+            if start.x == 0.4:
+                await release.wait()
+            return 1.0
+
+        async with live_routing_runtime(tmp_path, query, now) as (loop, _):
+            await loop.submit(submit())
+            await wait_for_routes(lambda: len(rows(loop, "outbox_events")) == 1)
+            await loop.submit(status(seq=2, epoch=1, task="t1", state=2, phase=1, session="original"))
+            await loop.submit(submit("high", priority=1))
+            await wait_for_routes(lambda: len(rows(loop, "outbox_events")) == 2)
+            victim = loop.core._active_tasks["t1"]
+            assert rows(loop, "outbox_events")[-1]["kind"] == "CANCEL_TASK"
+            await loop.submit(status(seq=3, epoch=1, pose=Pose2D(0.4, 0), session="original"))
+            assert len(rows(loop, "outbox_events")) == 2
+
+            terminal = action(loop, result_status=TaskResultStatus.STATUS_PREEMPTED)
+            assert await loop.submit(terminal) == "APPLIED"
+            await wait_for_routes(lambda: (0.4, 1) in calls)
+            assert len(rows(loop, "outbox_events")) == 2
+            release.set()
+            await wait_for_routes(lambda: len(rows(loop, "outbox_events")) == 3)
+            high = loop.core._active_tasks["high"]
+            assert high.assignment_epoch == victim.assignment_epoch + 1
+            assert high.goal_uuid != victim.goal_uuid
+            assert loop.core.queue.get("t1").preemption_count == 1
+    asyncio.run(scenario())

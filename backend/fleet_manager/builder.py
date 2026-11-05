@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Union
 import yaml
 
+from .adapters.route_cache import CachedRouteDistanceProvider, RouteCache
 from .domain.constants import StationType
 from .domain.fleet_manager_core import FleetManagerCore
 from .domain.models import Pose2D, RobotBatterySpecs
@@ -27,6 +28,9 @@ def build_fleet_manager_from_config(
             if candidate.exists():
                 config_file = candidate.resolve()
                 break
+
+    if route_provider is None:
+        route_provider = CachedRouteDistanceProvider(RouteCache())
 
     try:
         from fleet_config.loader import load_config as load_pydantic_config

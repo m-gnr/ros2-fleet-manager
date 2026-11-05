@@ -32,7 +32,7 @@ from .models import Pose2D, PreemptionDecision, RobotRecord, Task
 class RouteDistanceProvider(Protocol):
     """Protocol for calculating Nav2 path distances."""
 
-    def get_path_distance(self, start: Pose2D, goal: Pose2D) -> Optional[float]:
+    def get_path_distance(self, robot_id: str, start: Pose2D, goal: Pose2D) -> Optional[float]:
         """Return the Nav2 global path distance in metres, or None if path fails."""
         ...
 
@@ -61,6 +61,8 @@ class Scheduler:
     ) -> None:
         self.route_provider = route_provider
         self.safe_charge_station_pose = safe_charge_station_pose
+        self.route_lookup = None
+        self.pending_route_tasks: set[str] = set()
 
     def evaluate_robot_for_task(
         self,
@@ -73,21 +75,24 @@ class Scheduler:
         Returns CandidateEvaluation if route and energy are valid, else None.
         Strictly enforces NO Euclidean fallback if route planner fails.
         """
-        # 1. Nav2 Route distance calculations
-        d_pickup = self.route_provider.get_path_distance(robot.pose, task.pickup_pose)
-        if d_pickup is None or not isfinite(d_pickup) or d_pickup < 0.0:
-            return None  # Route failed, no Euclidean fallback!
-
-        d_delivery = self.route_provider.get_path_distance(task.pickup_pose, task.dropoff_pose)
-        if d_delivery is None or not isfinite(d_delivery) or d_delivery < 0.0:
-            return None  # Route failed, no Euclidean fallback!
-
-        d_escape = self.route_provider.get_path_distance(task.dropoff_pose, self.safe_charge_station_pose)
-        if d_escape is None or not isfinite(d_escape) or d_escape < 0.0:
-            return None  # Route failed, no Euclidean fallback!
-
         if not 0.0 <= robot.battery_soc_percent <= 100.0:
             return None
+
+        legs = (
+            (robot.pose, task.pickup_pose),
+            (task.pickup_pose, task.dropoff_pose),
+            (task.dropoff_pose, self.safe_charge_station_pose),
+        )
+        if self.route_lookup is None:
+            distances = tuple(
+                self.route_provider.get_path_distance(robot.robot_id, start, goal)
+                for start, goal in legs
+            )
+        else:
+            distances = self.route_lookup(robot, task, legs)
+        if distances is None or any(d is None or not isfinite(d) or d < 0 for d in distances):
+            return None
+        d_pickup, d_delivery, d_escape = distances
 
         d_total = d_pickup + d_delivery
 
@@ -136,7 +141,7 @@ class Scheduler:
             if eval_res is not None:
                 candidates.append(eval_res)
 
-        if not candidates:
+        if not candidates or task.task_id in self.pending_route_tasks:
             return None
 
         # Sort with multi-tier tie-breaking:
@@ -226,7 +231,7 @@ class Scheduler:
 
             preemptible_candidates.append((robot, victim_task, eval_res))
 
-        if not preemptible_candidates:
+        if not preemptible_candidates or high_task.task_id in self.pending_route_tasks:
             return None
 
         # Sort candidates by shortest pickup distance to the HIGH task (Karar 08 T06)

@@ -24,6 +24,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C3.3.4 Görev 3 | [Rapor](c3/c3-3-4-task-3-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-3-commands-2026-11-05.md) | Preemption sonrası normal zamanlamada yeniden uygunluk denetimi ve Outbox güvenliği |
 | C3.3.4 Görev 4 | [Rapor](c3/c3-3-4-task-4-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-4-commands-2026-11-05.md) | Normal bırakma, fiziksel kanıtla BLOCKED istasyon kurtarma ve canlı koşu bulguları |
 | C3.3.4 Görev 5+6 | [Rapor](c3/c3-3-4-task-5-6-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-5-6-commands-2026-11-05.md) | Robot bazlı canlı rota, SQL COMMIT güvenliği, C3.3.3/C2.3 regresyonları ve ayrı T02-AUTO-ROUTES koşuları |
+| C3.3.4 Görev 7 | [Rapor](c3/c3-3-4-task-7-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-7-commands-2026-11-05.md) | YAML enerji politikalarının Scheduler'a aktarımı ve ayrı YAML-ENERGY-POLICY kabul koşusu |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

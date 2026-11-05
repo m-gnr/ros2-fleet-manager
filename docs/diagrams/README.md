@@ -173,7 +173,7 @@ flowchart TD
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
-| RobotStatus, görev pozları, rota mesafeleri, batarya modeli | En yakın uygun aday veya aday yok | Güncel, oturum engeli yok, yüksüz, aktif atamasız; rota ve enerji zorunlu. |
+| RobotStatus, görev pozları, Nav2 rota mesafeleri, robotun batarya modeli ve filo YAML politikaları | En yakın uygun aday veya aday yok | Güncel, oturum engeli yok, yüksüz, aktif atamasız; rota ve enerji zorunlu. |
 
 **Kaynak belge:** [ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md](../ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md) · [c3-fleet-manager-decisions-2026-10-24.md](../decisions/c3-fleet-manager-decisions-2026-10-24.md)
 
@@ -181,7 +181,7 @@ flowchart TD
 
 **Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_fleet_builder.py](../../tests/test_fleet_builder.py)
 
-**Sınır / fark:** Fark: builder ilk şarj istasyonunu safe_charge seçer; çoklu istasyon erişim seçimi tamamlanmış değildir. Scheduler enerji kontrolüne fleet policies marj/rezervini geçirmez; fonksiyon varsayılanları kullanılır. Hedef formül ile kod arasındaki bu yapılandırma boşluğu korunarak raporlandı.
+**Sınır / fark.** Builder güvenli kaçış hedefi olarak ilk şarj istasyonunu seçer. Çoklu istasyon erişim seçimi planlanan kapsamdır. Scheduler filo YAML'ındaki doğrulanmış acil rezervi ve güvenlik marjını robotun batarya modeli, güncel SoC ve üç Nav2 rota mesafesiyle birlikte değerlendirir.
 
 ![Robot seçimi ve Wh uygunluğu](svg/robot-selection-energy.svg)
 
@@ -199,6 +199,8 @@ flowchart TD
  L --> R{"Üç rota geçerli mi?"}:::decision
  R -->|"Hayır"| NO
  R -->|"Evet"| EN["E_required = k × L1 + k × L2 + k × L3 + margin<br/>E_available = C × SoC/100 − C × reserve/100"]:::battery
+ P["Doğrulanmış filo YAML<br/>Acil rezerv (%) ve güvenlik marjı (Wh)"]:::fm --> EN
+ B["Robotun batarya modeli ve güncel SoC"]:::battery --> EN
  EN --> OK{"E_required ≤ E_available?"}:::decision
  OK -->|"Hayır"| NO
  OK -->|"Evet"| SORT["En küçük L1<br/>Eşitlik: en uzun IDLE, sonra robot_id"]:::fm

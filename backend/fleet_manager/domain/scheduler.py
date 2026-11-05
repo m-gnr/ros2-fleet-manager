@@ -19,6 +19,8 @@ from math import isfinite
 from typing import List, Optional, Protocol, Tuple
 
 from .constants import (
+    DEFAULT_EMERGENCY_SOC,
+    DEFAULT_SAFETY_MARGIN_WH,
     DISTANCE_TIE_EPSILON,
     MAX_PREEMPTIONS,
     RobotState,
@@ -58,9 +60,14 @@ class Scheduler:
         self,
         route_provider: RouteDistanceProvider,
         safe_charge_station_pose: Pose2D,
+        *,
+        emergency_soc_percent: float = DEFAULT_EMERGENCY_SOC,
+        safety_margin_wh: float = DEFAULT_SAFETY_MARGIN_WH,
     ) -> None:
         self.route_provider = route_provider
         self.safe_charge_station_pose = safe_charge_station_pose
+        self._emergency_soc_percent = emergency_soc_percent
+        self._safety_margin_wh = safety_margin_wh
         self.route_lookup = None
         self.pending_route_tasks: set[str] = set()
 
@@ -102,6 +109,8 @@ class Scheduler:
             battery_soc_percent=robot.battery_soc_percent,
             d_total_m=d_total,
             d_escape_m=d_escape,
+            emergency_soc_percent=self._emergency_soc_percent,
+            safety_margin_wh=self._safety_margin_wh,
         )
 
         if not energy_res.is_eligible:

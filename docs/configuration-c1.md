@@ -64,6 +64,10 @@ Görev yönetimi ve operasyon politikaları:
 - `low_soc_percent` (float, %): Şarj kuyruğuna yönlendirme eşiği (örn. `25.0`). Eşik kuralı: `emergency_soc_percent < low_soc_percent < charge_target_soc_percent`.
 - `safety_margin_wh` (float $\ge$ 0): Enerji hesaplama güvenlik payı (**Wh**, örn. `10.0`).
 
+Fleet Manager başlarken builder, zorunlu `emergency_soc_percent` ve `safety_margin_wh` alanlarını C1 doğrulayıcısından alıp Scheduler'a aktarır. Scheduler normal atamada, preemption aday seçiminde ve terminal sonuç ya da canlı rota sonrası yeniden zamanlamada aynı değerleri kullanır. Geçersiz dosya veya eksik doğrulayıcı bağımlılığı başlangıç hatası üretir. Doğrudan domain nesnesi oluşturan çağrılar temsili varsayılanları kullanabilir.
+
+Scheduler son kabul edilen `RobotStatus` SoC'sini, robotun kendi batarya kapasitesini ve Wh/m katsayısını kullanır. Nav2'nin pickup, taşıma ve şarja kaçış mesafelerine ait enerjiye güvenlik marjı bir kez eklenir. Rezerv, kalan enerjiden düşülür. Zamana bağlı tüketim ve şarj hesabı C4 Battery Simulator kapsamındadır.
+
 ## 3. Doğrulama Seviyeleri ve Kuralları
 
 1. **Sentaks ve Biçim Doğrulaması:** YAML ayrıştırmasında anahtar tekrarları (`duplicate keys`) ve string dışı anahtarlar engellenir.

@@ -53,7 +53,7 @@ def calculate_available_energy(
     """
     e_remaining = calculate_remaining_energy(usable_capacity_wh, soc_percent)
     e_emergency = calculate_emergency_reserve(usable_capacity_wh, emergency_soc_percent)
-    return max(0.0, e_remaining - e_emergency)
+    return e_remaining - e_emergency
 
 
 def calculate_escape_energy(

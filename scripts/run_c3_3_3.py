@@ -133,7 +133,9 @@ def main():
     parser = argparse.ArgumentParser(description='Run C3.3.3 dual-robot validation with host resource monitoring.')
     parser.add_argument('--token', default='c3-3-3-live-sim-run-1', help='Payload run token')
     parser.add_argument('--domain', default='47', help='ROS_DOMAIN_ID')
-    parser.add_argument('--auto-routes', action='store_true', help='Run the separate T02 automatic route variant')
+    scenario = parser.add_mutually_exclusive_group()
+    scenario.add_argument('--auto-routes', action='store_true', help='Run the separate T02 automatic route variant')
+    scenario.add_argument('--energy-policy', action='store_true', help='Run the separate YAML energy policy acceptance')
     args = parser.parse_args()
 
     docker_bin = shutil.which('docker') or '/usr/local/bin/docker'
@@ -160,6 +162,7 @@ def main():
     env['ROS_DOMAIN_ID'] = str(args.domain)
     env['ROS_LOCALHOST_ONLY'] = '0'
     env['C333_AUTO_ROUTES'] = '1' if args.auto_routes else '0'
+    env['C333_ENERGY_POLICY'] = '1' if args.energy_policy else '0'
     env['PATH'] = env.get('PATH', '') + ':/usr/local/bin:/opt/homebrew/bin'
 
     print(f'=== LAUNCHING C3.3.3 DUAL-ROBOT VALIDATION RUN: {args.token} (Domain: {args.domain}) ===', flush=True)

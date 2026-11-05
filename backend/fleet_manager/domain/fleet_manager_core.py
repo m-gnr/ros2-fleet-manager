@@ -13,6 +13,8 @@ from typing import Dict, List, Optional, Tuple
 import uuid
 
 from .constants import (
+    DEFAULT_EMERGENCY_SOC,
+    DEFAULT_SAFETY_MARGIN_WH,
     COMMUNICATION_ALERT_SEC,
     COMMUNICATION_WARNING_SEC,
     ROBOT_STATUS_STALE_TIMEOUT_SEC,
@@ -48,6 +50,9 @@ class FleetManagerCore:
         self,
         route_provider: RouteDistanceProvider,
         safe_charge_station_pose: Pose2D,
+        *,
+        emergency_soc_percent: float = DEFAULT_EMERGENCY_SOC,
+        safety_margin_wh: float = DEFAULT_SAFETY_MARGIN_WH,
     ) -> None:
         self.queue = TaskQueue()
         self.tracker = FleetTracker()
@@ -55,6 +60,8 @@ class FleetManagerCore:
         self.scheduler = Scheduler(
             route_provider=route_provider,
             safe_charge_station_pose=safe_charge_station_pose,
+            emergency_soc_percent=emergency_soc_percent,
+            safety_margin_wh=safety_margin_wh,
         )
 
         # Active tasks by task_id and by robot_id

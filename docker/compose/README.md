@@ -19,9 +19,13 @@ DDS için `DDS_TEST_PAYLOAD` zorunludur. Env dosyaları ve bind mount kaynaklar�
 
 C3.3.3 çalıştırıcısının `--auto-routes` seçeneği aynı Compose katmanlarıyla ayrı **T02-AUTO-ROUTES** koşusunu başlatır. Backend, bu koşuda T01 başlangıç denetiminden sonra boş önbellekten canlı planner sorguları yürütür. Tarihsel T01–T10 seçkisi için seçenek verilmez. [Komutlar ve ölçütler](../../docs/validation/c3/c3-3-4-task-5-6-commands-2026-11-05.md)
 
+`--energy-policy` seçeneği ayrı **YAML-ENERGY-POLICY** koşusunu başlatır. Aynı canlı Nav2 mesafeleri ve iki Executor'dan alınan SoC ile iki YAML marjını karşılaştırır. Kabul ölçütü SQLite görevi ve Outbox kaydıdır. [Görev 7 komutları](../../docs/validation/c3/c3-3-4-task-7-commands-2026-11-05.md)
+
 ## Image bağımlılıkları
 
 DDS image'ı temel alınır; A, B1 ve Nav2 image'ları aşamalı hazırlanır. Action image'ı da DDS tabanına bağlıdır. B2/AMCL/B3/Retry katmanları Nav2 image adını kullanırken A katmanının build tarifini miras alır. Bu mevcut davranış organizasyon sırasında değiştirilmedi. Bu birleşimlerde `build` veya `up --build` doğru Nav2 bağımlılık image'ını üretme garantisi vermez; [B2 hazırlık kanıtı](../../docs/validation/simulation/b2/simulation-stage-b2-2026-10-23.md) esas alınmalıdır.
+
+C3.3.3 backend image'ı mevcut Nav2 image'ından türetilir ve `requirements-c1.txt` bağımlılıklarını kurar. Üç C3.3.3 katmanıyla yalnızca `build backend` çalıştırın. Simülasyon servisi mevcut Nav2 image'ını kullanır. [Image hazırlama komutu](../../docs/validation/c3/c3-3-4-task-7-commands-2026-11-05.md)
 
 ## Tarihsel komutlar
 

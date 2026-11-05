@@ -1246,3 +1246,129 @@ def test_live_route_replans_after_terminal_preemption_at_stopped_pose(tmp_path):
             assert high.goal_uuid != victim.goal_uuid
             assert loop.core.queue.get("t1").preemption_count == 1
     asyncio.run(scenario())
+
+
+@pytest.fixture
+def energy_policy_yaml(tmp_path):
+    import shutil
+    import yaml
+
+    path = shutil.copytree("config", tmp_path / "config") / "fleet.yaml"
+    data = yaml.safe_load(path.read_text())
+    data["policies"].update(emergency_soc_percent=12.5, safety_margin_wh=22.0)
+    models = data["fleet"]["battery_models"]
+    models["turtlebot3_burger"]["consumption_wh_per_meter"] = 0.25
+    models["large"] = dict(models["turtlebot3_burger"], usable_capacity_wh=200.0)
+    data["robots"][1]["battery_model"] = "large"
+    path.write_text(yaml.safe_dump(data))
+    return path
+
+
+def energy_status(robot="robot_1", soc=100.0, **kwargs):
+    event = status(robot=robot, session=f"{robot}-session", **kwargs)
+    event.payload["battery_soc_percent"] = soc
+    return event
+
+
+def test_yaml_policy_rechecks_preemption_and_commits_one_assignment(energy_policy_yaml, tmp_path):
+    from backend.fleet_manager.builder import build_fleet_manager_from_config
+
+    class Routes:
+        def get_path_distance(self, robot_id, start, goal):
+            return 4.0
+
+    async def scenario():
+        core, _ = build_fleet_manager_from_config(energy_policy_yaml, Routes())
+        with closing(SQLiteStore(tmp_path / "policy.db")) as store:
+            loop = FleetEventLoop(store, core)
+            await loop.start()
+            try:
+                def tick():
+                    return Event("TICK", {"current_time": 10})
+
+                await loop.submit(energy_status())
+                await loop.submit(submit())
+                await loop.submit(tick())
+                victim = loop.core._active_tasks["t1"]
+                await loop.submit(energy_status(soc=37.49, seq=2, epoch=1, task="t1", state=2, phase=1))
+                await loop.submit(submit("high", priority=1, created_at=2))
+                await loop.submit(submit("younger-high", priority=1, created_at=3))
+                await loop.submit(tick())
+                assert [r["kind"] for r in rows(loop, "outbox_events")] == ["EXECUTE_TASK"]
+
+                await loop.submit(energy_status(seq=3, epoch=1, task="t1", state=2, phase=1))
+                await loop.submit(tick())
+                assert [r["kind"] for r in rows(loop, "outbox_events")] == ["EXECUTE_TASK", "CANCEL_TASK"]
+                await loop.submit(Event("ACTION_RESULT", dict(
+                    robot_id="robot_1", task_id=victim.task_id, assignment_epoch=victim.assignment_epoch,
+                    goal_uuid=victim.goal_uuid, result_status=TaskResultStatus.STATUS_PREEMPTED,
+                    completed_epoch=victim.assignment_epoch,
+                )))
+                await loop.submit(energy_status(soc=37.49, seq=4, epoch=1))
+                assert await loop.submit(energy_status(seq=4, epoch=1)) == "STALE"
+                await loop.submit(tick())
+                assert [t.task_id for t in loop.core.queue.iter_assignable_tasks()] == ["high", "younger-high", "t1"]
+                assert loop.core.queue.get("high").created_at == 2
+                assert not loop.core._failed_tasks
+                assert len(rows(loop, "outbox_events")) == 2
+
+                await loop.submit(energy_status(soc=37.5, seq=5, epoch=1))
+                tables = ("tasks", "robots", "reservations", "processed_events", "outbox_events")
+                before = {table: rows(loop, table) for table in tables}
+
+                def deny_commit(operation, argument, *_):
+                    if operation == sqlite3.SQLITE_TRANSACTION and argument == "COMMIT":
+                        return sqlite3.SQLITE_DENY
+                    return sqlite3.SQLITE_OK
+
+                event = tick()
+                store.connection.set_authorizer(deny_commit)
+                try:
+                    with pytest.raises(sqlite3.DatabaseError):
+                        await loop.submit(event)
+                finally:
+                    store.connection.set_authorizer(lambda *_: sqlite3.SQLITE_OK)
+                assert {table: rows(loop, table) for table in tables} == before
+                assert not loop.core._active_tasks
+                assert loop.core.tracker.get_robot("robot_1").current_epoch == 1
+                assert loop.core.queue.get("high").created_at == 2
+
+                assert await loop.submit(event) == "APPLIED"
+                assert await loop.submit(event) == "DUPLICATE"
+                await loop.submit(tick())
+                assert list(loop.core._active_tasks) == ["high"]
+                commands = [(row["kind"], row["task_id"], row["assignment_epoch"]) for row in rows(loop, "outbox_events")]
+                assert commands == [
+                    ("EXECUTE_TASK", "t1", 1), ("CANCEL_TASK", "t1", 1), ("EXECUTE_TASK", "high", 2),
+                ]
+            finally:
+                await loop.close()
+    asyncio.run(scenario())
+
+
+def test_yaml_energy_policy_and_robot_models_after_automatic_routes(energy_policy_yaml, tmp_path):
+    from backend.fleet_manager.builder import build_fleet_manager_from_config
+
+    async def scenario():
+        core, _ = build_fleet_manager_from_config(energy_policy_yaml)
+        with closing(SQLiteStore(tmp_path / "policy.db")) as store:
+            loop = FleetEventLoop(store, core, clock=lambda: 10.0)
+
+            async def query(robot_id, start, goal):
+                return 4.0 if robot_id == "robot_1" else 5.0
+
+            loop.enable_live_routing(query)
+            await loop.start()
+            try:
+                await loop.submit(energy_status(soc=37.49))
+                await loop.submit(energy_status(robot="robot_2", soc=37.49, pose=Pose2D(0, 1)))
+                await loop.submit(submit())
+                await wait_for_routes(lambda: bool(rows(loop, "outbox_events")))
+                assert sum(row["outcome"] == "ROUTE_APPLIED" for row in rows(loop, "processed_events")) == 6
+                # The closer 100 Wh robot falls just short. The 200 Wh robot
+                # has enough energy even though its three paths are longer.
+                assert loop.core._active_tasks["t1"].assigned_robot_id == "robot_2"
+                assert [row["kind"] for row in rows(loop, "outbox_events")] == ["EXECUTE_TASK"]
+            finally:
+                await loop.close()
+    asyncio.run(scenario())

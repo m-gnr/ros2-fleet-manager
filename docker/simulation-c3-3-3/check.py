@@ -69,6 +69,7 @@ def load_config():
                 break
     if not fleet_path.exists():
         raise FileNotFoundError(f"fleet.yaml missing: {fleet_path}")
+    config["fleet_config_path"] = str(fleet_path)
 
     template_path = Path(config["nav2_template_path"])
     if not template_path.exists():
@@ -565,6 +566,20 @@ def backend(config, fleet_data, timeout):
     print(f"[DEBUG] r2 status: {status_records['robot_2'][-1].pose.pose.position.x}, {status_records['robot_2'][-1].pose.pose.position.y}", flush=True)
 
     emit("WARMUP_COMPLETED", elapsed_s=round(time.monotonic() - start_time, 2))
+
+    if os.environ.get("C333_ENERGY_POLICY") == "1":
+        from energy_policy_check import check_energy_policy
+
+        try:
+            asyncio.run(check_energy_policy(
+                config["fleet_config_path"], robot_namespaces, executor,
+                {"robot_1": path_client_r1, "robot_2": path_client_r2}, emit,
+            ))
+        finally:
+            executor.shutdown()
+            node.destroy_node()
+            rclpy.shutdown()
+        return 0
 
     # Shared route cache and resolver
     shared_route_cache = RouteCache()

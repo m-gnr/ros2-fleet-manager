@@ -119,6 +119,18 @@ class TestEnergyModel:
         avail = calculate_available_energy(usable_wh, soc, emergency_soc)
         assert avail == 42.0
 
+    def test_zero_cost_task_cannot_use_emergency_reserve(self) -> None:
+        result = check_energy_eligibility(
+            specs=RobotBatterySpecs(),
+            battery_soc_percent=7.0,
+            d_total_m=0.0,
+            d_escape_m=0.0,
+            emergency_soc_percent=8.0,
+            safety_margin_wh=0.0,
+        )
+        assert result.available_wh == pytest.approx(-1.0)
+        assert not result.is_eligible
+
     def test_required_energy_formula(self) -> None:
         k = 0.20  # Wh/m
         d_total = 30.0  # metres

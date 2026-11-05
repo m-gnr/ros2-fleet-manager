@@ -24,7 +24,7 @@ flowchart LR
 
 Her olay için domain durumu ayrı kopyada hesaplanır. `BEGIN IMMEDIATE` içinde görev, robot, rezervasyon, Outbox ve işlenen olay birlikte yazılır. Başarılı `COMMIT` sonrasında kopya canlı bellek olur. Yazma veya COMMIT hatası hem kalıcı hem bellek durumunu korur; olay kimliği tüketilmez ve çağıran hatayı alır. Hatalı bir olay consumer döngüsünü kapatmaz. Dış gönderim transaction içinde yapılmaz.
 
-C3.1 zamanlayıcısında aktif görev sahipliği ayrıca denetlenir. Terminal sonuçtan önce gelen IDLE telemetrisi ikinci atama yaptıramaz. PREEMPTED ile çekirdeğin ürettiği yeni HIGH ataması da aynı transaction içinde Outbox'a girer. İptal kabulü tek başına atama başlatmaz. İptal reddi veya iptal beklerken doğal tamamlanma/hata, bekleyen HIGH görevi kuyruğa döndürür.
+Zamanlayıcı aktif görev sahipliğini denetler. Terminal sonuçtan önce gelen IDLE telemetrisi ikinci atama yaptıramaz. Eşleşen `PREEMPTED` işlemi kurbanın sayacını artırır, eski sahipliği kapatır, bekleyen HIGH ile kurbanı orijinal `created_at` değerleriyle kuyruğa alır ve gönderilmemiş eski komutları geçersiz kılar. Sonraki `TICK` güncel RobotStatus, sahiplik, üç rota ayağı ve Wh yeterliliği üzerinden normal atama kurallarını uygular. Yeni epoch, UUID ve `EXECUTE_TASK` kaydı başarılı atamanın transaction'ında oluşturulur. İptal kabulü tek başına atama başlatmaz. İptal reddi veya iptal beklerken doğal tamamlanma/hata, bekleyen HIGH görevi kuyruğa döndürür.
 
 ## SQLite şeması
 

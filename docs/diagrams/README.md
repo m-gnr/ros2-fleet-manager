@@ -276,17 +276,17 @@ flowchart TD
 
 ## 05. Güvenli preemption ve N=2
 
-**Durum:** IMPLEMENTED. **Amaç:** HIGH atamasından önce terminal duruş el sıkışmasını göstermek.
+**Durum:** IMPLEMENTED. **Amaç:** Terminal duruş teyidini ve sonraki zamanlama turunda yapılan uygunluk kontrolünü göstermek.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
-| Yeni HIGH, çalışan görev/faz/yük, sayaç, Nav2 ve odometri | PREEMPTED sonrası yeniden kuyruklama ve HIGH ataması | Boş uygun robot önce; kurban LOW/MED, pickup öncesi, yüksüz, sayaç < 2. |
+| Yeni HIGH, çalışan görev/faz/yük, sayaç, Nav2 ve odometri | PREEMPTED sonrası yeniden kuyruklama ve normal atama | Önce uygun boş robot aranır. Kurban LOW/MED, pickup öncesi, yüksüz ve sayaç < 2 olmalıdır. Sonraki tur güncel koşulları yeniden değerlendirir. |
 
 **Kaynak belge:** [ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md](../ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md) · [c3-3-1-executor-safety-decisions-2026-10-24.md](../decisions/c3-3-1-executor-safety-decisions-2026-10-24.md) · [c3-3-3-dual-robot-integration-decisions-2026-10-24.md](../decisions/c3-3-3-dual-robot-integration-decisions-2026-10-24.md)
 
 **Kaynak kod:** [scheduler.py](../../backend/fleet_manager/domain/scheduler.py) · [event_loop.py](../../backend/fleet_manager/event_loop.py) · [node.py](../../ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py) · [stop_detector.py](../../ros2_ws/src/fleet_robot_executor/fleet_robot_executor/stop_detector.py)
 
-**Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_executor_safety.py](../../tests/test_executor_safety.py)
+**Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_executor_safety.py](../../tests/test_executor_safety.py) · [Görev 3 doğrulama kaydı](../validation/c3/c3-3-4-task-3-validation-2026-11-05.md)
 
 **Sınır / fark:** İptal reddi ve timeout kesilme sayacını artırmaz. %15 takas kullanılmaz. Park dönüşünü kesme ayrı lojistik kuralıdır.
 
@@ -316,10 +316,11 @@ flowchart TD
  O -->|"Hayır"| BRAKE["Frenle ve teyit bekle"]:::wait
  BRAKE --> O
  O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor
- R --> Q["Kurban sayaç +1; orijinal created_at ile kuyruk<br/>N=2 ise üçüncü çalışmada koruma"]:::fm
- Q --> SES{"Robot SESSION_BLOCKED mı?"}:::decision
- SES -->|"Evet"| W
- SES -->|"Hayır"| NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
+ R --> Q["Kurban sayaç +1; kurban ve HIGH<br/>orijinal created_at ile kuyrukta"]:::fm
+ Q --> S["Sonraki normal zamanlama turu"]:::fm
+ S --> EL{"Güvenilir oturum, güncel uygun durum,<br/>sahiplik boş, yüksüz, rota ve enerji uygun?"}:::decision
+ EL -->|"Uygun aday yok"| W
+ EL -->|"Uygun aday var"| NEW["Yeni epoch + UUID ve tek<br/>EXECUTE_TASK Outbox kaydı"]:::fm
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

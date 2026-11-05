@@ -309,13 +309,11 @@ class FleetManagerCore:
             robot.active_goal_uuid = None
             robot.current_task_id = None
 
-            # 4. Check if a HIGH task was waiting for this robot
+            # The terminal result closes ownership. A scheduling tick must
+            # evaluate the waiting task against current RobotStatus and routes.
             pending_high = self._pending_preemption_assignments.pop(robot_id, None)
             if pending_high is not None:
-                if robot.session_blocked:
-                    self.queue.enqueue(pending_high)
-                else:
-                    self._dispatch_assignment(robot, pending_high)
+                self.queue.enqueue(pending_high)
 
             return True, task
 
@@ -411,7 +409,7 @@ class FleetManagerCore:
         self,
         robot: RobotRecord,
         task: Task,
-        current_time: float = 0.0,
+        current_time: float,
     ) -> Assignment:
         """Assign task to robot with incremented monotonic epoch and new goal UUID."""
         # Check if robot was at a station and initiate release

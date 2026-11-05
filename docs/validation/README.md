@@ -21,6 +21,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C3.3.2 | [Rapor](c3/c3-3-2-validation-2026-10-24.md) | ROS 2 adaptör entegrasyonu doğrulandı: status subscriber, session order/SESSION_BLOCKED, eylem istemcisi, Outbox göndericisi, task_review_holds, 0.20m/30s rota önbelleği (212 host, 102 ROS 2/DDS testi, 7/7 canlı senaryo geçti) |
 | C3.3.3 | [Rapor](c3/c3-3-3-validation-2026-10-24.md) | İki robotlu uçtan uca canlı simülasyon ve DDS entegrasyonu doğrulandı: Gazebo Fortress headless + iki Nav2 + iki Executor + Fleet Manager (214 host testi, T01–T10 senaryolarının tamamı 10/10 temiz geçti) |
 | C3.3.4 Görev 2 | [Rapor](c3/c3-3-4-task-2-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-2-commands-2026-11-05.md) | Oturum engeli ve istasyon sahipliği için host, ROS ve canlı regresyon kayıtları |
+| C3.3.4 Görev 3 | [Rapor](c3/c3-3-4-task-3-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-3-commands-2026-11-05.md) | Preemption sonrası normal zamanlamada yeniden uygunluk denetimi ve Outbox güvenliği |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

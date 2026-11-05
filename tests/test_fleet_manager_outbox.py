@@ -5,7 +5,10 @@ import sqlite3
 
 import pytest
 
-from backend.fleet_manager.domain import FleetManagerCore, Pose2D, ReservationState, StationType
+from backend.fleet_manager.adapters.route_cache import CachedRouteDistanceProvider, RouteCache
+from backend.fleet_manager.domain import (
+    FleetManagerCore, Pose2D, ReservationState, RobotState, StationType, TaskResultStatus,
+)
 from backend.fleet_manager.event_loop import Event, FleetEventLoop, OutboxDispatcher
 from backend.fleet_manager.persistence import SQLiteStore, ScenarioResetRequired
 
@@ -309,31 +312,228 @@ async def preempt(loop):
     await loop.submit(Event("TICK", {"current_time": 10}))
 
 
-def test_preemption_waits_for_terminal_and_records_new_assignment(runtime):
+@pytest.mark.parametrize("idle_first", [False, True], ids=["terminal-first", "idle-first"])
+def test_preemption_waits_for_terminal_and_records_new_assignment(runtime, idle_first):
     async def scenario():
         await runtime.start()
         await preempt(runtime)
+        await runtime.submit(submit("younger-low", created_at=2))
+        tick = Event("TICK", {"current_time": 10})
         assert [r["kind"] for r in rows(runtime, "outbox_events")] == ["EXECUTE_TASK", "CANCEL_TASK"]
         await runtime.submit(action(runtime, "CANCEL_RESPONSE"))
+        idle = status(seq=3, epoch=1, session="original")
+        if idle_first:
+            await runtime.submit(idle)
+        await runtime.submit(tick)
         assert list(runtime.core._active_tasks) == ["t1"]
-        await runtime.submit(action(runtime, result_status=3))
-        assert list(runtime.core._active_tasks) == ["high"]
+
+        terminal = action(runtime, result_status=TaskResultStatus.STATUS_PREEMPTED)
+        assert await runtime.submit(terminal) == "APPLIED"
+        assert not runtime.core._pending_preemption_assignments
+        assert not runtime.core._active_tasks
+        assert len(rows(runtime, "outbox_events")) == 2
+        assert runtime.core.queue.get("high").created_at == 1
+        assert [t.task_id for t in runtime.core.queue.iter_assignable_tasks()] == [
+            "high", "t1", "younger-low",
+        ]
         assert runtime.core.queue.get("t1").preemption_count == 1
         assert runtime.core.queue.get("t1").created_at == 1
+        if not idle_first:
+            await runtime.submit(Event(tick.kind, tick.payload))
+            assert not runtime.core._active_tasks
+            await runtime.submit(idle)
+
+        await runtime.submit(Event(tick.kind, tick.payload))
+        assert list(runtime.core._active_tasks) == ["high"]
+        command = rows(runtime, "outbox_events")[-1]
+        assert (command["kind"], command["task_id"], command["assignment_epoch"]) == (
+            "EXECUTE_TASK", "high", terminal.payload["assignment_epoch"] + 1,
+        )
+        assert command["goal_uuid"] != terminal.payload["goal_uuid"]
+        assert await runtime.submit(terminal) == "DUPLICATE"
+        assert await runtime.submit(Event(terminal.kind, terminal.payload)) == "STALE"
         assert len(rows(runtime, "outbox_events")) == 3
-        assert rows(runtime, "outbox_events")[-1]["task_id"] == "high"
+        assert runtime.core.queue.get("t1").preemption_count == 1
         await runtime.close()
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("result", [1, 2])
-def test_terminal_during_cancel_does_not_strand_high(runtime, result):
+@pytest.mark.parametrize("blocker", [
+    "session", "stale", "low-energy", "invalid-soc", "missing-pickup", "missing-dropoff",
+    "missing-escape", "expired", "invalidated", "negative-pickup", "nonfinite-dropoff",
+    "other-task", "loaded", "error",
+])
+def test_preempted_high_rechecks_assignment_eligibility(tmp_path, blocker):
+    async def scenario():
+        now = [10.0]
+        cache = RouteCache()
+        core = FleetManagerCore(CachedRouteDistanceProvider(cache, "r1", clock=lambda: now[0]), Pose2D())
+        core.register_robot("r1")
+        core.register_station("dock", StationType.CHARGING, Pose2D())
+        legs = [(Pose2D(), Pose2D(1, 0)), (Pose2D(1, 0), Pose2D(2, 0)), (Pose2D(2, 0), Pose2D())]
+        for leg in legs:
+            cache.put("r1", *leg, 1.0, now=now[0])
+        store = SQLiteStore(tmp_path / "eligibility.db")
+        loop = FleetEventLoop(store, core)
+        await loop.start()
+        try:
+            await loop.submit(status(session="original"))
+            await preempt(loop)
+            terminal = action(loop, result_status=TaskResultStatus.STATUS_PREEMPTED)
+            assert "r1" in loop.core._pending_preemption_assignments
+            station = {"station_id": "dock", "robot_id": "r1"}
+            await loop.submit(Event("RESERVE", station))
+            await loop.submit(Event("OCCUPIED", station))
+
+            if blocker == "stale":
+                now[0] += 2.1
+            if blocker == "expired":
+                now[0] += cache.ttl_sec + 0.1
+            if blocker == "invalidated":
+                cache.invalidate_map_revision("new-map")
+
+            # A changed pose invalidates the original pickup lookup. The other
+            # two missing-leg cases keep the remaining cached legs available.
+            if blocker in ("missing-dropoff", "missing-escape"):
+                cache.invalidate_all()
+                missing_index = 1 if blocker == "missing-dropoff" else 2
+                for i, leg in enumerate(legs):
+                    if i != missing_index:
+                        cache.put("r1", *leg, 1.0, now=now[0])
+            if blocker == "negative-pickup":
+                cache.put("r1", *legs[0], -0.1, now=now[0])
+            if blocker == "nonfinite-dropoff":
+                cache.put("r1", *legs[1], float("nan"), now=now[0])
+
+            timestamp = 10.0 if blocker == "stale" else now[0]
+            update = status(seq=3, epoch=1, timestamp=timestamp, session="original")
+            if blocker == "session":
+                await loop.submit(status(seq=3, epoch=1, timestamp=timestamp, session="original"))
+                update = status(seq=4, epoch=1, timestamp=timestamp, session="restart")
+            if blocker == "missing-pickup":
+                update.payload["pose"] = Pose2D(0.2, 0)
+            if blocker == "low-energy":
+                update.payload.update(battery_soc_percent=8.0, battery_energy_wh=8.0)
+            if blocker == "invalid-soc":
+                update.payload.update(battery_soc_percent=101.0, battery_energy_wh=101.0)
+            if blocker == "loaded":
+                update.payload["is_loaded"] = True
+            if blocker == "error":
+                update.payload["state"] = RobotState.STATE_ERROR
+
+            if blocker != "other-task":
+                expected = "SESSION_BLOCKED" if blocker == "session" else "APPLIED"
+                assert await loop.submit(update) == expected
+            before = rows(loop, "reservations")
+            assert await loop.submit(terminal) == "APPLIED"
+            if blocker == "other-task":
+                # Report ownership unknown to FM after the victim has closed.
+                update.payload.update(current_task_id="other", current_epoch=2)
+                assert await loop.submit(update) == "APPLIED"
+            await loop.submit(Event("TICK", {"current_time": now[0]}))
+            assert not loop.core._pending_preemption_assignments
+            assert not loop.core._active_tasks
+            assert not loop.core._failed_tasks
+            assert loop.core.queue.get("high").created_at == 1
+            assert loop.core.queue.get("t1").preemption_count == 1
+            assert rows(loop, "reservations") == before
+            assert [r["state"] for r in rows(loop, "outbox_events")] == ["SUPERSEDED", "SUPERSEDED"]
+            if blocker == "other-task":
+                assert loop.core.tracker.get_robot("r1").current_task_id == "other"
+        finally:
+            await loop.close()
+            store.close()
+    asyncio.run(scenario())
+
+
+def test_requeued_high_cannot_replace_another_active_owner(runtime):
     async def scenario():
         await runtime.start()
         await preempt(runtime)
-        await runtime.submit(action(runtime, result_status=result))
-        assert runtime.core.queue.get("high") is not None
+        await runtime.submit(submit("older-high", priority=1, created_at=0))
+        await runtime.submit(action(runtime, result_status=TaskResultStatus.STATUS_PREEMPTED))
+        await runtime.submit(status(seq=3, epoch=1))
+        await runtime.submit(Event("TICK", {"current_time": 10}))
+        other = runtime.core._active_tasks_by_robot["r1"]
+        assert other.task_id == "older-high"
+
+        # IDLE can arrive before the other assignment's matching terminal result.
+        await runtime.submit(status(seq=4, epoch=other.assignment_epoch))
+        before = rows(runtime, "outbox_events")
+        await runtime.submit(Event("TICK", {"current_time": 10}))
+        assert runtime.core._active_tasks_by_robot["r1"] == other
+        assert runtime.core.queue.get("high").created_at == 1
+        assert rows(runtime, "outbox_events") == before
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("kind", ["ACTION_RESULT", "TICK"])
+def test_commit_failure_after_preemption_preserves_domain_and_outbox(runtime, kind):
+    async def scenario():
+        await runtime.start()
+        await preempt(runtime)
+        station = {"station_id": "dock", "robot_id": "r1"}
+        await runtime.submit(Event("RESERVE", station))
+        await runtime.submit(Event("OCCUPIED", station))
+        await runtime.submit(status(seq=3, epoch=1))
+        terminal = action(runtime, result_status=TaskResultStatus.STATUS_PREEMPTED)
+        event = terminal
+        if kind == "TICK":
+            assert await runtime.submit(terminal) == "APPLIED"
+            event = Event("TICK", {"current_time": 10})
+
+        tables = ("robots", "tasks", "reservations", "outbox_events", "processed_events")
+        before = {table: rows(runtime, table) for table in tables}
+        before_core = runtime.core
+        connection = runtime.store.connection
+
+        def deny_commit(operation, argument, *_):
+            if operation == sqlite3.SQLITE_TRANSACTION and argument == "COMMIT":
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        connection.set_authorizer(deny_commit)
+        try:
+            with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
+                await runtime.submit(event)
+        finally:
+            # Python 3.10 does not support disabling the authorizer with None.
+            connection.set_authorizer(lambda *_: sqlite3.SQLITE_OK)
+        assert {table: rows(runtime, table) for table in tables} == before
+        assert runtime.core._active_tasks == before_core._active_tasks
+        assert runtime.core._pending_preemption_assignments == before_core._pending_preemption_assignments
+        assert list(runtime.core.queue.iter_assignable_tasks()) == list(before_core.queue.iter_assignable_tasks())
+        assert await runtime.submit(event) == "APPLIED"
+        if kind == "ACTION_RESULT":
+            assert runtime.core.queue.get("t1").preemption_count == 1
+            assert runtime.core.queue.get("high").created_at == 1
+        else:
+            assert list(runtime.core._active_tasks) == ["high"]
+            assert len(rows(runtime, "outbox_events")) == 3
+            assert rows(runtime, "reservations")[0]["state"] == "RELEASING"
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("result, status_name", [
+    (TaskResultStatus.STATUS_SUCCEEDED, "COMPLETED"),
+    (TaskResultStatus.STATUS_FAILED, "FAILED"),
+])
+def test_terminal_during_cancel_does_not_strand_high(runtime, result, status_name):
+    async def scenario():
+        await runtime.start()
+        await preempt(runtime)
+        await runtime.submit(action(runtime, "CANCEL_RESPONSE"))
+        assert await runtime.submit(action(runtime, result_status=result)) == "APPLIED"
+        assert runtime.core.queue.get("high").created_at == 1
+        assert runtime.core.queue.get("t1") is None
         assert not runtime.core._pending_preemption_assignments
+        assert not runtime.core._active_tasks
+        victim = next(row for row in rows(runtime, "tasks") if row["task_id"] == "t1")
+        assert victim["status"] == status_name
+        assert json.loads(victim["snapshot"])["preemption_count"] == 0
+        assert [row["state"] for row in rows(runtime, "outbox_events")] == ["SUPERSEDED", "SUPERSEDED"]
         await runtime.close()
     asyncio.run(scenario())
 

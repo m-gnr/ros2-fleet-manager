@@ -928,20 +928,41 @@ def backend(config, fleet_data, timeout):
 
         assert preempted, "Preempted task must return to queue with preemption_count == 1"
         emit("PREEMPTION_CONFIRMED_TERMINAL_RESULT", task_id="task_t04_low")
+        assert c.queue.get("task_t04_high") is not None
+        assert store_t04.connection.execute(
+            "SELECT COUNT(*) FROM outbox_events WHERE kind='EXECUTE_TASK' AND task_id='task_t04_high'"
+        ).fetchone()[0] == 0
 
         # Wait until robot_1 telemetry confirms IDLE after preemption
         t_idle = time.monotonic()
         while time.monotonic() - t_idle < 10.0:
-            if status_records["robot_1"][-1].state == RobotStatus.STATE_IDLE:
+            stopped = loop.core.tracker.get_robot("robot_1")
+            if stopped.state == RobotState.STATE_IDLE:
                 break
             await asyncio.sleep(0.2)
+        assert stopped.state == RobotState.STATE_IDLE
+
+        # Supply the test route for the actual stopped pose, then use the normal
+        # scheduling path. Leave the command unsent for the following scenarios.
+        shared_route_cache.put("robot_1", stopped.pose, Pose2D(-1.0, 0.0), 0.5)
+        await loop.submit(Event("TICK", {"current_time": time.monotonic()}))
+        high = loop.core._active_tasks.get("task_t04_high")
+        assert high is not None and high.assigned_robot_id == "robot_1"
+        commands = store_t04.connection.execute(
+            "SELECT assignment_epoch, goal_uuid FROM outbox_events WHERE kind='EXECUTE_TASK' AND task_id=?",
+            (high.task_id,),
+        ).fetchall()
+        assert len(commands) == 1
+        assert tuple(commands[0]) == (t_low.assignment_epoch + 1, high.goal_uuid)
+        assert high.goal_uuid != t_low.goal_uuid
+        emit("POST_PREEMPTION_ASSIGNMENT_VERIFIED", task_id=high.task_id, robot_id=high.assigned_robot_id)
 
         await loop.close()
         store_t04.close()
         executor.remove_node(sub_node_t04)
 
     asyncio.run(run_t04())
-    emit("SCENARIO_PASSED", test="T04", details="Safe preemption, standstill confirmation, and N increment verified")
+    emit("SCENARIO_PASSED", test="T04", details="Safe preemption, standstill, N increment, and revalidated assignment verified")
 
     # -------------------------------------------------------------------------
     # T05: Preemption Koruma Sınırı (N=2)

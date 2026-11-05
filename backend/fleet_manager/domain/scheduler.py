@@ -15,7 +15,8 @@ Implements approved rules:
 """
 
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Protocol, Tuple
+from math import isfinite
+from typing import List, Optional, Protocol, Tuple
 
 from .constants import (
     DISTANCE_TIE_EPSILON,
@@ -74,16 +75,19 @@ class Scheduler:
         """
         # 1. Nav2 Route distance calculations
         d_pickup = self.route_provider.get_path_distance(robot.pose, task.pickup_pose)
-        if d_pickup is None:
+        if d_pickup is None or not isfinite(d_pickup) or d_pickup < 0.0:
             return None  # Route failed, no Euclidean fallback!
 
         d_delivery = self.route_provider.get_path_distance(task.pickup_pose, task.dropoff_pose)
-        if d_delivery is None:
+        if d_delivery is None or not isfinite(d_delivery) or d_delivery < 0.0:
             return None  # Route failed, no Euclidean fallback!
 
         d_escape = self.route_provider.get_path_distance(task.dropoff_pose, self.safe_charge_station_pose)
-        if d_escape is None:
+        if d_escape is None or not isfinite(d_escape) or d_escape < 0.0:
             return None  # Route failed, no Euclidean fallback!
+
+        if not 0.0 <= robot.battery_soc_percent <= 100.0:
+            return None
 
         d_total = d_pickup + d_delivery
 

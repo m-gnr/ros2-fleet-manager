@@ -124,7 +124,7 @@ class RobotRecord:
             return False
         if self.state == RobotState.STATE_ERROR:
             return False
-        if self.is_loaded:
+        if self.is_loaded or self.current_task_id:
             return False
         # Can be assigned if IDLE or RETURNING_TO_PARK
         if self.state in (RobotState.STATE_IDLE, RobotState.STATE_RETURNING_TO_PARK):

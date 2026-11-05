@@ -18,10 +18,11 @@ flowchart TD
  O -->|"Hayır"| BRAKE["Frenle ve teyit bekle"]:::wait
  BRAKE --> O
  O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor
- R --> Q["Kurban sayaç +1; orijinal created_at ile kuyruk<br/>N=2 ise üçüncü çalışmada koruma"]:::fm
- Q --> SES{"Robot SESSION_BLOCKED mı?"}:::decision
- SES -->|"Evet"| W
- SES -->|"Hayır"| NEW["Bekleyen HIGH için yeni epoch + UUID"]:::fm
+ R --> Q["Kurban sayaç +1; kurban ve HIGH<br/>orijinal created_at ile kuyrukta"]:::fm
+ Q --> S["Sonraki normal zamanlama turu"]:::fm
+ S --> EL{"Güvenilir oturum, güncel uygun durum,<br/>sahiplik boş, yüksüz, rota ve enerji uygun?"}:::decision
+ EL -->|"Uygun aday yok"| W
+ EL -->|"Uygun aday var"| NEW["Yeni epoch + UUID ve tek<br/>EXECUTE_TASK Outbox kaydı"]:::fm
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

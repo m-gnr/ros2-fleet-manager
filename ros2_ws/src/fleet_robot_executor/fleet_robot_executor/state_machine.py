@@ -6,6 +6,7 @@ multi-criteria stop confirmation, and operator-driven error recovery.
 It has zero ROS 2 runtime dependencies.
 """
 
+from math import isfinite
 from typing import Optional, Tuple
 
 from .constants import (
@@ -25,7 +26,7 @@ from .models import (
     TaskGoal,
     TaskResult,
 )
-from .stop_detector import StopDetector
+from .stop_detector import CancelStopConfirmation, StopDetector
 
 
 class RobotExecutorStateMachine:
@@ -54,7 +55,7 @@ class RobotExecutorStateMachine:
         # Preemption and cancellation tracking
         self.is_cancelling: bool = False
         self.cancel_requested_at: Optional[float] = None
-        self.nav2_cancel_confirmed: bool = False
+        self.cancel_stop: Optional[CancelStopConfirmation] = None
 
         # Odometry and Telemetry
         self.current_pose: PoseStamped = PoseStamped()
@@ -128,7 +129,7 @@ class RobotExecutorStateMachine:
         self.is_loaded = False
         self.is_cancelling = False
         self.cancel_requested_at = None
-        self.nav2_cancel_confirmed = False
+        self.cancel_stop = None
         self.last_error_reason = ""
 
         return True
@@ -254,7 +255,7 @@ class RobotExecutorStateMachine:
 
         self.is_cancelling = True
         self.cancel_requested_at = current_sim_time
-        self.nav2_cancel_confirmed = False
+        self.cancel_stop = None
 
         return True, ""
 
@@ -267,7 +268,7 @@ class RobotExecutorStateMachine:
         """Receive evidence of the matching Nav2 terminal cancellation.
 
         Missing evidence retains ownership without selecting an error policy.
-        If Nav2 cancel succeeds, checks if odometry already confirmed physical stop.
+        Only samples after this observation can confirm physical stop.
         """
         if goal_uuid != self.active_goal_uuid or not self.is_cancelling:
             return None
@@ -275,8 +276,12 @@ class RobotExecutorStateMachine:
         if not success:
             return None
 
-        self.nav2_cancel_confirmed = True
+        if self.cancel_stop is None:
+            self.begin_cancel_stop_confirmation(current_sim_time)
         return self._try_complete_cancel(current_sim_time)
+
+    def begin_cancel_stop_confirmation(self, terminal_at):
+        self.cancel_stop = CancelStopConfirmation(terminal_at, self.config)
 
     def update_odometry_and_check_cancel(
         self,
@@ -284,7 +289,7 @@ class RobotExecutorStateMachine:
         current_sim_time: float,
     ) -> Optional[TaskResult]:
         """Update odometry and, if cancelling, verify stop criteria."""
-        self.update_odometry(odometry)
+        self.update_odometry(odometry, current_sim_time)
 
         if self.is_cancelling:
             return self._try_complete_cancel(current_sim_time)
@@ -313,21 +318,7 @@ class RobotExecutorStateMachine:
             return None
 
         # 2. Nav2 terminal cancellation check
-        if not self.nav2_cancel_confirmed:
-            return None
-
-        # 3. Odometry stop check
-        if self.last_odometry is None:
-            return None
-
-        is_stopped, _ = StopDetector.verify_stopped(
-            self.last_odometry,
-            current_sim_time=current_sim_time,
-            linear_threshold=self.config.linear_stop_threshold_m_s,
-            angular_threshold=self.config.angular_stop_threshold_rad_s,
-            freshness_sec=self.config.odometry_freshness_sec,
-        )
-        if not is_stopped:
+        if self.cancel_stop is None or self.cancel_stop.confirmed(current_sim_time) is None:
             return None
 
         # Safe preemption confirmed!
@@ -336,13 +327,14 @@ class RobotExecutorStateMachine:
             completed_epoch=self.current_epoch,
             completion_stamp_sec=current_sim_time,
             error_reason="",
+            stop_window_start_sec=self.cancel_stop.first_stopped_at,
         )
 
         self.state = RobotState.STATE_IDLE
         self.current_phase = TaskPhase.PHASE_NONE
         self.is_cancelling = False
         self.cancel_requested_at = None
-        self.nav2_cancel_confirmed = False
+        self.cancel_stop = None
         self.current_task_id = ""
         self.active_goal = None
         self.active_goal_uuid = None
@@ -386,7 +378,7 @@ class RobotExecutorStateMachine:
         self.last_error_reason = reason
         self.is_cancelling = False
         self.cancel_requested_at = None
-        self.nav2_cancel_confirmed = False
+        self.cancel_stop = None
 
         # Retain current_task_id and current_epoch for diagnosis until ClearRobotError
         return result
@@ -478,6 +470,29 @@ class RobotExecutorStateMachine:
     # Non-Task State Transitions (Charge & Park)
     # =========================================================================
 
+    def begin_station_move(self, move_id, epoch, goal_uuid, *, charging):
+        if epoch <= self.current_epoch or self.active_goal_uuid is not None:
+            return False
+        started = self.start_returning_to_charge() if charging else self.start_returning_to_park()
+        if started:
+            self.current_epoch = epoch
+            self.current_task_id = move_id
+            self.active_goal_uuid = goal_uuid
+        return started
+
+    def finish_station_move(self, goal_uuid, reason, now):
+        if self.active_goal_uuid != goal_uuid:
+            return False
+        self.active_goal_uuid = None
+        self.is_cancelling = False
+        self.cancel_stop = None
+        if reason:
+            self._transition_to_error(reason, now)
+        else:
+            self.current_task_id = ""
+            self.state = RobotState.STATE_IDLE
+        return True
+
     def start_returning_to_charge(self) -> bool:
         """Transition from IDLE to RETURNING_TO_CHARGE."""
         if self.state != RobotState.STATE_IDLE or self.is_loaded:
@@ -517,11 +532,18 @@ class RobotExecutorStateMachine:
     # Telemetry, Odometry & Snapshots
     # =========================================================================
 
-    def update_odometry(self, odometry: OdometryReading) -> None:
+    def update_odometry(self, odometry: OdometryReading, current_sim_time: Optional[float] = None) -> None:
         """Update cached odometry and current pose."""
+        stamp = odometry.timestamp_sec
+        now = stamp if current_sim_time is None else current_sim_time
+        if (not isfinite(stamp) or stamp < 0 or stamp > now
+                or (self.last_odometry is not None and stamp <= self.last_odometry.timestamp_sec)):
+            return
         self.last_odometry = odometry
         if odometry.pose is not None:
             self.current_pose = odometry.pose
+        if self.cancel_stop is not None:
+            self.cancel_stop.observe(odometry, now)
 
     def update_battery(self, soc_percent: float, energy_wh: float) -> None:
         """Update battery state of charge."""

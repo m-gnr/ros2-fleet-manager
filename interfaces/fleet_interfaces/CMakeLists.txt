@@ -14,6 +14,7 @@ find_package(unique_identifier_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/ExecuteTask.action"
+  "action/NavigateToStation.action"
   "msg/RobotStatus.msg"
   "msg/BatteryState.msg"
   "srv/ClearRobotError.srv"

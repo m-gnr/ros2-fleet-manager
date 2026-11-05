@@ -1,18 +1,28 @@
 ---
-title: "13 · Park rezervasyonu ve güvenli bekleme · PARTIAL"
+title: "13 · Park rezervasyonu ve güvenli bekleme · IMPLEMENTED"
 ---
 flowchart TD
- A(["Görev tamam; yüksüzlük teyidi"]):::terminal --> LOW{"Enerji düşük mü? • hedef politika"}:::decision
- LOW -->|"Evet"| C["Şarj akışı • PLANNED"]:::battery
- LOW -->|"Hayır"| PARK{"Boş park var mı?"}:::decision
- PARK -->|"Hayır"| SAFE{"Güvenli bekleme alanı var mı?"}:::decision
+ A(["Görev tamamlandı veya SoC düşük"]):::terminal --> F{"Güncel telemetri, yüksüz ve sahipsiz robot?"}:::decision
+ F -->|"Hayır"| WAIT["Sahipliği koru veya bekle"]:::wait
+ F -->|"Evet"| LOW{"YAML düşük SoC eşiğinin altında mı?"}:::decision
+ LOW -->|"Evet"| C["Şarj istasyonu adayı"]:::battery
+ LOW -->|"Hayır"| PARK["Park adayı"]:::fm
+ C --> ROUTE
+ PARK --> ROUTE
+ ROUTE{"Boş hedef, Nav2 rotası ve yeterli Wh?"}:::decision
+ ROUTE -->|"Hayır"| SAFE{"Uygun güvenli bekleme alanı var mı?"}:::decision
  SAFE -->|"Hayır"| STOP["Güvenli duruş + operatör alarmı"]:::error
- PARK -->|"Evet"| RES["En yakın boş alanı tek sahipli rezerve et"]:::fm
+ ROUTE -->|"Evet"| RES["Tek sahipli rezervasyon + Outbox"]:::db
  SAFE -->|"Evet"| RES
- RES --> OCC["Varış: OCCUPIED"]:::fm
+ RES --> NAV["Executor → NavigateToPose"]:::executor
+ NAV --> TERM{"Eşleşen terminal ve güncel duruş?"}:::decision
+ TERM -->|"Başarılı ve yarıçap içinde"| OCC["Varış: OCCUPIED"]:::fm
+ TERM -->|"Güvenli park iptali"| REL
+ TERM -->|"Nav2 hatası"| BLOCK
+ TERM -->|"Belirsiz"| WAIT
  OCC -->|"Her öncelikte yeni görev / ayrılma"| REL["RELEASING"]:::fm
  REL --> P{"Kabul edilen RobotStatus ile mesafe<br/>> tolerance_radius + departure_margin?"}:::decision
- P -->|"Hayır"| WAIT["Sahipliği koru"]:::wait
+ P -->|"Hayır"| WAIT
  P -->|"Evet"| FREE(["FREE"]):::terminal
  OCC -->|"ERROR"| BLOCK["BLOCKED · sahiplik korunur"]:::error
  REL -->|"ERROR"| BLOCK

@@ -72,6 +72,7 @@ class TaskResult:
     completed_epoch: int
     completion_stamp_sec: float
     error_reason: str = ""
+    stop_window_start_sec: Optional[float] = None
 
 
 @dataclass(frozen=True)
@@ -98,6 +99,9 @@ class OdometryReading:
     linear_velocity: float
     angular_velocity: float
     pose: Optional[PoseStamped] = None
+    source_frame_id: str = ""
+    source_frame_valid: bool = True
+    received_monotonic_ns: int = 0
 
 
 @dataclass(frozen=True)

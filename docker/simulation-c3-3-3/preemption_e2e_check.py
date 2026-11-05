@@ -5,6 +5,9 @@ import math
 import time
 
 from rclpy.parameter import Parameter
+from rcl_interfaces.msg import Log
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 
 from backend.fleet_manager.adapters.ros2_adapter_node import FleetROS2Adapter
 from backend.fleet_manager.builder import build_fleet_manager_from_config
@@ -33,6 +36,13 @@ def standstill(node, odom):
     return age, math.hypot(speed.linear.x, speed.linear.y), abs(speed.angular.z)
 
 
+def sample(odom):
+    stamp = odom.header.stamp
+    speed = odom.twist.twist
+    return (stamp.sec * 10**9 + stamp.nanosec, odom.header.frame_id,
+            math.hypot(speed.linear.x, speed.linear.y), abs(speed.angular.z))
+
+
 async def check_high_preemption(config_path, robot_namespaces, executor, node, odometry, statuses, emit):
     import rclpy
 
@@ -47,6 +57,30 @@ async def check_high_preemption(config_path, robot_namespaces, executor, node, o
     )
     executor.add_node(fm_node)
     terminal = {}
+    proofs = {}
+    commands_seen = []
+    independent_receipts = {}
+
+    def observe_proof(message):
+        prefix = "PREEMPTION_STOP_PROOF "
+        if message.msg.startswith(prefix):
+            proof = json.loads(message.msg[len(prefix):])
+            proofs[proof["goal_uuid"]] = proof
+
+    def observe_command(topic, message):
+        commands_seen.append((topic, node.get_clock().now().nanoseconds,
+                              math.hypot(message.linear.x, message.linear.y), abs(message.angular.z)))
+
+    node.create_subscription(Log, "/rosout", observe_proof, 100)
+    node.create_subscription(
+        Odometry, f"{robot_namespaces['robot_1']}/odom",
+        lambda msg: independent_receipts.__setitem__(
+            sample(msg)[0], (node.get_clock().now().nanoseconds, time.monotonic_ns()),
+        ), 100,
+    )
+    for topic in ("cmd_vel_nav", "cmd_vel"):
+        node.create_subscription(Twist, f"{robot_namespaces['robot_1']}/{topic}",
+                                 lambda msg, name=topic: observe_command(name, msg), 100)
 
     class ObservedConsumer(FleetEventLoop):
         def _process(self, event):
@@ -55,7 +89,9 @@ async def check_high_preemption(config_path, robot_namespaces, executor, node, o
                 assert store.connection.execute(
                     "SELECT count(*) FROM outbox_events WHERE task_id='urgent' AND kind='EXECUTE_TASK'"
                 ).fetchone()[0] == 0, "HIGH assignment appeared before the victim's terminal result"
-                stop = standstill(node, odometry[event.payload["robot_id"]][-1])
+                stop = {"received_at_ns": node.get_clock().now().nanoseconds,
+                        "monotonic_ns": time.monotonic_ns(),
+                        "sample": sample(odometry[event.payload["robot_id"]][-1])}
             outcome = super()._process(event)
             if event.kind == "ACTION_RESULT" and outcome == "APPLIED":
                 terminal[event.payload["task_id"]] = (event.payload, stop)
@@ -127,11 +163,35 @@ async def check_high_preemption(config_path, robot_namespaces, executor, node, o
         assert (result["assignment_epoch"], result["completed_epoch"], result["goal_uuid"],
                 result["result_status"]) == (victim.assignment_epoch, victim.assignment_epoch,
                                              victim.goal_uuid, TaskResultStatus.STATUS_PREEMPTED)
-        age, linear, angular = stop
-        assert 0 <= age <= 0.5 and linear <= 0.01 and angular <= 0.01, stop
+        proof = await until(lambda: proofs.get(victim.goal_uuid), "Executor odometry proof log", 3.0)
+        decision = proof["decision_ns"]
+        window_end = decision + 200_000_000
+        await until(lambda: sample(odometry["robot_1"][-1])[0] >= window_end,
+                    "independent odometry after PREEMPTED with HIGH unsent", 3.0)
+        observed = [value for msg in odometry["robot_1"]
+                    if proof["nav2_terminal_ns"] - 150_000_000 <= (value := sample(msg))[0] <= window_end]
+        emit("LIVE_PREEMPTION_DIAGNOSTICS", proof=proof, observer_at_result=stop, samples=observed,
+             observer_proof_receipt=independent_receipts.get(proof["odometry_ns"]),
+             commands=[row for row in commands_seen if row[1] >= proof["nav2_terminal_ns"] - 150_000_000])
+        matching = [value for value in observed if value[0] == proof["odometry_ns"]]
+        assert matching and all(value[1:] == (
+            proof["frame_id"], proof["linear_m_s"], abs(proof["angular_rad_s"]),
+        ) for value in matching), (proof, matching)
+        start, end = proof["stop_window_start_ns"], proof["odometry_ns"]
+        assert proof["nav2_terminal_ns"] < start <= end - 200_000_000 <= decision, proof
+        during = sorted({value for value in observed if start <= value[0] <= end})
+        assert during and during[0][0] == start and during[-1][0] == end, (proof, during)
+        assert all(b[0] - a[0] <= 100_000_000 for a, b in zip(during, during[1:])), during
+        assert all(linear <= 0.01 and angular <= 0.01 for _, _, linear, angular in during), during
+        after = [value for value in observed if value[0] >= decision]
+        assert len(after) >= 2 and all(linear <= 0.01 and angular <= 0.01
+                                       for _, _, linear, angular in after), after
+        age = (decision - proof["odometry_ns"]) / 10**9
+        linear, angular = proof["linear_m_s"], abs(proof["angular_rad_s"])
+        assert 0 <= age <= 0.5 and linear <= 0.01 and angular <= 0.01, proof
         emit("LIVE_PREEMPTION_TERMINAL", task_id="victim", goal_uuid=victim.goal_uuid,
              completed_epoch=result["completed_epoch"], odom_age_s=age,
-             linear_m_s=linear, angular_rad_s=angular)
+             linear_m_s=linear, angular_rad_s=angular, observed_after_terminal=len(after))
         high = await until(lambda: consumer.core._active_tasks.get("urgent"), "HIGH reassignment via Nav2", 15.0)
         assert high.assigned_robot_id == "robot_1"
         assert high.assignment_epoch == victim.assignment_epoch + 1 and high.goal_uuid != victim.goal_uuid
@@ -169,6 +229,8 @@ async def check_high_preemption(config_path, robot_namespaces, executor, node, o
         parallel_result, _ = await until(lambda: terminal.get("parallel"), "parallel task completion", 120.0)
         assert parallel_result["result_status"] == TaskResultStatus.STATUS_SUCCEEDED
         assert reservations() == expected_reservations
+        assert store.connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        assert not store.connection.execute("PRAGMA foreign_key_check").fetchall()
         emit("SCENARIO_PASSED", test=TEST, high_goal_uuid=high.goal_uuid, high_epoch=high.assignment_epoch,
              phases=phases, victim_preemption_count=1, fifo=["victim", "younger"], reservations=reservations())
     finally:

@@ -15,6 +15,52 @@ from .constants import (
 from .models import OdometryReading
 
 
+# Cover two control periods in the configured 10 Hz Nav2/smoother stack.
+CANCEL_STOP_WINDOW_SEC = 0.2
+CANCEL_STOP_MAX_SAMPLE_GAP_SEC = 0.1
+
+
+class CancelStopConfirmation:
+    """Require a continuous run of stopped odometry after Nav2 cancellation."""
+
+    def __init__(self, terminal_at, config):
+        self.terminal_at = terminal_at
+        self.config = config
+        self.first_stopped_at = None
+        self.last_sample = None
+
+    def observe(self, reading, now):
+        stamp = reading.timestamp_sec
+        if stamp <= self.terminal_at:
+            return
+        previous = self.last_sample
+        self.last_sample = reading
+        if not self._stopped(reading, now):
+            self.first_stopped_at = None
+        elif (self.first_stopped_at is None or previous is None
+              or stamp > previous.timestamp_sec + min(
+                  CANCEL_STOP_MAX_SAMPLE_GAP_SEC, self.config.odometry_freshness_sec,
+              )):
+            self.first_stopped_at = stamp
+
+    def confirmed(self, now):
+        reading = self.last_sample
+        if (reading is not None and self.first_stopped_at is not None
+                and reading.timestamp_sec >= self.first_stopped_at + CANCEL_STOP_WINDOW_SEC
+                and self._stopped(reading, now)):
+            return reading
+        return None
+
+    def _stopped(self, reading, now):
+        if not reading.source_frame_valid:
+            return False
+        stopped, _ = StopDetector.verify_stopped(
+            reading, now, self.config.linear_stop_threshold_m_s, self.config.angular_stop_threshold_rad_s,
+            self.config.odometry_freshness_sec,
+        )
+        return stopped
+
+
 class StopDetector:
     """Evaluates zero-velocity and odometry freshness criteria."""
 

@@ -68,6 +68,9 @@ class ReservationManager:
                 return station
         return None
 
+    def stations_owned_by(self, robot_id: str) -> List[StationRecord]:
+        return [station for station in self._stations.values() if station.has_owner(robot_id)]
+
     def reserve(self, station_id: str, robot_id: str) -> bool:
         """Reserve a station for a robot.
         
@@ -213,6 +216,7 @@ class ReservationManager:
         station.occupied_by_robot_id = None
         station.blocked_session_id = None
         station.blocked_after_ns = 0
+        station.departure_after_ns = 0
 
     def find_nearest_free_station(
         self,

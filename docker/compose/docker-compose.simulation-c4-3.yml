@@ -1,0 +1,26 @@
+# Validation only. Layer after C4.2 and use existing images with --no-build.
+name: ros2-fleet-simulation-c4-3
+
+x-c4-3: &c4-3
+  volumes:
+    - ../../docker/simulation-c4-3:/opt/simulation-c4-3:ro
+  command:
+    - bash
+    - -c
+    - >-
+      set -e;
+      source /opt/ros/humble/setup.bash;
+      cd /workspace;
+      colcon build --base-paths src;
+      source install/setup.bash;
+      export PYTHONPATH=/workspace:/opt/fleet-live-validation:/opt/simulation-c3-3-3:/opt/simulation-c4-1:/opt/simulation-c4-2:$$PYTHONPATH;
+      exec python3 /opt/simulation-c4-3/station_check.py
+
+services:
+  simulation:
+    <<: *c4-3
+  backend:
+    <<: *c4-3
+    volumes:
+      - ../../docker/simulation-c4-3:/opt/simulation-c4-3:ro
+      - ${C43_EVIDENCE_DIR:?Set C43_EVIDENCE_DIR to a fresh evidence directory}:/evidence

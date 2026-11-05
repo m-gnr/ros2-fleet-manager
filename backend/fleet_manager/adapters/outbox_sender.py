@@ -22,8 +22,10 @@ class ROS2OutboxSender:
     def __init__(
         self,
         action_clients: Dict[str, ExecuteTaskActionClientBridge],
+        station_clients=None,
     ) -> None:
         self.action_clients = action_clients
+        self.station_clients = {} if station_clients is None else station_clients
 
     def register_client(self, robot_id: str, client: ExecuteTaskActionClientBridge) -> None:
         self.action_clients[robot_id] = client
@@ -35,11 +37,15 @@ class ROS2OutboxSender:
         if not robot_id:
             raise ValueError(f"Command payload missing assigned_robot_id: {command['command_id']}")
 
+        kind = command["kind"]
+        if kind in ("NAVIGATE_TO_STATION", "CANCEL_STATION_MOVE"):
+            await self.station_clients[robot_id].send(command, payload)
+            return
+
         action_bridge = self.action_clients.get(robot_id)
         if action_bridge is None:
             raise RuntimeError(f"No action client registered for robot '{robot_id}'")
 
-        kind = command["kind"]
         task_id = command["task_id"]
         assignment_epoch = command["assignment_epoch"]
         goal_uuid = command["goal_uuid"]

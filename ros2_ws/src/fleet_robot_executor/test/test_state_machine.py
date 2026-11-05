@@ -117,9 +117,10 @@ class TestStateMachineCore:
         sm.update_odometry(moving_odom)
         assert sm.notify_nav2_cancel_result("task-p1", success=True, current_sim_time=1.1) is None
 
-        # Stopped odom
-        stopped_odom = OdometryReading(timestamp_sec=1.5, linear_velocity=0.0, angular_velocity=0.0)
-        result = sm.update_odometry_and_check_cancel(stopped_odom, current_sim_time=1.5)
+        # A single fresh stop sample is insufficient.
+        for stamp in (1.5, 1.57, 1.64):
+            assert sm.update_odometry_and_check_cancel(OdometryReading(stamp, 0.0, 0.0), stamp) is None
+        result = sm.update_odometry_and_check_cancel(OdometryReading(1.71, 0.0, 0.0), 1.71)
         assert result is not None
         assert result.status == TaskResultStatus.STATUS_PREEMPTED
         assert sm.state == RobotState.STATE_IDLE

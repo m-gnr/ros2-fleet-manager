@@ -168,6 +168,7 @@ class StationRecord:
     occupied_by_robot_id: Optional[str] = None
     blocked_session_id: Optional[str] = None
     blocked_after_ns: int = 0
+    departure_after_ns: int = 0
 
     def has_owner(self, robot_id: str) -> bool:
         owners = {self.reserved_by_robot_id, self.occupied_by_robot_id} - {None}

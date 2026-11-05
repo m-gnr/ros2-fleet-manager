@@ -66,8 +66,8 @@ class Scheduler:
     ) -> None:
         self.route_provider = route_provider
         self.safe_charge_station_pose = safe_charge_station_pose
-        self._emergency_soc_percent = emergency_soc_percent
-        self._safety_margin_wh = safety_margin_wh
+        self.emergency_soc_percent = emergency_soc_percent
+        self.safety_margin_wh = safety_margin_wh
         self.route_lookup = None
         self.battery_clock_ns = None
         self.pending_route_tasks: set[str] = set()
@@ -111,8 +111,8 @@ class Scheduler:
             battery_soc_percent=robot.battery_soc_percent,
             d_total_m=d_total,
             d_escape_m=d_escape,
-            emergency_soc_percent=self._emergency_soc_percent,
-            safety_margin_wh=self._safety_margin_wh,
+            emergency_soc_percent=self.emergency_soc_percent,
+            safety_margin_wh=self.safety_margin_wh,
             battery_energy_wh=robot.battery_energy_wh if robot.requires_battery_telemetry else None,
         )
 

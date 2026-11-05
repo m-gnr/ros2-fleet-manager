@@ -111,9 +111,16 @@ class FleetEventLoop:
         db = self.store.connection
         routes = self._route_planning
         plan = resolved_route = None
+        previous_dispatch = self._core.station_dispatch
         with self.store.transaction():
             if event.kind == "OUTBOX_CLAIM":
-                return self.store.claim(**event.payload)
+                command = self.store.claim(**event.payload)
+                if command is not None and command["kind"] in ("NAVIGATE_TO_STATION", "CANCEL_STATION_MOVE"):
+                    if not self._station_send_allowed(command, event.payload["now"]):
+                        self.store.finish(command["command_id"], command["attempts"],
+                                          "Station ownership or telemetry unavailable", 0, held_for_review=True)
+                        return None
+                return command
             if event.kind == "OUTBOX_FINISH":
                 p = event.payload
                 row = db.execute("SELECT * FROM outbox_events WHERE command_id=?", (p["command_id"],)).fetchone()
@@ -135,16 +142,16 @@ class FleetEventLoop:
             else:
                 outcome, stream, seq = self._apply(candidate, event)
             if outcome == "APPLIED" and routes is not None and event.kind in (
-                "TICK", "SUBMIT_TASK", "ROBOT_STATUS", "ACTION_RESULT", "CLEAR_REVIEW_HOLD",
+                "TICK", "SUBMIT_TASK", "ROBOT_STATUS", "ACTION_RESULT", "CLEAR_REVIEW_HOLD", "STATION_RESULT",
             ):
-                if len(candidate.queue):
+                if len(candidate.queue) or candidate.station_dispatch is not None:
                     now = self._clock()
                     plan = routes.planning_pass(now)
                     scheduler = candidate.scheduler
                     candidate.scheduler = copy(scheduler)
                     candidate.scheduler.route_lookup = plan.lookup
                     candidate.scheduler.pending_route_tasks = plan.pending
-                    candidate.schedule_tick(current_time=now)
+                    candidate.schedule_tick(current_time=now, station_lookup=plan.lookup_station)
                     candidate.scheduler = scheduler
             if outcome in ("APPLIED", "SESSION_BLOCKED"):
                 self.store.persist_core(candidate)
@@ -160,13 +167,18 @@ class FleetEventLoop:
         # Publish memory only after COMMIT; failed writes leave both states unchanged.
         if outcome in ("APPLIED", "SESSION_BLOCKED"):
             self._core = candidate
+            if candidate.station_dispatch is not None:
+                for robot_id, reason in candidate.station_dispatch.wait_reasons.items():
+                    if previous_dispatch.wait_reasons.get(robot_id) != reason:
+                        logger.warning("STATION_DISPATCH_WAIT robot=%s reason=%s", robot_id, reason)
             if routes is not None:
                 moved_robot = (candidate.tracker.get_robot(event.payload["robot_id"])
                                if event.kind == "ROBOT_STATUS" and outcome == "APPLIED" else None)
                 routes.after_commit(candidate, plan, moved_robot)
             if event.kind == "TICK":
                 for robot_id, severity, elapsed in candidate.tracker.check_communication_health(event.payload["current_time"]):
-                    if robot_id in candidate._active_tasks_by_robot:
+                    if (robot_id in candidate._active_tasks_by_robot
+                            or (candidate.station_dispatch and robot_id in candidate.station_dispatch.active)):
                         logger.warning("COMMUNICATION_WARNING robot=%s severity=%s elapsed=%s", robot_id, severity, elapsed)
         if resolved_route is not None:
             routes.publish_result(resolved_route, event.payload["distance"], event.payload["timestamp"])
@@ -205,11 +217,15 @@ class FleetEventLoop:
             if robot is None:
                 raise ValueError("Unknown robot")
             active = core._active_tasks_by_robot.get(robot.robot_id)
+            move = core.station_dispatch.active.get(robot.robot_id) if core.station_dispatch else None
             # RobotStatus has no goal UUID. Active ownership must remain intact
             # until a separately matched action result arrives, even if IDLE arrives first.
             if p["current_epoch"] < robot.current_epoch or (
                 active and (p["current_epoch"] != active.assignment_epoch
                             or p["current_task_id"] not in (None, active.task_id))
+            ) or (
+                move and (p["current_epoch"] != move.assignment_epoch
+                          or p["current_task_id"] not in (None, move.task_id))
             ):
                 return "STALE", stream, seq
             if p["timestamp_sec"] < robot.last_status_received_at:
@@ -293,6 +309,9 @@ class FleetEventLoop:
                 reason=p.get("reason", "GoalResponse.REJECT"),
                 held_at=p.get("held_at", 0.0),
             )
+        elif kind in ("STATION_RESULT", "STATION_GOAL_REJECTED", "STATION_CANCEL_RESPONSE"):
+            if not self._station_event(core, kind, p):
+                return "STALE", stream, seq
         elif kind == "CLEAR_REVIEW_HOLD":
             core.clear_review_hold(p["task_id"])
             self.store.clear_review_hold(p["task_id"])
@@ -305,6 +324,8 @@ class FleetEventLoop:
             if robot is None and kind == "RESERVE":
                 raise ValueError("Unknown robot")
             if robot is None or robot.session_blocked:
+                return "REJECTED", stream, seq
+            if core.station_dispatch is not None and robot.robot_id in core.station_dispatch.active:
                 return "REJECTED", stream, seq
             if kind == "RESERVE":
                 applied = core.reservations.reserve(**p)
@@ -325,11 +346,33 @@ class FleetEventLoop:
         return "APPLIED", stream, seq
 
     def _command_current(self, command):
+        if command["kind"] in ("NAVIGATE_TO_STATION", "CANCEL_STATION_MOVE"):
+            return any(
+                (move.task_id, move.assignment_epoch, move.goal_uuid) ==
+                (command["task_id"], command["assignment_epoch"], command["goal_uuid"])
+                and (command["kind"] != "CANCEL_STATION_MOVE" or move.cancel_for_task is not None)
+                for move in self._core.station_dispatch.active.values()
+            )
         task = self._core._active_tasks.get(command["task_id"])
         return bool(task and task.goal_uuid == command["goal_uuid"]
                     and task.assignment_epoch == command["assignment_epoch"]
                     and (command["kind"] != "CANCEL_TASK"
                          or task.assigned_robot_id in self._core._pending_preemption_assignments))
+
+    def _station_send_allowed(self, command, now):
+        from json import loads
+
+        if not self._command_current(command):
+            return False
+        robot = self._core.tracker.get_robot(loads(command["payload"])["assigned_robot_id"])
+        if robot.session_blocked:
+            return False
+        if command["kind"] == "CANCEL_STATION_MOVE" or command["attempts"] > 1:
+            return True
+        clock = self._core.scheduler.battery_clock_ns
+        return (not robot.is_stale(now) and now <= robot.route_pose_valid_until
+                and robot.has_fresh_battery(now, clock() if clock else None)
+                and not robot.is_loaded)
 
     def _commands(self, candidate):
         for robot_id in self._core._pending_preemption_assignments.keys() - candidate._pending_preemption_assignments.keys():
@@ -351,6 +394,60 @@ class FleetEventLoop:
         for robot_id in candidate._pending_preemption_assignments:
             if robot_id not in self._core._pending_preemption_assignments:
                 self.store.add_command("CANCEL_TASK", candidate._active_tasks_by_robot[robot_id])
+        if candidate.station_dispatch is not None:
+            self._station_commands(self._core.station_dispatch, candidate.station_dispatch)
+
+    def _station_event(self, core, kind, payload):
+        dispatch = core.station_dispatch
+        robot_id = payload["robot_id"]
+        robot = core.tracker.get_robot(robot_id)
+        move = dispatch.active.get(robot_id) if dispatch is not None else None
+        if (move is None or robot.session_blocked or robot.session_id != move.session_id
+                or (move.task_id, move.station_id, move.assignment_epoch, move.goal_uuid) !=
+                (payload["task_id"], payload["station_id"], payload["assignment_epoch"], payload["goal_uuid"])):
+            return False
+        db = self.store.connection
+        if kind == "STATION_RESULT":
+            status = TaskResultStatus(payload["result_status"])
+            epoch = payload.get("completed_epoch")
+            proof = payload.get("proof_ns")
+            if type(epoch) is not int or epoch != move.assignment_epoch:
+                return False
+            if status != TaskResultStatus.STATUS_FAILED and (type(proof) is not int or proof <= 0):
+                return False
+            return dispatch.result(core, move, status, proof, payload.get("error_reason", ""))
+        if kind == "STATION_GOAL_REJECTED":
+            dispatch.reject(move)
+            db.execute(
+                "UPDATE outbox_events SET state='HELD_FOR_REVIEW', last_error='Station goal rejected' "
+                "WHERE goal_uuid=? AND kind='NAVIGATE_TO_STATION' AND state IN ('PENDING','SENDING','RETRY')",
+                (move.goal_uuid,),
+            )
+            return True
+        latest = db.execute(
+            "SELECT command_id FROM outbox_events WHERE goal_uuid=? AND kind='CANCEL_STATION_MOVE' "
+            "ORDER BY sequence DESC LIMIT 1", (move.goal_uuid,),
+        ).fetchone()
+        if move.cancel_for_task is None or latest is None or latest[0] != payload["cancel_command_id"]:
+            return False
+        if not payload["accepted"]:
+            move.cancel_declined = True
+        return True
+
+    def _station_commands(self, previous, dispatch):
+        db = self.store.connection
+        for robot_id, move in previous.active.items():
+            if robot_id not in dispatch.active:
+                db.execute(
+                    "UPDATE outbox_events SET state='SUPERSEDED' WHERE goal_uuid=? AND state IN ('PENDING','RETRY')",
+                    (move.goal_uuid,),
+                )
+        for robot_id, move in dispatch.active.items():
+            old = previous.active.get(robot_id)
+            if old is None:
+                self.store.add_command("NAVIGATE_TO_STATION", move)
+            elif old.cancel_for_task is None and move.cancel_for_task is not None:
+                self.store.add_command("CANCEL_STATION_MOVE", move)
 
 
 class OutboxDispatcher:

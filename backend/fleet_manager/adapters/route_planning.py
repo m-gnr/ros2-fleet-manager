@@ -19,6 +19,7 @@ class RouteContext:
     session_id: str | None
     epoch: int
     leg: int
+    station_id: str | None = None
 
 
 @dataclass
@@ -48,12 +49,22 @@ class RoutePlanningPass:
         self.pending: set[str] = set()
 
     def lookup(self, robot, task, legs):
+        distances, waiting = self._lookup(robot, task.task_id, legs)
+        if waiting:
+            self.pending.add(task.task_id)
+        return distances
+
+    def lookup_station(self, robot, station, legs):
+        return self._lookup(robot, f"station:{station.station_id}", legs, station_id=station.station_id)
+
+    def _lookup(self, robot, task_id, legs, *, station_id=None):
         if self.now > robot.route_pose_valid_until:
-            return None
+            return None, False
         keys = [self.cache.key(robot.robot_id, start, goal) for start, goal in legs]
         if any(key is None for key in keys):
-            return None
-        self.references.setdefault(task.task_id, set()).update(keys)
+            return None, False
+        if station_id is None:
+            self.references.setdefault(task_id, set()).update(keys)
         distances = tuple(
             self.cache.get(robot.robot_id, start, goal, now=self.now) for start, goal in legs
         )
@@ -63,13 +74,12 @@ class RoutePlanningPass:
             if distance is None
         ]
         if any(self.now < self.cooldowns.get(key, 0) for _, key, _, _ in missing):
-            return None
+            return None, False
         if missing:
-            self.pending.add(task.task_id)
             for leg, key, start, goal in missing:
                 demand = self.demands.setdefault(key, RouteDemand(key, start, goal))
-                demand.contexts.add(RouteContext(task.task_id, robot.session_id, robot.current_epoch, leg))
-        return distances
+                demand.contexts.add(RouteContext(task_id, robot.session_id, robot.current_epoch, leg, station_id))
+        return distances, bool(missing)
 
 
 class LiveRoutePlanning:
@@ -101,10 +111,19 @@ class LiveRoutePlanning:
             and now <= robot.route_pose_valid_until
             and robot.session_id == context.session_id
             and robot.current_epoch == context.epoch
-            and core.queue.get(context.task_id) is not None
-            and not core.has_review_hold(context.task_id)
+            and LiveRoutePlanning._current_target(core, robot, context, now)
             and (context.leg != 0 or demand.key.matches_start(robot.pose))
         )
+
+    @staticmethod
+    def _current_target(core, robot, context, now):
+        if context.station_id is None:
+            return core.queue.get(context.task_id) is not None and not core.has_review_hold(context.task_id)
+        from ..domain.constants import ReservationState
+
+        station = core.reservations.get_station(context.station_id)
+        return (station is not None and station.state == ReservationState.FREE
+                and core.station_dispatch.needs_station(core, robot, now))
 
     def after_commit(self, core, plan, moved_robot=None):
         now = self.clock()
@@ -173,7 +192,8 @@ class LiveRoutePlanning:
                 starts_at_robot=any(context.leg == 0 for context in demand.contexts),
             )
             for context in demand.contexts:
-                self.references.setdefault(context.task_id, set()).add(demand.key)
+                if context.station_id is None:
+                    self.references.setdefault(context.task_id, set()).add(demand.key)
             logger.info("NAV2_ROUTE_RESOLVED robot=%s revision=%s legs=%s distance_m=%.3f",
                         demand.key.robot_id, demand.key.map_revision,
                         sorted({(context.task_id, context.leg) for context in demand.contexts}), distance)

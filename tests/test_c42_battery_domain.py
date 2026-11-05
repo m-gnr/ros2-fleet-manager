@@ -74,14 +74,16 @@ def commands(store):
 def test_remaining_wh_controls_threshold_and_session_change_blocks():
     async def scenario():
         core, _ = build_fleet_manager_from_config(route_provider=Routes())
+        # Keep this precision check above the C4.3 low-SoC routing threshold.
+        core.scheduler.safety_margin_wh = 50.0
         with closing(SQLiteStore(":memory:")) as store:
             consumer = FleetEventLoop(store, core, clock=lambda: 10.0)
             await consumer.start()
             try:
                 session = str(uuid4())
-                # The three metre legs plus the configured margin cost 10.6 Wh.
+                # The three metre legs plus the test margin cost 50.6 Wh.
                 # float32 SoC can round this sample to the threshold.
-                await consumer.submit(status(1, 10.0, session, battery_ns=10**9, energy=18.599999, soc=18.6))
+                await consumer.submit(status(1, 10.0, session, battery_ns=10**9, energy=58.599999, soc=58.6))
                 await consumer.submit(submit("waiting"))
                 await consumer.submit(tick(10.0))
                 assert consumer.core.queue.get("waiting").created_at == 1.0
@@ -89,7 +91,7 @@ def test_remaining_wh_controls_threshold_and_session_change_blocks():
                 assert await consumer.submit(status(2, 10.0, str(uuid4()), battery_ns=2 * 10**9)) == "SESSION_BLOCKED"
                 robot = consumer.core.tracker.get_robot("robot_1")
                 assert robot.session_blocked
-                assert robot.battery_energy_wh == 18.599999
+                assert robot.battery_energy_wh == 58.599999
                 await consumer.submit(tick(10.0))
                 assert not commands(store)
             finally:

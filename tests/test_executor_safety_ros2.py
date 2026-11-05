@@ -100,6 +100,7 @@ def test_cancel_acceptance_is_not_terminal_and_real_race_result_wins(rig, outcom
     odom_pub = peer.create_publisher(Odometry, '/robot_1/odom', 10)
     def publish_stopped():
         odom = Odometry()
+        odom.header.frame_id = "robot_1/odom"
         odom.header.stamp = peer.get_clock().now().to_msg()
         odom_pub.publish(odom)
     timer = peer.create_timer(.02, publish_stopped)
@@ -135,24 +136,46 @@ def test_terminal_cancel_waits_for_fresh_stopped_odometry(rig):
     nav = ControlledNav2(peer, 'cancel'); servers.append(nav)
     handle = wait(client.send_goal_async(goal()))
     assert nav.started.wait(5)
+    def reading(linear=0.0, angular=0.0):
+        msg = Odometry()
+        msg.header.frame_id = "robot_1/odom"
+        msg.header.stamp = node.get_clock().now().to_msg()
+        msg.twist.twist.linear.x = linear
+        msg.twist.twist.angular.z = angular
+        return msg
+
     wait(handle.cancel_goal_async())
     assert nav.cancel_seen.wait(5)
+    cached = reading()
+    node._odom_callback(cached)
     nav.release.set()
     future = handle.get_result_async()
     time.sleep(.15)
     assert not future.done()
-    stale = Odometry(); stale.header.stamp.sec = 1
+    stale = reading()
+    stale.header.stamp.sec = 1
     node._odom_callback(stale)
     time.sleep(.1)
     assert not future.done()
-    moving = Odometry(); moving.header.stamp = node.get_clock().now().to_msg()
-    moving.twist.twist.linear.x = .5
+    moving = reading(.5)
     node._odom_callback(moving)
     time.sleep(.1)
     assert not future.done()
     assert not wait(client.send_goal_async(goal(10))).accepted
-    stopped = Odometry(); stopped.header.stamp = node.get_clock().now().to_msg()
+    stopped = reading()
     node._odom_callback(stopped)
+    node._odom_callback(cached)
+    for _ in range(6):
+        time.sleep(.04)
+        node._odom_callback(stopped)  # Duplicates cannot advance the measured window.
+    assert not future.done()
+    next_goal = goal(10)
+    next_goal.task_id = "urgent"
+    next_goal.priority = ExecuteTask.Goal.PRIORITY_HIGH
+    assert not wait(client.send_goal_async(next_goal)).accepted
+    for _ in range(10):
+        node._odom_callback(reading())
+        time.sleep(.03)
     assert wait(future).result.status == 3
 
 

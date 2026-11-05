@@ -37,7 +37,8 @@ class SQLiteStore:
             raise
 
     def require_empty(self):
-        for table in ("tasks", "robots", "reservations", "outbox_events", "processed_events", "task_review_holds"):
+        for table in ("tasks", "robots", "reservations", "station_moves", "outbox_events",
+                      "processed_events", "task_review_holds"):
             if self.connection.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone():
                 raise ScenarioResetRequired(
                     "Scenario reset required; preserve this database and use a new database after reset"
@@ -68,6 +69,13 @@ class SQLiteStore:
                 (station.station_id, station.state, station.reserved_by_robot_id,
                  station.occupied_by_robot_id, encode(asdict(station))),
             )
+        if core.station_dispatch is not None:
+            for move in (*core.station_dispatch.history.values(), *core.station_dispatch.active.values()):
+                self.connection.execute(
+                    "INSERT INTO station_moves VALUES (?,?,?,?,?) ON CONFLICT(move_id) DO UPDATE SET "
+                    "status=excluded.status,snapshot=excluded.snapshot",
+                    (move.task_id, move.assigned_robot_id, move.station_id, move.status, encode(asdict(move))),
+                )
         for hold in core.list_review_holds():
             self.connection.execute(
                 "INSERT INTO task_review_holds VALUES (?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET "
@@ -79,7 +87,7 @@ class SQLiteStore:
 
     def add_command(self, kind, task):
         command_id = f"{kind}:{task.goal_uuid}"
-        if kind == "CANCEL_TASK":
+        if kind in ("CANCEL_TASK", "CANCEL_STATION_MOVE"):
             command_id += f":{uuid4()}"
         self.connection.execute(
             "INSERT OR IGNORE INTO outbox_events "

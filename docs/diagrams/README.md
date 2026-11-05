@@ -29,7 +29,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 10 | Enerji — [Wh batarya hesabı ve telemetri](#10-battery-wh-integration) | IMPLEMENTED | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
 | 11 | Enerji — [Şarj sırası ve istasyon seçimi](#11-charging-queue-selection) | PLANNED | [Mermaid](src/charging-queue-selection.mmd) · [SVG](svg/charging-queue-selection.svg) |
 | 12 | Enerji — [Şarjdan ayrılma ve yüzde 80](#12-charging-exit-policy) | PLANNED | [Mermaid](src/charging-exit-policy.mmd) · [SVG](svg/charging-exit-policy.svg) |
-| 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | PARTIAL | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
+| 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | IMPLEMENTED | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
 | 14 | Kurtarma — [FAILED / ERROR ve operatör kurtarma](#14-failure-operator-recovery) | PARTIAL | [Mermaid](src/failure-operator-recovery.mmd) · [SVG](svg/failure-operator-recovery.svg) |
 | 15 | Konfigürasyon — [fleet.yaml yaşam döngüsü](#15-fleet-config-lifecycle) | PARTIAL | [Mermaid](src/fleet-config-lifecycle.mmd) · [SVG](svg/fleet-config-lifecycle.svg) |
 | 16 | Panel — [REST / WebSocket ve 2D panel](#16-rest-websocket-gui) | PLANNED | [Mermaid](src/rest-websocket-gui.mmd) · [SVG](svg/rest-websocket-gui.svg) |
@@ -236,7 +236,7 @@ flowchart TD
 
 **Test / kanıt:** [test_executor_state_machine.py](../../tests/test_executor_state_machine.py) · [test_executor_lifecycle_integration.py](../../tests/test_executor_lifecycle_integration.py)
 
-**Sınır / fark:** Şarj/park sürüş orkestrasyonu bu taşıma yaşam döngüsünün tamamlanmış parçası değildir.
+**Sınır / fark:** Taşıma terminalinden sonra C4.3 istasyon yönlendirmesi ayrı bir action ve sahiplik kaydı kullanır.
 
 ![Robot Executor görev yaşam döngüsü](svg/executor-lifecycle.svg)
 
@@ -290,7 +290,7 @@ flowchart TD
 
 **Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_executor_safety.py](../../tests/test_executor_safety.py) · [Görev 3 doğrulama kaydı](../validation/c3/c3-3-4-task-3-validation-2026-11-05.md)
 
-**Sınır / fark:** İptal reddi ve timeout kesilme sayacını artırmaz. %15 takas kullanılmaz. Park dönüşünü kesme ayrı lojistik kuralıdır.
+**Sınır / fark:** İptal reddi ve timeout kesilme sayacını artırmaz. %15 takas kullanılmaz. Park dönüşünü kesme ayrı lojistik kuralıdır. İki iptal yolu da Nav2 terminalinden sonra aynı odometri duruş penceresini kullanır. [C4.3 duruş doğrulaması](../validation/c4/c4-3-validation-2026-11-06.md#high-preemption-kök-neden-ve-düzeltme)
 
 ![Güvenli preemption ve N=2](svg/safe-preemption.svg)
 
@@ -314,7 +314,7 @@ flowchart TD
  T -->|"SUCCEEDED"| N["Gerçek faz akışına devam<br/>PREEMPTED üretme"]:::executor
  T -->|"ABORTED"| E["FAILED / ERROR; HIGH yeniden değerlendirilir"]:::error
  T -->|"Belirsiz veya süre doldu"| B["Sahipliği tut; güvenli blokaj<br/>Geç sonuç otomatik açmaz"]:::wait
- T -->|"STATUS_CANCELED"| O{"Güncel odometri ve sıfır hız?"}:::decision
+ T -->|"STATUS_CANCELED"| O{"Terminal sonrası sıralı odometri<br/>0,20 sn boyunca duruşu doğruladı mı?"}:::decision
  O -->|"Hayır"| BRAKE["Frenle ve teyit bekle"]:::wait
  BRAKE --> O
  O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor
@@ -728,7 +728,7 @@ flowchart TD
 
 ## 13. Park rezervasyonu ve güvenli bekleme
 
-**Durum:** PARTIAL. **Amaç:** Görev sonrası hedef politikayı ve mevcut kaynak yaşam döngüsünü göstermek.
+**Durum:** IMPLEMENTED. Görev sonrasında veya düşük SoC ile uygun istasyona yönlendirme.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
@@ -736,11 +736,11 @@ flowchart TD
 
 **Kaynak belge:** [ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md](../ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md) · [c3-fleet-manager-decisions-2026-10-24.md](../decisions/c3-fleet-manager-decisions-2026-10-24.md) · [c3-3-3-dual-robot-integration-decisions-2026-10-24.md](../decisions/c3-3-3-dual-robot-integration-decisions-2026-10-24.md)
 
-**Kaynak kod:** [reservations.py](../../backend/fleet_manager/domain/reservations.py) · [event_loop.py](../../backend/fleet_manager/event_loop.py)
+**Kaynak kod:** [station_dispatch.py](../../backend/fleet_manager/domain/station_dispatch.py) · [reservations.py](../../backend/fleet_manager/domain/reservations.py) · [event_loop.py](../../backend/fleet_manager/event_loop.py)
 
-**Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py) · [test_fleet_manager_outbox.py](../../tests/test_fleet_manager_outbox.py)
+**Test / kanıt:** [C4.3 doğrulaması](../validation/c4/c4-3-validation-2026-11-06.md)
 
-**Sınır / fark:** Otomatik görev sonrası park/şarj yöneticisi planlanıyor. Boş kaynak araması Öklid mesafesi kullanır. Normal bırakma ve operatörün iç `UNBLOCK` olayı ayrı akışlardır. [Fiziksel kanıt koşulları](../design/c3-2-sqlite-outbox.md#istasyon-bırakma-ve-blocked-kurtarma)
+**Sınır / fark:** C4.3 adayları robotun Nav2 rota mesafesiyle sıralar. Şarj enerjisi ve kuyruk C4.4 kapsamındadır. Normal bırakma ve operatörün iç `UNBLOCK` olayı ayrı akışlardır. [Fiziksel kanıt koşulları](../design/c3-2-sqlite-outbox.md#istasyon-bırakma-ve-blocked-kurtarma)
 
 ![Park rezervasyonu ve güvenli bekleme](svg/parking-reservations.svg)
 
@@ -749,20 +749,30 @@ flowchart TD
 
 ```mermaid
 ---
-title: "13 · Park rezervasyonu ve güvenli bekleme · PARTIAL"
+title: "13 · Park rezervasyonu ve güvenli bekleme · IMPLEMENTED"
 ---
 flowchart TD
- A(["Görev tamam; yüksüzlük teyidi"]):::terminal --> LOW{"Enerji düşük mü? • hedef politika"}:::decision
- LOW -->|"Evet"| C["Şarj akışı • PLANNED"]:::battery
- LOW -->|"Hayır"| PARK{"Boş park var mı?"}:::decision
- PARK -->|"Hayır"| SAFE{"Güvenli bekleme alanı var mı?"}:::decision
+ A(["Görev tamamlandı veya SoC düşük"]):::terminal --> F{"Güncel telemetri, yüksüz ve sahipsiz robot?"}:::decision
+ F -->|"Hayır"| WAIT["Sahipliği koru veya bekle"]:::wait
+ F -->|"Evet"| LOW{"YAML düşük SoC eşiğinin altında mı?"}:::decision
+ LOW -->|"Evet"| C["Şarj istasyonu adayı"]:::battery
+ LOW -->|"Hayır"| PARK["Park adayı"]:::fm
+ C --> ROUTE
+ PARK --> ROUTE
+ ROUTE{"Boş hedef, Nav2 rotası ve yeterli Wh?"}:::decision
+ ROUTE -->|"Hayır"| SAFE{"Uygun güvenli bekleme alanı var mı?"}:::decision
  SAFE -->|"Hayır"| STOP["Güvenli duruş + operatör alarmı"]:::error
- PARK -->|"Evet"| RES["En yakın boş alanı tek sahipli rezerve et"]:::fm
+ ROUTE -->|"Evet"| RES["Tek sahipli rezervasyon + Outbox"]:::db
  SAFE -->|"Evet"| RES
- RES --> OCC["Varış: OCCUPIED"]:::fm
+ RES --> NAV["Executor → NavigateToPose"]:::executor
+ NAV --> TERM{"Eşleşen terminal ve güncel duruş?"}:::decision
+ TERM -->|"Başarılı ve yarıçap içinde"| OCC["Varış: OCCUPIED"]:::fm
+ TERM -->|"Güvenli park iptali"| REL
+ TERM -->|"Nav2 hatası"| BLOCK
+ TERM -->|"Belirsiz"| WAIT
  OCC -->|"Her öncelikte yeni görev / ayrılma"| REL["RELEASING"]:::fm
  REL --> P{"Kabul edilen RobotStatus ile mesafe<br/>> tolerance_radius + departure_margin?"}:::decision
- P -->|"Hayır"| WAIT["Sahipliği koru"]:::wait
+ P -->|"Hayır"| WAIT
  P -->|"Evet"| FREE(["FREE"]):::terminal
  OCC -->|"ERROR"| BLOCK["BLOCKED · sahiplik korunur"]:::error
  REL -->|"ERROR"| BLOCK

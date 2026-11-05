@@ -1,0 +1,21 @@
+# One station movement, with the same robot epoch and session fence as transport.
+string move_id
+string robot_id
+string station_id
+unique_identifier_msgs/UUID expected_session_id
+uint64 assignment_epoch
+geometry_msgs/PoseStamped target_pose
+float64 tolerance_radius
+bool charging_station
+---
+uint8 STATUS_SUCCEEDED = 1
+uint8 STATUS_FAILED = 2
+uint8 STATUS_PREEMPTED = 3
+uint8 status
+string move_id
+string station_id
+uint64 completed_epoch
+# Fresh stationary odometry measurement after terminal Nav2, or zero on failure.
+builtin_interfaces/Time stationary_stamp
+string error_reason
+---

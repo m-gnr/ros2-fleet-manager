@@ -410,9 +410,12 @@ class TestSafeCancellationLifecycle:
         assert result is None  # Cannot complete preemption while robot is moving!
         assert sm.state == RobotState.STATE_EXECUTING_TASK
 
-        # 3. Odometry updates with zero velocity and fresh timestamp
-        stopped_odom = OdometryReading(timestamp_sec=10.5, linear_velocity=0.002, angular_velocity=0.001)
-        result = sm.update_odometry_and_check_cancel(stopped_odom, current_sim_time=10.6)
+        # 3. Confirm a sustained stop from ordered samples after Nav2 terminal.
+        for stamp in (10.31, 10.38, 10.45):
+            assert sm.update_odometry_and_check_cancel(
+                OdometryReading(stamp, 0.002, 0.001), stamp,
+            ) is None
+        result = sm.update_odometry_and_check_cancel(OdometryReading(10.52, 0.002, 0.001), 10.6)
 
         # 4. Now both conditions met -> PREEMPTED!
         assert result is not None
@@ -441,9 +444,29 @@ class TestSafeCancellationLifecycle:
 
         # Nav2 confirms cancel
         result = sm.notify_nav2_cancel_result("task-c2", success=True, current_sim_time=5.3)
-        assert result is not None
+        assert result is None
+        assert sm.check_cancel_timeout(5.45) is None
+        assert sm.update_odometry_and_check_cancel(OdometryReading(5.45, 0.0434, 0.0), 5.45) is None
+        assert sm.state == RobotState.STATE_EXECUTING_TASK
+
+    def test_duplicate_reordered_and_delayed_odometry_cannot_complete_preemption(self):
+        sm = RobotExecutorStateMachine(robot_id="robot_1")
+        sm.accept_goal(create_goal(priority=TaskPriority.PRIORITY_LOW, goal_uuid="victim"))
+        sm.request_cancel("victim", 10.0)
+        assert sm.notify_nav2_cancel_result("different-goal", True, 10.05) is None
+        assert sm.notify_nav2_cancel_result("victim", True, 10.1) is None
+
+        assert sm.update_odometry_and_check_cancel(OdometryReading(10.12, 0.0, 0.0), 10.12) is None
+        assert sm.update_odometry_and_check_cancel(OdometryReading(10.18, 0.0, 0.02), 10.18) is None
+        assert sm.update_odometry_and_check_cancel(OdometryReading(10.18, 0.0, 0.0), 10.19) is None
+        assert sm.update_odometry_and_check_cancel(OdometryReading(10.17, 0.0, 0.0), 10.19) is None
+        assert sm.update_odometry_and_check_cancel(OdometryReading(10.20, 0.0, 0.0), 10.75) is None
+        assert sm.check_cancel_timeout(11.0) is None
+        assert sm.active_goal_uuid == "victim"
+        for stamp in (11.01, 11.08, 11.15):
+            assert sm.update_odometry_and_check_cancel(OdometryReading(stamp, 0.0, 0.0), stamp) is None
+        result = sm.update_odometry_and_check_cancel(OdometryReading(11.22, 0.0, 0.0), 11.22)
         assert result.status == TaskResultStatus.STATUS_PREEMPTED
-        assert sm.state == RobotState.STATE_IDLE
 
     def test_missing_terminal_cancel_preserves_ownership(self):
         sm = RobotExecutorStateMachine(robot_id="robot_1", initial_epoch=1)

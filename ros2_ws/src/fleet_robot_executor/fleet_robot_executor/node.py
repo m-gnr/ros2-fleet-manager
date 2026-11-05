@@ -10,6 +10,7 @@ Provides the logistics adapter layer between Fleet Manager and Nav2:
 """
 
 import copy
+import json
 import math
 import signal
 import threading
@@ -20,7 +21,7 @@ import uuid
 import rclpy
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from rclpy.action.server import ServerGoalHandle
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.clock import Clock, ClockType, JumpThreshold
 from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
@@ -28,16 +29,18 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.serialization import serialize_message
 from rclpy.signals import SignalHandlerOptions
+from rclpy.time import Time
 
 from action_msgs.msg import GoalStatus
 from builtin_interfaces.msg import Time as RosTime
 from geometry_msgs.msg import PoseStamped as RosPoseStamped, Twist
 from nav_msgs.msg import Odometry
 
-from fleet_interfaces.action import ExecuteTask
+from fleet_interfaces.action import ExecuteTask, NavigateToStation
 from fleet_interfaces.msg import BatteryState, RobotStatus
 from fleet_interfaces.srv import ClearRobotError
 from nav2_msgs.action import NavigateToPose
+from tf2_ros import Buffer, TransformException, TransformListener
 
 from .battery import BatteryTelemetry
 from .config_loader import load_robot_fleet_config
@@ -62,6 +65,7 @@ from .models import (
 )
 from .state_machine import RobotExecutorStateMachine
 from .safety import ExecutorSafety
+from .stop_detector import StopDetector
 
 
 def quaternion_to_yaw(x: float, y: float, z: float, w: float) -> float:
@@ -172,6 +176,7 @@ class RobotExecutorNode(Node):
             )
         self._lock = threading.Lock()
         self._battery = None
+        self._map_tf = None
         self._battery_endpoint_gid = None
         self._battery_clock_changed = threading.Event()
         if not _legacy_test_battery:
@@ -184,6 +189,8 @@ class RobotExecutorNode(Node):
                     or self.resolve_topic_name(self._battery_topic) != self._battery_topic):
                 raise ValueError("C4 BatteryState must stay in the configured robot namespace")
             self._battery = BatteryTelemetry(self.robot_id, robot_cfg.usable_capacity_wh)
+            self._map_tf = Buffer()
+            self._tf_listener = TransformListener(self._map_tf, self)
             self.state_machine.update_battery(0.0, 0.0)
             self._battery_clock_guard = self.get_clock().create_jump_callback(
                 JumpThreshold(min_forward=None, min_backward=Duration(nanoseconds=-1), on_clock_change=True),
@@ -207,6 +214,14 @@ class RobotExecutorNode(Node):
             callback_group=self.cb_group,
         )
         self.get_logger().info(f"ExecuteTask ActionServer listening on '{action_server_name}'")
+        if self._battery is not None:
+            self._station_server = ActionServer(
+                self, NavigateToStation, self._qualify("navigate_to_station"),
+                execute_callback=self._execute_station_move,
+                goal_callback=self._station_goal_callback,
+                cancel_callback=self._station_cancel_callback,
+                callback_group=self.cb_group,
+            )
 
         # Nav2 NavigateToPose Action Client
         self._nav2_client = ActionClient(
@@ -241,12 +256,13 @@ class RobotExecutorNode(Node):
 
         # Odometry Subscriber
         odom_topic = self._qualify(str(self.get_parameter("odom_topic_name").value))
+        self._odom_group = MutuallyExclusiveCallbackGroup()
         self._odom_sub = self.create_subscription(
             Odometry,
             odom_topic,
             self._odom_callback,
             10,
-            callback_group=self.cb_group,
+            callback_group=self._odom_group,
         )
         self.get_logger().info(f"Subscribed to Odometry on '{odom_topic}'")
 
@@ -370,6 +386,148 @@ class RobotExecutorNode(Node):
             if brake_until is not None and not brake_until.done():
                 self._cmd_vel_pub.publish(Twist())
         raise RuntimeError("Executor stopped with unresolved ownership")
+
+    def _station_goal_callback(self, request):
+        target = self._ros_pose_to_model(request.target_pose)
+        if (request.robot_id != self.robot_id or not request.move_id or not request.station_id
+                or bytes(request.expected_session_id.uuid) != self.safety.session_id.bytes
+                or target.frame_id != "map"
+                or not all(math.isfinite(v) for v in (target.x, target.y, target.z, target.yaw,
+                                                      request.tolerance_radius))
+                or request.tolerance_radius <= 0):
+            return GoalResponse.REJECT
+        with self._lock:
+            machine = self.state_machine
+            now = self.get_clock().now()
+            if (self._admission_pending or machine.is_loaded or machine.state != RobotState.STATE_IDLE
+                    or machine.active_goal_uuid is not None or request.assignment_epoch <= machine.current_epoch
+                    or not self.safety.available(request.move_id, request.assignment_epoch)
+                    or not self._fresh_battery_stamp(now.nanoseconds)
+                    or self._stationary_odom(now.nanoseconds / 1e9) is None):
+                return GoalResponse.REJECT
+            self._admission_pending = True
+        return GoalResponse.ACCEPT
+
+    def _station_cancel_callback(self, handle):
+        request = handle.request
+        goal_uuid = self._uuid_to_str(handle.goal_id.uuid)
+        with self._lock:
+            if (request.charging_station or self.state_machine.active_goal_uuid != goal_uuid
+                    or self.state_machine.state != RobotState.STATE_RETURNING_TO_PARK
+                    or self.safety.blocked):
+                return CancelResponse.REJECT
+            self.state_machine.is_cancelling = True
+        return CancelResponse.ACCEPT
+
+    def _execute_station_move(self, handle):
+        request = handle.request
+        goal_uuid = self._uuid_to_str(handle.goal_id.uuid)
+        identity = (request.move_id, request.assignment_epoch, goal_uuid)
+        payload = serialize_message(request)
+        try:
+            with self._lock:
+                admitted = self.safety.admit(identity, payload) and self.state_machine.begin_station_move(
+                    *identity, charging=request.charging_station,
+                )
+            if not admitted:
+                raise RuntimeError("Accepted station goal conflicts with assignment evidence")
+            status, proof, reason = self._navigate_to_station(handle)
+            result = NavigateToStation.Result()
+            result.status = int(status)
+            result.move_id = request.move_id
+            result.station_id = request.station_id
+            result.error_reason = reason
+            result.stationary_stamp.sec, result.stationary_stamp.nanosec = divmod(proof, 10**9)
+            with self._lock:
+                result.completed_epoch = self.state_machine.current_epoch
+                valid = self.safety.finish(identity, payload, result) and self.state_machine.finish_station_move(
+                    goal_uuid, reason, self.get_clock().now().nanoseconds / 1e9,
+                )
+                if valid:
+                    self._admission_pending = False
+            if not valid:
+                raise RuntimeError("Station terminal result does not match assignment")
+            if status == TaskResultStatus.STATUS_SUCCEEDED:
+                handle.succeed()
+            elif status == TaskResultStatus.STATUS_PREEMPTED:
+                handle.canceled()
+            else:
+                handle.abort()
+            return result
+        except Exception as exc:
+            return self._hold_uncertain(f"Station movement evidence unavailable: {exc}")
+
+    def _navigate_to_station(self, handle):
+        while not self._nav2_client.wait_for_server(timeout_sec=0.1):
+            if self._stopping.is_set():
+                raise RuntimeError("Stopped while awaiting station navigation server")
+        request = handle.request
+        nav_goal = NavigateToPose.Goal()
+        nav_goal.pose = copy.deepcopy(request.target_pose)
+        nav_goal.pose.header.stamp = self.get_clock().now().to_msg()
+        future = self._nav2_client.send_goal_async(nav_goal)
+        while not future.done():
+            if self._stopping.wait(0.02):
+                raise RuntimeError("Stopped with unresolved station navigation delivery")
+        nav_handle = future.result()
+        if nav_handle is None:
+            raise RuntimeError("Station navigation acceptance is unknown")
+        if not nav_handle.accepted:
+            return TaskResultStatus.STATUS_FAILED, 0, "Station Nav2 goal rejected"
+        self._active_nav2_goal_handle = nav_handle
+        result = nav_handle.get_result_async()
+        while not result.done():
+            with self._lock:
+                cancel_requested = self.state_machine.is_cancelling
+            if cancel_requested:
+                self._await_nav2_cancel_terminal(nav_handle, result)
+                break
+            if self._stopping.wait(0.02):
+                raise RuntimeError("Stopped with active station navigation")
+        self._active_nav2_goal_handle = None
+        terminal = result.result().status
+        if terminal == GoalStatus.STATUS_ABORTED:
+            return TaskResultStatus.STATUS_FAILED, 0, "Station Nav2 goal aborted"
+        with self._lock:
+            canceled = terminal == GoalStatus.STATUS_CANCELED and self.state_machine.is_cancelling
+        if terminal != GoalStatus.STATUS_SUCCEEDED and not canceled:
+            raise RuntimeError("Unexpected station Nav2 terminal state")
+        after = self.get_clock().now().nanoseconds / 1e9
+        if canceled:
+            with self._lock:
+                self.state_machine.begin_cancel_stop_confirmation(after)
+        deadline = after + self.executor_config.cancel_stop_timeout_sec
+        while not self._stopping.is_set():
+            now = self.get_clock().now().nanoseconds / 1e9
+            with self._lock:
+                proof = (self.state_machine.cancel_stop.confirmed(now) if canceled
+                         else self._stationary_odom(now, after=after))
+            if proof is not None:
+                stamp = round(proof.timestamp_sec * 10**9)
+                if canceled:
+                    return TaskResultStatus.STATUS_PREEMPTED, stamp, ""
+                target = request.target_pose.pose.position
+                if math.hypot(proof.pose.x - target.x, proof.pose.y - target.y) > request.tolerance_radius:
+                    return TaskResultStatus.STATUS_FAILED, 0, "Station stop outside configured radius"
+                return TaskResultStatus.STATUS_SUCCEEDED, stamp, ""
+            if now > deadline or now < after:
+                break
+            self._cmd_vel_pub.publish(Twist())
+            self._stopping.wait(0.02)
+        raise RuntimeError("Station movement lacks fresh stopped odometry")
+
+    def _stationary_odom(self, now, *, after=0.0):
+        reading = self.state_machine.last_odometry
+        if (reading is None or reading.timestamp_sec <= after or reading.pose is None
+                or reading.pose.frame_id != "map"
+                or not all(math.isfinite(v) for v in (reading.pose.x, reading.pose.y, reading.pose.yaw))):
+            return None
+        config = self.executor_config
+        stopped, _ = StopDetector.verify_stopped(
+            reading, now, config.linear_stop_threshold_m_s, config.angular_stop_threshold_rad_s,
+            config.odometry_freshness_sec,
+        )
+        return reading if stopped else None
 
     def _execute_task_callback(self, goal_handle: ServerGoalHandle) -> ExecuteTask.Result:
         req = goal_handle.request
@@ -596,6 +754,52 @@ class RobotExecutorNode(Node):
         return result
 
     def _execute_safe_cancel(self, goal_uuid, nav2_goal_handle, result_future):
+        terminal = self._await_nav2_cancel_terminal(nav2_goal_handle, result_future)
+        if terminal.status == GoalStatus.STATUS_SUCCEEDED:
+            with self._lock:
+                self.state_machine.is_cancelling = False
+                self.state_machine.cancel_requested_at = None
+                self.state_machine.cancel_stop = None
+            # The pickup step succeeded naturally; continue its logistics phases.
+            return None
+        if terminal.status == GoalStatus.STATUS_ABORTED:
+            return self._navigation_failed(goal_uuid)
+        if terminal.status != GoalStatus.STATUS_CANCELED:
+            return self._hold_uncertain("Ambiguous terminal cancel outcome")
+        now = self.get_clock().now().nanoseconds / 1e9
+        terminal_monotonic_ns = time.monotonic_ns()
+        with self._lock:
+            task_result = self.state_machine.notify_nav2_cancel_result(goal_uuid, True, now)
+            proof = self.state_machine.last_odometry
+            decision_monotonic_ns = time.monotonic_ns()
+        while task_result is None:
+            self._cmd_vel_pub.publish(Twist())
+            if self._stopping.wait(0.05):
+                raise RuntimeError("Stopped without fresh stationary odometry")
+            with self._lock:
+                task_result = self.state_machine.check_cancel_timeout(
+                    self.get_clock().now().nanoseconds / 1e9)
+                proof = self.state_machine.last_odometry
+                decision_monotonic_ns = time.monotonic_ns()
+        self.get_logger().info("PREEMPTION_STOP_PROOF " + json.dumps({
+            "robot_id": self.robot_id,
+            "goal_uuid": goal_uuid,
+            "nav2_goal_uuid": self._uuid_to_str(nav2_goal_handle.goal_id.uuid),
+            "epoch": task_result.completed_epoch,
+            "nav2_terminal_ns": round(now * 10**9),
+            "nav2_terminal_monotonic_ns": terminal_monotonic_ns,
+            "decision_ns": round(task_result.completion_stamp_sec * 10**9),
+            "decision_monotonic_ns": decision_monotonic_ns,
+            "stop_window_start_ns": round(task_result.stop_window_start_sec * 10**9),
+            "odometry_ns": round(proof.timestamp_sec * 10**9),
+            "odometry_received_monotonic_ns": proof.received_monotonic_ns,
+            "frame_id": proof.source_frame_id,
+            "linear_m_s": proof.linear_velocity,
+            "angular_rad_s": proof.angular_velocity,
+        }))
+        return self._terminal_message(task_result)
+
+    def _await_nav2_cancel_terminal(self, nav2_goal_handle, result_future):
         # The result future belongs to this exact Nav2 goal handle. The cancel
         # service response, including ERROR_NONE, cannot establish termination.
         if not result_future.done():
@@ -611,29 +815,7 @@ class RobotExecutorNode(Node):
                 self._cmd_vel_pub.publish(Twist())
                 if self._stopping.wait(min(0.02, remaining)):
                     raise RuntimeError("Stopped while awaiting terminal Nav2 cancellation")
-        terminal = result_future.result()
-        if terminal.status == GoalStatus.STATUS_SUCCEEDED:
-            with self._lock:
-                self.state_machine.is_cancelling = False
-                self.state_machine.cancel_requested_at = None
-                self.state_machine.nav2_cancel_confirmed = False
-            # The pickup step succeeded naturally; continue its logistics phases.
-            return None
-        if terminal.status == GoalStatus.STATUS_ABORTED:
-            return self._navigation_failed(goal_uuid)
-        if terminal.status != GoalStatus.STATUS_CANCELED:
-            return self._hold_uncertain("Ambiguous terminal cancel outcome")
-        now = self.get_clock().now().nanoseconds / 1e9
-        with self._lock:
-            task_result = self.state_machine.notify_nav2_cancel_result(goal_uuid, True, now)
-        while task_result is None:
-            self._cmd_vel_pub.publish(Twist())
-            if self._stopping.wait(0.05):
-                raise RuntimeError("Stopped without fresh stationary odometry")
-            with self._lock:
-                task_result = self.state_machine.check_cancel_timeout(
-                    self.get_clock().now().nanoseconds / 1e9)
-        return self._terminal_message(task_result)
+        return result_future.result()
 
     # =========================================================================
     # Telemetry, Odometry & Periodic Callbacks
@@ -684,6 +866,7 @@ class RobotExecutorNode(Node):
 
     def _odom_callback(self, msg: Odometry) -> None:
         """Receive odometry messages, compute velocity and heading, and update state machine."""
+        received_monotonic_ns = time.monotonic_ns()
         stamp_sec = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
 
         px = msg.pose.pose.position.x
@@ -700,39 +883,45 @@ class RobotExecutorNode(Node):
         lin_speed = math.hypot(vx, vy)
         ang_speed = msg.twist.twist.angular.z
 
-        # The configured spawn transform applies only to this robot's odometry.
         odom_frame = msg.header.frame_id.lstrip("/")
-        if odom_frame in ("odom", f"{self.robot_namespace.strip('/')}/odom"):
-            init_x, init_y, init_yaw = self.initial_pose
-            cos_i = math.cos(init_yaw)
-            sin_i = math.sin(init_yaw)
-            map_x = init_x + (px * cos_i - py * sin_i)
-            map_y = init_y + (px * sin_i + py * cos_i)
-            map_yaw = math.atan2(math.sin(init_yaw + yaw), math.cos(init_yaw + yaw))
-            frame_id = "map"
-        else:
-            map_x = px
-            map_y = py
-            map_yaw = yaw
-            frame_id = msg.header.frame_id
-
-        pose_stamped = PoseStamped(
-            x=map_x,
-            y=map_y,
-            z=pz,
-            yaw=map_yaw,
-            frame_id=frame_id,
-            timestamp_sec=stamp_sec,
-        )
+        pose_stamped = self._map_odometry_pose(odom_frame, msg.header.stamp, px, py, pz, yaw)
         reading = OdometryReading(
             timestamp_sec=stamp_sec,
             linear_velocity=lin_speed,
             angular_velocity=ang_speed,
             pose=pose_stamped,
+            source_frame_id=msg.header.frame_id,
+            source_frame_valid=odom_frame in ("map", "odom", f"{self.robot_namespace.strip('/')}/odom"),
+            received_monotonic_ns=received_monotonic_ns,
         )
 
         with self._lock:
-            self.state_machine.update_odometry(reading)
+            self.state_machine.update_odometry(reading, self.get_clock().now().nanoseconds / 1e9)
+
+    def _map_odometry_pose(self, frame, stamp, x, y, z, yaw):
+        robot_odom = f"{self.robot_namespace.strip('/')}/odom"
+        stamp_ns = stamp.sec * 10**9 + stamp.nanosec
+        if frame in ("odom", robot_odom):
+            if self._map_tf is None:
+                origin_x, origin_y, origin_yaw = self.initial_pose
+            else:
+                if stamp_ns <= 0:
+                    return None
+                try:
+                    transform = self._map_tf.lookup_transform("map", robot_odom, Time.from_msg(stamp)).transform
+                except TransformException:
+                    return None
+                origin_x, origin_y = transform.translation.x, transform.translation.y
+                z += transform.translation.z
+                q = transform.rotation
+                origin_yaw = quaternion_to_yaw(q.x, q.y, q.z, q.w)
+            cos_yaw, sin_yaw = math.cos(origin_yaw), math.sin(origin_yaw)
+            x, y = origin_x + x * cos_yaw - y * sin_yaw, origin_y + x * sin_yaw + y * cos_yaw
+            yaw = math.atan2(math.sin(origin_yaw + yaw), math.cos(origin_yaw + yaw))
+            frame = "map"
+        elif self._map_tf is not None and frame != "map":
+            return None
+        return PoseStamped(x=x, y=y, z=z, yaw=yaw, frame_id=frame, timestamp_sec=stamp_ns / 1e9)
 
     def _battery_source_available(self) -> bool:
         """Check the discovered source while holding the Executor lock."""

@@ -13,6 +13,15 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS one_active_task_per_robot ON tasks(robot_id)
     WHERE status IN ('ASSIGNED', 'EXECUTING');
+CREATE TABLE IF NOT EXISTS station_moves (
+    move_id TEXT PRIMARY KEY,
+    robot_id TEXT NOT NULL REFERENCES robots(robot_id),
+    station_id TEXT NOT NULL REFERENCES reservations(station_id),
+    status TEXT NOT NULL,
+    snapshot TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS one_active_station_move_per_robot ON station_moves(robot_id)
+    WHERE status = 'ASSIGNED';
 CREATE TABLE IF NOT EXISTS reservations (
     station_id TEXT PRIMARY KEY,
     state TEXT NOT NULL CHECK(state IN ('FREE','RESERVED','OCCUPIED','RELEASING','BLOCKED')),

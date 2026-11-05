@@ -40,6 +40,7 @@ def build_fleet_manager_from_config(
         safe_charge_station_pose=safe_charge_pose,
         emergency_soc_percent=cfg.policies.emergency_soc_percent,
         safety_margin_wh=cfg.policies.safety_margin_wh,
+        low_soc_percent=None if _legacy_test_battery else cfg.policies.low_soc_percent,
     )
 
     robot_ids: List[str] = []
@@ -71,6 +72,13 @@ def build_fleet_manager_from_config(
             station_id=ps.id,
             station_type=StationType.PARKING,
             pose=Pose2D(x=ps.pose.x, y=ps.pose.y, yaw=ps.pose.yaw),
+        )
+
+    for area in cfg.stations.safe_waiting_areas:
+        core.register_station(
+            station_id=area.id,
+            station_type=StationType.SAFE_WAITING,
+            pose=Pose2D(x=area.pose.x, y=area.pose.y, yaw=area.pose.yaw),
         )
 
     return core, robot_ids

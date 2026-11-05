@@ -265,6 +265,7 @@ def test_safe_preemption_lifecycle(ros_env):
         # Send stopped odometry to satisfy StopDetector
         time.sleep(0.1)
         stopped_odom = Odometry()
+        stopped_odom.header.frame_id = "robot_1/odom"
         stopped_odom.header.stamp = test_client_node.get_clock().now().to_msg()
         stopped_odom.twist.twist.linear.x = 0.0
         stopped_odom.twist.twist.angular.z = 0.0

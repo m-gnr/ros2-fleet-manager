@@ -57,7 +57,8 @@ class FleetROS2Adapter:
         self.status_bridges: Dict[str, RobotStatusSubscriberBridge] = {}
         self.action_bridges: Dict[str, ExecuteTaskActionClientBridge] = {}
         self.service_clients: Dict[str, ClearRobotErrorServiceClient] = {}
-        self.outbox_sender = ROS2OutboxSender(action_clients=self.action_bridges)
+        self.station_clients = {}
+        self.outbox_sender = ROS2OutboxSender(self.action_bridges, self.station_clients)
 
         self._battery_clock_ns = None
         if node is not None and any(robot.requires_battery_telemetry for robot in consumer.core.tracker.list_robots()):
@@ -88,7 +89,7 @@ class FleetROS2Adapter:
         if self.node is None:
             return
 
-        from fleet_interfaces.action import ExecuteTask
+        from fleet_interfaces.action import ExecuteTask, NavigateToStation
         from fleet_interfaces.msg import RobotStatus
         from fleet_interfaces.srv import ClearRobotError
         from nav2_msgs.action import ComputePathToPose
@@ -96,6 +97,7 @@ class FleetROS2Adapter:
 
         from .action_client import ExecuteTaskActionClientBridge
         from .service_client import ClearRobotErrorServiceClient
+        from .station_client import StationActionClient
         from .status_subscriber import RobotStatusSubscriberBridge
 
         for r_id in self.robot_ids:
@@ -125,6 +127,9 @@ class FleetROS2Adapter:
                 action_client=act_client,
             )
             self.action_bridges[r_id] = act_bridge
+            if self.consumer.core.station_dispatch is not None:
+                station_client = ActionClient(self.node, NavigateToStation, f"{namespace}/navigate_to_station")
+                self.station_clients[r_id] = StationActionClient(station_client, self.consumer, self.loop)
 
             # 3. ClearRobotError ServiceClient (/{robot_id}/clear_robot_error - C3.3.3-DEC-01)
             srv_client = self.node.create_client(ClearRobotError, f"{namespace}/clear_robot_error")

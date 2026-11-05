@@ -14,7 +14,7 @@ flowchart TD
  T -->|"SUCCEEDED"| N["Gerçek faz akışına devam<br/>PREEMPTED üretme"]:::executor
  T -->|"ABORTED"| E["FAILED / ERROR; HIGH yeniden değerlendirilir"]:::error
  T -->|"Belirsiz veya süre doldu"| B["Sahipliği tut; güvenli blokaj<br/>Geç sonuç otomatik açmaz"]:::wait
- T -->|"STATUS_CANCELED"| O{"Güncel odometri ve sıfır hız?"}:::decision
+ T -->|"STATUS_CANCELED"| O{"Terminal sonrası sıralı odometri<br/>0,20 sn boyunca duruşu doğruladı mı?"}:::decision
  O -->|"Hayır"| BRAKE["Frenle ve teyit bekle"]:::wait
  BRAKE --> O
  O -->|"Evet"| R["Eşleşen terminal PREEMPTED"]:::executor

@@ -38,6 +38,7 @@ from .models import (
 )
 from .reservations import ReservationManager
 from .scheduler import RouteDistanceProvider, Scheduler
+from .station_dispatch import StationDispatch
 from .task_queue import TaskQueue
 
 logger = logging.getLogger(__name__)
@@ -53,10 +54,12 @@ class FleetManagerCore:
         *,
         emergency_soc_percent: float = DEFAULT_EMERGENCY_SOC,
         safety_margin_wh: float = DEFAULT_SAFETY_MARGIN_WH,
+        low_soc_percent: float | None = None,
     ) -> None:
         self.queue = TaskQueue()
         self.tracker = FleetTracker()
         self.reservations = ReservationManager()
+        self.station_dispatch = StationDispatch(low_soc_percent) if low_soc_percent is not None else None
         self.scheduler = Scheduler(
             route_provider=route_provider,
             safe_charge_station_pose=safe_charge_station_pose,
@@ -250,8 +253,7 @@ class FleetManagerCore:
             robot.station_pose_valid_until = pose_valid_until
 
         # Check departure from any station robot was occupying/releasing
-        station = self.reservations.get_station_by_robot(robot_id)
-        if station is not None:
+        for station in self.reservations.stations_owned_by(robot_id):
             if state == RobotState.STATE_ERROR:
                 # Robot errored at station -> mark resource BLOCKED (C3-DEC §2.2)
                 self.reservations.mark_blocked(
@@ -261,7 +263,8 @@ class FleetManagerCore:
             elif (station.has_owner(robot_id)
                   and station.state in (ReservationState.RELEASING, ReservationState.OCCUPIED)
                   and pose is not None
-                  and (pose_valid_until is None or robot.station_pose_valid_until)):
+                  and (pose_valid_until is None or robot.station_pose_valid_until)
+                  and (not station.departure_after_ns or pose_sample_ns > station.departure_after_ns)):
                 self.reservations.update_physical_departure(station.station_id, pose)
 
         return robot
@@ -337,6 +340,8 @@ class FleetManagerCore:
             # Clear robot active goal
             robot.active_goal_uuid = None
             robot.current_task_id = None
+            if self.station_dispatch is not None:
+                self.station_dispatch.park_due.add(robot_id)
             return True, task
 
         elif result_status == TaskResultStatus.STATUS_PREEMPTED:
@@ -367,8 +372,7 @@ class FleetManagerCore:
             robot.current_task_id = None
 
             # Mark occupied station BLOCKED if any
-            station = self.reservations.get_station_by_robot(robot_id)
-            if station is not None:
+            for station in self.reservations.stations_owned_by(robot_id):
                 self.reservations.mark_blocked(
                     station.station_id, robot_id, session_id=robot.session_id,
                     # A result can precede ERROR telemetry. It cannot establish the recovery fence.
@@ -385,6 +389,7 @@ class FleetManagerCore:
     def schedule_tick(
         self,
         current_time: float,
+        station_lookup=None,
     ) -> List[Tuple[str, Assignment]]:
         """Run one scheduling evaluation pass across the queued tasks.
         
@@ -405,6 +410,7 @@ class FleetManagerCore:
                 r for r in idle_robots
                 if r.robot_id not in self._pending_preemption_assignments
                 and r.robot_id not in self._active_tasks_by_robot
+                and (self.station_dispatch is None or self.station_dispatch.allows_transport(self, r))
             ]
 
             selection = self.scheduler.select_best_idle_robot(
@@ -419,6 +425,11 @@ class FleetManagerCore:
                 self.queue.remove(task.task_id)
                 assignment = self._dispatch_assignment(robot, task, current_time)
                 new_assignments.append((robot.robot_id, assignment))
+                continue
+
+            if self.station_dispatch is not None and self.station_dispatch.request_park_cancel(
+                self, task, current_time,
+            ):
                 continue
 
             # 2. If task is HIGH priority and no IDLE robot was available:
@@ -447,6 +458,8 @@ class FleetManagerCore:
 
             # 3. If cannot assign or preempt, skip to next task in work-conserving FIFO
 
+        if self.station_dispatch is not None:
+            self.station_dispatch.schedule(self, current_time, station_lookup)
         return new_assignments
 
     # -------------------------------------------------------------------------
@@ -460,9 +473,9 @@ class FleetManagerCore:
     ) -> Assignment:
         """Assign task to robot with incremented monotonic epoch and new goal UUID."""
         # Check if robot was at a station and initiate release
-        station = self.reservations.get_station_by_robot(robot.robot_id)
-        if station is not None and station.state in (ReservationState.RESERVED, ReservationState.OCCUPIED):
-            self.reservations.initiate_release(station.station_id, robot.robot_id)
+        for station in self.reservations.stations_owned_by(robot.robot_id):
+            if station.state in (ReservationState.RESERVED, ReservationState.OCCUPIED):
+                self.reservations.initiate_release(station.station_id, robot.robot_id)
 
         # Increment monotonic assignment epoch
         robot.current_epoch += 1

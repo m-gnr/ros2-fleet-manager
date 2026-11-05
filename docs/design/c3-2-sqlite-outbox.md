@@ -50,7 +50,7 @@ JSON görüntüleri domain alanlarını korur; çalıştırılabilir nesne seril
 | `TICK` | `current_time`: domain saatinde saniye. Aktif görev iletişim kaybında `COMMUNICATION_WARNING` logu üretir; FAILED/ERROR üretmez. |
 | `ROBOT_STATUS` | `handle_robot_status` parametreleri ve monoton, negatif olmayan `status_seq`. |
 | `ACTION_FEEDBACK` | Robot kimliği, görev/epoch/UUID, faz ve `status_seq`. |
-| `ACTION_RESULT` | Robot kimliği, görev/`assignment_epoch`/UUID, geçerli terminal `result_status`, isteğe bağlı `error_reason`. |
+| `ACTION_RESULT` | Robot kimliği, görev/`assignment_epoch`/UUID, Executor'ın ilettiği `completed_epoch`, geçerli terminal `result_status`, isteğe bağlı `error_reason`. |
 | `CANCEL_RESPONSE` | Robot kimliği, görev/epoch/UUID, `accepted`, ilgili Outbox kaydının `cancel_command_id` değeri. |
 | `RESERVE`, `OCCUPIED`, `RELEASE` | `station_id`, `robot_id`. OCCUPIED mevcut sahipliği ve bilinen robot pozunu kontrol eder. Fiziksel ayrılma ROBOT_STATUS üzerinden domain tarafından doğrulanır. |
 | `OUTBOX_CLAIM`, `OUTBOX_FINISH` | Göndericinin iç komutları; claim zamanı veya komut kimliği/deneme numarası/hata/tekrar zamanı. |
@@ -58,6 +58,8 @@ JSON görüntüleri domain alanlarını korur; çalıştırılabilir nesne seril
 Sonuçlar `APPLIED`, `DUPLICATE`, `STALE` veya `REJECTED` olur. Geçersiz alanlar/komutlar exception üretir ve transaction geri alınır. Olay API'si bir REST giriş doğrulayıcısı değildir.
 
 Action olaylarında üçlü kimlik aktif atamayla eşleşmelidir. Telemetri sırası robot başına, feedback sırası robot/goal başına kontrol edilir. Terminal sonuç feedback sıra numarasına bağımlı değildir. Eski epoch, eski sıra veya geriye giden telemetri zamanı uygulanmaz. İptal yanıtı ayrıca en son iptal komutuyla eşleşir; önceki iptal isteğinin geç yanıtı yeni isteği kapatamaz.
+
+`SUCCEEDED`, `FAILED` ve `PREEMPTED` için `completed_epoch` gerçek bir tam sayı olmalı ve aktif atamanın epoch'u ile eşleşmelidir. Eksik, geçersiz veya uyuşmayan değer uyarı logu ve `processed_events` kaydında `STALE` üretir. Görev, robot, rezervasyon ve Outbox kayıtları ile bekleyen preemption korunur. [C3.3.2-DEC-05](../decisions/c3-3-2-ros2-adapter-decisions-2026-10-24.md#c332-dec-05-gerçek-completed_epoch-doğrulaması)
 
 **Entegrasyon sınırı:** Mevcut `RobotStatus.msg` içinde `status_seq` yoktur. C3.2 bunu yalnız iç olay zarfında zorunlu tutar. Kaynak sırasını koruyan ROS eşlemesi sonraki adaptör işidir; geliş sırasına yeni numara vermek ağda sırasız teslimi çözmez. Bu değişiklik ROS IDL veya adaptör eklemez. `timestamp_sec`, `current_time` ve rota verisi çağıran tarafından tutarlı sağlanmalıdır; rota sağlayıcı senkron ve yan etkisiz bir mesafe sorgusu olmalıdır.
 

@@ -1,5 +1,5 @@
 ---
-title: "08 · Assignment epoch ve UUID uzlaştırması · PARTIAL"
+title: "08 · Assignment epoch ve UUID uzlaştırması · IMPLEMENTED"
 ---
 flowchart TD
  A(["Action olayı"]):::terminal --> M{"Aktif robot + task + epoch + UUID eşleşir mi?"}:::decision
@@ -7,12 +7,9 @@ flowchart TD
  M -->|"Evet"| K{"Olay türü?"}:::decision
  K -->|"Feedback"| F["Sıra denetimi; ilerlemeyi işle<br/>Fiziksel durum otoritesi değişmez"]:::fm
  K -->|"Cancel yanıtı"| C["Son cancel_command_id kontrolü<br/>Kabul terminal sonuç değildir"]:::fm
- K -->|"Result"| CE{"Gerçek completed_epoch mevcut mu?"}:::decision
- CE -->|"Evet"| EQ{"Aktif epoch ile eşit mi?"}:::decision
- CE -->|"Hayır: mevcut kod"| GAP["FARK: assignment_epoch kopyalanıyor<br/>Onaylı sözleşme bunu yasaklar"]:::error
- GAP --> EQ
- EQ -->|"Hayır"| ST
- EQ -->|"Evet"| TERM["SUCCEEDED / FAILED / PREEMPTED işle<br/>Görev sonucu ve sahiplik güncelle"]:::fm
+ K -->|"Result"| CE{"Gerçek completed_epoch bir tam sayı ve aktif epoch ile eşit mi?"}:::decision
+ CE -->|"Hayır"| LOG["Epoch uyarısını kaydet"]:::wait --> ST
+ CE -->|"Evet"| TERM["SUCCEEDED / FAILED / PREEMPTED işle<br/>Görev sonucu ve sahiplik güncelle"]:::fm
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

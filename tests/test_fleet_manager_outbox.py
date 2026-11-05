@@ -43,7 +43,7 @@ def action(loop, kind="ACTION_RESULT", **changes):
     payload = dict(robot_id="r1", task_id=task.task_id, assignment_epoch=task.assignment_epoch,
                    goal_uuid=task.goal_uuid)
     if kind == "ACTION_RESULT":
-        payload["result_status"] = 1
+        payload.update(result_status=1, completed_epoch=task.assignment_epoch)
     elif kind == "ACTION_FEEDBACK":
         payload.update(status_seq=1, current_phase=1)
     else:
@@ -125,6 +125,44 @@ def test_each_assignment_identity_component_is_required(runtime, change):
         await assign(runtime)
         assert await runtime.submit(action(runtime, **change)) == "STALE"
         assert runtime.core._active_tasks["t1"].status == "ASSIGNED"
+        await runtime.close()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("result_status", [1, 2, 3], ids=["succeeded", "failed", "preempted"])
+def test_invalid_terminal_epochs_preserve_ownership_and_sqlite(runtime, result_status, caplog):
+    async def scenario():
+        await runtime.start()
+        await runtime.submit(status())
+        await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+        await preempt(runtime)
+        valid = action(runtime, result_status=result_status)
+        missing_epoch = dict(valid.payload)
+        del missing_epoch["completed_epoch"]
+        invalid_payloads = [missing_epoch] + [
+            dict(valid.payload, completed_epoch=epoch)
+            for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+        ]
+        before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+        processed = rows(runtime, "processed_events")
+        for payload in invalid_payloads:
+            event = Event("ACTION_RESULT", payload)
+            assert await runtime.submit(event) == "STALE"
+            entry = rows(runtime, "processed_events")[-1]
+            assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+            assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            active = runtime.core._active_tasks_by_robot["r1"]
+            assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            assert active.preemption_count == 0
+            assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+            assert {table: rows(runtime, table) for table in before} == before
+        assert rows(runtime, "processed_events")[:len(processed)] == processed
+        assert "ACTION_RESULT completed_epoch" in caplog.text
+        assert await runtime.submit(valid) == "APPLIED"
         await runtime.close()
     asyncio.run(scenario())
 
@@ -362,7 +400,8 @@ def test_database_lock_failure_can_be_retried(runtime, tmp_path):
     asyncio.run(scenario())
 
 
-def test_old_result_after_next_assignment_and_invalid_result(runtime):
+@pytest.mark.parametrize("result_status", [1, 2, 3], ids=["succeeded", "failed", "preempted"])
+def test_old_result_after_next_assignment_and_invalid_result(runtime, result_status):
     async def scenario():
         await runtime.start()
         await assign(runtime)
@@ -374,7 +413,11 @@ def test_old_result_after_next_assignment_and_invalid_result(runtime):
         await runtime.submit(status(seq=2, epoch=1))
         await runtime.submit(submit("t2"))
         await runtime.submit(Event("TICK", {"current_time": 10}))
-        assert await runtime.submit(Event(old.kind, old.payload)) == "STALE"
+        before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+        delayed = Event(old.kind, dict(old.payload, result_status=result_status))
+        assert await runtime.submit(delayed) == "STALE"
+        assert rows(runtime, "processed_events")[-1]["outcome"] == "STALE"
+        assert {table: rows(runtime, table) for table in before} == before
         assert runtime.core._active_tasks["t2"].assignment_epoch == 2
         detached = runtime.core
         detached._active_tasks.clear()

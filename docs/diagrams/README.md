@@ -24,7 +24,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 5 | Yürütme — [Güvenli preemption ve N=2](#05-safe-preemption) | IMPLEMENTED | [Mermaid](src/safe-preemption.mmd) · [SVG](svg/safe-preemption.svg) |
 | 6 | Güvenlik — [RobotStatus sıra ve oturum yönetimi](#06-status-session-order) | PARTIAL | [Mermaid](src/status-session-order.mmd) · [SVG](svg/status-session-order.svg) |
 | 7 | Güvenlik — [DDS goal ve cancel protokolü](#07-dds-goal-cancel) | IMPLEMENTED | [Mermaid](src/dds-goal-cancel.mmd) · [SVG](svg/dds-goal-cancel.svg) |
-| 8 | Güvenlik — [Assignment epoch ve UUID uzlaştırması](#08-assignment-reconciliation) | PARTIAL | [Mermaid](src/assignment-reconciliation.mmd) · [SVG](svg/assignment-reconciliation.svg) |
+| 8 | Güvenlik — [Assignment epoch ve UUID uzlaştırması](#08-assignment-reconciliation) | IMPLEMENTED | [Mermaid](src/assignment-reconciliation.mmd) · [SVG](svg/assignment-reconciliation.svg) |
 | 9 | Kalıcılık — [SQLite Outbox ve tek consumer](#09-sqlite-outbox-consumer) | IMPLEMENTED | [Mermaid](src/sqlite-outbox-consumer.mmd) · [SVG](svg/sqlite-outbox-consumer.svg) |
 | 10 | Enerji — [Wh batarya hesabı](#10-battery-wh-integration) | PLANNED | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
 | 11 | Enerji — [Şarj sırası ve istasyon seçimi](#11-charging-queue-selection) | PLANNED | [Mermaid](src/charging-queue-selection.mmd) · [SVG](svg/charging-queue-selection.svg) |
@@ -452,7 +452,7 @@ flowchart TD
 
 ## 08. Assignment epoch ve UUID uzlaştırması
 
-**Durum:** PARTIAL. **Amaç:** Gecikmiş sonuçların yeni atamayı kapatmamasını açıklamak.
+**Durum:** IMPLEMENTED. **Amaç:** Gecikmiş sonuçların yeni atamayı kapatmamasını açıklamak.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
@@ -464,7 +464,7 @@ flowchart TD
 
 **Test / kanıt:** [test_fleet_manager_outbox.py](../../tests/test_fleet_manager_outbox.py) · [test_ros2_action_client.py](../../tests/test_ros2_action_client.py)
 
-**Sınır / fark:** Eksik epoch dalı hedef davranış değildir; mevcut event_loop fallback’i açıkça gösterilir. Adaptör gerçek epoch gönderir, ancak consumer sınırı eksik alanı bağımsız reddetmez.
+**Sınır / fark:** Terminal sonuçta eksik, geçersiz veya uyuşmayan epoch için `STALE` kaydı ve uyarı üretilir. Görev ve kaynak sahipliği korunur.
 
 ![Assignment epoch ve UUID uzlaştırması](svg/assignment-reconciliation.svg)
 
@@ -473,7 +473,7 @@ flowchart TD
 
 ```mermaid
 ---
-title: "08 · Assignment epoch ve UUID uzlaştırması · PARTIAL"
+title: "08 · Assignment epoch ve UUID uzlaştırması · IMPLEMENTED"
 ---
 flowchart TD
  A(["Action olayı"]):::terminal --> M{"Aktif robot + task + epoch + UUID eşleşir mi?"}:::decision
@@ -481,12 +481,9 @@ flowchart TD
  M -->|"Evet"| K{"Olay türü?"}:::decision
  K -->|"Feedback"| F["Sıra denetimi; ilerlemeyi işle<br/>Fiziksel durum otoritesi değişmez"]:::fm
  K -->|"Cancel yanıtı"| C["Son cancel_command_id kontrolü<br/>Kabul terminal sonuç değildir"]:::fm
- K -->|"Result"| CE{"Gerçek completed_epoch mevcut mu?"}:::decision
- CE -->|"Evet"| EQ{"Aktif epoch ile eşit mi?"}:::decision
- CE -->|"Hayır: mevcut kod"| GAP["FARK: assignment_epoch kopyalanıyor<br/>Onaylı sözleşme bunu yasaklar"]:::error
- GAP --> EQ
- EQ -->|"Hayır"| ST
- EQ -->|"Evet"| TERM["SUCCEEDED / FAILED / PREEMPTED işle<br/>Görev sonucu ve sahiplik güncelle"]:::fm
+ K -->|"Result"| CE{"Gerçek completed_epoch bir tam sayı ve aktif epoch ile eşit mi?"}:::decision
+ CE -->|"Hayır"| LOG["Epoch uyarısını kaydet"]:::wait --> ST
+ CE -->|"Evet"| TERM["SUCCEEDED / FAILED / PREEMPTED işle<br/>Görev sonucu ve sahiplik güncelle"]:::fm
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

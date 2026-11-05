@@ -734,6 +734,14 @@ class TestDeduplicationAndMatching:
         assert accepted is False
         assert core.tracker.get_robot("robot_1").current_task_id == "task_active"
 
+        for invalid_epoch in (None, True, float(assign.assignment_epoch)):
+            accepted, _ = core.handle_action_result(
+                robot_id="robot_1", task_id="task_active", result_status=TaskResultStatus.STATUS_SUCCEEDED,
+                completed_epoch=invalid_epoch, goal_uuid=assign.goal_uuid,
+            )
+            assert accepted is False
+            assert core.tracker.get_robot("robot_1").current_task_id == "task_active"
+
         # Matching result with correct epoch and goal UUID succeeds!
         accepted, task = core.handle_action_result(
             robot_id="robot_1", task_id="task_active", result_status=TaskResultStatus.STATUS_SUCCEEDED,

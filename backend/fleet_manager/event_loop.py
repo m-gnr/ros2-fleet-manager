@@ -195,18 +195,16 @@ class FleetEventLoop:
             else:
                 TaskResultStatus(p["result_status"])  # Reject invalid results before mutation.
                 completed_epoch = p.get("completed_epoch")
-                if completed_epoch is None:
-                    completed_epoch = p.pop("assignment_epoch", None)
-                else:
-                    p.pop("assignment_epoch", None)
-                if completed_epoch != task.assignment_epoch:
+                if type(completed_epoch) is not int or completed_epoch != task.assignment_epoch:
                     logger.warning(
-                        "ACTION_RESULT completed_epoch mismatch for task %s: got %s, expected %s",
+                        "ACTION_RESULT completed_epoch invalid or mismatched for task %s: got %r, expected %d",
                         task.task_id, completed_epoch, task.assignment_epoch
                     )
                     return "STALE", stream, seq
-                p["completed_epoch"] = completed_epoch
-                core.handle_action_result(**p)
+                del p["assignment_epoch"]
+                accepted, _ = core.handle_action_result(**p)
+                if not accepted:
+                    return "STALE", stream, seq
                 # A natural completion/failure during cancellation must not strand HIGH.
                 pending = core._pending_preemption_assignments.pop(p["robot_id"], None)
                 if pending is not None:

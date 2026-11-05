@@ -267,7 +267,8 @@ class FleetManagerCore:
 
         # Strictly match (task_id, completed_epoch, goal_uuid)
         if (
-            robot.current_task_id != task_id
+            type(completed_epoch) is not int
+            or robot.current_task_id != task_id
             or robot.current_epoch != completed_epoch
             or robot.active_goal_uuid != goal_uuid
         ):

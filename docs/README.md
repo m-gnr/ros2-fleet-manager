@@ -40,6 +40,7 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 - [C3.3.2 Doğrulama Raporu](validation/c3/c3-3-2-validation-2026-10-24.md): ROS 2 adaptörleri, `status_seq` ve oturum güvenliği, eylem istemcisi, Outbox göndericisi, `task_review_holds` ve canlı simülasyon kanıtı (212 host testi, 102 ROS 2/DDS testi, 7/7 canlı simülasyon senaryosu geçti).
 - [C3.3.3 İki Robotlu Entegrasyon Kararları](decisions/c3-3-3-dual-robot-integration-decisions-2026-10-24.md): iki robotlu çalıştırma düzeni, topic/servis hizalaması, fleet.yaml pozları, C4 öncesi geçici batarya beslemesi, T01 oturum güvenliği ve deadlock kapsam dışı kararları.
 - [C3.3.3 Doğrulama Raporu](validation/c3/c3-3-3-validation-2026-10-24.md): İki robotlu uçtan uca canlı simülasyon ve DDS entegrasyonu kanıtı (Gazebo Fortress headless + iki bağımsız Nav2 + iki Executor + Fleet Manager; 214 host testi, T01–T10 senaryolarının tamamı 10/10 temiz geçti).
+- [C3.3.4 Görev 1 Doğrulama Raporu](validation/c3/c3-3-4-task-1-validation-2026-11-05.md): Terminal `completed_epoch` doğrulaması ve sahipliğin korunması.
 
 ## Doğrulama kanıtları
 

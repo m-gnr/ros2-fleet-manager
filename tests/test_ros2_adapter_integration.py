@@ -147,8 +147,9 @@ def test_ros2_status_subscription_and_session_blocked(tmp_path):
         rclpy.shutdown()
 
 
-def test_ros2_execute_task_action_client_happy_path(tmp_path):
-    """Verify real ExecuteTask ActionClient lifecycle with identical goal UUID and completed_epoch."""
+@pytest.mark.parametrize("epoch_offset", [0, None, 1], ids=["matching", "unset", "mismatched"])
+def test_ros2_execute_task_action_client_terminal_epoch(tmp_path, epoch_offset):
+    """Verify the result's wire epoch and goal UUID through the real ROS 2 adapter."""
     rclpy.init()
     fm_node = Node("test_fm_action_node")
     server_node = Node("test_executor_server_node")
@@ -178,10 +179,11 @@ def test_ros2_execute_task_action_client_happy_path(tmp_path):
         fb.battery_soc = 89.0
         goal_handle.publish_feedback(fb)
 
-        # Return terminal result with completed_epoch matching request
         res = ExecuteTask.Result()
         res.status = int(TaskResultStatus.STATUS_SUCCEEDED)
-        res.completed_epoch = goal_handle.request.assignment_epoch
+        # An unset uint64 is transmitted as zero.
+        if epoch_offset is not None:
+            res.completed_epoch = goal_handle.request.assignment_epoch + epoch_offset
         res.error_reason = ""
         goal_handle.succeed()
         return res
@@ -239,26 +241,42 @@ def test_ros2_execute_task_action_client_happy_path(tmp_path):
             retry_delay=2.0,
         )
 
-        sent = await dispatcher.send_one()
-        assert sent is True
+        try:
+            assert await dispatcher.send_one() is True
+            deadline = time.monotonic() + 5
+            result = None
+            while result is None and time.monotonic() < deadline:
+                result = store.connection.execute(
+                    "SELECT outcome FROM processed_events WHERE goal_uuid=? AND stream IS NULL",
+                    (target_uuid,),
+                ).fetchone()
+                if result is None:
+                    await asyncio.sleep(0.01)
 
-        # Wait for action execution and terminal result processing in consumer
-        await asyncio.sleep(0.5)
-
-        # 1. Verify ActionServer received the EXACT SAME goal UUID!
-        assert len(received_goal_uuids) == 1
-        assert received_goal_uuids[0] == target_uuid
-
-        # 2. Verify task is completed in FM!
-        assert "task_ros2" not in loop.core._active_tasks
-        assert "task_ros2" in loop.core._completed_tasks
-
-        await loop.close()
-        executor.shutdown()
-        act_server.destroy()
-        fm_node.destroy_node()
-        server_node.destroy_node()
-        store.close()
+            assert received_goal_uuids == [target_uuid]
+            assert result is not None
+            persisted = store.connection.execute(
+                "SELECT status, assignment_epoch, goal_uuid FROM tasks WHERE task_id='task_ros2'"
+            ).fetchone()
+            if epoch_offset == 0:
+                assert result["outcome"] == "APPLIED"
+                assert "task_ros2" in loop.core._completed_tasks
+                assert persisted["status"] == "COMPLETED"
+            else:
+                assert result["outcome"] == "STALE"
+                assert loop.core._active_tasks["task_ros2"].goal_uuid == target_uuid
+                assert persisted["status"] in ("ASSIGNED", "EXECUTING")
+            assert (persisted["assignment_epoch"], persisted["goal_uuid"]) == (
+                task.assignment_epoch, target_uuid,
+            )
+        finally:
+            await loop.close()
+            executor.shutdown()
+            spin_thread.join(timeout=5)
+            act_server.destroy()
+            fm_node.destroy_node()
+            server_node.destroy_node()
+            store.close()
 
     try:
         asyncio.run(scenario())

@@ -4,10 +4,11 @@ import { Box3, Group, PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Burger, burgerSize } from './Burger'
 import {
-  followTarget, maxCameraDistance, minCameraDistance, startOffset, targetHeight, warehouseTargetHeight,
+  followTarget, maxCameraDistance, minCameraDistance, startOffset, targetHeight, topAngle,
   type CameraCommand,
 } from './camera'
 import { blendMs, blendPose, toScene } from './coordinates'
+import { frameWarehouse, warehouseCorners } from './framing'
 import { robotColor } from './presentation'
 import { RouteLayers } from './RouteLayers'
 import type { RouteOptions } from './routes'
@@ -28,8 +29,13 @@ type SceneProps = {
 }
 
 const polarLimit = Math.PI / 2 - 0.045
-const topAngle = 0.001
-const topHeight = 19.8
+const fov = 42
+
+type LabelPlacement = { label: HTMLSpanElement; left: number; top: number; right: number; bottom: number }
+
+function overlaps(a: LabelPlacement, b: LabelPlacement) {
+  return a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top
+}
 
 function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSelect, trace, routes }: SceneProps) {
   const models = useRef(new Map<string, Group>()).current
@@ -39,6 +45,9 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
   const previousSelection = useRef<string>(undefined)
   const fitted = useRef(false)
   const cameraCommand = useRef(command)
+  const warehouseFrame = useRef<Vector3[]>(undefined)
+  const aspect = useRef(0)
+  const preset = useRef(true)
   const transitioning = useRef(false)
   const goalTarget = useRef(new Vector3(0, targetHeight, 0))
   const goalOffset = useRef(new Vector3(...startOffset))
@@ -51,21 +60,31 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
 
   useLayoutEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement)
-    controls.target.set(0, warehouseTargetHeight, 0)
+    controls.target.set(0, targetHeight, 0)
     controls.minDistance = minCameraDistance
     controls.maxDistance = maxCameraDistance
     controls.maxPolarAngle = polarLimit
     controls.enableDamping = true
     controls.dampingFactor = 0.16
     controls.update()
-    const requestFrame = () => invalidate()
+    let interacting = false
+    const startInteraction = () => { interacting = true }
+    const endInteraction = () => { interacting = false }
+    const requestFrame = () => {
+      if (interacting) preset.current = false
+      invalidate()
+    }
     controls.addEventListener('change', requestFrame)
+    controls.addEventListener('start', startInteraction)
+    controls.addEventListener('end', endInteraction)
     orbit.current = controls
     const unsubscribe = feed.subscribe(invalidate)
     invalidate()
     return () => {
       unsubscribe()
       controls.removeEventListener('change', requestFrame)
+      controls.removeEventListener('start', startInteraction)
+      controls.removeEventListener('end', endInteraction)
       controls.dispose()
       orbit.current = null
     }
@@ -82,6 +101,13 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
     const now = performance.now()
     const { shift, destination, screen, front, rotation, bounds, extent } = scratch.current
     const nextMode = command.mode
+    const nextAspect = size.width / size.height
+    if (!Number.isFinite(nextAspect) || nextAspect <= 0) return
+    const resized = aspect.current !== nextAspect
+    const firstFrame = aspect.current === 0
+    aspect.current = nextAspect
+    warehouseFrame.current ??= warehouseCorners(scene.getObjectByName('schematic-warehouse')!)
+    if (resized && preset.current && nextMode === 'fit') fitted.current = false
     const oldCommand = cameraCommand.current
     const priorPose = lastPose.current
     const selectionChanged = selected !== previousSelection.current
@@ -106,24 +132,35 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
     }
     lastPose.current = pose
 
-    if (oldCommand !== command) {
+    const changed = oldCommand !== command
+    const warehouseMode = nextMode === 'free' || nextMode === 'top'
+    const restoreWarehouse = changed && (nextMode === 'top' || command.reset !== oldCommand.reset ||
+      (oldCommand.mode === 'top' && nextMode === 'free'))
+    if (restoreWarehouse) preset.current = true
+
+    if (changed) {
       cameraCommand.current = command
       goalTarget.current.copy(controls.target)
       goalOffset.current.copy(camera.position).sub(controls.target)
-      if (nextMode === 'top') {
-        goalTarget.current.set(0, targetHeight, 0)
-        goalOffset.current.set(0, topHeight, topAngle * topHeight)
-      } else if (command.reset !== oldCommand.reset || oldCommand.mode === 'top') {
-        goalTarget.current.set(0, warehouseTargetHeight, 0)
-        goalOffset.current.set(...startOffset)
+      if (nextMode === 'free' && !restoreWarehouse) preset.current = false
+      if (nextMode === 'fit') {
+        preset.current = true
+        fitted.current = false
       }
-      if (nextMode === 'fit') fitted.current = false
       if (nextMode === 'follow' && goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
       controls.minPolarAngle = 0
       controls.maxPolarAngle = Math.PI / 2
       controls.enableDamping = false
       controls.enabled = false
       transitioning.current = true
+    }
+
+    if (warehouseMode && (restoreWarehouse || (resized && preset.current))) {
+      frameWarehouse(warehouseFrame.current, fov, nextAspect, nextMode === 'top', goalTarget.current, goalOffset.current)
+      if (firstFrame || !transitioning.current) {
+        controls.target.copy(goalTarget.current)
+        camera.position.copy(goalTarget.current).add(goalOffset.current)
+      }
     }
 
     if (nextMode === 'fit' && !fitted.current && !bounds.isEmpty()) {
@@ -175,20 +212,38 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
       controls.target.copy(goalTarget.current)
     }
     controls.update()
+    camera.updateMatrixWorld()
 
+    const placements: LabelPlacement[] = []
     for (const [id, root] of models) {
       const label = labels.get(id)
       if (!label) continue
-      if (root.visible) {
-        screen.copy(root.position).addScaledVector(camera.up, burgerSize.height + 0.055).project(camera)
+      if (!root.visible) {
+        label.style.visibility = 'hidden'
+        continue
       }
-      const onScreen = root.visible && screen.z >= -1 && screen.z <= 1 &&
-        Math.abs(screen.x) < 0.89 && Math.abs(screen.y) < 0.89
-      label.hidden = !onScreen
-      if (onScreen) {
-        label.style.left = (screen.x + 1) / 2 * size.width + 'px'
-        label.style.top = (1 - screen.y) / 2 * size.height + 'px'
+      screen.copy(root.position).addScaledVector(camera.up, burgerSize.height + 0.055).project(camera)
+      const x = (screen.x + 1) / 2 * size.width
+      const y = (1 - screen.y) / 2 * size.height - 5
+      const width = label.offsetWidth
+      const left = x - width / 2
+      const top = y - label.offsetHeight
+      if (screen.z < -1 || screen.z > 1 || left < 3 || left + width > size.width - 3 || top < 3 || y > size.height) {
+        label.style.visibility = 'hidden'
+        continue
       }
+      const placement = { label, left, top, right: left + width, bottom: y }
+      if (id === selected) placements.unshift(placement)
+      else placements.push(placement)
+    }
+    const visible: LabelPlacement[] = []
+    for (const placement of placements) {
+      const { label, left, top } = placement
+      const covered = visible.some(other => overlaps(placement, other))
+      label.style.visibility = covered ? 'hidden' : 'visible'
+      if (covered) continue
+      label.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`
+      visible.push(placement)
     }
     if (transitioning.current || interpolating) invalidate()
 
@@ -246,7 +301,7 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
   </group>)
 }
 
-const initialCamera = { position: [startOffset[0], startOffset[1] + warehouseTargetHeight, startOffset[2]] as [number, number, number], fov: 42, near: 0.035, far: 90 }
+const initialCamera = { position: [8, 11, 10] as [number, number, number], fov, near: 0.035, far: 90 }
 
 export default memo(function Scene(props: SceneProps) {
   return <Canvas frameloop="demand" dpr={props.lowQuality ? 1 : [1, 1.5]} camera={initialCamera}

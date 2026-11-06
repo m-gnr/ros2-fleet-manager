@@ -7,7 +7,7 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
 - **Mevcut:** Tek `fleet.yaml`, şema/Pydantic doğrulaması; robot başına Executor; HIGH/MEDIUM/LOW ve atanabilir FIFO; güvenli preemption; SQLite Outbox ve ROS 2 adaptörleri.
 - **Mevcut:** Robot başına batarya telemetrisi ve Nav2 enerji hesabı. Düşük SoC için şarj istasyonuna, teslimat sonrasında park veya güvenli bekleme alanına otomatik yönlendirme.
 - **Mevcut:** Düşük SoC/FIFO şarj kuyruğu, fiziksel dock temasıyla şarj ve kanıtlı istasyon devri.
-- **Mevcut:** C5 Aşama 1.5, salt okunur operasyon kartlarını ve ROS TF/Path tabanlı açık 3D depoyu tek panelde gösterir.
+- **Mevcut:** C5 Aşama 1.6, salt okunur operasyon özetini, seçili robotu ve ROS TF/Path tabanlı açık 3D depoyu kompakt genel görünümde birleştirir.
 
 ## Mimari genel bakış
 
@@ -96,6 +96,7 @@ Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belg
 | C4 | Tüketim, telemetri, istasyon yönlendirmesi ve fiziksel şarj | İki robotlu uçtan uca kabul ve sınırlar [C4 kontrol listesinde](docs/validation/c4/c4-acceptance-2026-11-06.md) |
 | C5 Aşama 1 | Salt okunur API, WebSocket ve operasyon paneli | [Tarihsel 2D doğrulaması](docs/validation/c5/c5-stage1-validation-2026-11-06.md) |
 | C5 Aşama 1.5 | Açık temalı 3D depo, TF/Path ve ayrı ürün güncelliği | [Gazebo ve Chrome doğrulaması](docs/validation/c5/c5-stage1-5-validation-2026-11-06.md) |
+| C5 Aşama 1.6 | Depo öncelikli genel görünüm, kamera kadrajı ve filo kartları | [Yerleşim ve canlı kabul](docs/validation/c5/c5-stage1-6-validation-2026-11-06.md) |
 
 ## Testler ve doğrulama sonuçları
 

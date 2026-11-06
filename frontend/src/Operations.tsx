@@ -1,7 +1,7 @@
-import { BatteryCharging, Bot, ChevronRight, CircleAlert, LocateFixed, Radio } from "lucide-react";
+import { BatteryCharging, Bot, ChevronRight, CircleAlert, Radio } from "lucide-react";
 import type { Telemetry } from "./scene/telemetry";
 import type { Fleet, Reliability, Robot } from "./fleet";
-import { currentBattery, displayNumber, labels, poseLabel, reliabilityLabel, robotReliability, simTime } from "./presentation";
+import { currentBattery, displayNumber, labels, poseLabel, reliabilityLabel, robotReliability, simTime, telemetryAge } from "./presentation";
 
 export function ReliabilityBadge({ value }: { value: Reliability }) {
   return <span className={`status-badge ${value.toLowerCase()}`}><i />{reliabilityLabel[value]}</span>;
@@ -29,36 +29,55 @@ export function EmptyState({ title, detail }: { title: string; detail: string })
 export function RobotDetails({ robot, robotId, tf, connected }: {
   robot: Robot | undefined; robotId?: string; tf?: Telemetry; connected: boolean;
 }) {
-  const tfFields = robotId && <dl className="detail-grid tf-fields">
-    <div><dt><LocateFixed size={13} /> TF poz durumu</dt><dd data-testid="tf-status">{tf?.status ?? "NO_DATA"}</dd></div>
-    <div><dt>Son TF pozu</dt><dd>{poseLabel(tf?.pose ?? null)}</dd></div>
-    <div><dt>TF ölçümü</dt><dd>{simTime(tf?.pose?.stamp_ns ?? null)}</dd></div>
-    <div><dt>Gözlemlenen Nav2 planı</dt><dd>{tf?.path?.points ? "Durum B" : "—"}</dd></div>
-  </dl>;
+  const pose = tf?.pose;
+  const tfStatus = tf?.status ?? "NO_DATA";
+  const plan = tf?.path;
+  const age = robot && telemetryAge(robot.status_age_sec, robotReliability(robot, connected));
+  const tfFields = robotId && <>
+    <dl className="detail-grid tf-fields">
+      <div><dt>TF poz durumu</dt><dd data-testid="tf-status">{tfStatus}</dd></div>
+      <div><dt>Gözlemlenen Nav2 planı</dt><dd data-testid="plan-status">
+        {plan?.points ? <>Güncel <small className="tag" title="Aktif Nav2 hedefiyle ilişki doğrulanmadı">Durum B</small></> : plan ? "Gösterim sona erdi" : "Ölçüm yok"}
+      </dd></div>
+    </dl>
+    <details className="measurement-details">
+      <summary>Konum ve ölçüm zamanı</summary>
+      <dl className="detail-grid">
+        <div><dt>TF konumu (x, y)</dt><dd>{poseLabel(pose ?? null)}</dd></div>
+        <div><dt>TF yönü (yaw)</dt><dd>{pose ? `${displayNumber(pose.yaw, 3)} rad` : "Ölçüm yok"}</dd></div>
+        <div><dt>TF ölçümü</dt><dd>{simTime(pose?.stamp_ns ?? null)}</dd></div>
+        {robot && <>
+          <div><dt>Son ürün pozu</dt><dd>{poseLabel(robot.pose)}</dd></div>
+          <div><dt>Ürün ölçümü</dt><dd>{simTime(robot.status_sim_ns)}</dd></div>
+          <div><dt>Batarya ölçümü</dt><dd>{simTime(robot.battery_sim_ns)}</dd></div>
+        </>}
+        {plan?.points && <div><dt>Nav2 plan ölçümü</dt><dd>{simTime(plan.stamp)}</dd></div>}
+      </dl>
+    </details>
+  </>;
   return (
     <details className="card robot-details" open>
-      <summary className="card-heading"><div><h2>Robot ayrıntıları</h2><p>Seçili birimin telemetrisi</p></div><ChevronRight size={18} /></summary>
+      <summary className="card-heading"><h2>Robot ayrıntıları</h2><ChevronRight size={16} /></summary>
       {robot ? <div className="details-body">
-        <div className="detail-identity"><span className="robot-icon"><Bot size={22} /></span>
+        <div className="detail-identity"><span className="robot-icon"><Bot size={20} /></span>
           <div><h3>{robot.robot_id}</h3><p>{robot.state ? `${labels[robot.state]}${connected && robot.telemetry === "LIVE" ? "" : " · son kayıt"}` : "Durum bilinmiyor"}</p></div>
           <ReliabilityBadge value={robotReliability(robot, connected)} /></div>
-        <Battery robot={robot} connected={connected} />
-        <dl className="detail-grid">
-          <div><dt>Enerji</dt><dd>{connected && robot.battery_energy_wh !== null && robot.battery_reliability === "LIVE"
-            ? `${displayNumber(robot.battery_energy_wh, 2)} Wh` : "—"}</dd></div>
-          <div><dt>Şarj</dt><dd>{connected ? labels[robot.charging] : "Kullanılamıyor"}</dd></div>
-          <div><dt>{connected ? "Aktif görev" : "Görev · son eşitleme"}</dt><dd>{robot.active_task_id ?? "—"}</dd></div>
-          <div><dt>Son ürün telemetrisi</dt><dd title="Gazebo simülasyon saati">{simTime(robot.status_sim_ns)}</dd></div>
-          <div><dt>Son ürün pozu</dt><dd>{poseLabel(robot.pose)}</dd></div>
-          <div><dt>Batarya ölçümü</dt><dd title="Gazebo simülasyon saati">{simTime(robot.battery_sim_ns)}</dd></div>
-        </dl>
-        {tfFields}
         {(!connected || robot.telemetry !== "LIVE" || robot.pose_reliability !== "LIVE" || robot.battery_reliability !== "LIVE") &&
           <div className="detail-warning"><CircleAlert size={16} /><span>
             {robot.telemetry === "BLOCKED" ? "Kaynak oturumu değişti. Telemetri blokeli."
               : !connected ? "Ürün akışı kesildi. Görev ve durum son eşitlemeden."
-                : "Poz veya batarya ölçümünün güncelliği doğrulanamadı."}
+                : "Ürün telemetrisi, poz veya batarya ölçümünün güncelliği doğrulanamadı."}
           </span></div>}
+        <Battery robot={robot} connected={connected} />
+        <dl className="detail-grid">
+          <div><dt>{connected ? "Aktif görev" : "Görev · son eşitleme"}</dt><dd>{robot.active_task_id ?? "—"}</dd></div>
+          <div><dt>Şarj</dt><dd>{connected ? labels[robot.charging] : "Kullanılamıyor"}
+            {connected && robot.charging_station_id && <small>{robot.charging_station_id}</small>}</dd></div>
+          {connected && robot.battery_energy_wh !== null && robot.battery_reliability === "LIVE" &&
+            <div><dt>Kalan enerji</dt><dd>{displayNumber(robot.battery_energy_wh, 2)} Wh</dd></div>}
+          <div><dt>Ürün telemetrisi</dt><dd title="Snapshot alınırken kaynağın bildirdiği alım yaşı">{age}</dd></div>
+        </dl>
+        {tfFields}
       </div> : robotId ? <div className="details-body"><h3>{robotId}</h3>
         <p className="tf-note">Ürün snapshot’ı bekleniyor.</p>{tfFields}</div>
         : <EmptyState title="Robot verisi bekleniyor" detail="Filo eşitlendiğinde bir robot seçebilirsin." />}
@@ -69,18 +88,19 @@ export function RobotDetails({ robot, robotId, tf, connected }: {
 export function RobotList({ fleet, connected, selected, onSelect, tfRobots }: {
   fleet: Fleet | null; connected: boolean; selected: string | undefined; onSelect: (id: string) => void; tfRobots?: ReadonlyMap<string, Telemetry>;
 }) {
-  return <section aria-labelledby="robots-heading">
-    <div className="section-heading"><div><h2 id="robots-heading">Filo robotları</h2><p>Ayrıntılarını görmek için bir robot seç.</p></div>
+  return <section className="fleet-panel" aria-labelledby="robots-heading">
+    <div className="section-heading"><h2 id="robots-heading">Filo robotları</h2>
       {fleet && <span className="tag">{fleet.robots.length} robot</span>}</div>
     {fleet?.robots.length ? <div className="robot-list">
       {fleet.robots.map((robot) => <button key={robot.robot_id} type="button" onClick={() => onSelect(robot.robot_id)}
         className="card robot-card" aria-pressed={selected === robot.robot_id} aria-label={`Robot seç: ${robot.robot_id}`}>
         <div className="robot-card-top"><span className="robot-icon"><Bot size={20} /></span>
           <div><strong>{robot.robot_id}</strong><p>{robot.state ? `${labels[robot.state]}${connected && robot.telemetry === "LIVE" ? "" : " · son kayıt"}` : "Durum bilinmiyor"}</p></div>
-          <ReliabilityBadge value={robotReliability(robot, connected)} /><ChevronRight size={16} className="card-chevron" /></div>
+        </div>
         <Battery robot={robot} connected={connected} />
         <div className="robot-card-task"><span>{connected ? "Aktif görev" : "Görev · son eşitleme"}</span><strong>{robot.active_task_id ?? "—"}</strong></div>
-        {tfRobots && <span className="card-tf">TF · {tfRobots.get(robot.robot_id)?.status ?? "NO_DATA"}</span>}
+        <div className="robot-card-status"><ReliabilityBadge value={robotReliability(robot, connected)} />
+          {tfRobots && <small>TF · {tfRobots.get(robot.robot_id)?.status ?? "NO_DATA"}</small>}</div>
       </button>)}
     </div> : <div className="card"><EmptyState title="Robot kaydı yok" detail="Yetkili filo snapshot’ı bekleniyor." /></div>}
   </section>;

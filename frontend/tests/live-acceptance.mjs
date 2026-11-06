@@ -179,6 +179,32 @@ async function measure(page) {
     wsMaxBytes: Math.max(...frames.map(({ bytes }) => bytes)) };
 }
 
+async function recordLayout(page) {
+  const result = await page.evaluate(() => {
+    const box = (selector) => {
+      const { x, y, width, height, bottom } = document.querySelector(selector).getBoundingClientRect();
+      return { x, y, width, height, bottom };
+    };
+    return {
+      width: window.innerWidth, height: window.innerHeight,
+      scrollWidth: document.documentElement.scrollWidth, scrollHeight: document.documentElement.scrollHeight,
+      scene: box(".scene-viewport"), metrics: box(".metrics"), panel: box(".robot-details"),
+      fleet: box(".robot-list"), cards: [...document.querySelectorAll(".robot-card")].map((card) => ({
+        top: card.getBoundingClientRect().top, bottom: card.getBoundingClientRect().bottom,
+      })),
+    };
+  });
+  metrics.layout ??= {};
+  metrics.layout[result.width] = result;
+  assert.ok(result.scrollWidth <= result.width);
+  if (process.env.C5_REQUIRE_COMPACT === "1" && result.width >= 1280) {
+    assert.equal(result.scrollHeight, result.height);
+    assert.ok(result.scene.height >= result.height * 0.57);
+    assert.ok(result.metrics.height <= 52);
+    assert.ok(result.cards.every(({ top, bottom }) => top === result.cards[0].top && bottom <= result.height));
+  }
+}
+
 try {
   startApi();
   let page = await pageForFleet();
@@ -193,7 +219,9 @@ try {
       "Chrome did not render two live TF robots");
     await expect(page.locator(".scene-viewport canvas")).toBeVisible();
     metrics.firstSceneFrameMs = traceFrames[0].at;
+    await recordLayout(page);
     await capture("isometric-two-robots");
+    await page.screenshot({ path: join(evidence, "startup-1440.png") });
     metrics.initialLoad = await page.evaluate(() => ({
       domInteractiveMs: performance.getEntriesByType("navigation")[0].domInteractive,
       sceneChunkMs: performance.getEntriesByType("resource").find((item) => /assets\/Scene-/.test(item.name))?.responseEnd,
@@ -209,6 +237,17 @@ try {
   assert.ok(Math.abs(accepted - last.robots.find((robot) => robot.robot_id === ids[1]).battery_soc_percent) < 0.25);
   metrics.selectionMs = performance.now() - selectionAt;
   await capture("selected-robot");
+
+  if (process.env.C5_REQUIRE_COMPACT === "1") {
+    const canvas = page.locator(".scene-viewport canvas");
+    const bounds = await canvas.boundingBox();
+    const first = traceFrames.at(-1)?.robots.find((robot) => robot.robot_id === ids[0]);
+    assert.ok(bounds && first?.visible);
+    await page.mouse.click(bounds.x + bounds.width * first.screen[0], bounds.y + bounds.height * first.screen[1]);
+    await expect(details().getByRole("heading", { name: ids[0] })).toBeVisible();
+    await expect(page.getByRole("button", { name: `Robot seç: ${ids[0]}` })).toHaveAttribute("aria-pressed", "true");
+    await selected.click();
+  }
 
   if (sceneEnabled) {
     const tf = details().getByTestId("tf-status");
@@ -271,10 +310,12 @@ try {
     await capture("active-task-plan");
     await page.getByRole("button", { name: "Robotu takip et" }).click();
     await until(() => traceFrames.at(-1)?.mode === "follow" && !traceFrames.at(-1).transitioning, "Follow camera did not settle", 10000);
+    await capture("camera-follow");
     await page.getByRole("button", { name: "Üstten" }).click();
     await until(() => traceFrames.at(-1)?.mode === "top" && !traceFrames.at(-1).transitioning, "Top camera did not settle", 10000);
     await page.getByRole("button", { name: "Filoyu kadraja al" }).click();
     await until(() => traceFrames.at(-1)?.mode === "fit" && !traceFrames.at(-1).transitioning, "Fleet camera did not settle", 10000);
+    await capture("camera-fit");
     await page.getByRole("button", { name: "Kamerayı sıfırla" }).click();
     await until(() => traceFrames.at(-1)?.mode === "free" && !traceFrames.at(-1).transitioning, "Reset did not settle", 10000);
     metrics.layersOn = await measure(page);
@@ -309,7 +350,8 @@ try {
   for (const [width, height] of [[1280, 850], [1920, 1080], [390, 844]]) {
     await page.setViewportSize({ width, height });
     await expect(page.getByRole("heading", { name: "Depo görünümü" })).toBeVisible();
-    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await recordLayout(page);
+    await page.screenshot({ path: join(evidence, `viewport-${width}.png`) });
     await page.screenshot({ path: join(evidence, `overview-${width}.png`), fullPage: true });
   }
   assert.ok([...taskStates.values()].some((states) => states.has("ASSIGNED") || states.has("EXECUTING")));

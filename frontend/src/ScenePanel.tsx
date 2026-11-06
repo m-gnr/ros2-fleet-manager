@@ -41,7 +41,8 @@ export function ScenePanel({ feed, view, robotIds, selected, onSelect }: {
     <div className="card-heading">
       <div className="scene-heading"><span className="scene-icon"><Box size={17} /></span>
         <div><h2 id="scene-heading">Depo görünümü</h2><p>ROS TF · map çerçevesi</p></div></div>
-      <span className="tag map-tag">TEMSİLİ 3D DEPO</span>
+      <div className="scene-legend"><span className="tag map-tag">TEMSİLİ 3D DEPO</span>
+        <small>Raflar ve sınırlar görsel temsildir.</small></div>
     </div>
     <div className="scene-viewport" aria-label="Etkileşimli 3D depo">
       <SceneBoundary>
@@ -53,11 +54,11 @@ export function ScenePanel({ feed, view, robotIds, selected, onSelect }: {
       <div className="scene-labels">
         {robotIds.map((id, index) => {
           const status = view.robots.get(id)?.status ?? "NO_DATA";
-          return <span key={id} ref={(node) => {
+          return <span key={id} data-robot-id={id} ref={(node) => {
             if (node) labels.set(id, node);
             else labels.delete(id);
-          }} hidden={!view.robots.get(id)?.pose} className={`scene-label ${status.toLowerCase()} ${id === selected ? "selected" : ""}`}>
-            <i style={{ background: robotColor(index) }} />{id}<small>{status}</small>
+          }} className={`scene-label ${status.toLowerCase()} ${id === selected ? "selected" : ""}`}>
+            <i style={{ background: robotColor(index) }} /><span>{id}</span><small>{status}</small>
           </span>;
         })}
       </div>

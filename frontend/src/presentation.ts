@@ -24,9 +24,15 @@ export function poseLabel(pose: Pose | null) {
 }
 
 export function simTime(value: string | null) {
-  if (value === null) return "—";
+  if (value === null) return "Ölçüm yok";
   const ns = BigInt(value);
-  return `${ns / 1000000000n},${(ns % 1000000000n / 1000000n).toString().padStart(3, "0")} sn`;
+  return `${ns / 1000000000n},${(ns % 1000000000n / 1000000n).toString().padStart(3, "0")} sn · ROS zamanı`;
+}
+
+export function telemetryAge(age: number | null, reliability: Reliability) {
+  if (reliability === "STALE") return "Veri eski";
+  if (reliability !== "LIVE" || age === null) return reliability === "BLOCKED" ? "Oturum blokeli" : "Ölçüm yok";
+  return age < 1 ? "Az önce" : `${displayNumber(Math.floor(age), 0)} sn önce`;
 }
 
 export function robotReliability(robot: Robot, connected: boolean): Reliability {

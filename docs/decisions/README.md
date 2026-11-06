@@ -1,5 +1,7 @@
 # Onaylı karar kayıtları
 
+- [C5 Aşama 1.5 ana 3D depo görünümü](c5-stage1-5-3d-decision-2026-11-06.md)
+
 [Kaynak önceliği](../project-context.md) geçerlidir. Karar onayı test başarısı değildir; kayıtların oluşturulma anındaki “henüz test edilmedi” ifadeleri tarihsel olarak korunur. Sonraki uygulama kanıtları [doğrulama dizinindedir](../validation/README.md).
 
 | Kayıt | İlgili sonraki kanıt |

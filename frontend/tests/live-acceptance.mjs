@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { createWriteStream, mkdirSync, writeFileSync } from "node:fs";
+import { createWriteStream, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { chromium, expect } from "@playwright/test";
@@ -13,6 +13,25 @@ const chrome = await chromium.launch({ channel: "chrome", headless: true });
 const context = await chrome.newContext({ viewport: { width: 1440, height: 900 } });
 const system = await chrome.newBrowserCDPSession();
 const errors = [];
+const sceneEnabled = Boolean(process.env.C5_SCENE_PORT);
+const scenePackets = [];
+const rendered = [];
+const routeEvents = [];
+const traceFrames = [];
+const urls = new Set();
+const pct = (items, fraction) => [...items].sort((a, b) => a - b).at(Math.floor((items.length - 1) * fraction)) ?? null;
+if (sceneEnabled) {
+  await context.exposeFunction("recordScene", (type, detail) => {
+    if (type === "rendered") rendered.push(detail);
+    if (type === "routes") routeEvents.push(detail);
+    if (type === "frame") traceFrames.push(detail);
+  });
+  await context.addInitScript(() => {
+    for (const type of ["rendered", "routes", "frame"]) {
+      window.addEventListener("fleet-visualizer:" + type, (e) => window.recordScene(type, e.detail));
+    }
+  });
+}
 const initial = new Map();
 const moved = new Set();
 const chargeOwners = new Set();
@@ -56,11 +75,16 @@ async function pageForFleet() {
     }
   });
   page.on("websocket", (socket) => {
+    urls.add(socket.url());
     if (!socket.url().endsWith("/ws/fleet")) return;
     socket.on("framereceived", ({ payload }) => {
       const snapshot = JSON.parse(payload.toString());
+      frames.push({ time: performance.now(), bytes: Buffer.byteLength(payload), type: snapshot.type ?? "product" });
+      if (snapshot.type) {
+        if (snapshot.type === "scene") scenePackets.push(snapshot.packet);
+        return;
+      }
       last = snapshot;
-      frames.push({ time: performance.now(), bytes: Buffer.byteLength(payload) });
       for (const robot of snapshot.robots) {
         if (robot.pose_reliability !== "LIVE") continue;
         assert.equal(robot.pose.frame_id, snapshot.map_frame);
@@ -83,8 +107,17 @@ async function pageForFleet() {
       }
     });
   });
-  await page.goto(origin);
+  await page.goto(sceneEnabled ? origin + "/?trace=1" : origin);
   return page;
+}
+
+function bridgeUsage() {
+  if (!sceneEnabled) return null;
+  const result = execFileSync("docker", ["exec", `${project}-scene-1`, "bash", "-ec",
+    'pid=$(pgrep -f "^python3 /gated_bridge.py "); read -r -a proc < "/proc/$pid/stat"; read -r _ resident _ < "/proc/$pid/statm"; '
+      + 'echo "$((proc[13]+proc[14])) $resident $(getconf CLK_TCK) $(getconf PAGESIZE)"'], { encoding: "utf8" });
+  const [ticks, pages, clockTicks, pageSize] = result.trim().split(/\s+/).map(Number);
+  return { seconds: ticks / clockTicks, rssBytes: pages * pageSize };
 }
 
 function apiUsage() {
@@ -101,34 +134,26 @@ async function measure(page) {
   const time = performance.now();
   const apiStart = apiUsage();
   const before = await system.send("SystemInfo.getProcessInfo");
+  const bridgeStart = bridgeUsage();
+  const sceneStart = traceFrames.length;
   const browserStats = await page.evaluate(async () => {
     const frameTimes = [];
-    const canvasTimes = [];
-    const original = CanvasRenderingContext2D.prototype.clearRect;
-    CanvasRenderingContext2D.prototype.clearRect = function (...args) {
-      if (this.canvas.isConnected && this.canvas.closest(".map-viewport")) canvasTimes.push(performance.now());
-      return original.apply(this, args);
-    };
-    try {
-      await new Promise((resolve) => {
-        const start = performance.now();
-        function frame(now) {
-          frameTimes.push(now);
-          if (now - start < 5000) requestAnimationFrame(frame);
-          else resolve();
-        }
-        requestAnimationFrame(frame);
-      });
-      const intervals = (times) => times.slice(1).map((at, index) => at - times[index]).sort((a, b) => a - b);
-      const compositor = intervals(frameTimes);
-      const render = intervals(canvasTimes);
-      return { frames: frameTimes.length, fps: (frameTimes.length - 1) * 1000 / (frameTimes.at(-1) - frameTimes[0]),
-        rafIntervalP95Ms: compositor[Math.floor(compositor.length * 0.95)],
-        canvasDraws: canvasTimes.length, canvasIntervalP95Ms: render[Math.floor(render.length * 0.95)] ?? null };
-    } finally {
-      CanvasRenderingContext2D.prototype.clearRect = original;
-    }
+    await new Promise((resolve) => {
+      const start = performance.now();
+      function frame(now) {
+        frameTimes.push(now);
+        if (now - start < 5000) requestAnimationFrame(frame);
+        else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+    const intervals = frameTimes.slice(1).map((at, index) => at - frameTimes[index]).sort((a, b) => a - b);
+    return { rafFps: (frameTimes.length - 1) * 1000 / (frameTimes.at(-1) - frameTimes[0]),
+      rafIntervalP95Ms: intervals[Math.floor(intervals.length * 0.95)] };
   });
+  const bridgeEnd = bridgeUsage();
+  const draws = traceFrames.slice(sceneStart);
+  const latestDraw = draws.at(-1);
   const elapsed = (performance.now() - time) / 1000;
   const after = await system.send("SystemInfo.getProcessInfo");
   const apiEnd = apiUsage();
@@ -141,6 +166,12 @@ async function measure(page) {
     .trim().split("\n").map((line) => line.trim().split(/\s+/).map(Number))
     .filter(([pid]) => chromePids.has(pid)).reduce((sum, [, rss]) => sum + rss, 0);
   return { ...browserStats, seconds: elapsed, jsHeapUsedBytes: heap.usedSize,
+    sceneFps: draws.length / elapsed, sceneIntervalP95Ms: pct(draws.slice(1).map((draw, i) => draw.at - draws[i].at), .95),
+    drawCallsP95: pct(draws.map((draw) => draw.calls), .95), geometries: latestDraw?.geometries, textures: latestDraw?.textures,
+    bridgeCpuPercentOneCore: bridgeEnd && (bridgeEnd.seconds - bridgeStart.seconds) / elapsed * 100,
+    bridgeRssBytes: bridgeEnd?.rssBytes,
+    wsHzByType: Object.fromEntries([...new Set(frames.map(({ type }) => type))].map((type) =>
+      [type, frames.filter((frame) => frame.type === type).length / elapsed])),
     chromeCpuPercentOneCore: usedCpu / elapsed * 100, chromeRssSumBytes: chromeRssKiB * 1024,
     apiCpuPercentOneCore: (apiEnd.seconds - apiStart.seconds) / elapsed * 100, apiRssBytes: apiEnd.rssBytes,
     wsHz: frames.length / elapsed, wsFrames: frames.length,
@@ -154,8 +185,21 @@ try {
   await until(() => last?.robots.length === 2 && last.robots.every((robot) => robot.battery_reliability === "LIVE"
     && robot.pose_reliability === "LIVE"), "Two verified live robots unavailable");
   const details = () => page.locator(".robot-details");
+  const capture = (name) => page.screenshot({ path: join(evidence, name + ".png"), fullPage: true });
   const ids = last.robots.map(({ robot_id }) => robot_id);
   await expect(page.getByRole("button", { name: /^Robot seç:/ })).toHaveCount(2);
+  if (sceneEnabled) {
+    await until(() => traceFrames.at(-1)?.robots.filter((robot) => robot.visible && robot.status === "LIVE").length === 2,
+      "Chrome did not render two live TF robots");
+    await expect(page.locator(".scene-viewport canvas")).toBeVisible();
+    metrics.firstSceneFrameMs = traceFrames[0].at;
+    await capture("isometric-two-robots");
+    metrics.initialLoad = await page.evaluate(() => ({
+      domInteractiveMs: performance.getEntriesByType("navigation")[0].domInteractive,
+      sceneChunkMs: performance.getEntriesByType("resource").find((item) => /assets\/Scene-/.test(item.name))?.responseEnd,
+    }));
+  }
+  const selectionAt = performance.now();
   const selected = page.getByRole("button", { name: `Robot seç: ${ids[1]}` });
   await selected.focus();
   await page.keyboard.press("Enter");
@@ -163,14 +207,40 @@ try {
   await expect(details().getByRole("meter")).toBeVisible();
   const accepted = Number(await details().getByRole("meter").getAttribute("aria-valuenow"));
   assert.ok(Math.abs(accepted - last.robots.find((robot) => robot.robot_id === ids[1]).battery_soc_percent) < 0.25);
-  await page.screenshot({ path: join(evidence, "overview-1440.png"), fullPage: true });
+  metrics.selectionMs = performance.now() - selectionAt;
+  await capture("selected-robot");
+
+  if (sceneEnabled) {
+    const tf = details().getByTestId("tf-status");
+    const gate = join(evidence, "gates", ids[1]);
+    writeFileSync(gate, "");
+    try {
+      await expect(tf).toHaveText("STALE", { timeout: 8000 });
+      await expect(page.locator(".scene-indicator")).toHaveText("1 / 2 TF LIVE");
+      await expect(details().getByRole("meter")).toBeVisible();
+      await capture("isolated-tf-stale");
+    } finally {
+      rmSync(gate, { force: true });
+    }
+    await expect(tf).toHaveText("LIVE", { timeout: 10000 });
+    const bridge = `${project}-scene-1`;
+    const source = last.source_session_id;
+    const sequence = last.sequence;
+    execFileSync("docker", ["stop", bridge]);
+    await expect(tf).toHaveText("STALE");
+    await expect(details().getByRole("meter")).toBeVisible();
+    await until(() => last.sequence > sequence + 2, "Product source stopped with bridge", 8000);
+    assert.equal(last.source_session_id, source);
+    execFileSync("docker", ["start", bridge]);
+    await expect(tf).toHaveText("LIVE", { timeout: 10000 });
+  }
 
   const previous = last;
   const outage = performance.now();
   await stopApi();
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(details().getByRole("meter")).toHaveCount(0);
-  await expect(details().getByText(/Son doğrulanmış konum korunuyor/)).toBeVisible();
+  await expect(details().getByText(/Ürün akışı kesildi/)).toBeVisible();
   await page.screenshot({ path: join(evidence, "connection-loss.png"), fullPage: true });
   const reconnect = performance.now();
   startApi();
@@ -182,6 +252,10 @@ try {
 
   await until(() => last?.stations.some((station) => station.charging === "CHARGING"),
     "Verified charging not displayed", 60000);
+  const chargingId = last.stations.find((station) => station.charging === "CHARGING").charging_robot_id;
+  await page.getByRole("button", { name: `Robot seç: ${chargingId}` }).click();
+  await expect(details().getByText("Şarj oluyor", { exact: true }).first()).toBeVisible();
+  await capture("charging-scene");
   await page.getByRole("link", { name: "İstasyonlar / Şarj", exact: true }).click();
   await expect(page.getByRole("cell", { name: /Şarj oluyor/ })).toBeVisible();
   await page.screenshot({ path: join(evidence, "charging.png"), fullPage: true });
@@ -189,6 +263,27 @@ try {
 
   await until(() => moved.size === 2 && chargeOwners.size === 2 && last.task_counts.active > 0,
     "Live movement, charging or task assignment not visible", 150_000);
+  if (sceneEnabled) {
+    await until(() => scenePackets.some(({ type }) => type === "robot_path") &&
+      routeEvents.some(({ plan_vertices }) => plan_vertices?.length > 1) &&
+      routeEvents.some(({ trail_vertices }) => trail_vertices?.length > 1),
+    "Live plan and TF trail did not render", 20000);
+    await capture("active-task-plan");
+    await page.getByRole("button", { name: "Robotu takip et" }).click();
+    await until(() => traceFrames.at(-1)?.mode === "follow" && !traceFrames.at(-1).transitioning, "Follow camera did not settle", 10000);
+    await page.getByRole("button", { name: "Üstten" }).click();
+    await until(() => traceFrames.at(-1)?.mode === "top" && !traceFrames.at(-1).transitioning, "Top camera did not settle", 10000);
+    await page.getByRole("button", { name: "Filoyu kadraja al" }).click();
+    await until(() => traceFrames.at(-1)?.mode === "fit" && !traceFrames.at(-1).transitioning, "Fleet camera did not settle", 10000);
+    await page.getByRole("button", { name: "Kamerayı sıfırla" }).click();
+    await until(() => traceFrames.at(-1)?.mode === "free" && !traceFrames.at(-1).transitioning, "Reset did not settle", 10000);
+    metrics.layersOn = await measure(page);
+    await page.getByLabel(/Gözlemlenen Nav2 planı/).uncheck();
+    await page.getByLabel("TF hareket izi").uncheck();
+    metrics.layersOff = await measure(page);
+    await page.getByLabel(/Gözlemlenen Nav2 planı/).check();
+    await page.getByLabel("TF hareket izi").check();
+  }
   const beforeClose = last;
   await page.close();
   await delay(2200);
@@ -219,9 +314,49 @@ try {
   }
   assert.ok([...taskStates.values()].some((states) => states.has("ASSIGNED") || states.has("EXECUTING")));
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ result: "C5_CHROME_PASSED", chrome: chrome.version(), moved: [...moved],
+  if (sceneEnabled) {
+    assert.deepEqual([...urls], [origin.replace(/^http/, "ws") + "/ws/fleet"]);
+    const poses = new Map(scenePackets.filter((p) => p.type === "robot_pose").map((p) =>
+      [`${p.robot_id}:${p.stream_id}:${p.epoch}:${p.stamp_ns}`, p]));
+    for (const frame of rendered) {
+      const key = `${frame.robot_id}:${frame.stream_id}:${frame.epoch}:${frame.stamp_ns}`;
+      const packet = poses.get(key);
+      assert.ok(packet, key);
+      assert.ok(Math.hypot(frame.x - packet.x, frame.z + packet.y) < 1e-7);
+      assert.ok(Math.hypot(frame.heading_x - Math.cos(packet.yaw), frame.heading_z + Math.sin(packet.yaw)) < 1e-7);
+    }
+    const paths = new Map(scenePackets.filter((p) => p.type === "robot_path").map((p) =>
+      [`${p.robot_id}:${p.stamp_ns}`, p.points]));
+    const vertexMatches = ([x, , z], [px, py]) => Math.hypot(x - px, z + py) < 1e-6;
+    for (const route of routeEvents) {
+      if (route.trail) {
+        const anchors = route.trail.map((point) => {
+          const sample = poses.get(`${route.robot_id}:${point.stream_id}:${point.epoch}:${point.stamp_ns}`);
+          assert.ok(sample, point.stamp_ns);
+          return [sample.x, sample.y];
+        });
+        const expected = anchors.flatMap((anchor, index) => index && !route.trail[index].start
+          ? [anchors[index - 1], anchor] : []);
+        assert.equal(expected.length, route.trail_vertices.length);
+        assert.ok(route.trail_vertices.every((vertex, i) => vertexMatches(vertex, expected[i])));
+      }
+      if (route.plan_vertices?.length) {
+        const points = paths.get(`${route.robot_id}:${route.plan}`);
+        assert.equal(points?.length, route.plan_vertices.length);
+        assert.ok(route.plan_vertices.every((vertex, i) => vertexMatches(vertex, points[i])));
+      }
+    }
+    assert.ok(ids.every((id) => rendered.some((frame) => frame.robot_id === id)));
+    metrics.renderedAnchorChecks = rendered.length;
+  }
+  console.log(JSON.stringify({ result: sceneEnabled ? "C5_3D_CHROME_PASSED" : "C5_CHROME_PASSED", chrome: chrome.version(), moved: [...moved],
     chargeOwners: [...chargeOwners], tasks: Object.fromEntries([...taskStates].map(([id, states]) => [id, [...states]])) }));
 } finally {
+  if (sceneEnabled) {
+    writeFileSync(join(evidence, "scene-packets.json"), JSON.stringify(scenePackets));
+    writeFileSync(join(evidence, "scene-rendered.json"), JSON.stringify(rendered));
+    writeFileSync(join(evidence, "scene-routes.json"), JSON.stringify(routeEvents));
+  }
   writeFileSync(join(evidence, "browser-metrics.json"), JSON.stringify(metrics, null, 2));
   await chrome.close();
   try {

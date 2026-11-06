@@ -3,7 +3,7 @@ title: "01 · Sistem ve Docker mimarisi · PARTIAL"
 ---
 flowchart TB
  subgraph UI["frontend • PARTIAL"]
- U["React + Konva • 2D panel"]:::ui
+ U["React + Three.js • 3D panel"]:::ui
  end
  subgraph BACK["backend • PARTIAL"]
  API["FastAPI / WebSocket • salt okunur"]:::ui
@@ -26,7 +26,10 @@ flowchart TB
  GZ -->|"/clock, odometri, fiziksel poz ve temas"| BAT
  BAT -->|"BatteryState • robot başına"| EX
  end
- U <-->|"GET / WebSocket"| API
+ R["Salt okunur TF / Path köprüsü"]:::ui
+ NAV -->|"Gözlemlenen plan ve TF"| R
+ R -->|"Ayrı görsel veri"| API
+ U <-->|"GET / Tek WebSocket"| API
  FM -->|"ExecuteTask / NavigateToStation / cancel / ClearRobotError"| EX
  FM -->|"DockLease • kayıtlı kaynak sahibi"| BAT
  EX -->|"RobotStatus / feedback / result"| FM

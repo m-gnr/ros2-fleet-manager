@@ -32,7 +32,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | IMPLEMENTED | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
 | 14 | Kurtarma — [FAILED / ERROR ve operatör kurtarma](#14-failure-operator-recovery) | PARTIAL | [Mermaid](src/failure-operator-recovery.mmd) · [SVG](svg/failure-operator-recovery.svg) |
 | 15 | Konfigürasyon — [fleet.yaml yaşam döngüsü](#15-fleet-config-lifecycle) | PARTIAL | [Mermaid](src/fleet-config-lifecycle.mmd) · [SVG](svg/fleet-config-lifecycle.svg) |
-| 16 | Panel — [REST / WebSocket ve 2D panel](#16-rest-websocket-gui) | PARTIAL | [Mermaid](src/rest-websocket-gui.mmd) · [SVG](svg/rest-websocket-gui.svg) |
+| 16 | Panel — [REST / WebSocket ve 3D panel](#16-rest-websocket-gui) | PARTIAL | [Mermaid](src/rest-websocket-gui.mmd) · [SVG](svg/rest-websocket-gui.svg) |
 | 17 | Rota — [Asenkron rota ve önbellek](#17-route-cache) | IMPLEMENTED | [Mermaid](src/route-cache.mmd) · [SVG](svg/route-cache.svg) |
 | 18 | Güvenlik — [Duplicate kayıtları ve restart engeli](#18-duplicate-restart-guard) | PARTIAL | [Mermaid](src/duplicate-restart-guard.mmd) · [SVG](svg/duplicate-restart-guard.svg) |
 
@@ -52,7 +52,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 
 **Test / kanıt:** [c3-3-3-validation-2026-10-24.md](../validation/c3/c3-3-3-validation-2026-10-24.md)
 
-**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager ürün akışı [C4.5 Fortress kabulünde](../validation/c4/c4-5-validation-2026-11-06.md) çalıştırıldı. C5 salt okunur yüzü [iki robotlu Chrome kabulünde](../validation/c5/c5-stage1-validation-2026-11-06.md) bu akışı izler.
+**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager ürün akışı [C4.5 Fortress kabulünde](../validation/c4/c4-5-validation-2026-11-06.md) çalıştırıldı. C5 salt okunur 3D yüzü [iki robotlu Chrome kabulünde](../validation/c5/c5-stage1-5-validation-2026-11-06.md) bu akışı izler.
 
 ![Sistem ve Docker mimarisi](svg/system-architecture.svg)
 
@@ -65,7 +65,7 @@ title: "01 · Sistem ve Docker mimarisi · PARTIAL"
 ---
 flowchart TB
  subgraph UI["frontend • PARTIAL"]
- U["React + Konva • 2D panel"]:::ui
+ U["React + Three.js • 3D panel"]:::ui
  end
  subgraph BACK["backend • PARTIAL"]
  API["FastAPI / WebSocket • salt okunur"]:::ui
@@ -88,7 +88,10 @@ flowchart TB
  GZ -->|"/clock, odometri, fiziksel poz ve temas"| BAT
  BAT -->|"BatteryState • robot başına"| EX
  end
- U <-->|"GET / WebSocket"| API
+ R["Salt okunur TF / Path köprüsü"]:::ui
+ NAV -->|"Gözlemlenen plan ve TF"| R
+ R -->|"Ayrı görsel veri"| API
+ U <-->|"GET / Tek WebSocket"| API
  FM -->|"ExecuteTask / NavigateToStation / cancel / ClearRobotError"| EX
  FM -->|"DockLease • kayıtlı kaynak sahibi"| BAT
  EX -->|"RobotStatus / feedback / result"| FM
@@ -913,32 +916,33 @@ flowchart TD
 
 <a id="16-rest-websocket-gui"></a>
 
-## 16. REST / WebSocket ve 2D panel
+## 16. REST / WebSocket ve 3D panel
 
-**Durum:** PARTIAL. C5 Aşama 1 salt okunur izlemeyi uygular. Görev girişi sonraki aşamadır.
+**Durum:** PARTIAL. C5 Aşama 1.5 salt okunur operasyon ve 3D TF/Path izlemeyi uygular. Görev girişi sonraki aşamadır.
 
 | Girdiler | Çıktılar | Koşullar |
 |---|---|---|
-| Kabul edilmiş RobotStatus, görev ve rezervasyon kayıtları | Sürümlü tam snapshot ve 2D görünüm | Kaynak oturumu, sıra, zaman ve koordinat çerçevesi denetlenir. |
+| Kabul edilmiş RobotStatus, görev ve rezervasyon kayıtları, ROS TF ve gözlemlenen Nav2 Path | Sürümlü ürün snapshot’ı ve ayrı TF/Path mesajları | Her kaynağın oturum, sıra, zaman ve koordinat çerçevesi ayrı denetlenir. |
 
-[API sözleşmesi](../design/c5-readonly-api.md) tam snapshot, yeniden eşitleme ve tampon sınırlarını açıklar. [Kaynak kod](../../backend/dashboard) · [Chrome/Fortress doğrulaması](../validation/c5/c5-stage1-validation-2026-11-06.md)
+[Entegrasyon sözleşmesi](../design/c5-3d-operations.md) kaynak sınırlarını açıklar. [Kaynak kod](../../backend/dashboard) · [Chrome/Fortress doğrulaması](../validation/c5/c5-stage1-5-validation-2026-11-06.md)
 
-![REST / WebSocket ve 2D panel](svg/rest-websocket-gui.svg)
+![REST / WebSocket ve 3D panel](svg/rest-websocket-gui.svg)
 
 <details>
 <summary>Düzenlenebilir Mermaid görünümü</summary>
 
 ```mermaid
 ---
-title: "16 · REST / WebSocket ve 2D panel · PARTIAL"
+title: "16 · REST / WebSocket ve 3D panel · PARTIAL"
 ---
 flowchart LR
  EX["Robot Executor"]:::executor -->|"RobotStatus / terminal sonuç"| Q["FM tek consumer"]:::fm
  Q -->|"Atomik durum ve Outbox kaydı"| DB[("SQLite")]:::db
  Q -->|"Commit sonrası yetkili görünüm"| S["Sınırlı son snapshot"]:::fm
  S -->|"Özel geçici dosya"| API["Salt okunur FastAPI"]:::ui
- API -->|"GET / tam WebSocket snapshot'ı"| U["React + Konva paneli"]:::ui
- API -.->|"Süre aşımı veya oturum değişimi"| R["Yeniden eşitleme"]:::wait
+ ROS["Salt okunur TF / Path köprüsü"]:::executor -->|"Robot ID / map / gözlemlenen plan"| API
+ API -->|"Tek WebSocket • ayrı ürün ve TF mesajları"| U["React + Three.js 3D paneli"]:::ui
+ API -.->|"Kaynak başına süre ve oturum"| R["Yeniden eşitleme"]:::wait
  R -.-> U
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;

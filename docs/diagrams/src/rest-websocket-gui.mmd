@@ -1,13 +1,14 @@
 ---
-title: "16 · REST / WebSocket ve 2D panel · PARTIAL"
+title: "16 · REST / WebSocket ve 3D panel · PARTIAL"
 ---
 flowchart LR
  EX["Robot Executor"]:::executor -->|"RobotStatus / terminal sonuç"| Q["FM tek consumer"]:::fm
  Q -->|"Atomik durum ve Outbox kaydı"| DB[("SQLite")]:::db
  Q -->|"Commit sonrası yetkili görünüm"| S["Sınırlı son snapshot"]:::fm
  S -->|"Özel geçici dosya"| API["Salt okunur FastAPI"]:::ui
- API -->|"GET / tam WebSocket snapshot'ı"| U["React + Konva paneli"]:::ui
- API -.->|"Süre aşımı veya oturum değişimi"| R["Yeniden eşitleme"]:::wait
+ ROS["Salt okunur TF / Path köprüsü"]:::executor -->|"Robot ID / map / gözlemlenen plan"| API
+ API -->|"Tek WebSocket • ayrı ürün ve TF mesajları"| U["React + Three.js 3D paneli"]:::ui
+ API -.->|"Kaynak başına süre ve oturum"| R["Yeniden eşitleme"]:::wait
  R -.-> U
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;

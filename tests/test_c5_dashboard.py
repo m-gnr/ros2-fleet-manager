@@ -229,3 +229,129 @@ def test_slow_client_bounded_send_and_schema(monkeypatch, tmp_path):
     assert api.read_source(path) is None
     with pytest.raises(ValidationError):
         SourceSnapshot.model_validate(payload)
+
+
+def test_scene_bridge_identity_is_limited_to_config():
+    from backend.dashboard.scene_stream import BridgeIdentity
+
+    gate = BridgeIdentity({"fleet_id": "/separate_namespace/plan"})
+    identity = dict(version=1, robot_id="fleet_id", frame_id="map", source="tf")
+    assert not gate.accepts(dict(identity, type="robot_pose"))
+    assert not gate.accepts(dict(version=1, type="fleet_hello", robot_ids=["separate_namespace"]))
+    assert not gate.accepts(dict(version=1, type="fleet_hello", robot_ids=["fleet_id", "fleet_id"]))
+    assert gate.accepts(dict(version=1, type="fleet_hello", robot_ids=["fleet_id"]))
+    assert gate.accepts(dict(identity, type="hello", path_topic="/separate_namespace/plan"))
+    assert not gate.accepts(dict(identity, type="hello", path_topic="/fleet_id/plan"))
+    assert not gate.accepts(dict(identity, type="robot_pose", frame_id="odom"))
+    assert not gate.accepts(dict(identity, type="robot_pose", source="diagnostic_odom"))
+    path = dict(identity, type="robot_path", source_topic="/separate_namespace/plan")
+    assert not gate.accepts(dict(path, plan_source="active_goal"))
+    assert gate.accepts(dict(path, plan_source="nav2_observed_plan"))
+
+
+def test_multiplexed_sources_expire_and_reconnect_independently(tmp_path):
+    from threading import Event, Thread
+
+    from websockets.exceptions import ConnectionClosed
+    from websockets.sync.server import serve
+
+    from backend.dashboard.scene_stream import BRIDGE_ORIGIN, PROTOCOL
+
+    outage = Event()
+    connected = []
+    identity = dict(version=1, robot_id="alpha", frame_id="map", source="tf", stream_id=str(uuid4()), epoch=0)
+
+    def bridge(peer):
+        connected.append(True)
+        peer.send(json.dumps(dict(type="fleet_hello", version=1, robot_ids=["alpha"])))
+        peer.send(json.dumps(dict(identity, type="hello", after_stamp_ns="0", stale_after_ms=1000)))
+        try:
+            while not outage.wait(0.04):
+                peer.send(json.dumps(dict(identity, type="data_status", status="LIVE")))
+        except ConnectionClosed:
+            pass
+
+    path = tmp_path / "snapshot.json"
+    write_source(path, 1)
+    with serve(bridge, "127.0.0.1", 0, origins=[BRIDGE_ORIGIN]) as upstream:
+        thread = Thread(target=upstream.serve_forever)
+        thread.start()
+        try:
+            port = upstream.socket.getsockname()[1]
+            app = api.create_app(path, origins={ORIGIN}, bridge_url=f"ws://127.0.0.1:{port}/telemetry/fleet",
+                                 scene_topics={"alpha": "/ns/plan"})
+            with TestClient(app, base_url=URL) as client:
+                wait_for_api(client, 1)
+                with client.websocket_connect("ws://127.0.0.1/ws/fleet", headers={"origin": ORIGIN},
+                                              subprotocols=[PROTOCOL]) as socket:
+                    assert socket.accepted_subprotocol == PROTOCOL
+                    assert socket.receive_json()["sequence"] == 1
+
+                    def receive_until(predicate):
+                        for _ in range(120):
+                            message = socket.receive_json()
+                            if predicate(message):
+                                return message
+                        pytest.fail("Expected multiplexed packet was missing")
+
+                    receive_until(lambda message: message.get("type") == "scene_connected")
+                    receive_until(lambda message: message.get("type") == "product_unavailable")
+                    status = receive_until(lambda message: message.get("packet", {}).get("type") == "data_status")
+                    assert status["packet"]["robot_id"] == "alpha"
+                    outage.set()
+                    receive_until(lambda message: message.get("type") == "scene_disconnected")
+                    outage.clear()
+                    write_source(path, 2)
+                    receive_until(lambda message: message.get("sequence") == 2)
+                    receive_until(lambda message: message.get("type") == "scene_connected")
+                    assert len(connected) >= 2
+                    assert client.post("/api/config/apply").status_code == 404
+                    socket.send_text("command")
+                    with pytest.raises(WebSocketDisconnect) as closed:
+                        for _ in range(8):
+                            socket.receive_json()
+                    assert closed.value.code == 1008
+        finally:
+            outage.set()
+            upstream.shutdown()
+            thread.join(timeout=3)
+
+
+def test_slow_scene_socket_keeps_at_most_one_upstream_event(monkeypatch, tmp_path):
+    from backend.dashboard import scene_stream
+
+    async def run():
+        advanced = []
+        finished = []
+
+        async def upstream(*_):
+            try:
+                for index in range(100):
+                    advanced.append(index)
+                    yield {"type": "scene_connected"}, time.monotonic()
+            finally:
+                finished.append(True)
+
+        class SlowSocket:
+            closed = None
+
+            async def receive(self):
+                await asyncio.Future()
+
+            async def send_text(self, _):
+                await asyncio.Future()
+
+            async def close(self, code):
+                self.closed = code
+
+        monkeypatch.setattr(scene_stream, "bridge_events", upstream)
+        socket = SlowSocket()
+        feed = api.Feed(tmp_path / "snapshot.json")
+        feed.update(make_source(1))
+        await asyncio.wait_for(scene_stream.send_operations(
+            socket, feed, bridge_url="ws://scene", topics={}, poll_sec=0.01, send_timeout=0.03,
+        ), 1)
+        assert advanced == [0] and finished == [True]
+        assert socket.closed == 1013
+
+    asyncio.run(run())

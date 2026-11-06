@@ -14,6 +14,10 @@ compose=(
   -f docker/compose/docker-compose.simulation-c5.yml
 )
 
+if [[ -n ${C5_SCENE_PORT:-} ]]; then
+  compose+=(-f docker/compose/docker-compose.simulation-c5-3d.yml)
+fi
+
 export C45_PROFILE=charging
 case "${1:-}" in
   api)
@@ -22,8 +26,12 @@ case "${1:-}" in
       flock -n 9
       echo "$$" > /run/fleet-dashboard/api.pid
       cd /workspace
+      scene=()
+      if [[ -n ${C5_SCENE_PORT:-} ]]; then
+        scene=(--scene-port "$C5_SCENE_PORT" --fleet /config/fleet.yaml)
+      fi
       exec python3 -m backend.dashboard.api --container-bind --snapshot "$C5_SNAPSHOT_PATH" \
-        --port "$C5_API_PORT" --origin "$C5_UI_ORIGIN"
+        --port "$C5_API_PORT" --origin "$C5_UI_ORIGIN" "${scene[@]}"
     '
     ;;
   stop-api)

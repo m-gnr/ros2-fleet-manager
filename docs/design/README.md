@@ -1,6 +1,7 @@
 # Teknik tasarımlar
 
 - [C5 Aşama 1 salt okunur operasyon paneli](c5-readonly-dashboard.md) · [API sözleşmesi](c5-readonly-api.md) · [Arayüz ve koordinatlar](c5-dashboard-ui.md)
+- [C5 Aşama 1.5 3D entegrasyonu](c5-3d-operations.md)
 
 - [SQLite Outbox ve tek consumer](c3-2-sqlite-outbox.md): C3.2 uygulama sözleşmesi.
 - [Konfigürasyon alanları ve doğrulama](../configuration-c1.md): C1 sözleşmesi; mevcut yolu korunur.

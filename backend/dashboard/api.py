@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .models import MAX_BYTES, SOURCE_TTL_NS, SourceSnapshot, WireSnapshot
+from .scene_stream import PROTOCOL, send_operations
 
 POLL_SEC = 0.10
 SEND_TIMEOUT_SEC = 1.0
@@ -95,7 +96,7 @@ async def send_latest(socket, feed, *, poll_sec=POLL_SEC):
             await asyncio.wait_for(socket.close(close_code), SEND_TIMEOUT_SEC)
 
 
-def create_app(path, *, origins, max_clients=MAX_CLIENTS):
+def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None):
     origins = frozenset(origins)
     for origin in origins:
         url = urlsplit(origin)
@@ -179,8 +180,13 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS):
             return
         clients += 1
         try:
-            await socket.accept()
-            await send_latest(socket, feed)
+            if PROTOCOL in socket.scope["subprotocols"]:
+                await socket.accept(subprotocol=PROTOCOL)
+                await send_operations(socket, feed, bridge_url=bridge_url, topics=scene_topics,
+                                      poll_sec=POLL_SEC, send_timeout=SEND_TIMEOUT_SEC)
+            else:
+                await socket.accept()
+                await send_latest(socket, feed)
         finally:
             clients -= 1
 
@@ -195,9 +201,21 @@ def main():
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--origin", action="append", required=True)
     parser.add_argument("--container-bind", action="store_true")
+    parser.add_argument("--scene-port", type=int)
+    parser.add_argument("--fleet", type=Path)
     args = parser.parse_args()
+    bridge_url = None
+    topics = None
+    if args.scene_port is not None:
+        if args.fleet is None or not 1 <= args.scene_port <= 65535:
+            parser.error("--scene-port requires a valid port and --fleet")
+        from fleet_config import load_config
+
+        fleet = load_config(args.fleet, schema_path=args.fleet.with_name("fleet.schema.json"))
+        topics = {robot.id: robot.namespace + "/plan" for robot in fleet.robots}
+        bridge_url = f"ws://scene:{args.scene_port}/telemetry/fleet"
     uvicorn.run(
-        create_app(args.snapshot, origins=frozenset(args.origin)),
+        create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics),
         host="0.0.0.0" if args.container_bind else "127.0.0.1", port=args.port,
         proxy_headers=False, server_header=False, ws="websockets", ws_max_size=1024, ws_max_queue=1,
         ws_per_message_deflate=False, limit_concurrency=64, timeout_graceful_shutdown=3,

@@ -10,7 +10,19 @@ export default defineConfig(({ command, mode }) => {
     }
     return value;
   };
-  if (command === "build" && !C5_API_PORT && !C5_UI_PORT) return { plugins: [react()] };
+  if (command === "build") return {
+    plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.endsWith("/three/build/three.core.js")) return "three-core";
+            if (id.endsWith("/three/build/three.module.js")) return "three-webgl";
+          },
+        },
+      },
+    },
+  };
   const target = `http://127.0.0.1:${port(C5_API_PORT)}`;
   const proxy = {
     "/api": { target, changeOrigin: true },

@@ -20,6 +20,7 @@ Bu dosyalar uygulamanın nihai üç servisli dağıtımı değildir. Komutlar de
 | C4.4 | DDS → A → C3.3.3 → C4.1 → C4.2 → C4.3 → `docker-compose.simulation-c4-4.yml` |
 | C4.5 | DDS → A → C3.3.3 → C4.1 → C4.2 → C4.3 → C4.4 → `docker-compose.simulation-c4-5.yml` |
 | C5 Aşama 1 kabulü | C4.5 → `docker-compose.simulation-c5.yml` |
+| C5 Aşama 1.5 kabulü | C5 Aşama 1 → `docker-compose.simulation-c5-3d.yml` |
 
 DDS için `DDS_TEST_PAYLOAD` zorunludur. Env dosyaları ve bind mount kaynakları depo kökündeki `config/` ve `docker/` dizinlerine gider. Container içindeki yollar, proje/servis/ağ adları ve image adları korunmuştur. Dosyaların yerinin değişmesiyle `.env` arama bağlamı da etkilenebilir; depoda `.env` yoktur. Başka çalışma dizini veya sonradan eklenen yerel env dosyası için ayrıca doğrulama gerekir.
 
@@ -44,6 +45,8 @@ C4.4 katmanı Gazebo dünyasına yapılandırılmış fiziksel dock pedlerini ve
 C4.5, `C45_PROFILE=energy` ve `C45_PROFILE=charging` profillerini ayrı temiz projelerde çalıştırır. Her profil ayrı SQLite ve log kanıtı üretir. [C4.5 komut eki](../../docs/validation/c4/c4-5-commands-2026-11-06.md)
 
 C5 kabul katmanı C4.5 şarj senaryosuna salt okunur yayıncı ekler. FastAPI backend konteynerinde bağımsız süreçtir ve portu host loopback'e yayımlanır. Vite hostta çalışır. Image hazırlama ve çalıştırma [C5 komut ekindedir](../../docs/validation/c5/c5-stage1-commands-2026-11-06.md).
+
+Aşama 1.5 katmanı, `C5_SCENE_PORT` tanımlandığında salt okunur TF/Path köprüsünü kabul ağına ekler. Köprü portu hosta yayımlanmaz. Kayıp deneyi yalnız köprünün TF okuyucusundaki test kapısını kullanır. [Aşama 1.5 komutları](../../docs/validation/c5/c5-stage1-5-commands-2026-11-06.md)
 
 DDS image'ı temel alınır; A, B1 ve Nav2 image'ları aşamalı hazırlanır. Action image'ı da DDS tabanına bağlıdır. B2/AMCL/B3/Retry katmanları Nav2 image adını kullanırken A katmanının build tarifini miras alır. Bu mevcut davranış organizasyon sırasında değiştirilmedi. Bu birleşimlerde `build` veya `up --build` doğru Nav2 bağımlılık image'ını üretme garantisi vermez; [B2 hazırlık kanıtı](../../docs/validation/simulation/b2/simulation-stage-b2-2026-10-23.md) esas alınmalıdır.
 

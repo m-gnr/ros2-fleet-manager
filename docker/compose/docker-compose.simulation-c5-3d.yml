@@ -1,0 +1,30 @@
+# Optional private ROS reader for C5 browser acceptance. No published bridge port.
+services:
+  scene:
+    image: fleet-visualizer-stage4:humble
+    init: true
+    env_file:
+      - ../../config/dds.env
+    environment:
+      PYTHONPATH: /app:/opt/visualizer-deps:/app/fleet-visualizer/bridge
+      ROS_DOMAIN_ID: "${ROS_DOMAIN_ID:?Set an unused ROS domain}"
+    networks:
+      - dds
+    volumes:
+      - ../../config:/config:ro
+      - ../../docker/simulation-c5/gated_bridge.py:/gated_bridge.py:ro
+      - "${C43_EVIDENCE_DIR:?Set the validation evidence directory}/gates:/validation-gates:ro"
+    entrypoint: ["/ros_entrypoint.sh", "python3", "/gated_bridge.py"]
+    command:
+      - --fleet
+      - /config/fleet.yaml
+      - --bind
+      - 0.0.0.0
+      - --port
+      - "${C5_SCENE_PORT:?Set the internal telemetry port}"
+      - --origin
+      - http://scene
+      - --observed-nav2-plans
+  backend:
+    environment:
+      C5_SCENE_PORT: "${C5_SCENE_PORT:?Set the internal telemetry port}"

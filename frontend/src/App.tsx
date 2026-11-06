@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity, ArrowUpRight, BatteryCharging, Bot, ClipboardList, Grid2X2, LayoutDashboard,
   ListTodo, LockKeyhole, Network, RotateCw, Signal, WifiOff,
 } from "lucide-react";
 import { EmptyState, RobotDetails, RobotList, StationOverview, TaskList } from "./Operations";
-import { WarehouseMap } from "./WarehouseMap";
+import { ScenePanel } from "./ScenePanel";
 import { useFleet, type Connection } from "./useFleet";
 
 const views = [
@@ -33,9 +33,15 @@ function Metric({ label, value, detail, icon: Icon, tone }: {
 export default function App() {
   const [view, setView] = useState<View>(activeView);
   const [selectedId, setSelectedId] = useState<string>();
-  const { fleet, connection, error, reconnect } = useFleet();
+  const { fleet, connection, error, scene, sceneFeed, reconnect } = useFleet();
   const connected = connection === "CONNECTED";
-  const selected = fleet?.robots.find((robot) => robot.robot_id === selectedId) ?? fleet?.robots[0];
+  const productIds = fleet?.robots.map((robot) => robot.robot_id).join("\0") ?? "";
+  const robotIds = useMemo(() => [...new Set([
+    ...(productIds ? productIds.split("\0") : []), ...(scene.roster ?? []),
+  ])].sort(), [productIds, scene.roster]);
+  const activeId = selectedId && robotIds.includes(selectedId) ? selectedId : robotIds[0];
+  const selected = fleet?.robots.find((robot) => robot.robot_id === activeId);
+  const selectedTf = activeId ? scene.robots.get(activeId) : undefined;
   const sync = fleet ? new Date(fleet.generated_at_utc) : null;
 
   useEffect(() => {
@@ -56,11 +62,11 @@ export default function App() {
             aria-current={view.id === id ? "page" : undefined}><Icon size={18} /><span>{label}</span></a>)}
         </nav>
         <div className="sidebar-footer"><span className="environment-icon"><Grid2X2 size={17} /></span>
-          <div><strong>Operasyon ortamı</strong><small>C5 / Aşama 1</small></div></div>
+          <div><strong>Operasyon ortamı</strong><small>C5 / Aşama 1.5</small></div></div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
-          <div className="top-breadcrumb"><span>Operasyon merkezi</span><i>/</i><strong>{view.label}</strong></div>
+          <div className="top-breadcrumb"><span>ROS 2 Fleet Manager</span><i>/</i><strong>{view.label}</strong></div>
           <div className="top-status">
             <div className="sync"><span>Son eşitleme</span><time dateTime={sync?.toISOString()}>
               {sync ? sync.toLocaleTimeString("tr-TR") : "—"}</time></div>
@@ -86,22 +92,22 @@ export default function App() {
               <Metric label="Filo robotları" value={fleet?.robots.length ?? null} detail="Kayıtlı birim" icon={Bot} tone="mint" />
               <Metric label="Canlı telemetri" value={connected && fleet ? fleet.robots.filter((r) => r.telemetry === "LIVE").length : null}
                 detail="Doğrulanmış kaynak" icon={Activity} tone="blue" />
-              <Metric label="Aktif görevler" value={fleet?.task_counts.active ?? null} detail="Taşıma ataması" icon={ListTodo} tone="violet" />
+              <Metric label="Aktif görevler" value={fleet?.task_counts.active ?? null} detail={connected ? "Taşıma ataması" : "Son eşitlemeden"} icon={ListTodo} tone="violet" />
               <Metric label="Şarjda" value={connected && fleet
                 ? fleet.robots.some((r) => r.charging === "UNAVAILABLE") ? null : fleet.robots.filter((r) => r.charging === "CHARGING").length
                 : null} detail="Doğrulanmış C4 ölçümü" icon={BatteryCharging} tone="amber" />
             </section>
             <div className="operations-grid">
-              <WarehouseMap fleet={fleet} connected={connected} selected={selected?.robot_id} onSelect={setSelectedId} />
-              <RobotDetails robot={selected} connected={connected} />
+              <ScenePanel feed={sceneFeed} view={scene} robotIds={robotIds} selected={activeId} onSelect={setSelectedId} />
+              <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} connected={connected} />
             </div>
-            <RobotList fleet={fleet} connected={connected} selected={selected?.robot_id} onSelect={setSelectedId} />
+            <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} tfRobots={scene.robots} />
           </>}
           {view.id === "robots" && <div className="operations-grid robot-view">
-            <RobotList fleet={fleet} connected={connected} selected={selected?.robot_id} onSelect={setSelectedId} />
-            <RobotDetails robot={selected} connected={connected} />
+            <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} />
+            <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} connected={connected} />
           </div>}
-          {view.id === "tasks" && <TaskList fleet={fleet} />}
+          {view.id === "tasks" && <TaskList fleet={fleet} connected={connected} />}
           {view.id === "stations" && <StationOverview fleet={fleet} connected={connected} />}
           {!fleet && !error && view.id !== "overview" && <div role="status" className="initial-note">
             <EmptyState title="İlk eşitleme" detail="Fleet Manager snapshot’ı bekleniyor." /></div>}

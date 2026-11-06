@@ -31,6 +31,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C4.3 | [Rapor](c4/c4-3-validation-2026-11-06.md) · [Komut eki](c4/c4-3-commands-2026-11-06.md) | Park ve dock yaklaşımı, canlı HIGH duruşu ve SQLite/Outbox bütünlüğü doğrulandı |
 | C4.4 | [Rapor](c4/c4-4-validation-2026-11-06.md) · [Komut eki](c4/c4-4-commands-2026-11-06.md) | Fiziksel dock teması, iki robotlu şarj ve ayrılma kanıtıyla devir |
 | C4.5 | [Sonuç raporu](c4/c4-5-validation-2026-11-06.md) · [Komut eki](c4/c4-5-commands-2026-11-06.md) · [C4 kabul listesi](c4/c4-acceptance-2026-11-06.md) | İki robotlu enerji, fiziksel şarj devri, görev ve güvenli preemption |
+| C5 Aşama 1 | [Rapor](c5/c5-stage1-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-commands-2026-11-06.md) · [Performans](c5/c5-stage1-performance-2026-11-06.md) | İki robotlu Fortress ve Chrome, salt okunur canlı panel ve güvenli yeniden eşitleme |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

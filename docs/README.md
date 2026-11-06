@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5 Aşama 1 salt okunur operasyon paneli](design/c5-readonly-dashboard.md) · [API sözleşmesi](design/c5-readonly-api.md) · [Arayüz ve koordinatlar](design/c5-dashboard-ui.md) · [Doğrulama](validation/c5/c5-stage1-validation-2026-11-06.md)
+
 - [Proje girişi](../README.md): mevcut depo durumu ve C1–C5 sırası.
 - [Compose kılavuzu](../docker/compose/README.md): test katmanları ve güncel yollar.
 - [Organizasyon doğrulaması](organization-validation-2026-10-24.md): taşıma kapsamı, kontroller ve sınırlar.

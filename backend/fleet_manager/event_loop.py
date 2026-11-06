@@ -34,6 +34,7 @@ class FleetEventLoop:
         self._worker = None
         self._closed = False
         self._route_planning = None
+        self._dashboard_telemetry = None
         with store.transaction():
             store.require_empty()
             store.persist_core(self._core)
@@ -46,6 +47,26 @@ class FleetEventLoop:
     def core(self):
         """Return a detached snapshot; producers cannot mutate the consumer state."""
         return deepcopy(self._core, {id(self._core.scheduler): self._core.scheduler})
+
+    def enable_dashboard_sampling(self):
+        """Enable an optional bounded observation of committed RobotStatus."""
+        from ..dashboard.telemetry import CommittedTelemetry
+
+        if self._dashboard_telemetry is not None or self._closed:
+            raise RuntimeError("Dashboard sampling is already enabled or consumer is closed")
+        self._dashboard_telemetry = CommittedTelemetry()
+
+    def disable_dashboard_sampling(self):
+        self._dashboard_telemetry = None
+
+    def dashboard_sample(self):
+        """Owner loop only. Published core generations are read-only to the sampler."""
+        if (self._dashboard_telemetry is None or self._closed
+                or self._worker is None or self._worker.done()):
+            raise RuntimeError("Dashboard source unavailable")
+        battery_clock = self._core.scheduler.battery_clock_ns
+        return (self._core, self._dashboard_telemetry.snapshot(),
+                self._clock(), battery_clock() if battery_clock else None)
 
     def bind_battery_clock(self, clock_ns):
         if self._core.scheduler.battery_clock_ns is not None or self._closed:
@@ -167,6 +188,14 @@ class FleetEventLoop:
         # Publish memory only after COMMIT; failed writes leave both states unchanged.
         if outcome in ("APPLIED", "SESSION_BLOCKED"):
             self._core = candidate
+            if self._dashboard_telemetry is not None and event.kind == "ROBOT_STATUS" and outcome == "APPLIED":
+                try:
+                    robot = candidate.tracker.get_robot(event.payload["robot_id"])
+                    self._dashboard_telemetry.record(robot, event.payload, self._clock())
+                except Exception:
+                    # Display failures must not propagate into the committed product event.
+                    self._dashboard_telemetry = None
+                    logger.exception("Dashboard sampling disabled after telemetry observation failure")
             if candidate.station_dispatch is not None:
                 for robot_id, reason in candidate.station_dispatch.wait_reasons.items():
                     if previous_dispatch.wait_reasons.get(robot_id) != reason:

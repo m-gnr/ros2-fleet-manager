@@ -32,7 +32,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | IMPLEMENTED | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
 | 14 | Kurtarma — [FAILED / ERROR ve operatör kurtarma](#14-failure-operator-recovery) | PARTIAL | [Mermaid](src/failure-operator-recovery.mmd) · [SVG](svg/failure-operator-recovery.svg) |
 | 15 | Konfigürasyon — [fleet.yaml yaşam döngüsü](#15-fleet-config-lifecycle) | PARTIAL | [Mermaid](src/fleet-config-lifecycle.mmd) · [SVG](svg/fleet-config-lifecycle.svg) |
-| 16 | Panel — [REST / WebSocket ve 2D panel](#16-rest-websocket-gui) | PLANNED | [Mermaid](src/rest-websocket-gui.mmd) · [SVG](svg/rest-websocket-gui.svg) |
+| 16 | Panel — [REST / WebSocket ve 2D panel](#16-rest-websocket-gui) | PARTIAL | [Mermaid](src/rest-websocket-gui.mmd) · [SVG](svg/rest-websocket-gui.svg) |
 | 17 | Rota — [Asenkron rota ve önbellek](#17-route-cache) | IMPLEMENTED | [Mermaid](src/route-cache.mmd) · [SVG](svg/route-cache.svg) |
 | 18 | Güvenlik — [Duplicate kayıtları ve restart engeli](#18-duplicate-restart-guard) | PARTIAL | [Mermaid](src/duplicate-restart-guard.mmd) · [SVG](svg/duplicate-restart-guard.svg) |
 
@@ -52,7 +52,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 
 **Test / kanıt:** [c3-3-3-validation-2026-10-24.md](../validation/c3/c3-3-3-validation-2026-10-24.md)
 
-**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager ürün akışı [C4.5 Fortress kabulünde](../validation/c4/c4-5-validation-2026-11-06.md) çalıştırıldı.
+**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager ürün akışı [C4.5 Fortress kabulünde](../validation/c4/c4-5-validation-2026-11-06.md) çalıştırıldı. C5 salt okunur yüzü [iki robotlu Chrome kabulünde](../validation/c5/c5-stage1-validation-2026-11-06.md) bu akışı izler.
 
 ![Sistem ve Docker mimarisi](svg/system-architecture.svg)
 
@@ -64,14 +64,14 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 title: "01 · Sistem ve Docker mimarisi · PARTIAL"
 ---
 flowchart TB
- subgraph UI["frontend • PLANNED"]
+ subgraph UI["frontend • PARTIAL"]
  U["React + Konva • 2D panel"]:::ui
  end
  subgraph BACK["backend • PARTIAL"]
- API["FastAPI / WebSocket • PLANNED"]:::ui
+ API["FastAPI / WebSocket • salt okunur"]:::ui
  FM["Fleet Manager • tek consumer"]:::fm
  DB[("SQLite + Outbox")]:::db
- API <-->|"Olay ve komut"| FM
+ FM -->|"Commit sonrası snapshot"| API
  FM <-->|"Atomik kayıt"| DB
  end
  subgraph SIM["simulation • PARTIAL"]
@@ -88,7 +88,7 @@ flowchart TB
  GZ -->|"/clock, odometri, fiziksel poz ve temas"| BAT
  BAT -->|"BatteryState • robot başına"| EX
  end
- U <-->|"HTTP / WebSocket"| API
+ U <-->|"GET / WebSocket"| API
  FM -->|"ExecuteTask / NavigateToStation / cancel / ClearRobotError"| EX
  FM -->|"DockLease • kayıtlı kaynak sahibi"| BAT
  EX -->|"RobotStatus / feedback / result"| FM
@@ -915,19 +915,13 @@ flowchart TD
 
 ## 16. REST / WebSocket ve 2D panel
 
-**Durum:** PLANNED. **Amaç:** UI ile ROS arasındaki sorumluluk ve veri yönünü açıklamak.
+**Durum:** PARTIAL. C5 Aşama 1 salt okunur izlemeyi uygular. Görev girişi sonraki aşamadır.
 
-| Girdiler | Çıktılar | Karar koşulları |
+| Girdiler | Çıktılar | Koşullar |
 |---|---|---|
-| Kullanıcı görevi, RobotStatus, harita/rota, kalıcı olaylar | Görev yanıtı, snapshot/stream/replay ve 2D görünüm | UI DDS kullanmaz; kabul yanıtı görev tamamlanması değildir. |
+| Kabul edilmiş RobotStatus, görev ve rezervasyon kayıtları | Sürümlü tam snapshot ve 2D görünüm | Kaynak oturumu, sıra, zaman ve koordinat çerçevesi denetlenir. |
 
-**Kaynak belge:** [ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md](../ROS2_Fleet_Manager_Nihai_Mimari_Kararlar_2026-10-23.md) · [architecture-v2.3-transition.md](../architecture/architecture-v2.3-transition.md)
-
-**Kaynak kod:** Ürün uygulaması / bu akışa ait doğrulama henüz yok.
-
-**Test / kanıt:** Ürün uygulaması / bu akışa ait doğrulama henüz yok.
-
-**Sınır / fark:** FastAPI, WebSocket ve React/Konva uygulaması yoktur. REST şema, replay cursor, bağlantı kopması ve backpressure ayrıntıları burada yeni karar olarak seçilmez. Video akışı aktarılmaz.
+[API sözleşmesi](../design/c5-readonly-api.md) tam snapshot, yeniden eşitleme ve tampon sınırlarını açıklar. [Kaynak kod](../../backend/dashboard) · [Chrome/Fortress doğrulaması](../validation/c5/c5-stage1-validation-2026-11-06.md)
 
 ![REST / WebSocket ve 2D panel](svg/rest-websocket-gui.svg)
 
@@ -936,23 +930,19 @@ flowchart TD
 
 ```mermaid
 ---
-title: "16 · REST / WebSocket ve 2D panel · PLANNED"
+title: "16 · REST / WebSocket ve 2D panel · PARTIAL"
 ---
 flowchart LR
- U["Kullanıcı / React + Konva"]:::ui -->|"HTTP görev isteği"| API["FastAPI REST"]:::ui
- API -->|"Komut olayı"| Q["FM tek consumer"]:::fm
- Q -->|"Görev kabul / kimlik"| API
- Q -->|"ExecuteTask"| EX["Robot Executor"]:::executor
- EX -->|"RobotStatus / result"| Q
- Q -->|"Kalıcı görev ve olay"| DB[("SQLite")]:::db
- Q -->|"Durum görünümü"| WS["WebSocket snapshot / stream / replay"]:::ui
- DB -.->|"Replay ayrıntısı C5'te"| WS
- WS -->|"Koordinat / durum / görev"| U
- NAV["ROS harita / rota"]:::nav -->|"Backend adaptasyonu"| WS
+ EX["Robot Executor"]:::executor -->|"RobotStatus / terminal sonuç"| Q["FM tek consumer"]:::fm
+ Q -->|"Atomik durum ve Outbox kaydı"| DB[("SQLite")]:::db
+ Q -->|"Commit sonrası yetkili görünüm"| S["Sınırlı son snapshot"]:::fm
+ S -->|"Özel geçici dosya"| API["Salt okunur FastAPI"]:::ui
+ API -->|"GET / tam WebSocket snapshot'ı"| U["React + Konva paneli"]:::ui
+ API -.->|"Süre aşımı veya oturum değişimi"| R["Yeniden eşitleme"]:::wait
+ R -.-> U
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
- classDef nav fill:#ccfbf1,stroke:#0f766e,color:#134e4a,stroke-width:1.5px;
  classDef battery fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px;
  classDef db fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:1.5px;
  classDef ui fill:#fce7f3,stroke:#be185d,color:#831843,stroke-width:1.5px;

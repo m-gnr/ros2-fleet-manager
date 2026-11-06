@@ -1,0 +1,25 @@
+# Read-only C5 browser validation layered after C4.5. No frontend DDS access.
+services:
+  backend:
+    image: ros2-fleet-c5-validation:humble-fortress
+    ports:
+      - "127.0.0.1:${C5_API_PORT:?Set the C5 API port}:${C5_API_PORT:?Set the C5 API port}"
+    environment:
+      C5_API_PORT: "${C5_API_PORT:?Set the C5 API port}"
+      C5_UI_ORIGIN: "${C5_UI_ORIGIN:?Set the exact Vite browser origin}"
+      C5_SNAPSHOT_PATH: /run/fleet-dashboard/latest.json
+    tmpfs:
+      - /run/fleet-dashboard:mode=0700,size=4m
+    volumes:
+      - ../../docker/simulation-c5:/opt/simulation-c5:ro
+    command:
+      - bash
+      - -c
+      - >-
+        set -e;
+        source /opt/ros/humble/setup.bash;
+        cd /workspace;
+        colcon build --base-paths src;
+        source install/setup.bash;
+        export PYTHONPATH=/workspace:/opt/fleet-live-validation:/opt/simulation-c3-3-3:/opt/simulation-c4-1:/opt/simulation-c4-2:/opt/simulation-c4-3:/opt/simulation-c4-4:/opt/simulation-c4-5:$$PYTHONPATH;
+        exec python3 /opt/simulation-c5/dashboard_acceptance.py

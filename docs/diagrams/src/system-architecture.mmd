@@ -2,14 +2,14 @@
 title: "01 · Sistem ve Docker mimarisi · PARTIAL"
 ---
 flowchart TB
- subgraph UI["frontend • PLANNED"]
+ subgraph UI["frontend • PARTIAL"]
  U["React + Konva • 2D panel"]:::ui
  end
  subgraph BACK["backend • PARTIAL"]
- API["FastAPI / WebSocket • PLANNED"]:::ui
+ API["FastAPI / WebSocket • salt okunur"]:::ui
  FM["Fleet Manager • tek consumer"]:::fm
  DB[("SQLite + Outbox")]:::db
- API <-->|"Olay ve komut"| FM
+ FM -->|"Commit sonrası snapshot"| API
  FM <-->|"Atomik kayıt"| DB
  end
  subgraph SIM["simulation • PARTIAL"]
@@ -26,7 +26,7 @@ flowchart TB
  GZ -->|"/clock, odometri, fiziksel poz ve temas"| BAT
  BAT -->|"BatteryState • robot başına"| EX
  end
- U <-->|"HTTP / WebSocket"| API
+ U <-->|"GET / WebSocket"| API
  FM -->|"ExecuteTask / NavigateToStation / cancel / ClearRobotError"| EX
  FM -->|"DockLease • kayıtlı kaynak sahibi"| BAT
  EX -->|"RobotStatus / feedback / result"| FM

@@ -7,7 +7,7 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
 - **Mevcut:** Tek `fleet.yaml`, şema/Pydantic doğrulaması; robot başına Executor; HIGH/MEDIUM/LOW ve atanabilir FIFO; güvenli preemption; SQLite Outbox ve ROS 2 adaptörleri.
 - **Mevcut:** Robot başına batarya telemetrisi ve Nav2 enerji hesabı. Düşük SoC için şarj istasyonuna, teslimat sonrasında park veya güvenli bekleme alanına otomatik yönlendirme.
 - **Mevcut:** Düşük SoC/FIFO şarj kuyruğu, fiziksel dock temasıyla şarj ve kanıtlı istasyon devri.
-- **Planlanan:** FastAPI, WebSocket ve React + Konva 2D panel C5 kapsamındadır.
+- **Mevcut:** C5 Aşama 1, FastAPI/WebSocket üzerinden robot, batarya, görev ve istasyon verilerini gösteren salt okunur React/Konva paneli sunar.
 
 ## Mimari genel bakış
 
@@ -15,8 +15,9 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
 
 ```mermaid
 flowchart LR
-    UI["frontend: React + Konva • planlanan"] <-->|"HTTP / WebSocket"| API["backend: Fleet Manager + SQLite<br/>FastAPI • planlanan"]
-    API <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator ve fiziksel dock"]
+    UI["React + TypeScript + Konva"] <-->|"GET / WebSocket"| API["FastAPI • salt okunur"]
+    FM["Fleet Manager + SQLite"] -->|"Commit sonrası snapshot"| API
+    FM <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator ve fiziksel dock"]
 ```
 
 `simulation`, robot başına bağımsız düğümleri barındırır. `backend`, görev/sahiplik kararlarını ve kalıcılığı yönetir. `frontend`, backend üzerinden telemetri ve görevleri gösterir; DDS ağına bağlanmaz.
@@ -27,7 +28,7 @@ flowchart LR
 
 ## Kullanılan teknolojiler
 
-Mevcut altyapı: Python, Pydantic, JSON Schema, SQLite, ROS 2 Humble/rclpy, Cyclone DDS, Nav2/AMCL, Gazebo Fortress ve Docker Compose. Python bağımlılıkları [requirements-c1.txt](requirements-c1.txt), image/build tanımları [docker/](docker/) altında tutulur. FastAPI, React ve Konva C5 hedefidir.
+Mevcut altyapı: Python, Pydantic, JSON Schema, SQLite, ROS 2 Humble/rclpy, Cyclone DDS, Nav2/AMCL, Gazebo Fortress ve Docker Compose. Python bağımlılıkları [requirements-c1.txt](requirements-c1.txt), image/build tanımları [docker/](docker/) altında tutulur. C5, FastAPI ve Vite üzerinde TypeScript, React ve Konva kullanır.
 
 Kayıtlı canlı deney ortamı Apple Silicon / linux-arm64 container'lardır. Diğer platformlar ayrıca doğrulama gerektirir. Headless yazılım render ve Nav2 image bağımlılıkları için [Compose kılavuzuna](docker/compose/README.md) bakın.
 
@@ -36,7 +37,8 @@ Kayıtlı canlı deney ortamı Apple Silicon / linux-arm64 container'lardır. Di
 ```text
 backend/fleet_manager/   Domain, tek consumer, SQLite ve ROS adaptörleri
 fleet_config/           Paylaşılan filo doğrulayıcı ve CLI
-frontend/               Planlanan arayüz; henüz uygulama yok, boş dizin Git'te taşınmaz
+backend/dashboard/      Salt okunur snapshot, REST ve WebSocket
+frontend/               React/TypeScript/Konva operasyon paneli
 ros2_ws/src/             Robot Executor ve Battery Simulator ROS 2 paketleri
 interfaces/             Ürün IDL ve ayrı DDS probe test arayüzü
 config/                 fleet.yaml, şema, harita ve test yapılandırmaları
@@ -55,7 +57,7 @@ PDF'ler, kişisel notlar ve tarihsel bağlantılar korunur. Ayrıntılı belge d
 
 ## Kurulum ve çalıştırma
 
-Nihai uygulama Compose'u ve açılabilecek web paneli henüz yoktur. Python bağımlılıkları kurulu ortamda aşağıdaki komutlar 6 Kasım 2026'da depo kökünden çalıştırıldı.
+Yerel C5 paneli için [iki robotlu başlatma komutlarını](docs/validation/c5/c5-stage1-commands-2026-11-06.md) izleyin. Host test seçkisi [C1](requirements-c1.txt) ve [C5 test bağımlılıklarını](requirements-c5-test.txt) kullanır.
 
 ```sh
 export PYTHONPATH=.:backend:ros2_ws/src/fleet_robot_executor:ros2_ws/src/fleet_battery_simulator
@@ -90,7 +92,7 @@ Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belg
 | C2 | Executor ve ürün IDL mevcut | Tek robot canlı simülasyon tarihsel kanıtı |
 | C3–C3.3.3 | Domain, Outbox, adaptör ve iki robot test altyapısı mevcut | Tarihsel canlı rapor var; statik incelemede açık güvenlik/entegrasyon farkları bulundu |
 | C4 | Tüketim, telemetri, istasyon yönlendirmesi ve fiziksel şarj | İki robotlu uçtan uca kabul ve sınırlar [C4 kontrol listesinde](docs/validation/c4/c4-acceptance-2026-11-06.md) |
-| C5 | Planlanan | API, WebSocket ve frontend yok |
+| C5 Aşama 1 | Salt okunur API, WebSocket ve operasyon paneli | [Gazebo ve Chrome doğrulaması](docs/validation/c5/c5-stage1-validation-2026-11-06.md) |
 
 ## Testler ve doğrulama sonuçları
 
@@ -106,7 +108,7 @@ Tarihsel kanıtlar: C2.3 tek robotta 7/7 senaryo; C3.3.3 raporunda 10/10 senaryo
 
 ## Yol haritası
 
-C5, API/panel ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
+C5’in sonraki aşamaları görev girişini ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
 
 ## Dokümantasyon bağlantıları
 

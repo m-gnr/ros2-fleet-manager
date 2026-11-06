@@ -1,5 +1,6 @@
-import { memo, useLayoutEffect, useRef } from 'react'
-import { InstancedMesh, Object3D } from 'three'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Group, InstancedMesh, Object3D } from 'three'
+import { loadWarehouseDecor } from './warehouseDecor'
 
 type Box = [x: number, y: number, z: number, width: number, height: number, depth: number]
 const warehouseSize = 14
@@ -80,11 +81,6 @@ for (const x of [-5.55, 5.55]) {
 
 export const Warehouse = memo(function Warehouse({ softShadows }: { softShadows: boolean }) {
   return <group name="schematic-warehouse">
-    <mesh name="warehouse-floor" position={[0, -0.1, 0]}>
-      <boxGeometry args={[warehouseSize, 0.15, warehouseSize]} />
-      <meshStandardMaterial color="#e0e5e7" roughness={0.97} />
-    </mesh>
-    <gridHelper args={[warehouseSize, warehouseSize, '#c7d0d5', '#d2dade']} position={[0, -0.015, 0]} />
     <Boxes name="storage-zones" color="#ced8dc" boxes={zones} />
     <Boxes name="zone-outlines" color="#a8b8c0" boxes={edges} />
     <Boxes name="aisle-markings" color="#f7f9fa" boxes={paint} />
@@ -98,5 +94,47 @@ export const Warehouse = memo(function Warehouse({ softShadows }: { softShadows:
     <Boxes name="pallet-cartons" color="#e8dfd1" boxes={cartons} />
     <Boxes name="case-bands" color="#d2c4b3" boxes={crateBands} />
     <Boxes name="rack-guards" color="#aebdc5" boxes={curbs} />
+  </group>
+})
+
+const importedZones: Box[] = [[0, -0.018, -5.34, 12.15, 0.005, 1.8]]
+const importedEdges: Box[] = [[0, -0.012, -4.44, 12.15, 0.005, 0.035]]
+const importedShadows: Box[] = [[0, -0.009, -5.3, 11.4, 0.004, 0.94]]
+
+export const WarehouseEnvironment = memo(function WarehouseEnvironment({ softShadows }: { softShadows: boolean }) {
+  const [decor, setDecor] = useState<Group>()
+  useEffect(() => {
+    let mounted = true
+    let release: (() => void) | undefined
+    loadWarehouseDecor().then(({ group, dispose }) => {
+      if (!mounted) dispose()
+      else {
+        release = dispose
+        setDecor(group)
+      }
+    }).catch(() => {
+      // The schematic remains mounted if the optional local asset cannot be used.
+    })
+    return () => {
+      mounted = false
+      release?.()
+    }
+  }, [])
+
+  return <group name="warehouse-environment">
+    <mesh name="warehouse-floor" position={[0, -0.1, 0]}>
+      <boxGeometry args={[warehouseSize, 0.15, warehouseSize]} />
+      <meshStandardMaterial color="#e0e5e7" roughness={0.97} />
+    </mesh>
+    <gridHelper args={[warehouseSize, warehouseSize, '#c7d0d5', '#d2dade']} position={[0, -0.015, 0]} />
+    {decor ? <group name="warehouse-layout">
+      <Boxes name="storage-zones" color="#ccd6da" boxes={importedZones} />
+      <Boxes name="zone-outlines" color="#b68441" boxes={importedEdges} />
+      <Boxes name="aisle-markings" color="#f7f9fa" boxes={paint} />
+      <Boxes name="walkway-crossings" color="#f5f8f8" boxes={stripes} />
+      <Boxes name="perimeter-curbs" color="#c8d2d7" boxes={rail} />
+      {softShadows && <Boxes name="shelf-shadows" color="#b6c2c9" boxes={importedShadows} />}
+      <primitive object={decor} />
+    </group> : <Warehouse softShadows={softShadows} />}
   </group>
 })

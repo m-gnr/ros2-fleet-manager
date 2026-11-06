@@ -14,7 +14,9 @@ import { RouteLayers } from './RouteLayers'
 import type { RouteOptions } from './routes'
 import type { Pose } from './telemetry'
 import type { SceneFeed } from './sceneFeed'
-import { Warehouse } from './Warehouse'
+import { WarehouseEnvironment } from './Warehouse'
+import { OperationMarkers } from './OperationMarkers'
+import type { OperationPoint } from './operationPoints'
 
 type SceneProps = {
   feed: SceneFeed
@@ -22,6 +24,8 @@ type SceneProps = {
   lowQuality: boolean
   labels: Map<string, HTMLSpanElement>
   markers: Map<string, HTMLButtonElement>
+  points: OperationPoint[]
+  pointLabels: Map<string, HTMLSpanElement>
   robotIds: string[]
   selected?: string
   onSelect: (id: string) => void
@@ -39,7 +43,7 @@ function overlaps(a: ScreenRect, b: ScreenRect) {
   return a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top
 }
 
-function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, selected, onSelect, trace, routes }: SceneProps) {
+function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLabels, robotIds, selected, onSelect, trace, routes }: SceneProps) {
   const models = useRef(new Map<string, Group>()).current
   const orbit = useRef<OrbitControls | null>(null)
   const lastPose = useRef<Pose>(undefined)
@@ -47,6 +51,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
   const previousSelection = useRef<string>(undefined)
   const fitted = useRef(false)
   const cameraCommand = useRef(command)
+  const warehouseLayout = useRef<Group>(undefined)
   const warehouseFrame = useRef<Vector3[]>(undefined)
   const aspect = useRef(0)
   const preset = useRef(true)
@@ -92,7 +97,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
     }
   }, [camera, gl, feed, invalidate])
 
-  useLayoutEffect(() => { invalidate() }, [command, lowQuality, selected, routes, invalidate])
+  useLayoutEffect(() => { invalidate() }, [command, lowQuality, selected, routes, points, invalidate])
   useLayoutEffect(() => { fitted.current = false }, [routes.selectedOnly, filteredId])
 
   useFrame(({ size, scene }, delta) => {
@@ -108,7 +113,16 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
     const resized = aspect.current !== nextAspect
     const firstFrame = aspect.current === 0
     aspect.current = nextAspect
-    warehouseFrame.current ??= warehouseCorners(scene.getObjectByName('schematic-warehouse')!)
+    const environment = scene.getObjectByName('warehouse-environment')!
+    const layout = environment.getObjectByName('warehouse-layout') as Group | undefined
+    const layoutChanged = warehouseLayout.current !== layout
+    if (!warehouseFrame.current || layoutChanged) {
+      warehouseLayout.current = layout
+      warehouseFrame.current = warehouseCorners(environment)
+      if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:warehouse-bounds', {
+        bubbles: true, detail: warehouseFrame.current.map(corner => corner.toArray()),
+      }))
+    }
     if (resized && preset.current && nextMode === 'fit') fitted.current = false
     const oldCommand = cameraCommand.current
     const priorPose = lastPose.current
@@ -157,7 +171,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
       transitioning.current = true
     }
 
-    if (warehouseMode && (restoreWarehouse || (resized && preset.current))) {
+    if (warehouseMode && (restoreWarehouse || ((resized || layoutChanged) && preset.current))) {
       frameWarehouse(warehouseFrame.current, fov, nextAspect, nextMode === 'top', goalTarget.current, goalOffset.current)
       if (firstFrame || !transitioning.current) {
         controls.target.copy(goalTarget.current)
@@ -180,6 +194,12 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
 
     if (nextMode === 'follow' && robot?.visible) {
       const [x, y, z] = followTarget(robot.position.x, robot.position.z)
+      if (transitioning.current && !changed && !selectionChanged && previous) {
+        // Keep the transition converging relative to a continuously moving target.
+        shift.set(x, y, z).sub(goalTarget.current)
+        controls.target.add(shift)
+        camera.position.add(shift)
+      }
       goalTarget.current.set(x, y, z)
       if (!transitioning.current && (selectionChanged || (pose !== priorPose && !previous && status === 'LIVE')) &&
           controls.target.distanceToSquared(goalTarget.current) > 0.0144) {
@@ -253,6 +273,26 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
         placements.unshift(placement)
       } else placements.push(placement)
     }
+    for (const point of points) {
+      const label = pointLabels.get(point.key)
+      if (!label) continue
+      screen.fromArray(point.position).project(camera)
+      if (Math.abs(screen.x) > 1 || Math.abs(screen.y) > 1 || Math.abs(screen.z) > 1) {
+        label.style.visibility = 'hidden'
+        continue
+      }
+      const x = (screen.x + 1) / 2 * size.width
+      const y = (1 - screen.y) / 2 * size.height
+      const width = label.offsetWidth
+      const height = label.offsetHeight
+      const gap = 18
+      placements.push({ label, candidates: [
+        { left: x + gap, right: x + gap + width, top: y - height / 2, bottom: y + height / 2 },
+        { left: x - gap - width, right: x - gap, top: y - height / 2, bottom: y + height / 2 },
+        { left: x - width / 2, right: x + width / 2, top: y + gap, bottom: y + gap + height },
+        { left: x - width / 2, right: x + width / 2, top: y - gap - height, bottom: y - gap },
+      ] })
+    }
     for (const { label, candidates } of placements) {
       const slot = candidates.find(rect => rect.left >= 3 && rect.right <= size.width - 3 &&
         rect.top >= 3 && rect.bottom <= size.height - 3 && !occupied.some(other => overlaps(rect, other)))
@@ -298,7 +338,11 @@ function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, select
           target: controls.target.toArray(), camera: camera.position.toArray(),
           calls: gl.info.render.calls, triangles: gl.info.render.triangles,
           geometries: gl.info.memory.geometries, textures: gl.info.memory.textures,
-          dpr: gl.getPixelRatio(),
+          dpr: gl.getPixelRatio(), warehouse: layout ? 'glb' : 'schematic',
+          points: points.map(point => {
+            const root = scene.getObjectByName(point.key)!
+            return { ...point, position: root.getWorldPosition(screen).toArray(), yaw: root.rotation.y }
+          }),
         },
       }))
     }
@@ -326,7 +370,8 @@ export default memo(function Scene(props: SceneProps) {
     <hemisphereLight args={['#ffffff', '#c2cbd1', 1.65]} />
     <directionalLight position={[2, 8, -3]} intensity={1.95} color="#fff6e9" />
     <directionalLight position={[-6, 3, 5]} intensity={0.42} color="#e0ecfc" />
-    <Warehouse softShadows={!props.lowQuality} />
+    <WarehouseEnvironment softShadows={!props.lowQuality} />
+    <OperationMarkers points={props.points} />
     {props.robotIds.map((id, index) => <RouteLayers key={id} feed={props.feed} id={id} colorIndex={index}
       selected={id === props.selected} options={props.routes} trace={props.trace} />)}
     <Vehicles {...props} />

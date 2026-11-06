@@ -90,7 +90,7 @@ export default function App() {
             ? fleet.robots.filter((r) => r.charging === "CHARGING").length : null} description="Doğrulanmış C4 ölçümü. Şarj olduğu doğrulanan robotların sayısı." icon={BatteryCharging} />
         </dl>
         <div className="operations-grid">
-          <ScenePanel feed={sceneFeed} view={scene} robotIds={robotIds} selected={activeId} onSelect={setSelectedId} />
+          <ScenePanel fleet={fleet} connected={connected} feed={sceneFeed} view={scene} robotIds={robotIds} selected={activeId} onSelect={setSelectedId} />
           <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} tfRobots={scene.robots} />
           <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} connected={connected} />
         </div>

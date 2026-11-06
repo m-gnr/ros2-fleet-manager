@@ -84,6 +84,10 @@ async function trace(page: Page) {
   });
 }
 
+async function warehouseReady(page: Page) {
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.warehouse)).toBe("glb");
+}
+
 test("lists robots, selects by 3D scene and keyboard, and masks invalid battery", async ({ page }) => {
   await trace(page);
   await feed(page, (socket) => {
@@ -110,6 +114,7 @@ test("lists robots, selects by 3D scene and keyboard, and masks invalid battery"
   const root = () => page.evaluate(() => Reflect.get(window, "scene_frame")?.robots.find(
     (entry: { robot_id: string }) => entry.robot_id === "robot_alpha"));
   await expect.poll(async () => (await root())?.visible).toBe(true);
+  await warehouseReady(page);
   const anchor = await root();
   expect(anchor.pose).toEqual([-2, 0, -1]);
   expect(anchor.yaw).toBeCloseTo(Math.PI / 2);
@@ -404,6 +409,7 @@ test("keeps close robots aligned to TF roots at multiple camera distances", asyn
     await expect(selected === valid.robot_id ? beta : alpha).toBeHidden();
     expect((await label.boundingBox())!.height).toBeLessThanOrEqual(26 * .8);
   };
+  await warehouseReady(page);
   await expect(alpha).toBeVisible();
   await checkMarkers(valid.robot_id);
   const bounds = (await canvas.boundingBox())!;
@@ -422,7 +428,7 @@ test("refits an untouched camera but preserves zoom, orbit and pan across resize
   await feed(page, (socket) => socket.send(JSON.stringify(fixture)));
   await page.goto("/?trace=1");
   const frame = () => page.evaluate(() => Reflect.get(window, "scene_frame"));
-  await expect.poll(frame).toBeTruthy();
+  await warehouseReady(page);
   const wide = await frame();
   const viewport = page.locator("canvas");
   await page.setViewportSize({ width: 1280, height: 850 });
@@ -567,4 +573,106 @@ test("disposes orbit listeners and the WebGL context when leaving the overview",
     .toEqual([false, "true", "true"]);
   await page.getByRole("link", { name: "Genel görünüm" }).click();
   await expect(page.locator(".scene-viewport canvas")).toBeVisible();
+});
+
+test("places verified operation markers on map coordinates and prioritizes the selected robot's task", async ({ page }) => {
+  await trace(page);
+  let socket: WebSocketRoute | undefined;
+  const park = { ...fixture.stations[0], station_id: "park_test", station_type: "PARKING" as const,
+    pose: { ...pose, x: -2.4, y: -1.1 }, state: "FREE" as const, charging: "NOT_APPLICABLE" as const,
+    occupied_by_robot_id: null, reserved_by_robot_id: null, charging_robot_id: null };
+  const otherTask = { ...fixture.tasks[0], task_id: "other_task", pickup: { ...pose, x: 3.4, y: -1.8 },
+    dropoff: { ...pose, x: -3.2, y: 2.4 }, assigned_robot_id: valid.robot_id };
+  const snapshot = { ...fixture, robots: [{ ...valid, active_task_id: otherTask.task_id }, invalid],
+    stations: [...fixture.stations, park, { ...park, station_id: "no_pose", pose: null },
+      { ...park, station_id: "wrong_frame", pose: { ...pose, frame_id: "odom" } }],
+    tasks: [otherTask, fixture.tasks[0]] };
+  await feed(page, (route) => {
+    socket = route;
+    route.send(JSON.stringify(snapshot));
+    const tf = telemetry(route);
+    tf.connect();
+    tf.poses();
+  });
+  await page.goto("/?trace=1");
+  const point = (id: string) => page.locator(`[data-operation-point="${id}"]`);
+  await expect(point("pickup:other_task")).toHaveCount(1);
+  await expect(point("station:dock_test")).toContainText("robot_alpha");
+  await expect(point("station:dock_test")).toContainText("İşgal altında");
+  await expect(point("station:park_test")).toContainText("Serbest");
+  await expect(point("station:no_pose")).toHaveCount(0);
+  await expect(point("station:wrong_frame")).toHaveCount(0);
+  const drawnPoints = () => page.evaluate(() => Reflect.get(window, "scene_frame")?.points.map(
+    ({ key, position, yaw }: { key: string; position: number[]; yaw: number }) => [key, position, yaw]));
+  await expect.poll(drawnPoints).toContainEqual(["pickup:other_task", [3.4, 0, 1.8], pose.yaw]);
+  await expect.poll(drawnPoints).toContainEqual(["dropoff:other_task", [-3.2, 0, -2.4], pose.yaw]);
+  await expect.poll(drawnPoints).toContainEqual(["station:park_test", [-2.4, 0, 1.1], pose.yaw]);
+  await page.getByRole("button", { name: "Robot seç: robot_beta", exact: true }).click();
+  await expect(point("pickup:task_test")).toHaveCount(1);
+  await expect(point("pickup:other_task")).toHaveCount(0);
+  socket!.send(JSON.stringify({ ...snapshot, sequence: snapshot.sequence + 1, tasks: [] }));
+  await expect(page.locator('[data-operation-point^="pickup:"], [data-operation-point^="dropoff:"]')).toHaveCount(0);
+  await socket!.close();
+  await expect(point("station:dock_test")).toContainText("Son eşitleme");
+  await expect(point("station:dock_test")).not.toContainText("robot_alpha");
+});
+
+test("loads the local GLB without resetting an edited camera", async ({ page }) => {
+  await trace(page);
+  let release: () => void = () => {};
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/warehouse-aisle*.glb", async (route) => {
+    await pending;
+    await route.continue();
+  });
+  const requests: URL[] = [];
+  page.on("request", request => {
+    if (request.url().endsWith(".glb")) requests.push(new URL(request.url()));
+  });
+  await feed(page, (route) => {
+    route.send(JSON.stringify(fixture));
+    const tf = telemetry(route);
+    tf.connect();
+    tf.poses();
+  });
+  await page.goto("/?trace=1");
+  const frame = () => page.evaluate(() => Reflect.get(window, "scene_frame"));
+  try {
+    await expect.poll(async () => (await frame())?.warehouse).toBe("schematic");
+    const original = await frame();
+    const canvas = (await page.locator("canvas").boundingBox())!;
+    await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+    await page.mouse.wheel(0, -260);
+    await expect.poll(async () => (await frame())?.camera).not.toEqual(original.camera);
+    const manual = await frame();
+    release();
+    await expect.poll(async () => (await frame())?.warehouse).toBe("glb");
+    const loaded = await frame();
+    expect(new Vector3(...loaded.camera).distanceTo(new Vector3(...manual.camera))).toBeLessThan(.005);
+    expect(new Vector3(...loaded.target).distanceTo(new Vector3(...manual.target))).toBeLessThan(.005);
+    expect(requests).toHaveLength(1);
+    expect(requests[0].origin).toEqual(new URL(page.url()).origin);
+  } finally {
+    release();
+  }
+});
+
+test("keeps live robots and camera controls when the local GLB fails", async ({ page }) => {
+  await trace(page);
+  await page.route("**/warehouse-aisle*.glb", route => route.abort());
+  await feed(page, (route) => {
+    route.send(JSON.stringify(fixture));
+    const tf = telemetry(route);
+    tf.connect();
+    tf.poses();
+  });
+  const failed = page.waitForEvent("requestfailed", request => request.url().endsWith(".glb"));
+  await page.goto("/?trace=1");
+  await failed;
+  await expect(page.locator(".scene-indicator")).toHaveText("2 / 2 TF LIVE");
+  await page.getByRole("button", { name: "Üstten", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => {
+    const frame = Reflect.get(window, "scene_frame");
+    return [frame?.warehouse, frame?.mode, frame?.transitioning];
+  })).toEqual(["schematic", "top", false]);
 });

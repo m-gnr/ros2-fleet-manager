@@ -1,11 +1,14 @@
 import { Box, Crosshair, Layers, Maximize, Orbit, RotateCcw, Scan } from "lucide-react";
-import { Component, Fragment, lazy, Suspense, useRef, useState, type ReactNode } from "react";
+import { Component, Fragment, lazy, Suspense, useMemo, useRef, useState, type ReactNode } from "react";
 import { cameraLabels, resetCamera, selectCamera, type CameraCommand, type CameraMode } from "./scene/camera";
 import type { Fleet as SceneView } from "./scene/fleet";
 import { robotColor } from "./scene/presentation";
 import type { RouteOptions } from "./scene/routes";
 import { markerDiameter } from "./scene/marker";
 import type { SceneFeed } from "./scene/sceneFeed";
+
+import type { Fleet } from "./fleet";
+import { operationPoints, pointStyle } from "./scene/operationPoints";
 
 const Scene = lazy(() => import("./scene/Scene"));
 const modes = [
@@ -25,7 +28,8 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
   }
 }
 
-export function ScenePanel({ feed, view, robotIds, selected, onSelect }: {
+export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, onSelect }: {
+  fleet: Fleet | null; connected: boolean;
   feed: SceneFeed; view: SceneView; robotIds: string[]; selected?: string; onSelect: (id: string) => void;
 }) {
   const [command, setCommand] = useState<CameraCommand>({ mode: "free", reset: 0 });
@@ -33,6 +37,8 @@ export function ScenePanel({ feed, view, robotIds, selected, onSelect }: {
   const [routes, setRoutes] = useState<RouteOptions>({ plan: true, trail: true, selectedOnly: false, highlight: false });
   const markers = useRef(new Map<string, HTMLButtonElement>()).current;
   const labels = useRef(new Map<string, HTMLSpanElement>()).current;
+  const pointLabels = useRef(new Map<string, HTMLSpanElement>()).current;
+  const points = useMemo(() => operationPoints(fleet, selected, connected), [fleet, selected, connected]);
   const live = robotIds.filter((id) => view.robots.get(id)?.status === "LIVE").length;
 
   function chooseMode(mode: CameraMode) {
@@ -50,7 +56,7 @@ export function ScenePanel({ feed, view, robotIds, selected, onSelect }: {
       <SceneBoundary>
         <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
           <Scene feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
-            robotIds={robotIds} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
+            robotIds={robotIds} points={points} pointLabels={pointLabels} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
         </Suspense>
       </SceneBoundary>
       <div className="scene-labels">
@@ -72,6 +78,13 @@ export function ScenePanel({ feed, view, robotIds, selected, onSelect }: {
               <i style={{ background: color }} /><span>{id}</span><small>{status}</small>
             </span>
           </Fragment>;
+        })}
+        {points.map(({ key, id, kind, detail, owner }) => {
+          const { name, color } = pointStyle[kind];
+          return <span key={key} className="scene-point-label" data-operation-point={key} title={[name, id, detail, owner].filter(Boolean).join(" · ")}
+            ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
+            <strong style={{ color }}>{name}</strong> <span>{id}</span>{detail && <small>{detail}</small>}{owner && <small>{owner}</small>}
+          </span>;
         })}
       </div>
       <span className="scene-indicator"><i data-live={live > 0} />{live} / {robotIds.length} TF LIVE</span>

@@ -20,6 +20,9 @@ const scenePackets = [];
 const rendered = [];
 const routeEvents = [];
 const traceFrames = [];
+const operationSources = new Map();
+const pointChecks = new Map();
+const verifyWarehouse = process.env.C5_VERIFY_WAREHOUSE === "1";
 const urls = new Set();
 const pct = (items, fraction) => [...items].sort((a, b) => a - b).at(Math.floor((items.length - 1) * fraction)) ?? null;
 if (sceneEnabled) {
@@ -87,6 +90,12 @@ async function pageForFleet() {
         return;
       }
       last = snapshot;
+      if (verifyWarehouse) {
+        for (const station of snapshot.stations) operationSources.set(`station:${station.station_id}`, station.pose);
+        for (const task of snapshot.tasks) {
+          for (const kind of ["pickup", "dropoff"]) operationSources.set(`${kind}:${task.task_id}`, task[kind]);
+        }
+      }
       for (const robot of snapshot.robots) {
         if (robot.pose_reliability !== "LIVE") continue;
         assert.equal(robot.pose.frame_id, snapshot.map_frame);
@@ -217,6 +226,8 @@ try {
   const ids = last.robots.map(({ robot_id }) => robot_id);
   await expect(page.getByRole("button", { name: /^Robot seç:/ })).toHaveCount(2);
   if (sceneEnabled) {
+    if (verifyWarehouse) await until(() => traceFrames.at(-1)?.warehouse === "glb",
+      "Local GLB did not render in Chrome", 10000);
     await until(() => traceFrames.at(-1)?.robots.filter((robot) => robot.visible && robot.status === "LIVE").length === 2,
       "Chrome did not render two live TF robots");
     await expect(page.locator(".scene-viewport canvas")).toBeVisible();
@@ -318,12 +329,17 @@ try {
       }
       return false;
     }, "Observed Nav2 plan label did not match a visible ROS plan", 20000);
+    if (verifyWarehouse) {
+      await until(() => traceFrames.at(-1)?.points?.some(point => point.kind === "pickup"),
+        "Pickup/dropoff did not render during an active task", 8000);
+    }
     await capture("active-task-plan");
     await page.getByRole("button", { name: "Robotu takip et" }).click();
     await until(() => traceFrames.at(-1)?.mode === "follow" && !traceFrames.at(-1).transitioning, "Follow camera did not settle", 10000);
     await capture("camera-follow");
     await page.getByRole("button", { name: "Üstten" }).click();
     await until(() => traceFrames.at(-1)?.mode === "top" && !traceFrames.at(-1).transitioning, "Top camera did not settle", 10000);
+    if (verifyWarehouse) await capture("camera-top");
     await page.getByRole("button", { name: "Filoyu kadraja al" }).click();
     await until(() => traceFrames.at(-1)?.mode === "fit" && !traceFrames.at(-1).transitioning, "Fleet camera did not settle", 10000);
     await capture("camera-fit");
@@ -402,6 +418,25 @@ try {
     }
     assert.ok(ids.every((id) => rendered.some((frame) => frame.robot_id === id)));
     metrics.renderedAnchorChecks = rendered.length;
+    if (verifyWarehouse) {
+      let checked = 0;
+      for (const frame of traceFrames) {
+        if (frame.warehouse !== "glb") continue;
+        for (const point of frame.points) {
+          const source = operationSources.get(point.key);
+          assert.equal(source?.frame_id, "map", point.key);
+          assert.deepEqual(point.position, [source.x, 0, -source.y].map(value => value || 0), point.key);
+          assert.equal(point.yaw, source.yaw, point.key);
+          pointChecks.set(point.key, { ...point, source });
+          checked++;
+        }
+      }
+      for (const kind of ["pickup", "dropoff", "station"]) {
+        assert.ok([...pointChecks.keys()].some(key => key.startsWith(kind + ":")), kind);
+      }
+      metrics.operationPointChecks = checked;
+      writeFileSync(join(evidence, "chrome-operation-points.json"), JSON.stringify([...pointChecks.values()], null, 2));
+    }
   }
   console.log(JSON.stringify({ result: sceneEnabled ? "C5_3D_CHROME_PASSED" : "C5_CHROME_PASSED", chrome: chrome.version(), moved: [...moved],
     chargeOwners: [...chargeOwners], tasks: Object.fromEntries([...taskStates].map(([id, states]) => [id, [...states]])) }));

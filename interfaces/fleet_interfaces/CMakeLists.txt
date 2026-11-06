@@ -17,6 +17,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/NavigateToStation.action"
   "msg/RobotStatus.msg"
   "msg/BatteryState.msg"
+  "msg/DockLease.msg"
   "srv/ClearRobotError.srv"
   DEPENDENCIES
     geometry_msgs

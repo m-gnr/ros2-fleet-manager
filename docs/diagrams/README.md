@@ -27,8 +27,8 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 | 8 | Güvenlik — [Assignment epoch ve UUID uzlaştırması](#08-assignment-reconciliation) | IMPLEMENTED | [Mermaid](src/assignment-reconciliation.mmd) · [SVG](svg/assignment-reconciliation.svg) |
 | 9 | Kalıcılık — [SQLite Outbox ve tek consumer](#09-sqlite-outbox-consumer) | IMPLEMENTED | [Mermaid](src/sqlite-outbox-consumer.mmd) · [SVG](svg/sqlite-outbox-consumer.svg) |
 | 10 | Enerji — [Wh batarya hesabı ve telemetri](#10-battery-wh-integration) | IMPLEMENTED | [Mermaid](src/battery-wh-integration.mmd) · [SVG](svg/battery-wh-integration.svg) |
-| 11 | Enerji — [Şarj sırası ve istasyon seçimi](#11-charging-queue-selection) | PLANNED | [Mermaid](src/charging-queue-selection.mmd) · [SVG](svg/charging-queue-selection.svg) |
-| 12 | Enerji — [Şarjdan ayrılma ve yüzde 80](#12-charging-exit-policy) | PLANNED | [Mermaid](src/charging-exit-policy.mmd) · [SVG](svg/charging-exit-policy.svg) |
+| 11 | Enerji — [Şarj sırası ve istasyon seçimi](#11-charging-queue-selection) | IMPLEMENTED | [Mermaid](src/charging-queue-selection.mmd) · [SVG](svg/charging-queue-selection.svg) |
+| 12 | Enerji — [Şarjdan ayrılma ve yüzde 80](#12-charging-exit-policy) | IMPLEMENTED | [Mermaid](src/charging-exit-policy.mmd) · [SVG](svg/charging-exit-policy.svg) |
 | 13 | Kaynak — [Park rezervasyonu ve güvenli bekleme](#13-parking-reservations) | IMPLEMENTED | [Mermaid](src/parking-reservations.mmd) · [SVG](svg/parking-reservations.svg) |
 | 14 | Kurtarma — [FAILED / ERROR ve operatör kurtarma](#14-failure-operator-recovery) | PARTIAL | [Mermaid](src/failure-operator-recovery.mmd) · [SVG](svg/failure-operator-recovery.svg) |
 | 15 | Konfigürasyon — [fleet.yaml yaşam döngüsü](#15-fleet-config-lifecycle) | PARTIAL | [Mermaid](src/fleet-config-lifecycle.mmd) · [SVG](svg/fleet-config-lifecycle.svg) |
@@ -567,7 +567,7 @@ flowchart TD
 
 ## 10. Wh batarya hesabı
 
-**Durum:** IMPLEMENTED. C4.1 fiziksel tüketimi, C4.2 ise Executor ve Fleet Manager telemetri akışını uygular.
+**Durum:** IMPLEMENTED. C4.1 tüketimi, C4.2 telemetriyi ve C4.4 fiziksel şarjı uygular.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
@@ -579,7 +579,7 @@ flowchart TD
 
 **Test / kanıt:** [C4.1 tüketim raporu](../validation/c4/c4-1-validation-2026-11-06.md) · [C4.2 entegrasyon raporu](../validation/c4/c4-2-validation-2026-11-06.md)
 
-**Sınır / fark:** Her düğüm bir robotu izler. Geri sarmada simülatör enerjiyi korur, Executor ve Fleet Manager ise yeni atamayı senaryo resetine kadar kilitler. Şarj sonraki aşamaların kapsamıdır.
+**Sınır / fark:** Her düğüm bir robotu izler. Geri sarmada simülatör enerjiyi korur, Executor ve Fleet Manager ise yeni atamayı senaryo resetine kadar kilitler. [C4.4 fiziksel şarjı](../validation/c4/c4-4-validation-2026-11-06.md) kısa süreli sahiplik ve temas kanıtı kullanır.
 
 ![Wh batarya hesabı](svg/battery-wh-integration.svg)
 
@@ -596,9 +596,14 @@ flowchart TD
  T -->|"İlk örnek veya geri sarma"| R["Zaman ve odometri referansını kur<br/>Enerjiyi koru"]:::battery
  T -->|"Aynı veya geçersiz"| W(["Sonraki geçerli saat örneği"]):::terminal
  T -->|"İleri"| D["Saate yetişen odometriyi işle<br/>Kopuk veya geçersiz adımı sayma"]:::battery
- D --> E["E = max(0, E − k × delta_s − P_idle × delta_t / 3600)"]:::battery
+ D --> DOCK{"Geçerli dock teması ve sahipliği var mı?"}:::decision
+ DOCK -->|"Evet"| CH["Şarj Wh = P_charge × delta_t / 3600"]:::battery
+ DOCK -->|"Hayır"| ZERO["Şarj Wh = 0"]:::battery
+ CH --> E
+ ZERO --> E
+ E["E = sınırla(E + şarj Wh − hareket Wh − taban Wh)"]:::battery
  E --> S["SoC = 100 × E / C_usable"]:::battery
- S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, ölçüm damgası ve yayıncı oturumu"]:::battery
+ S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, şarj istasyonu ve ölçüm damgası"]:::battery
  R --> P
  P --> W
  P --> EX{"Executor: kaynak tek ve aynı mı?<br/>Robot, Wh, SoC ve ölçüm damgası geçerli mi?"}:::decision
@@ -620,7 +625,7 @@ flowchart TD
 
 ## 11. Şarj sırası ve istasyon seçimi
 
-**Durum:** PLANNED. **Amaç:** Şarj talep sırasını kaynak sahipliğinden ayırmak.
+**Durum:** IMPLEMENTED. Düşük SoC ve FIFO sırası ile dock sahipliğinin yönetimi.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
@@ -632,7 +637,7 @@ flowchart TD
 
 **Test / kanıt:** [test_fleet_manager_domain.py](../../tests/test_fleet_manager_domain.py)
 
-**Sınır / fark:** Rezervasyon primitive’leri mevcut olsa da otomatik şarj kuyruğu/yürütücüsü yoktur. Çoklu istasyon seçimi için yeni eşitlik veya maliyet politikası belirlenmedi.
+**Sınır / fark:** Şarj için kaynak sahibi ile damgalı fiziksel kanıt eşleşir. [C4.4 kanıtı](../validation/c4/c4-4-validation-2026-11-06.md)
 
 ![Şarj sırası ve istasyon seçimi](svg/charging-queue-selection.svg)
 
@@ -641,7 +646,7 @@ flowchart TD
 
 ```mermaid
 ---
-title: "11 · Şarj sırası ve istasyon seçimi · PLANNED"
+title: "11 · Şarj sırası ve istasyon seçimi · IMPLEMENTED"
 ---
 flowchart TD
  A(["Şarj ihtiyacı"]):::terminal --> Q["Şarj kuyruğu: düşük SoC → FIFO"]:::fm
@@ -650,10 +655,11 @@ flowchart TD
  FREE -->|"Evet"| PICK["Sıra hakkı olan robot için<br/>uygun istasyon seç"]:::fm
  PICK --> RES{"Tek sahipli rezervasyon başarılı mı?"}:::decision
  RES -->|"Hayır"| W
- RES -->|"Evet"| NAV["Executor üzerinden istasyona git<br/>Komut sözleşmesi henüz tamamlanmadı"]:::executor
- NAV --> DOCK{"Konum + duruş + temas doğrulandı mı?"}:::decision
- DOCK -->|"Hayır"| WAIT["Teyit bekle; enerji ekleme"]:::wait
- DOCK -->|"Evet"| CH["OCCUPIED / şarj başlar"]:::battery
+ RES -->|"Evet"| NAV["NavigateToStation ile istasyona git"]:::executor
+ NAV --> LEASE["OCCUPIED kaydı + geçerli DockLease"]:::db
+ LEASE --> DOCK{"Sahiplik, fiziksel konum,<br/>duruş ve temas geçerli mi?"}:::decision
+ DOCK -->|"Hayır"| WAIT["Teyit bekle ve şarjı kapalı tut"]:::wait
+ DOCK -->|"Evet"| CH["Battery Simulator şarjı başlatır"]:::battery
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
@@ -673,7 +679,7 @@ flowchart TD
 
 ## 12. Şarjdan ayrılma ve yüzde 80
 
-**Durum:** PLANNED. **Amaç:** Görev için erken ayrılma ile yer verme politikasını ayırmak.
+**Durum:** IMPLEMENTED. Görev için erken ayrılma ve %80 sonrası yer verme.
 
 | Girdiler | Çıktılar | Karar koşulları |
 |---|---|---|
@@ -683,9 +689,9 @@ flowchart TD
 
 **Kaynak kod:** [state_machine.py](../../ros2_ws/src/fleet_robot_executor/fleet_robot_executor/state_machine.py)
 
-**Test / kanıt:** Ürün uygulaması / bu akışa ait doğrulama henüz yok.
+**Test / kanıt:** [C4.4 şarj politikası ve fiziksel devir](../validation/c4/c4-4-validation-2026-11-06.md)
 
-**Sınır / fark:** Mevcut Executor CHARGING durumunda taşıma goal kabul etmez; erken ayrılma orkestrasyonu uygulanmamıştır. Diyagram hedef politikadır.
+**Sınır / fark:** Uygun boş robotlara öncelik verilir. Fiziksel ayrılma iki güncel pozla doğrulanır.
 
 ![Şarjdan ayrılma ve yüzde 80](svg/charging-exit-policy.svg)
 
@@ -694,7 +700,7 @@ flowchart TD
 
 ```mermaid
 ---
-title: "12 · Şarjdan ayrılma ve yüzde 80 · PLANNED"
+title: "12 · Şarjdan ayrılma ve yüzde 80 · IMPLEMENTED"
 ---
 flowchart TD
  A(["CHARGING"]):::terminal --> JOB{"Alınabilecek görev ve dinamik enerji yeterli mi?"}:::decision
@@ -706,7 +712,7 @@ flowchart TD
  QUEUE -->|"Evet"| EXIT["Park / bekleme için çıkış"]:::fm
  DEPART --> REL["RELEASING • kaynak hâlâ sahipli"]:::fm
  EXIT --> REL
- REL --> P{"Fiziksel ayrılma doğrulandı mı?"}:::decision
+ REL --> P{"Güncel RobotStatus ve Gazebo pozu<br/>ayrılma eşiğini aştı mı?"}:::decision
  P -->|"Hayır"| WAIT["FREE yapma; teyit bekle"]:::wait
  P -->|"Evet"| FREE(["Kaynak FREE"]):::terminal
 
@@ -740,7 +746,7 @@ flowchart TD
 
 **Test / kanıt:** [C4.3 doğrulaması](../validation/c4/c4-3-validation-2026-11-06.md)
 
-**Sınır / fark:** C4.3 adayları robotun Nav2 rota mesafesiyle sıralar. Şarj enerjisi ve kuyruk C4.4 kapsamındadır. Normal bırakma ve operatörün iç `UNBLOCK` olayı ayrı akışlardır. [Fiziksel kanıt koşulları](../design/c3-2-sqlite-outbox.md#istasyon-bırakma-ve-blocked-kurtarma)
+**Sınır / fark:** C4.3 adayları robotun Nav2 rota mesafesiyle sıralar. C4.4 şarj kuyruğunu ve fiziksel dock devrini ekler. Normal bırakma ve operatörün iç `UNBLOCK` olayı ayrı akışlardır. [Fiziksel kanıt koşulları](../design/c3-2-sqlite-outbox.md#istasyon-bırakma-ve-blocked-kurtarma)
 
 ![Park rezervasyonu ve güvenli bekleme](svg/parking-reservations.svg)
 

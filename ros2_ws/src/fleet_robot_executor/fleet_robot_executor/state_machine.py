@@ -47,6 +47,7 @@ class RobotExecutorStateMachine:
         self.is_loaded: bool = False
         self.current_epoch: int = initial_epoch
         self.current_task_id: str = ""
+        self.dock_station_id = ""
 
         # Active goal tracking
         self.active_goal: Optional[TaskGoal] = None
@@ -81,7 +82,8 @@ class RobotExecutorStateMachine:
         - pickup_pose and dropoff_pose must be defined
         """
         # Robot state verification
-        if self.state not in (RobotState.STATE_IDLE, RobotState.STATE_RETURNING_TO_PARK):
+        can_leave_dock = self.state == RobotState.STATE_CHARGING and bool(self.dock_station_id)
+        if self.state not in (RobotState.STATE_IDLE, RobotState.STATE_RETURNING_TO_PARK) and not can_leave_dock:
             return False, ErrorReason.REJECTED_ROBOT_NOT_IDLE
 
         # Load check
@@ -121,6 +123,7 @@ class RobotExecutorStateMachine:
             return False
 
         self.state = RobotState.STATE_EXECUTING_TASK
+        self.dock_station_id = ""
         self.current_phase = TaskPhase.PHASE_MOVING_TO_PICKUP
         self.current_epoch = goal.assignment_epoch
         self.current_task_id = goal.task_id
@@ -374,6 +377,7 @@ class RobotExecutorStateMachine:
         )
 
         self.state = RobotState.STATE_ERROR
+        self.dock_station_id = ""
         self.current_phase = TaskPhase.PHASE_NONE
         self.last_error_reason = reason
         self.is_cancelling = False
@@ -475,6 +479,7 @@ class RobotExecutorStateMachine:
             return False
         started = self.start_returning_to_charge() if charging else self.start_returning_to_park()
         if started:
+            self.dock_station_id = ""
             self.current_epoch = epoch
             self.current_task_id = move_id
             self.active_goal_uuid = goal_uuid
@@ -516,7 +521,8 @@ class RobotExecutorStateMachine:
 
     def start_returning_to_park(self) -> bool:
         """Transition from IDLE to RETURNING_TO_PARK."""
-        if self.state != RobotState.STATE_IDLE or self.is_loaded:
+        can_leave_dock = self.state == RobotState.STATE_CHARGING and bool(self.dock_station_id)
+        if (self.state != RobotState.STATE_IDLE and not can_leave_dock) or self.is_loaded:
             return False
         self.state = RobotState.STATE_RETURNING_TO_PARK
         return True

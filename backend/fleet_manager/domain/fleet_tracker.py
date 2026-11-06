@@ -72,6 +72,7 @@ class FleetTracker:
         timestamp_sec: float,
         battery_sample_ns: int = 0,
         battery_valid_until: float = 0.0,
+        charging_station_id: str = "",
     ) -> Optional[RobotRecord]:
         """Update robot record from incoming RobotStatus message (5 Hz).
         
@@ -94,7 +95,7 @@ class FleetTracker:
         if pose is not None:
             robot.pose = pose
         self._update_battery(robot, battery_soc_percent, battery_energy_wh,
-                             battery_sample_ns, battery_valid_until, timestamp_sec)
+                             battery_sample_ns, battery_valid_until, timestamp_sec, charging_station_id)
         robot.current_epoch = current_epoch
         robot.current_task_id = current_task_id
         robot.last_status_received_at = timestamp_sec
@@ -106,7 +107,7 @@ class FleetTracker:
         return robot
 
     @staticmethod
-    def _update_battery(robot, soc, energy, sample_ns, valid_until, received_at):
+    def _update_battery(robot, soc, energy, sample_ns, valid_until, received_at, charging_station_id):
         if not robot.requires_battery_telemetry:
             robot.battery_soc_percent = soc
             robot.battery_energy_wh = energy
@@ -117,10 +118,13 @@ class FleetTracker:
                 or not isfinite(valid_until) or not received_at <= valid_until <= received_at + BATTERY_TELEMETRY_TIMEOUT_SEC
                 or not 0 <= energy <= capacity or not 0 <= soc <= 100
                 or not isclose(soc, 100.0 * (energy / capacity), rel_tol=0.0, abs_tol=5e-6)
-                or (robot.battery_sample_ns and energy > robot.battery_energy_wh)):
+                or (robot.battery_sample_ns and energy > robot.battery_energy_wh
+                    and not (charging_station_id or robot.charging_station_id))):
             robot.battery_valid_until = 0.0
         elif sample_ns == robot.battery_sample_ns:
-            if (energy, soc) != (robot.battery_energy_wh, robot.battery_soc_percent):
+            if (energy, soc, charging_station_id) != (
+                robot.battery_energy_wh, robot.battery_soc_percent, robot.charging_station_id,
+            ):
                 robot.battery_valid_until = 0.0
             else:
                 robot.battery_valid_until = min(robot.battery_valid_until, valid_until)
@@ -129,6 +133,7 @@ class FleetTracker:
             robot.battery_energy_wh = energy
             robot.battery_sample_ns = sample_ns
             robot.battery_valid_until = valid_until
+            robot.charging_station_id = charging_station_id
 
     def is_stale(
         self,

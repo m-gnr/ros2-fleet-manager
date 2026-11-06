@@ -241,6 +241,8 @@ class FleetEventLoop:
                 now = self._clock()
                 if seq == 0 or not p["timestamp_sec"] <= now <= p.get("battery_valid_until", 0.0):
                     p["battery_valid_until"] = 0.0
+                if seq == 0 or not p["timestamp_sec"] <= now <= p.get("physical_valid_until", 0.0):
+                    p.pop("physical_pose", None)
             core.handle_robot_status(**p)
             if active:
                 robot.current_task_id = active.task_id

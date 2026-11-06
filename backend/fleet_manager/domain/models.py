@@ -115,6 +115,9 @@ class RobotRecord:
     requires_battery_telemetry: bool = False
     battery_sample_ns: int = 0
     battery_valid_until: float = 0.0
+    dock_station_id: str = ""
+    charging_station_id: str = ""
+    charge_request_order: int = 0
 
     def has_fresh_battery(self, current_time: float, sim_ns: Optional[int] = None) -> bool:
         if not self.requires_battery_telemetry:
@@ -151,7 +154,7 @@ class RobotRecord:
         # Can be assigned if IDLE or RETURNING_TO_PARK
         if self.state in (RobotState.STATE_IDLE, RobotState.STATE_RETURNING_TO_PARK):
             return True
-        return False
+        return self.state == RobotState.STATE_CHARGING and bool(self.dock_station_id)
 
 
 @dataclass

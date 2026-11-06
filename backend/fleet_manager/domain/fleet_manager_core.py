@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Tuple
 import uuid
 
 from .constants import (
+    DEFAULT_CHARGE_TARGET_SOC,
     DEFAULT_EMERGENCY_SOC,
     DEFAULT_SAFETY_MARGIN_WH,
     COMMUNICATION_ALERT_SEC,
@@ -55,11 +56,14 @@ class FleetManagerCore:
         emergency_soc_percent: float = DEFAULT_EMERGENCY_SOC,
         safety_margin_wh: float = DEFAULT_SAFETY_MARGIN_WH,
         low_soc_percent: float | None = None,
+        charge_target_soc_percent: float = DEFAULT_CHARGE_TARGET_SOC,
     ) -> None:
         self.queue = TaskQueue()
         self.tracker = FleetTracker()
         self.reservations = ReservationManager()
-        self.station_dispatch = StationDispatch(low_soc_percent) if low_soc_percent is not None else None
+        self.station_dispatch = (
+            StationDispatch(low_soc_percent, charge_target_soc_percent) if low_soc_percent is not None else None
+        )
         self.scheduler = Scheduler(
             route_provider=route_provider,
             safe_charge_station_pose=safe_charge_station_pose,
@@ -207,6 +211,11 @@ class FleetManagerCore:
         pose_valid_until: Optional[float] = None,
         battery_sample_ns: int = 0,
         battery_valid_until: float = 0.0,
+        dock_station_id: str = "",
+        charging_station_id: str = "",
+        physical_pose: Optional[Pose2D] = None,
+        physical_sample_ns: int = 0,
+        physical_valid_until: float = 0.0,
     ) -> Optional[RobotRecord]:
         """Process incoming 5 Hz RobotStatus message.
         
@@ -220,6 +229,14 @@ class FleetManagerCore:
         if not isinstance(pose, Pose2D) or not pose.has_finite_coordinates():
             pose = None
 
+        dock = self.reservations.get_station(dock_station_id)
+        if (dock is None or dock.station_type != StationType.CHARGING or not dock.has_owner(robot_id)
+                or dock.state not in (ReservationState.OCCUPIED, ReservationState.RELEASING)):
+            dock_station_id = ""
+        if charging_station_id and charging_station_id != dock_station_id:
+            charging_station_id = ""
+            battery_valid_until = 0.0
+        robot.dock_station_id = dock_station_id
         self.tracker.update_robot_status(
             robot_id=robot_id,
             state=state,
@@ -233,6 +250,7 @@ class FleetManagerCore:
             timestamp_sec=timestamp_sec,
             battery_sample_ns=battery_sample_ns,
             battery_valid_until=battery_valid_until,
+            charging_station_id=charging_station_id,
         )
         if robot.session_id is None:
             robot.session_id = publisher_session_id
@@ -265,6 +283,11 @@ class FleetManagerCore:
                   and pose is not None
                   and (pose_valid_until is None or robot.station_pose_valid_until)
                   and (not station.departure_after_ns or pose_sample_ns > station.departure_after_ns)):
+                if station.station_type == StationType.CHARGING and station.departure_after_ns:
+                    if (physical_sample_ns <= station.departure_after_ns
+                            or not timestamp_sec <= physical_valid_until
+                            or not station.is_physically_departed(physical_pose)):
+                        continue
                 self.reservations.update_physical_departure(station.station_id, pose)
 
         return robot
@@ -415,9 +438,15 @@ class FleetManagerCore:
 
             selection = self.scheduler.select_best_idle_robot(
                 task=task,
-                available_robots=idle_robots,
+                available_robots=[robot for robot in idle_robots if not robot.dock_station_id],
                 current_time=current_time,
             )
+            if selection is None and task.task_id not in self.scheduler.pending_route_tasks:
+                selection = self.scheduler.select_best_idle_robot(
+                    task=task,
+                    available_robots=[robot for robot in idle_robots if robot.dock_station_id],
+                    current_time=current_time,
+                )
 
             if selection is not None:
                 robot, eval_res = selection

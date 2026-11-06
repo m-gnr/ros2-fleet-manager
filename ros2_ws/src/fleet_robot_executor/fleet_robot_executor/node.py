@@ -177,6 +177,7 @@ class RobotExecutorNode(Node):
         self._lock = threading.Lock()
         self._battery = None
         self._map_tf = None
+        self._physical_pose = None
         self._battery_endpoint_gid = None
         self._battery_clock_changed = threading.Event()
         if not _legacy_test_battery:
@@ -221,6 +222,9 @@ class RobotExecutorNode(Node):
                 goal_callback=self._station_goal_callback,
                 cancel_callback=self._station_cancel_callback,
                 callback_group=self.cb_group,
+            )
+            self._physical_pose_sub = self.create_subscription(
+                RosPoseStamped, self._qualify("physical_pose"), self._physical_pose_callback, 10,
             )
 
         # Nav2 NavigateToPose Action Client
@@ -399,7 +403,10 @@ class RobotExecutorNode(Node):
         with self._lock:
             machine = self.state_machine
             now = self.get_clock().now()
-            if (self._admission_pending or machine.is_loaded or machine.state != RobotState.STATE_IDLE
+            can_leave_dock = (not request.charging_station and machine.state == RobotState.STATE_CHARGING
+                              and bool(machine.dock_station_id))
+            if (self._admission_pending or machine.is_loaded
+                    or (machine.state != RobotState.STATE_IDLE and not can_leave_dock)
                     or machine.active_goal_uuid is not None or request.assignment_epoch <= machine.current_epoch
                     or not self.safety.available(request.move_id, request.assignment_epoch)
                     or not self._fresh_battery_stamp(now.nanoseconds)
@@ -444,6 +451,8 @@ class RobotExecutorNode(Node):
                     goal_uuid, reason, self.get_clock().now().nanoseconds / 1e9,
                 )
                 if valid:
+                    if status == TaskResultStatus.STATUS_SUCCEEDED and request.charging_station:
+                        self.state_machine.dock_station_id = request.station_id
                     self._admission_pending = False
             if not valid:
                 raise RuntimeError("Station terminal result does not match assignment")
@@ -952,8 +961,13 @@ class RobotExecutorNode(Node):
         with self._lock:
             if not self._battery_source_available():
                 return
-            if self._battery.observe(msg, self.get_clock().now().nanoseconds, time.monotonic()):
+            if self._battery.observe(msg, self.get_clock().now().nanoseconds, time.monotonic(),
+                                     self.state_machine.dock_station_id):
                 self.state_machine.update_battery(msg.battery_soc_percent, msg.battery_energy_wh)
+                if self._battery.charging_station_id:
+                    self.state_machine.start_charging()
+                else:
+                    self.state_machine.stop_charging()
             elif self._battery.blocked_reason:
                 self.get_logger().error(f"{self._battery.blocked_reason}. Scenario reset required.")
 
@@ -962,6 +976,16 @@ class RobotExecutorNode(Node):
             return
         with self._lock:
             self.state_machine.update_battery(msg.battery_soc_percent, msg.battery_energy_wh)
+
+    def _physical_pose_callback(self, msg: RosPoseStamped) -> None:
+        stamp = msg.header.stamp
+        stamp_ns = stamp.sec * 10**9 + stamp.nanosec
+        if (not msg.header.frame_id or not 0 <= stamp.nanosec < 10**9
+                or not 0 < stamp_ns <= self.get_clock().now().nanoseconds + 300_000_000):
+            return
+        with self._lock:
+            if self._physical_pose is None or stamp_ns > self._physical_pose[0]:
+                self._physical_pose = (stamp_ns, msg)
 
     def _fresh_battery_stamp(self, sim_ns: int) -> int:
         if self._battery is not None and self._battery_source_available():
@@ -979,6 +1003,9 @@ class RobotExecutorNode(Node):
                 return
             snap = self.state_machine.get_status_snapshot(now_sim)
             battery_stamp_ns = self._fresh_battery_stamp(now_stamp.nanoseconds)
+            dock_station_id = self.state_machine.dock_station_id
+            charging_station_id = self._battery.charging_station_id if battery_stamp_ns else ""
+            physical_pose = self._physical_pose
 
         msg = RobotStatus()
         msg.header.stamp = now_stamp.to_msg()
@@ -1008,6 +1035,10 @@ class RobotExecutorNode(Node):
         msg.battery_energy_wh = float(snap.battery_energy_wh)
         msg.battery_stamp.sec, msg.battery_stamp.nanosec = divmod(battery_stamp_ns, 10**9)
         msg.current_task_id = snap.current_task_id
+        msg.dock_station_id = dock_station_id
+        msg.charging_station_id = charging_station_id
+        if physical_pose is not None and 0 <= now_stamp.nanoseconds - physical_pose[0] <= 300_000_000:
+            msg.physical_pose = physical_pose[1]
 
         self._status_pub.publish(msg)
 

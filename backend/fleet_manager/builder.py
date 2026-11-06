@@ -41,6 +41,7 @@ def build_fleet_manager_from_config(
         emergency_soc_percent=cfg.policies.emergency_soc_percent,
         safety_margin_wh=cfg.policies.safety_margin_wh,
         low_soc_percent=None if _legacy_test_battery else cfg.policies.low_soc_percent,
+        charge_target_soc_percent=cfg.policies.charge_target_soc_percent,
     )
 
     robot_ids: List[str] = []

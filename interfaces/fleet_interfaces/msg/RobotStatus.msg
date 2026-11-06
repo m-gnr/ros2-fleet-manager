@@ -13,6 +13,10 @@ float64 battery_energy_wh
 # Battery measurement time. Zero means unavailable for assignment.
 builtin_interfaces/Time battery_stamp
 string current_task_id
+string dock_station_id
+string charging_station_id
+# Stamped Gazebo model pose for physical dock departure. Zero stamp means unavailable.
+geometry_msgs/PoseStamped physical_pose
 
 uint8 STATE_IDLE = 1
 uint8 STATE_EXECUTING_TASK = 2

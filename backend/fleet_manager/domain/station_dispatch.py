@@ -27,8 +27,10 @@ class StationMove:
 
 
 class StationDispatch:
-    def __init__(self, low_soc_percent):
+    def __init__(self, low_soc_percent, charge_target_soc_percent):
         self.low_soc_percent = low_soc_percent
+        self.charge_target_soc_percent = charge_target_soc_percent
+        self.charge_sequence = 0
         self.active = {}
         self.history = {}
         self.park_due = set()
@@ -42,7 +44,7 @@ class StationDispatch:
             and robot.robot_id not in self.active
             and robot.robot_id not in self.held
             and robot.session_id
-            and robot.state == RobotState.STATE_IDLE
+            and robot.state in (RobotState.STATE_IDLE, RobotState.STATE_CHARGING)
             and robot.is_eligible_for_new_assignment(now)
             and robot.last_pose_sample_ns > 0
             and now <= robot.route_pose_valid_until
@@ -52,13 +54,15 @@ class StationDispatch:
     def allows_transport(self, core, robot):
         if robot.robot_id in self.active or robot.robot_id in self.held:
             return False
-        if robot.state != RobotState.STATE_IDLE or robot.battery_soc_percent < self.low_soc_percent:
-            return False
-        return not any(
-            station.has_owner(robot.robot_id) and station.station_type == StationType.CHARGING
-            and station.state != ReservationState.BLOCKED
-            for station in core.reservations.list_stations()
-        )
+        dock = self._occupied_dock(core, robot)
+        if dock is not None:
+            return robot.dock_station_id == dock.station_id
+        return robot.state == RobotState.STATE_IDLE and robot.battery_soc_percent >= self.low_soc_percent
+
+    @staticmethod
+    def _occupied_dock(core, robot):
+        return next((s for s in core.reservations.stations_owned_by(robot.robot_id)
+                     if s.station_type == StationType.CHARGING and s.state == ReservationState.OCCUPIED), None)
 
     def request_park_cancel(self, core, task, now):
         if any(move.cancel_for_task == task.task_id and not move.cancel_declined for move in self.active.values()):
@@ -89,10 +93,28 @@ class StationDispatch:
             return False
         if low:
             return all(s.station_type != StationType.CHARGING for s in owners)
-        return not owners and robot.robot_id in self.park_due
+        if not owners:
+            return robot.robot_id in self.park_due
+        dock = self._occupied_dock(core, robot)
+        return (dock is not None and robot.dock_station_id == dock.station_id
+                and robot.battery_soc_percent >= self.charge_target_soc_percent
+                and any(other.charge_request_order and self.can_move(core, other, now)
+                        for other in core.tracker.list_robots() if other.robot_id != robot.robot_id))
 
     def schedule(self, core, now, lookup=None):
-        for robot in core.tracker.list_robots():
+        robots = core.tracker.list_robots()
+        for robot in robots:
+            if not self.can_move(core, robot, now):
+                continue
+            if robot.battery_soc_percent >= self.low_soc_percent or self._occupied_dock(core, robot):
+                robot.charge_request_order = 0
+            elif not robot.charge_request_order:
+                self.charge_sequence += 1
+                robot.charge_request_order = self.charge_sequence
+        robots.sort(key=lambda r: (not bool(r.charge_request_order), r.battery_soc_percent,
+                                   r.charge_request_order, r.robot_id))
+        charge_pending = False
+        for robot in robots:
             if not self.needs_station(core, robot, now):
                 continue
             low = robot.battery_soc_percent < self.low_soc_percent
@@ -101,11 +123,14 @@ class StationDispatch:
                 continue
             primary = StationType.CHARGING if low else StationType.PARKING
             # A robot already holding a safe berth can wait there for charge.
-            station_types = (primary,) if core.reservations.stations_owned_by(robot.robot_id) else (
-                primary, StationType.SAFE_WAITING,
-            )
+            owns_safe_berth = bool(core.reservations.stations_owned_by(robot.robot_id)) and low
+            station_types = (primary,) if owns_safe_berth else (primary, StationType.SAFE_WAITING)
+            if low and charge_pending:
+                continue
             for station_type in station_types:
                 station, pending = self._select(core, robot, station_type, now, lookup)
+                if station_type == StationType.CHARGING and pending:
+                    charge_pending = True
                 if station is not None or pending:
                     break
             if station is not None:
@@ -167,6 +192,8 @@ class StationDispatch:
             station.pose, station.tolerance_radius, robot.session_id, robot.current_epoch, goal_uuid,
         )
         self.active[robot.robot_id] = move
+        if station.station_type == StationType.CHARGING:
+            robot.charge_request_order = 0
         self.wait_reasons.pop(robot.robot_id, None)
 
     def result(self, core, move, status, proof_ns, error_reason):

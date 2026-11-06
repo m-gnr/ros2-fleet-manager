@@ -325,13 +325,16 @@ def gazebo_command(world_path):
     ]
 
 
-def simulation(config, fleet_data, *, executor_entry=None, battery_commands=None):
+def simulation(config, fleet_data, *, executor_entry=None, battery_commands=None,
+               world_modifier=None, bridge_arguments=()):
     """Run the dual-robot Gazebo, Nav2 and Executor validation world."""
     if executor_entry is None:
         executor_entry = "/opt/simulation-c3-3-3/executor_test_entry.py"
     from live_processes import bridge_executable, run_simulation
 
     world_path = prepare_world(config, fleet_data)
+    if world_modifier is not None:
+        world_modifier(world_path)
     params_files = generate_params_for_robots(config, fleet_data)
 
     commands = [
@@ -348,6 +351,7 @@ def simulation(config, fleet_data, *, executor_entry=None, battery_commands=None
             "/robot_2/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan",
             "/robot_2/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
             "/robot_2/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist",
+            *bridge_arguments,
         ],
         # 3. TF helper
         ["python3", "/opt/simulation-c3-3-3/tf_helper.py"],

@@ -6,4 +6,5 @@ float64 battery_energy_wh
 float32 battery_soc_percent
 float64 battery_capacity_wh
 bool is_charging
+string charging_station_id
 builtin_interfaces/Time battery_stamp

@@ -1,5 +1,5 @@
 ---
-title: "11 · Şarj sırası ve istasyon seçimi · PLANNED"
+title: "11 · Şarj sırası ve istasyon seçimi · IMPLEMENTED"
 ---
 flowchart TD
  A(["Şarj ihtiyacı"]):::terminal --> Q["Şarj kuyruğu: düşük SoC → FIFO"]:::fm
@@ -8,10 +8,11 @@ flowchart TD
  FREE -->|"Evet"| PICK["Sıra hakkı olan robot için<br/>uygun istasyon seç"]:::fm
  PICK --> RES{"Tek sahipli rezervasyon başarılı mı?"}:::decision
  RES -->|"Hayır"| W
- RES -->|"Evet"| NAV["Executor üzerinden istasyona git<br/>Komut sözleşmesi henüz tamamlanmadı"]:::executor
- NAV --> DOCK{"Konum + duruş + temas doğrulandı mı?"}:::decision
- DOCK -->|"Hayır"| WAIT["Teyit bekle; enerji ekleme"]:::wait
- DOCK -->|"Evet"| CH["OCCUPIED / şarj başlar"]:::battery
+ RES -->|"Evet"| NAV["NavigateToStation ile istasyona git"]:::executor
+ NAV --> LEASE["OCCUPIED kaydı + geçerli DockLease"]:::db
+ LEASE --> DOCK{"Sahiplik, fiziksel konum,<br/>duruş ve temas geçerli mi?"}:::decision
+ DOCK -->|"Hayır"| WAIT["Teyit bekle ve şarjı kapalı tut"]:::wait
+ DOCK -->|"Evet"| CH["Battery Simulator şarjı başlatır"]:::battery
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

@@ -1,5 +1,5 @@
 ---
-title: "12 · Şarjdan ayrılma ve yüzde 80 · PLANNED"
+title: "12 · Şarjdan ayrılma ve yüzde 80 · IMPLEMENTED"
 ---
 flowchart TD
  A(["CHARGING"]):::terminal --> JOB{"Alınabilecek görev ve dinamik enerji yeterli mi?"}:::decision
@@ -11,7 +11,7 @@ flowchart TD
  QUEUE -->|"Evet"| EXIT["Park / bekleme için çıkış"]:::fm
  DEPART --> REL["RELEASING • kaynak hâlâ sahipli"]:::fm
  EXIT --> REL
- REL --> P{"Fiziksel ayrılma doğrulandı mı?"}:::decision
+ REL --> P{"Güncel RobotStatus ve Gazebo pozu<br/>ayrılma eşiğini aştı mı?"}:::decision
  P -->|"Hayır"| WAIT["FREE yapma; teyit bekle"]:::wait
  P -->|"Evet"| FREE(["Kaynak FREE"]):::terminal
 

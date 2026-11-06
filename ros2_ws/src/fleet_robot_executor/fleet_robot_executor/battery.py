@@ -15,9 +15,10 @@ class BatteryTelemetry:
         self.stamp_ns = 0
         self.received_at = 0.0
         self.energy_wh = 0.0
+        self.charging_station_id = ""
         self.blocked_reason = ""
 
-    def observe(self, msg, sim_ns: int, received_at: float) -> bool:
+    def observe(self, msg, sim_ns: int, received_at: float, dock_station_id="") -> bool:
         if self.blocked_reason or msg.robot_id != self.robot_id:
             return False
         session_id = bytes(msg.publisher_session_id.uuid)
@@ -40,14 +41,20 @@ class BatteryTelemetry:
                 and 0.0 <= energy <= capacity and 0.0 <= soc <= 100.0
                 and isclose(soc, 100.0 * (energy / capacity), rel_tol=0.0, abs_tol=SOC_TOLERANCE_PERCENT)):
             return False
-        if msg.is_charging or (self.session_id is not None and energy > self.energy_wh):
-            self.blocked_reason = "Unexpected energy increase or charging in C4.2"
+        charging_station = getattr(msg, "charging_station_id", "")
+        if msg.is_charging and charging_station and charging_station != dock_station_id:
+            return False  # A delayed charging sample can arrive just after departure.
+        if (bool(charging_station) != msg.is_charging
+                or (self.session_id is not None and energy > self.energy_wh
+                    and not (charging_station or self.charging_station_id))):
+            self.blocked_reason = "Unexpected energy increase or unverified charging"
             return False
 
         self.session_id = session_id
         self.stamp_ns = stamp_ns
         self.received_at = received_at
         self.energy_wh = energy
+        self.charging_station_id = charging_station
         return True
 
     def fresh_stamp(self, sim_ns: int, now: float) -> int:

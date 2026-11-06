@@ -9,6 +9,7 @@ Conforms strictly to:
 import asyncio
 import logging
 import threading
+import time
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ class FleetROS2Adapter:
             return
 
         from fleet_interfaces.action import ExecuteTask, NavigateToStation
-        from fleet_interfaces.msg import RobotStatus
+        from fleet_interfaces.msg import DockLease, RobotStatus
         from fleet_interfaces.srv import ClearRobotError
         from nav2_msgs.action import ComputePathToPose
         from rclpy.action import ActionClient
@@ -100,6 +101,7 @@ class FleetROS2Adapter:
         from .station_client import StationActionClient
         from .status_subscriber import RobotStatusSubscriberBridge
 
+        dock_publishers = {}
         for r_id in self.robot_ids:
             namespace = self.robot_namespaces[r_id]
             # 1. Status Subscriber (/{robot_id}/robot_status - C3.3.3-DEC-01)
@@ -130,6 +132,7 @@ class FleetROS2Adapter:
             if self.consumer.core.station_dispatch is not None:
                 station_client = ActionClient(self.node, NavigateToStation, f"{namespace}/navigate_to_station")
                 self.station_clients[r_id] = StationActionClient(station_client, self.consumer, self.loop)
+                dock_publishers[r_id] = self.node.create_publisher(DockLease, f"{namespace}/dock_lease", 10)
 
             # 3. ClearRobotError ServiceClient (/{robot_id}/clear_robot_error - C3.3.3-DEC-01)
             srv_client = self.node.create_client(ClearRobotError, f"{namespace}/clear_robot_error")
@@ -143,4 +146,37 @@ class FleetROS2Adapter:
             nav2_client = ActionClient(self.node, ComputePathToPose, f"{namespace}/compute_path_to_pose")
             self.route_resolver.register_robot_client(r_id, nav2_client)
 
+        if dock_publishers and self._battery_clock_ns is not None:
+            self.node.create_timer(0.1, lambda: self._publish_dock_leases(dock_publishers))
         logger.info("Initialized ROS 2 interfaces for robots: %s", self.robot_ids)
+
+    def _publish_dock_leases(self, publishers):
+        from fleet_interfaces.msg import DockLease
+
+        from ..domain.constants import ReservationState, RobotState, StationType
+        from .action_client import str_to_ros_uuid
+
+        # The snapshot is published only after SQLite COMMIT.
+        core = self.consumer.core
+        now, sim_ns = time.monotonic(), self._battery_clock_ns()
+        if sim_ns <= 0:
+            return
+        for robot in core.tracker.list_robots():
+            if not robot.session_id:
+                continue
+            station = core.reservations.get_station(robot.dock_station_id)
+            allowed = (
+                station is not None and station.station_type == StationType.CHARGING
+                and station.state == ReservationState.OCCUPIED and station.has_owner(robot.robot_id)
+                and not robot.session_blocked and not robot.is_stale(now)
+                and robot.has_fresh_battery(now, sim_ns) and not robot.is_loaded
+                and not robot.current_task_id and robot.robot_id not in core._active_tasks_by_robot
+                and robot.robot_id not in core.station_dispatch.active
+                and robot.state in (RobotState.STATE_IDLE, RobotState.STATE_CHARGING)
+            )
+            message = DockLease(
+                robot_id=robot.robot_id, station_id=station.station_id if allowed else "",
+                executor_session_id=str_to_ros_uuid(robot.session_id), assignment_epoch=robot.current_epoch,
+            )
+            message.stamp.sec, message.stamp.nanosec = divmod(sim_ns, 10**9)
+            publishers[robot.robot_id].publish(message)

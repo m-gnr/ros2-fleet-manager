@@ -70,6 +70,8 @@ Scheduler son kabul edilen `RobotStatus` SoC'sini, robotun kendi batarya kapasit
 
 C4.1 Battery Simulator mevcut modeli doğrudan yükler. Senaryo başlangıcındaki enerji `usable_capacity_wh` değeridir. Bu aşama için YAML şeması değişmedi. Tüketim hesabı ve ROS yayını [C4.1 raporunda](validation/c4/c4-1-validation-2026-11-06.md) açıklanır.
 
+C4.4 mevcut `charge_power_w`, `tolerance_radius`, düşük SoC ve %80 hedef alanlarını kullanır. Şarj girişi yalnız fiziksel temas ve kaynak sahipliği doğrulandığında simülasyon süresinden hesaplanır. [C4.4 fiziksel şarj sözleşmesi](validation/c4/c4-4-validation-2026-11-06.md)
+
 ## 3. Doğrulama Seviyeleri ve Kuralları
 
 1. **Sentaks ve Biçim Doğrulaması:** YAML ayrıştırmasında anahtar tekrarları (`duplicate keys`) ve string dışı anahtarlar engellenir.

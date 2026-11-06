@@ -64,6 +64,8 @@ def ros_robot_status_to_dict(msg: Any, receipt_time_sec: Optional[float] = None)
         "battery_energy_wh": float(msg.battery_energy_wh),
         "current_task_id": msg.current_task_id if msg.current_task_id else None,
         "timestamp_sec": timestamp_sec,
+        "dock_station_id": getattr(msg, "dock_station_id", ""),
+        "charging_station_id": getattr(msg, "charging_station_id", ""),
     }
 
 
@@ -114,6 +116,17 @@ class RobotStatusSubscriberBridge:
                     and 0 <= age_sec <= BATTERY_TELEMETRY_TIMEOUT_SEC):
                 payload["battery_sample_ns"] = battery_ns
                 payload["battery_valid_until"] = receipt_time + (BATTERY_TELEMETRY_TIMEOUT_SEC - age_sec)
+            physical = getattr(msg, "physical_pose", None)
+            if physical is not None and physical.header.frame_id:
+                stamp = physical.header.stamp
+                physical_ns = stamp.sec * 10**9 + stamp.nanosec
+                physical_age = (now_ns - physical_ns) / 10**9
+                if (0 <= stamp.nanosec < 10**9 and 0 < physical_ns <= status_ns
+                        and 0 <= physical_age <= 0.3):
+                    pos = physical.pose.position
+                    payload["physical_pose"] = Pose2D(x=pos.x, y=pos.y)
+                    payload["physical_sample_ns"] = physical_ns
+                    payload["physical_valid_until"] = receipt_time + 0.3 - physical_age
         event = Event(kind="ROBOT_STATUS", payload=payload)
         
         future = asyncio.run_coroutine_threadsafe(

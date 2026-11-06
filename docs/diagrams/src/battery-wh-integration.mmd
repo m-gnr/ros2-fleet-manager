@@ -7,9 +7,14 @@ flowchart TD
  T -->|"İlk örnek veya geri sarma"| R["Zaman ve odometri referansını kur<br/>Enerjiyi koru"]:::battery
  T -->|"Aynı veya geçersiz"| W(["Sonraki geçerli saat örneği"]):::terminal
  T -->|"İleri"| D["Saate yetişen odometriyi işle<br/>Kopuk veya geçersiz adımı sayma"]:::battery
- D --> E["E = max(0, E − k × delta_s − P_idle × delta_t / 3600)"]:::battery
+ D --> DOCK{"Geçerli dock teması ve sahipliği var mı?"}:::decision
+ DOCK -->|"Evet"| CH["Şarj Wh = P_charge × delta_t / 3600"]:::battery
+ DOCK -->|"Hayır"| ZERO["Şarj Wh = 0"]:::battery
+ CH --> E
+ ZERO --> E
+ E["E = sınırla(E + şarj Wh − hareket Wh − taban Wh)"]:::battery
  E --> S["SoC = 100 × E / C_usable"]:::battery
- S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, ölçüm damgası ve yayıncı oturumu"]:::battery
+ S --> P["Robot namespace'inde BatteryState<br/>Wh, SoC, kapasite, şarj istasyonu ve ölçüm damgası"]:::battery
  R --> P
  P --> W
  P --> EX{"Executor: kaynak tek ve aynı mı?<br/>Robot, Wh, SoC ve ölçüm damgası geçerli mi?"}:::decision

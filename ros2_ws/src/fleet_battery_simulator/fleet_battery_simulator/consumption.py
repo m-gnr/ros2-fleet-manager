@@ -29,6 +29,7 @@ class BatteryConsumption:
         self.remaining_wh = self.capacity_wh
         self._consumption_wh_per_meter = model.consumption_wh_per_meter
         self._idle_power_w = model.idle_power_w
+        self._charge_power_w = model.charge_power_w
         self.clock_ns: int | None = None
         self._clock_epoch_start_ns = 0
         self._last_odom_ns: int | None = None
@@ -56,7 +57,7 @@ class BatteryConsumption:
             self._previous_odom = None
         self._pending.append(sample)
 
-    def update_clock(self, stamp_ns: int) -> bool:
+    def update_clock(self, stamp_ns: int, *, charging: bool = False) -> bool:
         """Apply a valid new clock stamp. A rewind starts a fresh reference epoch."""
         previous_clock = self.clock_ns
         if stamp_ns < 0 or stamp_ns == previous_clock:
@@ -75,7 +76,8 @@ class BatteryConsumption:
             distance_m += self._motion_distance(self._pending.popleft())
         idle_wh = self._idle_power_w * (elapsed_sec / 3600.0)
         motion_wh = self._consumption_wh_per_meter * distance_m
-        self.remaining_wh = max(0.0, self.remaining_wh - (idle_wh + motion_wh))
+        charge_wh = self._charge_power_w * elapsed_sec / 3600.0 if charging else 0.0
+        self.remaining_wh = min(self.capacity_wh, max(0.0, self.remaining_wh + charge_wh - idle_wh - motion_wh))
         return True
 
     def _motion_distance(self, sample: OdometrySample) -> float:

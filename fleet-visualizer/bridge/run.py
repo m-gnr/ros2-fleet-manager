@@ -27,11 +27,15 @@ def options():
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--origin", action="append")
     parser.add_argument("--trace", action="store_true")
+    parser.add_argument("--observed-nav2-plans", action="store_true",
+                        help="Observe the verified namespaced Humble Planner Server topics")
     args = parser.parse_args()
     if not isfinite(args.hz) or not 1 <= args.hz <= 60:
         parser.error("--hz must be finite and in 1..60")
     if not isfinite(args.stale_seconds) or not 2 / args.hz <= args.stale_seconds <= 10:
         parser.error("--stale-seconds must cover two sampling intervals and be at most 10")
+    if args.observed_nav2_plans and args.source != "tf":
+        parser.error("--observed-nav2-plans requires the map TF source")
     if not 1 <= args.port <= 65535:
         parser.error("--port must be in 1..65535")
     args.origin = args.origin or ["http://127.0.0.1:5173"]
@@ -96,8 +100,9 @@ async def run(args, robots):
     def read_clock(robot_id):
         return telemetry[robot_id].clock_observation
 
+    plan_topics = {robot.id: robot.namespace + "/plan" for robot in robots} if args.observed_nav2_plans else {}
     stream = Stream([state.identity for state in telemetry.values()], stale_ms=1000 * args.stale_seconds,
-                    trace_clock=read_clock if args.trace else None)
+                    trace_clock=read_clock if args.trace else None, plan_topics=plan_topics)
     loop = asyncio.get_running_loop()
     relay = LatestSnapshots(loop, stream)
     stop = asyncio.Event()
@@ -110,7 +115,7 @@ async def run(args, robots):
     stop_ros = Event()
     try:
         reader = RosReader([(robot.namespace, telemetry[robot.id]) for robot in robots],
-                           args.hz, relay.offer, context=context)
+                           args.hz, relay.offer, context=context, plan_topics=plan_topics)
         executor = SingleThreadedExecutor(context=context)
         executor.add_node(reader)
         async with listen(stream, args.bind, args.port, args.origin):

@@ -1,17 +1,22 @@
 """Read isolated, verified TF chains with one ROS participant."""
+from dataclasses import replace
 from math import isfinite
 from time import monotonic_ns
 
-from nav_msgs.msg import Odometry
+from action_msgs.msg import GoalStatus, GoalStatusArray
+from nav_msgs.msg import Odometry, Path
 from rclpy.clock import Clock, ClockType
 from rclpy.duration import Duration
+from rclpy.impl.implementation_singleton import rclpy_implementation
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.serialization import deserialize_message
 from rclpy.time import Time
 from rosgraph_msgs.msg import Clock as ClockMessage
 from tf2_msgs.msg import TFMessage
 from tf2_ros import Buffer, TransformException
 
+from observed_plan import MAX_ROS_BYTES, PlanBuffer
 from telemetry import NS, Pose, yaw_from_quaternion
 
 
@@ -20,7 +25,7 @@ def stamp_ns(stamp):
 
 
 class RosReader(Node):
-    def __init__(self, robots, hz, on_snapshot, *, context):
+    def __init__(self, robots, hz, on_snapshot, *, context, plan_topics=None):
         super().__init__("fleet_visualizer", enable_rosout=False,
                          start_parameter_services=False, use_global_arguments=False, context=context)
         # Humble always creates a parameter event writer during Node initialization.
@@ -28,10 +33,14 @@ class RosReader(Node):
             self.destroy_publisher(publisher)
 
         self.robots = {}
+        self.planners = {}
         self.on_snapshot = on_snapshot
         for namespace, telemetry in robots:
             reader = RobotReader(namespace, telemetry)
             self.robots[reader.robot_id] = reader
+            if plan_topics and reader.robot_id in plan_topics:
+                self.planners[reader.robot_id] = PlannerReader(
+                    self, namespace, plan_topics[reader.robot_id], telemetry)
             if reader.tf is not None:
                 self.create_subscription(TFMessage, namespace + "/tf", reader.on_tf, 10)
             else:
@@ -45,12 +54,89 @@ class RosReader(Node):
         stamp, now = stamp_ns(msg.clock), monotonic_ns()
         for robot_id, reader in self.robots.items():
             if reader.clock(stamp, now):
+                planner = self.planners.get(robot_id)
+                if planner:
+                    planner.buffer.reset()
                 self.on_snapshot(robot_id, reader.sample(now))
 
     def sample(self):
         now = monotonic_ns()
         for robot_id, reader in self.robots.items():
-            self.on_snapshot(robot_id, reader.sample(now))
+            snapshot = reader.sample(now)
+            planner = self.planners.get(robot_id)
+            if planner:
+                plan = planner.sample(now, snapshot.status == "LIVE")
+                if plan is not None:
+                    snapshot = replace(snapshot, plan=plan)
+            self.on_snapshot(robot_id, snapshot)
+
+
+class PlannerReader:
+    def __init__(self, node, namespace, topic, telemetry):
+        self.node = node
+        self.namespace = namespace
+        self.topic = topic
+        self.telemetry = telemetry
+        self.buffer = PlanBuffer()
+        self.writer = None
+        self.next_graph_check = 0
+        self.status_topic = namespace + "/navigate_to_pose/_action/status"
+        self.goals = {}
+        node.create_subscription(Path, topic, self.on_path, 1, raw=True)
+        node.create_subscription(GoalStatusArray, self.status_topic, self.on_navigation,
+                                 QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+
+    def on_navigation(self, message):
+        # Status can invalidate an observation, but never establishes Path ownership.
+        endpoints = self.node.get_publishers_info_by_topic(self.status_topic)
+        if (len(endpoints) != 1 or endpoints[0].node_name != "bt_navigator"
+                or endpoints[0].node_namespace != self.namespace or len(message.status_list) > 128):
+            self.buffer.plan = None
+            return
+        active = (GoalStatus.STATUS_ACCEPTED, GoalStatus.STATUS_EXECUTING, GoalStatus.STATUS_CANCELING)
+        goals = {bytes(row.goal_info.goal_id.uuid): row.status for row in message.status_list}
+        if (any(goals.get(goal) != status for goal, status in self.goals.items() if status in active)
+                or any(self.goals.get(goal) != status for goal, status in goals.items() if status in active)):
+            self.buffer.plan = None
+        self.goals = goals
+
+    def check_writer(self):
+        endpoints = self.node.get_publishers_info_by_topic(self.topic)
+        writer = None
+        if len(endpoints) == 1:
+            endpoint = endpoints[0]
+            qos = endpoint.qos_profile
+            if (endpoint.node_namespace == self.namespace and endpoint.node_name == "planner_server"
+                    and endpoint.topic_type == "nav_msgs/msg/Path"
+                    and qos.reliability == ReliabilityPolicy.RELIABLE
+                    and qos.durability == DurabilityPolicy.VOLATILE
+                    and qos.history == HistoryPolicy.KEEP_LAST and qos.depth == 1):
+                writer = tuple(endpoint.endpoint_gid)
+        if writer != self.writer:
+            self.buffer.plan = None
+            self.writer = writer
+        return writer is not None
+
+    def on_path(self, raw):
+        if not self.check_writer():
+            return
+        if len(raw) > MAX_ROS_BYTES:
+            self.buffer.plan = None
+            return
+        try:
+            message = deserialize_message(raw, Path)
+        except rclpy_implementation.RMWError:
+            self.buffer.plan = None
+            return
+        self.buffer.accept(message, self.telemetry.clock_ns, monotonic_ns())
+
+    def sample(self, now, pose_live):
+        if not pose_live:
+            self.buffer.plan = None
+        elif self.buffer.plan is not None and now >= self.next_graph_check:
+            self.check_writer()
+            self.next_graph_check = now + NS // 4
+        return self.buffer.current(self.telemetry.clock_ns, now)
 
 
 class RobotReader:

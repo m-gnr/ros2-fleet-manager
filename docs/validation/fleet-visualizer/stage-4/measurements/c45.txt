@@ -1,0 +1,17 @@
+2026-11-06T15:42:36.283614012Z {"event": "C45_ROBOT_ENERGY", "robot_id": "robot_1", "distances_m": [3.9061779302988335, 0.6000001607278774, 3.4543386372063316], "required_wh": 26.59210334564661, "available_wh": 17.96131111112588, "eligible": false}
+2026-11-06T15:42:36.412213845Z {"event": "C45_ROBOT_ENERGY", "robot_id": "robot_2", "distances_m": [0.5000001658520968, 0.6000001607278774, 3.4543386372063316], "required_wh": 25.910867792757262, "available_wh": 91.9614305555215, "eligible": true}
+2026-11-06T15:42:38.337055179Z {"event": "C45_STALE_BATTERY_BLOCKED", "robots": ["robot_1", "robot_2"]}
+2026-11-06T15:42:48.212904378Z {"event": "ALL_C4_5_ENERGY_TESTS_PASSED", "robot_id": "robot_2"}
+2026-11-06T16:02:45.085922251Z {"event": "C45_CHARGED_PREEMPTION", "proof": {"robot_id": "robot_1", "goal_uuid": "1884f748-c4ea-4c84-bc2a-61682adf7e99", "nav2_goal_uuid": "5f12c561-014b-494b-baf4-7615ccf51ef3", "epoch": 3, "nav2_terminal_ns": 106625000000, "nav2_terminal_monotonic_ns": 766718627279596, "decision_ns": 107080000000, "decision_monotonic_ns": 766719081504055, "stop_window_start_ns": 106855000000, "odometry_ns": 107065000000, "odometry_received_monotonic_ns": 766719063390138, "frame_id": "robot_1/odom", "linear_m_s": 0.0, "angular_rad_s": 0.0}, "independent_samples": 13}
+2026-11-06T16:03:06.241320886Z {"event": "C45_LATE_TERMINAL_BLOCKED", "goal_uuid": "1884f748-c4ea-4c84-bc2a-61682adf7e99", "epoch": 3}
+2026-11-06T16:03:32.301684593Z {"event": "C45_LOW_RESUMED", "epoch": 5, "original_epoch": 3}
+2026-11-06T16:03:32.303217426Z {"event": "ALL_C4_5_CHARGING_TESTS_PASSED", "terminal_epoch": 3}
+/fleet-viz4-final-charge-simulation-1 exit=0 oom=false
+/fleet-viz4-final-charge-backend-1 exit=0 oom=false
+/fleet-viz4-final-charge-bridge exit=0 oom=false
+
+SQLite integrity_check / foreign_key_check (charging)
+ok
+
+SQLite integrity_check / foreign_key_check (energy)
+ok

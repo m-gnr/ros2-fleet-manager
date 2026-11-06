@@ -1,8 +1,11 @@
 """ROS-independent pose validation and stream state."""
 from dataclasses import dataclass
 from math import atan2, hypot, isfinite
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from observed_plan import ObservedPlan
 
 NS = 1_000_000_000
 
@@ -31,6 +34,7 @@ class Snapshot:
     epoch: int = 0
     status: str = "NO_DATA"
     pose: Optional[Pose] = None
+    plan: Optional["ObservedPlan"] = None
 
 
 class Telemetry:

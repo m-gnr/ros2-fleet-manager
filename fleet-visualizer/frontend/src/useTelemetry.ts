@@ -14,12 +14,13 @@ function createSceneFeed() {
       return () => { listeners.delete(listener) }
     },
     update(next: Fleet) {
-      const poseChanged = current.robots.size !== next.robots.size || [...next.robots].some(([id, robot]) => {
+      const sceneChanged = current.robots.size !== next.robots.size || [...next.robots].some(([id, robot]) => {
         const before = current.robots.get(id)
-        return robot.pose !== before?.pose || robot.previous !== before?.previous || robot.status !== before?.status
+        return robot.pose !== before?.pose || robot.previous !== before?.previous || robot.status !== before?.status ||
+          robot.path !== before?.path || robot.trail !== before?.trail
       })
       current = next
-      if (poseChanged) listeners.forEach(listener => listener())
+      if (sceneChanged) listeners.forEach(listener => listener())
     },
   }
 }

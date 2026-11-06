@@ -9,6 +9,8 @@ import {
 } from './camera'
 import { blendMs, blendPose, toScene } from './coordinates'
 import { robotColor } from './presentation'
+import { RouteLayers } from './RouteLayers'
+import type { RouteOptions } from './routes'
 import type { Pose } from './telemetry'
 import type { SceneFeed } from './useTelemetry'
 import { Warehouse } from './Warehouse'
@@ -22,13 +24,14 @@ type SceneProps = {
   selected?: string
   onSelect: (id: string) => void
   trace: boolean
+  routes: RouteOptions
 }
 
 const polarLimit = Math.PI / 2 - 0.045
 const topAngle = 0.001
 const topHeight = 19.8
 
-function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSelect, trace }: SceneProps) {
+function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSelect, trace, routes }: SceneProps) {
   const models = useRef(new Map<string, Group>()).current
   const orbit = useRef<OrbitControls | null>(null)
   const lastPose = useRef<Pose>(undefined)
@@ -44,6 +47,7 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
     shift: new Vector3(), destination: new Vector3(), screen: new Vector3(),
     front: new Vector3(), rotation: new Quaternion(), bounds: new Box3(), extent: new Vector3(),
   })
+  const filteredId = routes.selectedOnly ? selected : undefined
   const { camera, gl, invalidate } = useThree()
 
   useLayoutEffect(() => {
@@ -68,7 +72,8 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
     }
   }, [camera, gl, feed, invalidate])
 
-  useLayoutEffect(() => { invalidate() }, [command, lowQuality, selected, invalidate])
+  useLayoutEffect(() => { invalidate() }, [command, lowQuality, selected, routes, invalidate])
+  useLayoutEffect(() => { fitted.current = false }, [routes.selectedOnly, filteredId])
 
   useFrame(({ size, scene }, delta) => {
     const controls = orbit.current
@@ -92,8 +97,8 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
       const measured = sample?.pose
       const displayed = measured && sample.previous
         ? blendPose(sample.previous, measured, now - measured.receivedAt) : measured
-      root.visible = !!displayed
-      if (!displayed) continue
+      root.visible = !!displayed && (!routes.selectedOnly || id === selected)
+      if (!displayed || !root.visible) continue
       const [x, z, heading] = toScene(displayed)
       root.position.set(x, 0, z)
       root.rotation.y = heading
@@ -212,7 +217,7 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
         screen.copy(root.position).addScaledVector(camera.up, burgerSize.height / 2).project(camera)
         roots.push({ robot_id: id, pose: root.position.toArray(), yaw: root.rotation.y, visible: root.visible,
           status: sample?.status, blend, screen: [(screen.x + 1) / 2, (1 - screen.y) / 2] })
-        if (!measured || blending || tracedPoses.has(measured)) continue
+        if (!root.visible || !measured || blending || tracedPoses.has(measured)) continue
         tracedPoses.add(measured)
         const marker = root.getObjectByName('robot-front-marker')!
         front.set(0, 1, 0).applyQuaternion(marker.getWorldQuaternion(rotation))
@@ -262,6 +267,8 @@ export default memo(function Scene(props: SceneProps) {
     <directionalLight position={[2, 8, -3]} intensity={2.2} color="#ffe8ce" />
     <directionalLight position={[-6, 3, 5]} intensity={0.7} color="#bedaff" />
     <Warehouse softShadows={!props.lowQuality} />
+    {props.robotIds.map((id, index) => <RouteLayers key={id} feed={props.feed} id={id} colorIndex={index}
+      selected={id === props.selected} options={props.routes} trace={props.trace} />)}
     <Vehicles {...props} />
   </Canvas>
 })

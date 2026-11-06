@@ -128,3 +128,17 @@ footer b { color: var(--mint); margin-inline: 3px; }
 .fleet-list small { display: block; color: #a9bbcd; font-variant-numeric: tabular-nums; }
 .fleet-list strong { overflow-wrap: anywhere; }
 .robot-label[data-selected="true"] { box-shadow: 0 0 0 1px #f4fbff; }
+
+.route-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 9px 0;
+  color: #c2d3e3;
+  font-size: 0.78rem;
+}
+
+.route-controls label { display: inline-flex; align-items: center; gap: 5px; }
+.route-controls input { accent-color: #79d6c8; }
+.route-readings dd { overflow-wrap: anywhere; }
+.trail-label { margin-top: 0.8rem; }

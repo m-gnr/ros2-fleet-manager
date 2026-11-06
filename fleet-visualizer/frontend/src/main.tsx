@@ -4,6 +4,7 @@ import { cameraLabels, cameraModes, resetCamera, selectCamera, type CameraComman
 import { freshnessLabels, robotColor, schematicLabel, telemetryFields } from './presentation'
 import { initial, stampLabel, type Telemetry } from './telemetry'
 import type { Fleet } from './fleet'
+import type { RouteOptions } from './routes'
 import { useTelemetry } from './useTelemetry'
 import './style.css'
 
@@ -48,11 +49,12 @@ function StateBadge({ kind, value }: { kind: string; value: string }) {
   </strong>
 }
 
-function TelemetryPanel({ fleet, selected, onSelect, mode }: {
-  fleet: Fleet; selected?: string; onSelect: (id: string) => void; mode: CameraCommand['mode']
+function TelemetryPanel({ fleet, selected, onSelect, mode, routes }: {
+  fleet: Fleet; selected?: string; onSelect: (id: string) => void; mode: CameraCommand['mode']; routes: RouteOptions
 }) {
   const view = (selected && fleet.robots.get(selected)) || initial
-  const { status } = view
+  const { status, path, trail, session } = view
+  const planStatus = path?.points ? 'LIVE' : path ? 'STALE' : 'UNAVAILABLE'
   const { connection } = fleet
   const fields = telemetryFields(view)
   return <aside className="panel" aria-label="Robot telemetrisi">
@@ -92,6 +94,17 @@ function TelemetryPanel({ fleet, selected, onSelect, mode }: {
       </dl>
       <p className="clock">ROS simülasyon saati <code>/clock</code></p>
     </section>
+    <section className="readings" aria-label="Rota ve hareket izi">
+      <p className="subtle">GÖZLEMLENEN NAV2 PLANI</p>
+      <dl className="details route-readings">
+        <div><dt>Güncellik</dt><dd><StateBadge kind="plan-status" value={planStatus} /></dd></div>
+        <div><dt>Kaynak</dt><dd>{session?.pathTopic ?? '—'}</dd></div>
+        <div><dt>Frame / Damga</dt><dd>{path ? `map / ${stampLabel(path.stamp)} sn` : '—'}</dd></div>
+      </dl>
+      <p className="clock">Aktif hedef ilişkisi belirsiz.</p>
+      <p className="subtle trail-label">ACTUAL / GERÇEKLEŞEN İZ</p>
+      <p className="clock" data-testid="trail-summary">{trail?.length ?? 0} TF noktası · {routes.trail ? 'Görünür' : 'Gizli'}</p>
+    </section>
   </aside>
 }
 
@@ -99,6 +112,11 @@ function App() {
   const [command, setCommand] = useState<CameraCommand>({ mode: 'free', reset: 0 })
   const [lowQuality, setLowQuality] = useState(options.get('quality') === 'low')
   const { view, feed } = useTelemetry(url)
+  const [routes, setRoutes] = useState<RouteOptions>({ plan: true, trail: true, selectedOnly: false, highlight: true })
+  const routeControls = [
+    ['plan', 'Gözlemlenen Nav2 planı'], ['trail', 'Gerçekleşen iz'],
+    ['selectedOnly', 'Yalnız seçili robot'], ['highlight', 'Seçili rotayı vurgula'],
+  ] as const
   const [choice, setChoice] = useState<string>()
   const selected = choice && view.robots.has(choice) ? choice : view.robots.keys().next().value
   const roster = view.roster ?? view.robots
@@ -108,7 +126,7 @@ function App() {
     <header className="masthead">
       <div className="brand-mark"><Icon name="warehouse" /></div>
       <div><p className="eyebrow">ROS 2 FLEET MANAGER</p><h1>Fleet Visualizer</h1></div>
-      <div className="prototype"><span aria-hidden="true">◇</span> SALT OKUNUR <span className="edition">/ AŞAMA 03</span></div>
+      <div className="prototype"><span aria-hidden="true">◇</span> SALT OKUNUR <span className="edition">/ AŞAMA 04</span></div>
     </header>
     <section className="workspace">
       <section className="viewport" aria-label="Etkileşimli 3D depo">
@@ -126,7 +144,7 @@ function App() {
         <div className="stage">
           <SceneBoundary>
             <Suspense fallback={<p className="scene-message" role="status">3D sahne yükleniyor…</p>}>
-              <Scene feed={feed} command={command} lowQuality={lowQuality} labels={labels} robotIds={robotIds} selected={selected} onSelect={setChoice} trace={options.has('trace')} />
+              <Scene feed={feed} command={command} lowQuality={lowQuality} labels={labels} robotIds={robotIds} selected={selected} onSelect={setChoice} routes={routes} trace={options.has('trace')} />
             </Suspense>
           </SceneBoundary>
           <div className="stage-overlay">
@@ -146,12 +164,18 @@ function App() {
             </button>
           </div>
         </div>
+        <div className="route-controls" role="group" aria-label="Rota katmanları">
+          {routeControls.map(([key, label]) => <label key={key}>
+            <input type="checkbox" checked={routes[key]}
+              onChange={event => setRoutes({ ...routes, [key]: event.target.checked })} />{label}
+          </label>)}
+        </div>
         <div className="viewport-bottom">
           <span className="heading-key"><span aria-hidden="true">▲</span> Robotun önü</span>
           <span>Sürükle · Orbit / Sağ tuş · Pan / Tekerlek · Zoom</span>
         </div>
       </section>
-      <TelemetryPanel fleet={view} selected={selected} onSelect={setChoice} mode={command.mode} />
+      <TelemetryPanel fleet={view} selected={selected} onSelect={setChoice} mode={command.mode} routes={routes} />
     </section>
     <footer><span>ROS 2 Humble <b>·</b> Gazebo Fortress</span><span>Deneysel görselleştirme <b>·</b> Filo</span></footer>
   </main>

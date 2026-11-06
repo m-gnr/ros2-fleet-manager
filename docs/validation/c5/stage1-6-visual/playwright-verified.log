@@ -1,0 +1,27 @@
+
+> fleet-operations-dashboard@0.1.0 test
+> playwright test --workers=1
+
+
+Running 16 tests using 1 worker
+
+(node:51730) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/dashboard.spec.ts:87:1 › lists robots, selects by 3D scene and keyboard, and masks invalid battery (6.9s)
+  ✓   2 tests/dashboard.spec.ts:129:1 › displays loading, empty and protocol error states (6.4s)
+  ✓   3 tests/dashboard.spec.ts:141:1 › rejects older snapshots and resynchronizes after a disconnected socket (7.4s)
+  ✓   4 tests/dashboard.spec.ts:167:1 › fits, follows, orbits, pans, zooms and displays at mobile widths (11.4s)
+  ✓   5 tests/dashboard.spec.ts:222:1 › keeps product and TF validity separate, clears the observed plan at an epoch fence (7.9s)
+  ✓   6 tests/dashboard.spec.ts:278:1 › transforms measured ROS axes and yaw and bounds interpolation (2ms)
+  ✓   7 tests/dashboard.spec.ts:285:1 › keeps the snapshot strip, warehouse, and fleet cards in view across responsive layouts (6.8s)
+  ✓   8 tests/dashboard.spec.ts:345:1 › scrolls expanded details while keeping the panel heading and robot identity fixed (11.6s)
+  ✓   9 tests/dashboard.spec.ts:366:1 › keeps close robots aligned to TF roots at multiple camera distances (12.8s)
+  ✓  10 tests/dashboard.spec.ts:420:1 › refits an untouched camera but preserves zoom, orbit and pan across resize until reset (18.5s)
+  ✓  11 tests/dashboard.spec.ts:468:3 › shows absent, fresh and expired observed plans with robot state IDLE (15.3s)
+  ✓  12 tests/dashboard.spec.ts:468:3 › shows absent, fresh and expired observed plans with robot state EXECUTING_TASK (15.5s)
+  ✓  13 tests/dashboard.spec.ts:500:1 › shows source-reported reception age separately from ROS timestamps (12.5s)
+  ✓  14 tests/dashboard.spec.ts:521:1 › frames the warehouse bounds at desktop and mobile aspect ratios (7ms)
+  ✓  15 tests/dashboard.spec.ts:542:1 › formats ROS time without clock conversion and masks an invalid age (15ms)
+  ✓  16 tests/dashboard.spec.ts:551:1 › disposes orbit listeners and the WebGL context when leaving the overview (13.9s)
+
+  16 passed (2.5m)

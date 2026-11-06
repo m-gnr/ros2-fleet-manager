@@ -1,0 +1,11 @@
+backend-1     | {"event": "C42_GRAPH_VERIFIED", "battery_topics": ["/robot_1/battery_state", "/robot_2/battery_state"]}
+backend-1     | {"event": "C44_PHYSICAL_CHARGE", "robot_id": "robot_1", "station_id": "dock_1", "collision": ["robot_1::right_wheel::wheel", 39315000000], "wh": 21.43072182388452}
+backend-1     | {"event": "C44_DOCK_DEPARTURE", "robot_id": "robot_1", "station_id": "dock_1", "distance_m": 0.46121715351385895, "wh": 81.2644504720848}
+backend-1     | {"event": "C44_PHYSICAL_CHARGE", "robot_id": "robot_2", "station_id": "dock_1", "collision": ["robot_2::caster::caster", 77075000000], "wh": 23.07123342912114}
+backend-1     | {"event": "ALL_C4_4_TESTS_PASSED", "token": "fleet-c5-final-visual", "outbox_commands": 3}
+backend-1     | {"event": "C45_CHARGED_PREEMPTION", "proof": {"robot_id": "robot_1", "goal_uuid": "9a41ece5-c0d7-4904-8e58-c6d084eb745b", "nav2_goal_uuid": "41dec68f-3338-401d-b0de-13ec84840f0e", "epoch": 3, "nav2_terminal_ns": 91605000000, "nav2_terminal_monotonic_ns": 784537810974268, "decision_ns": 91985000000, "decision_monotonic_ns": 784538236831726, "stop_window_start_ns": 91735000000, "odometry_ns": 91980000000, "odometry_received_monotonic_ns": 784538236384768, "frame_id": "robot_1/odom", "linear_m_s": 0.0, "angular_rad_s": 0.0}, "independent_samples": 13}
+backend-1     | {"event": "C45_LATE_TERMINAL_BLOCKED", "goal_uuid": "9a41ece5-c0d7-4904-8e58-c6d084eb745b", "epoch": 3}
+backend-1     | {"event": "C45_LOW_RESUMED", "epoch": 5, "original_epoch": 3}
+backend-1     | {"event": "ALL_C4_5_CHARGING_TESTS_PASSED", "terminal_epoch": 3}
+backend-1     | {"event": "C5_SOURCE_MATCHED", "sequence": 463}
+simulation-1  | {"event": "SIMULATION_SHUTDOWN", "clean": true}

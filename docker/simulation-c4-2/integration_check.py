@@ -49,7 +49,7 @@ async def wait_for(condition, description, timeout=30.0):
 
 
 @contextmanager
-def pause_battery_processes(robot_ids):
+def pause_battery_processes(robot_ids, executable=b"/battery_simulator"):
     """Keep the DDS writers and in-memory energy state across a short outage."""
     pids = {}
     for path in Path("/proc").glob("[0-9]*/cmdline"):
@@ -57,7 +57,7 @@ def pause_battery_processes(robot_ids):
             args = path.read_bytes().split(b"\0")
         except (FileNotFoundError, ProcessLookupError):
             continue
-        if b"--robot-id" in args and any(arg.endswith(b"/battery_simulator") for arg in args):
+        if b"--robot-id" in args and any(arg.endswith(executable) for arg in args):
             robot_id = args[args.index(b"--robot-id") + 1].decode()
             assert robot_id not in pids
             pids[robot_id] = int(path.parent.name)

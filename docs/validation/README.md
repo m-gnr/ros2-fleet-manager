@@ -30,6 +30,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C4.2 | [Rapor](c4/c4-2-validation-2026-11-06.md) · [Komut eki](c4/c4-2-commands-2026-11-06.md) | İki robotlu Fortress ortamında telemetri, enerji yetersizliği, geçici kesinti ve gerçek Nav2 teslimatı doğrulandı |
 | C4.3 | [Rapor](c4/c4-3-validation-2026-11-06.md) · [Komut eki](c4/c4-3-commands-2026-11-06.md) | Park ve dock yaklaşımı, canlı HIGH duruşu ve SQLite/Outbox bütünlüğü doğrulandı |
 | C4.4 | [Rapor](c4/c4-4-validation-2026-11-06.md) · [Komut eki](c4/c4-4-commands-2026-11-06.md) | Fiziksel dock teması, iki robotlu şarj ve ayrılma kanıtıyla devir |
+| C4.5 | [Sonuç raporu](c4/c4-5-validation-2026-11-06.md) · [Komut eki](c4/c4-5-commands-2026-11-06.md) · [C4 kabul listesi](c4/c4-acceptance-2026-11-06.md) | İki robotlu enerji, fiziksel şarj devri, görev ve güvenli preemption |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

@@ -6,7 +6,7 @@ Publishes transforms to:
 - /robot_2/tf, /robot_2/tf_static
 - /tf, /tf_static (unified global tree)
 """
-import sys
+import signal
 import rclpy
 from rclpy.signals import SignalHandlerOptions
 from rclpy.node import Node
@@ -122,16 +122,23 @@ class DualRobotTfHelper(Node):
 
 
 def main():
+    stopping = False
+
+    def stop(signum, frame):
+        nonlocal stopping
+        stopping = True
+
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
     rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     node = DualRobotTfHelper()
     try:
-        rclpy.spin(node)
-    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
-        pass
+        # Finish the current DDS message before destroying the node.
+        while not stopping and rclpy.ok():
+            rclpy.spin_once(node, timeout_sec=0.2)
     finally:
         node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

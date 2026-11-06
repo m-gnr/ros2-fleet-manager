@@ -34,8 +34,7 @@ INITIAL_SOC = (22.0, 24.0)
 TEST_CHARGE_POWER_W = 21600.0
 
 
-async def validate(config_path, fleet, executor):
-    probe = LiveBatteryCheck(fleet, executor)
+async def verify_navigators(probe):
     await probe.verify_graph()
     for namespace in probe.namespaces.values():
         client = probe.probe.create_client(GetState, f"{namespace}/bt_navigator/get_state")
@@ -49,6 +48,12 @@ async def validate(config_path, fleet, executor):
             await asyncio.sleep(0.25)
         else:
             raise AssertionError(f"Navigator inactive for {namespace}")
+
+
+async def validate(config_path, fleet, executor, *, after_charging=None,
+                   consumer_type=FleetEventLoop, database_path="/evidence/c44.sqlite3"):
+    probe = LiveBatteryCheck(fleet, executor)
+    await verify_navigators(probe)
     core, robots = build_fleet_manager_from_config(config_path)
     first, second = robots
     dock = fleet.stations.charging_stations[0]
@@ -69,8 +74,8 @@ async def validate(config_path, fleet, executor):
                                        lambda msg, rid=robot_id: poses.__setitem__(rid, msg.pose.position), 10)
     node = rclpy.create_node("c44_fleet_manager", parameter_overrides=[Parameter("use_sim_time", value=True)])
     executor.add_node(node)
-    with closing(SQLiteStore("/evidence/c44.sqlite3")) as store:
-        consumer = FleetEventLoop(store, core)
+    with closing(SQLiteStore(database_path)) as store:
+        consumer = consumer_type(store, core)
         adapter = FleetROS2Adapter(node, consumer, asyncio.get_running_loop(), robots,
                                    robot_namespaces=probe.namespaces, enable_live_routing=False)
         dispatcher = OutboxDispatcher(consumer, adapter.outbox_sender, clock=time.monotonic, retry_delay=1.0)
@@ -135,6 +140,11 @@ async def validate(config_path, fleet, executor):
             assert store.connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             assert not store.connection.execute("PRAGMA foreign_key_check").fetchall()
             emit("ALL_C4_4_TESTS_PASSED", token=os.environ["DDS_TEST_PAYLOAD"], outbox_commands=len(commands))
+            if after_charging is not None:
+                worker.cancel()
+                await asyncio.gather(worker, return_exceptions=True)
+                worker = None
+                await after_charging(fleet, probe, node, consumer, store, dispatcher)
         finally:
             if worker is not None:
                 worker.cancel()
@@ -142,14 +152,18 @@ async def validate(config_path, fleet, executor):
             await consumer.close()
 
 
-def main():
+def main(*, check=validate, initial_soc=INITIAL_SOC, charge_power_w=TEST_CHARGE_POWER_W,
+         safety_margin_wh=None):
     config, _, _ = load_test_config()
     source = Path(config["fleet_config_path"])
     with TemporaryDirectory(prefix="c44-") as directory:
         variant = shutil.copytree(source.parent, Path(directory) / "config") / source.name
         data = yaml.safe_load(variant.read_text())
-        for model in data["fleet"]["battery_models"].values():
-            model["charge_power_w"] = TEST_CHARGE_POWER_W
+        if charge_power_w is not None:
+            for model in data["fleet"]["battery_models"].values():
+                model["charge_power_w"] = charge_power_w
+        if safety_margin_wh is not None:
+            data["policies"]["safety_margin_wh"] = safety_margin_wh
         variant.write_text(yaml.safe_dump(data))
         config["fleet_config_path"] = str(variant)
         fleet = load_config(variant)
@@ -157,7 +171,7 @@ def main():
             commands = [
                 (label, ["python3", "/opt/simulation-c4-3/battery_entry.py",
                          *command[1:], "--initial-soc", str(soc)])
-                for (label, command), soc in zip(battery_commands(config, fleet), INITIAL_SOC)
+                for (label, command), soc in zip(battery_commands(config, fleet), initial_soc)
             ]
             docks = fleet.stations.charging_stations
             return simulation(config, fleet.model_dump(), executor_entry="/opt/simulation-c4-2/executor_test_entry.py",
@@ -169,7 +183,7 @@ def main():
         worker = threading.Thread(target=executor.spin)
         worker.start()
         try:
-            asyncio.run(validate(variant, fleet, executor))
+            asyncio.run(check(variant, fleet, executor))
         finally:
             executor.shutdown()
             worker.join()

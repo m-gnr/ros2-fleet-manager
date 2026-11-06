@@ -1,0 +1,25 @@
+# Two independent test profiles on the C4.4 simulation and backend images.
+name: ros2-fleet-simulation-c4-5
+
+x-c4-5: &c4-5
+  environment:
+    C45_PROFILE: "${C45_PROFILE:?Set C45_PROFILE to charging or energy}"
+  volumes:
+    - ../../docker/simulation-c4-5:/opt/simulation-c4-5:ro
+  command:
+    - bash
+    - -c
+    - >-
+      set -e;
+      source /opt/ros/humble/setup.bash;
+      cd /workspace;
+      colcon build --base-paths src;
+      source install/setup.bash;
+      export PYTHONPATH=/workspace:/opt/fleet-live-validation:/opt/simulation-c3-3-3:/opt/simulation-c4-1:/opt/simulation-c4-2:/opt/simulation-c4-3:/opt/simulation-c4-4:$$PYTHONPATH;
+      exec python3 /opt/simulation-c4-5/fleet_acceptance.py
+
+services:
+  simulation:
+    <<: *c4-5
+  backend:
+    <<: *c4-5

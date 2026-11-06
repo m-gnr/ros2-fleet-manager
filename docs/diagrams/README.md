@@ -52,7 +52,7 @@ Her akış için `.mmd` düzenlenebilir kaynak, `.svg` türetilmiş çıktıdır
 
 **Test / kanıt:** [c3-3-3-validation-2026-10-24.md](../validation/c3/c3-3-3-validation-2026-10-24.md)
 
-**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager bağlantısı ayrı [C4.2 Fortress koşusunda](../validation/c4/c4-2-validation-2026-11-06.md) doğrulandı.
+**Sınır / fark:** Kök üç servis Compose henüz planlanandır. C3.3.3 geçici test besleyicisini kullanır. Robot başına Battery Simulator, Executor ve Fleet Manager ürün akışı [C4.5 Fortress kabulünde](../validation/c4/c4-5-validation-2026-11-06.md) çalıştırıldı.
 
 ![Sistem ve Docker mimarisi](svg/system-architecture.svg)
 
@@ -79,17 +79,18 @@ flowchart TB
  EX["Robot Executor • fiziksel durum otoritesi"]:::executor
  NAV["Nav2 / AMCL • robot başına"]:::nav
  GZ["Gazebo headless / bridge / Map Server"]:::nav
- BAT["Battery Simulator • C4.2 tüketim ve telemetri"]:::battery
+ BAT["Battery Simulator • tüketim ve fiziksel şarj"]:::battery
  CFG --> EX
  CFG --> NAV
  CFG --> BAT
  EX -->|"NavigateToPose"| NAV
  NAV <-->|"Odometri / sensör / hız"| GZ
- GZ -->|"/clock ve odometri"| BAT
+ GZ -->|"/clock, odometri, fiziksel poz ve temas"| BAT
  BAT -->|"BatteryState • robot başına"| EX
  end
  U <-->|"HTTP / WebSocket"| API
- FM -->|"DDS ExecuteTask / cancel / ClearRobotError"| EX
+ FM -->|"ExecuteTask / NavigateToStation / cancel / ClearRobotError"| EX
+ FM -->|"DockLease • kayıtlı kaynak sahibi"| BAT
  EX -->|"RobotStatus / feedback / result"| FM
  FM <-->|"ComputePathToPose"| NAV
 

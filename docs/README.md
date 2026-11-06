@@ -43,6 +43,8 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 - [C3.3.4 Görev 1 Doğrulama Raporu](validation/c3/c3-3-4-task-1-validation-2026-11-05.md): Terminal `completed_epoch` doğrulaması ve sahipliğin korunması.
 - [C4.2 Entegrasyon Doğrulama Raporu](validation/c4/c4-2-validation-2026-11-06.md): İki robotlu Fortress ortamında BatteryState → RobotStatus → Fleet Manager, batarya güncelliği ve gerçek Nav2 ile atama.
 
+- [Fleet Visualizer Aşama 1](validation/fleet-visualizer/report.md) — Tek robotlu 3D prototipin ROS, WebSocket ve Chrome doğrulaması.
+
 ## Doğrulama kanıtları
 
 [Doğrulama dizini](validation/README.md), DDS, A, B1, B2, AMCL, B3 ve B3 Retry raporlarını komut ekleriyle birlikte listeler. AMCL sonucu 1 geçti / 1 kaldı; ilk B3 ve Retry ayrı oturumlardır. Kanıtların tarihleri, ölçütleri ve başarısız koşuları korunur.

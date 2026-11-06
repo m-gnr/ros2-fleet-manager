@@ -21,6 +21,7 @@ await page.addInitScript(() => {
 const identity = { version: 1, robot_id: 'configured_bot', frame_id: 'map', source: 'tf', epoch: 0,
   stream_id: 'b0800df7-63ee-4281-a509-cdf5ca44a69e' }
 let socket
+let heartbeat
 let opens = 0
 let stamp = 0
 const send = (type, body) => socket.send(JSON.stringify({ ...identity, type, ...body }))
@@ -31,10 +32,12 @@ const state = (name, expected) => page.waitForFunction(([name, expected]) =>
 const screenshot = name => page.screenshot({ path: join(directory, name + '.png') })
 const latest = () => page.evaluate(() => window.sceneFrames.at(-1))
 
-await page.routeWebSocket('**/telemetry', route => {
+await page.routeWebSocket(/\/telemetry(?:\/fleet)?$/, route => {
   socket = route
   opens++
   send('hello', { after_stamp_ns: String(stamp * 100_000_000), stale_after_ms: 1500 })
+  clearInterval(heartbeat)
+  heartbeat = setInterval(() => send('data_status', { status: 'LIVE' }), 400)
 })
 
 try {
@@ -98,6 +101,7 @@ try {
   await state('freshness', 'FRAME_ERROR')
   assert(await page.getByText('TF zinciri veya koordinat çerçevesi doğrulanamadı.').isVisible())
   await screenshot('frame-error')
+  clearInterval(heartbeat)
   await socket.close()
   await state('connection', 'DISCONNECTED')
   assert.deepEqual((await latest()).pose, held.pose)
@@ -151,5 +155,6 @@ try {
     lowQuality: { dpr: low.dpr, calls: low.calls, geometries: low.geometries, textures: low.textures },
   }, null, 2))
 } finally {
+  clearInterval(heartbeat)
   await browser.close()
 }

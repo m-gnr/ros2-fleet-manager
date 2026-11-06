@@ -36,7 +36,7 @@ function ContactShadow() {
   </mesh>
 }
 
-export const Burger = memo(function Burger({ softShadows }: { softShadows: boolean }) {
+export const Burger = memo(function Burger({ softShadows, color, selected }: { softShadows: boolean; color: string; selected: boolean }) {
   return <>
     {softShadows && <ContactShadow />}
     <group name="burger-body">
@@ -83,8 +83,8 @@ export const Burger = memo(function Burger({ softShadows }: { softShadows: boole
       </mesh>
     </group>
     <mesh name="robot-locator" position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.184, 0.199, 48]} />
-      <meshBasicMaterial color="#79d6c8" transparent opacity={0.88} />
+      <ringGeometry args={[selected ? 0.171 : 0.184, 0.199, 48]} />
+      <meshBasicMaterial color={color} transparent opacity={selected ? 1 : 0.72} />
     </mesh>
     <mesh name="robot-front-marker" position={[frontMarkerX, 0.015, 0]} rotation={[0, 0, -Math.PI / 2]}>
       <coneGeometry args={[0.058, 0.13, 3]} />

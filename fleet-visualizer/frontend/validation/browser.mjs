@@ -15,7 +15,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 850 } })
 const packets = []
 const errors = await recordWebGL(page)
 page.on('websocket', socket => {
-  if (!socket.url().endsWith('/telemetry')) return
+  if (!/\/telemetry(?:\/fleet)?$/.test(socket.url())) return
   socket.on('framereceived', ({ payload }) => packets.push(JSON.parse(String(payload))))
 })
 await page.addInitScript(() => {

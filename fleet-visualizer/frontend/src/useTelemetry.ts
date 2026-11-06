@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { connected, disconnected, expire, initial, receive } from './telemetry'
-import type { Telemetry } from './telemetry'
+import { connectFleet, disconnectFleet, expireFleet, initialFleet, receiveFleet, type Fleet } from './fleet'
 
 const retryMs = 750
 const heartbeatTimeoutMs = 2500
 
 function createSceneFeed() {
-  let current = initial
+  let current = initialFleet
   const listeners = new Set<() => void>()
   return {
     read: () => current,
@@ -14,8 +13,11 @@ function createSceneFeed() {
       listeners.add(listener)
       return () => { listeners.delete(listener) }
     },
-    update(next: Telemetry) {
-      const poseChanged = current.pose !== next.pose || current.previous !== next.previous
+    update(next: Fleet) {
+      const poseChanged = current.robots.size !== next.robots.size || [...next.robots].some(([id, robot]) => {
+        const before = current.robots.get(id)
+        return robot.pose !== before?.pose || robot.previous !== before?.previous || robot.status !== before?.status
+      })
       current = next
       if (poseChanged) listeners.forEach(listener => listener())
     },
@@ -25,16 +27,16 @@ function createSceneFeed() {
 export type SceneFeed = ReturnType<typeof createSceneFeed>
 
 export function useTelemetry(url: string) {
-  const [view, setView] = useState(initial)
+  const [view, setView] = useState(initialFleet)
   const [feed] = useState(createSceneFeed)
   useEffect(() => {
-    let state: Telemetry = initial
+    let state = initialFleet
     let socket: WebSocket | undefined
     let retry: number | undefined
     let lastPacketAt = 0
     let stopped = false
 
-    function update(next: Telemetry) {
+    function update(next: Fleet) {
       if (next !== state) {
         state = next
         feed.update(next)
@@ -49,12 +51,12 @@ export function useTelemetry(url: string) {
       socket = candidate
       lastPacketAt = performance.now()
       candidate.onopen = () => {
-        if (socket === candidate) update(connected(state))
+        if (socket === candidate) update(connectFleet(state))
       }
       candidate.onmessage = ({ data }) => {
         if (socket !== candidate) return
         const now = performance.now()
-        const next = receive(state, data, now)
+        const next = receiveFleet(state, data, now)
         if (next !== state) {
           lastPacketAt = now
           update(next)
@@ -64,7 +66,7 @@ export function useTelemetry(url: string) {
         if (socket !== candidate) return
         socket = undefined
         candidate.close()
-        update(disconnected(state))
+        update(disconnectFleet(state))
         retry = window.setTimeout(connect, retryMs)
       }
       candidate.onclose = lost
@@ -74,11 +76,11 @@ export function useTelemetry(url: string) {
     connect()
     const timer = window.setInterval(() => {
       const now = performance.now()
-      update(expire(state, now))
+      update(expireFleet(state, now))
       if (socket && now - lastPacketAt > heartbeatTimeoutMs) {
         socket.close()
         socket = undefined
-        update(disconnected(state))
+        update(disconnectFleet(state))
         retry = window.setTimeout(connect, retryMs)
       }
     }, 100)

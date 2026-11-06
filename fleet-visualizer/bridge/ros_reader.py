@@ -1,4 +1,5 @@
-"""Read a single verified TF chain or explicit diagnostic odometry."""
+"""Read isolated, verified TF chains with one ROS participant."""
+from math import isfinite
 from time import monotonic_ns
 
 from nav_msgs.msg import Odometry
@@ -19,15 +20,42 @@ def stamp_ns(stamp):
 
 
 class RosReader(Node):
-    def __init__(self, namespace, telemetry, hz, on_snapshot, *, context):
+    def __init__(self, robots, hz, on_snapshot, *, context):
         super().__init__("fleet_visualizer", enable_rosout=False,
                          start_parameter_services=False, use_global_arguments=False, context=context)
         # Humble always creates a parameter event writer during Node initialization.
         for publisher in list(self.publishers):
             self.destroy_publisher(publisher)
 
-        self.telemetry = telemetry
+        self.robots = {}
         self.on_snapshot = on_snapshot
+        for namespace, telemetry in robots:
+            reader = RobotReader(namespace, telemetry)
+            self.robots[reader.robot_id] = reader
+            if reader.tf is not None:
+                self.create_subscription(TFMessage, namespace + "/tf", reader.on_tf, 10)
+            else:
+                self.create_subscription(Odometry, namespace + "/odom", reader.on_odom,
+                                         QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT))
+        self.create_subscription(ClockMessage, "/clock", self.on_clock,
+                                 QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
+        self.create_timer(1 / hz, self.sample, clock=Clock(clock_type=ClockType.STEADY_TIME))
+
+    def on_clock(self, msg):
+        stamp, now = stamp_ns(msg.clock), monotonic_ns()
+        for robot_id, reader in self.robots.items():
+            if reader.clock(stamp, now):
+                self.on_snapshot(robot_id, reader.sample(now))
+
+    def sample(self):
+        now = monotonic_ns()
+        for robot_id, reader in self.robots.items():
+            self.on_snapshot(robot_id, reader.sample(now))
+
+
+class RobotReader:
+    def __init__(self, namespace, telemetry):
+        self.telemetry = telemetry
         self.odom_frame = namespace.lstrip("/") + "/odom"
         self.base_frame = namespace.lstrip("/") + "/base_link"
         self.frame = telemetry.identity["frame_id"]
@@ -35,26 +63,19 @@ class RosReader(Node):
         self.latest = None
         self.localization_ns = 0
         self.frame_error = False
-        self.tf = None
+        self.bad_edges = set()
+        self.tf = Buffer(cache_time=Duration(seconds=5)) if telemetry.identity["source"] == "tf" else None
 
-        self.create_subscription(ClockMessage, "/clock", self.on_clock,
-                                 QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
-        if telemetry.identity["source"] == "tf":
-            self.tf = Buffer(cache_time=Duration(seconds=5))
-            self.create_subscription(TFMessage, namespace + "/tf", self.on_tf, 10)
-        else:
-            self.create_subscription(Odometry, namespace + "/odom", self.on_odom,
-                                     QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT))
-        self.create_timer(1 / hz, self.sample, clock=Clock(clock_type=ClockType.STEADY_TIME))
-
-    def on_clock(self, msg):
-        if self.telemetry.clock(stamp_ns(msg.clock), monotonic_ns()):
+    def clock(self, stamp, now):
+        if self.telemetry.clock(stamp, now):
             if self.tf is not None:
                 self.tf.clear()
             self.latest = None
             self.localization_ns = 0
             self.frame_error = False
-            self.on_snapshot(self.telemetry.sample(None, monotonic_ns()))
+            self.bad_edges.clear()
+            return True
+        return False
 
     def on_tf(self, msg):
         now = monotonic_ns()
@@ -64,19 +85,32 @@ class RosReader(Node):
         for transform in msg.transforms:
             parent, child = transform.header.frame_id, transform.child_frame_id
             stamp = stamp_ns(transform.header.stamp)
-            if child == self.odom_frame and parent == self.frame:
-                # AMCL post-dates map->odom by the configured transform tolerance.
-                if self.localization_ns < stamp <= clock + 2 * NS:
-                    self.tf.set_transform(transform, "visualizer")
-                    self.localization_ns = stamp
-            elif child == self.base_frame and parent == self.odom_frame:
-                # /clock and /tf are delivered independently. Allow a small receive skew.
-                if (self.latest is None or stamp > self.latest[0]) and 0 < stamp <= clock + NS // 4:
-                    self.tf.set_transform(transform, "visualizer")
-                    self.latest = (stamp, now)
-                    self.frame_error = False
-            elif child in (self.base_frame, self.odom_frame):
-                self.frame_error = True
+            if child == self.odom_frame:
+                expected, cutoff, lead = self.frame, self.localization_ns, 2 * NS
+            elif child == self.base_frame:
+                expected, cutoff, lead = self.odom_frame, self.latest[0] if self.latest else 0, NS // 4
+            else:
+                continue
+
+            if parent != expected:
+                self.bad_edges.add(child)
+                continue
+            if not cutoff < stamp <= clock + lead:
+                continue
+            translation, q = transform.transform.translation, transform.transform.rotation
+            try:
+                yaw_from_quaternion(q.x, q.y, q.z, q.w)
+                if not all(isfinite(value) for value in (translation.x, translation.y, translation.z)):
+                    raise ValueError("Invalid TF translation")
+                self.tf.set_transform(transform, "visualizer")
+            except (TransformException, ValueError):
+                self.bad_edges.add(child)
+                continue
+            self.bad_edges.discard(child)
+            if child == self.odom_frame:
+                self.localization_ns = stamp
+            else:
+                self.latest = (stamp, now)
 
     def make_pose(self, position, q, stamp, received):
         yaw = yaw_from_quaternion(q.x, q.y, q.z, q.w)
@@ -98,18 +132,15 @@ class RosReader(Node):
             except ValueError:
                 self.frame_error = True
 
-    def sample(self):
-        now = monotonic_ns()
+    def sample(self, now):
         if self.tf is None:
-            snapshot = self.telemetry.sample(self.latest, now, frame_error=self.frame_error)
-        else:
-            candidate, frame_error = self.resolve_tf(now)
-            snapshot = self.telemetry.sample(candidate, now, frame_error=frame_error)
-        self.on_snapshot(snapshot)
+            return self.telemetry.sample(self.latest, now, frame_error=self.frame_error)
+        candidate, frame_error = self.resolve_tf(now)
+        return self.telemetry.sample(candidate, now, frame_error=frame_error)
 
     def resolve_tf(self, now):
-        if self.latest is None or self.frame_error:
-            return None, self.frame_error
+        if self.latest is None or self.bad_edges:
+            return None, bool(self.bad_edges)
         stamp, received = self.latest
         if now - received >= self.telemetry.stale_ns:
             return None, False

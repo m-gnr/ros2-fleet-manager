@@ -20,3 +20,9 @@ export function telemetryFields({ pose, session }: Telemetry) {
     stamp: pose ? stampLabel(pose.stamp_ns) + ' sn' : '—',
   }
 }
+
+const robotColors = ['#79d6c8', '#97b9ff', '#f3a6ce', '#f5be82']
+
+export function robotColor(index: number) {
+  return robotColors[index % robotColors.length]
+}

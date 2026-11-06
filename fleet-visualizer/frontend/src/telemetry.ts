@@ -52,12 +52,21 @@ function sameSource(a: Identity, b: Identity) {
   return a.robot_id === b.robot_id && a.frame_id === b.frame_id && a.source === b.source
 }
 
-export function receive(state: Telemetry, raw: unknown, now: number): Telemetry {
-  if (state.connection !== 'CONNECTED' || typeof raw !== 'string' || raw.length > 2048) return state
+export function decodePacket(raw: unknown, maxLength = 2048): Record<string, unknown> | undefined {
+  if (typeof raw !== 'string' || raw.length > maxLength) return undefined
   let value: unknown
-  try { value = JSON.parse(raw) } catch { return state }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return state
-  const packet = value as Record<string, unknown>
+  try { value = JSON.parse(raw) } catch { return undefined }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  return value as Record<string, unknown>
+}
+
+export function receive(state: Telemetry, raw: unknown, now: number): Telemetry {
+  const packet = decodePacket(raw)
+  return packet ? receivePacket(state, packet, now) : state
+}
+
+export function receivePacket(state: Telemetry, packet: Record<string, unknown>, now: number): Telemetry {
+  if (state.connection !== 'CONNECTED') return state
   const id = identity(packet)
   if (!id) return state
 

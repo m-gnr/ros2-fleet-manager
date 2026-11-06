@@ -47,6 +47,8 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 
 - [Fleet Visualizer Aşama 2 tasarımı](design/fleet-visualizer-stage-2.md) ve [doğrulama kaydı](validation/fleet-visualizer/stage-2/report.md). Tek robotlu, salt okunur, temsili 3D depo ve kamera kontrolleri.
 
+- [Fleet Visualizer Aşama 3 tasarımı](design/fleet-visualizer-stage-3.md) · [Doğrulama ve Chrome kanıtı](validation/fleet-visualizer/stage-3/report.md). İki robotlu, salt okunur deneysel 3D filo görünümü.
+
 ## Doğrulama kanıtları
 
 [Doğrulama dizini](validation/README.md), DDS, A, B1, B2, AMCL, B3 ve B3 Retry raporlarını komut ekleriyle birlikte listeler. AMCL sonucu 1 geçti / 1 kaldı; ilk B3 ve Retry ayrı oturumlardır. Kanıtların tarihleri, ölçütleri ve başarısız koşuları korunur.

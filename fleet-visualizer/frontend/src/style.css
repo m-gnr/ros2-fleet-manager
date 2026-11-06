@@ -117,3 +117,14 @@ footer b { color: var(--mint); margin-inline: 3px; }
   .quality-control { flex-direction: column; align-items: end; gap: 3px; }
   .camera-toolbar button { padding-inline: 6px; }
 }
+
+.fleet-list { list-style: none; margin: 0 0 0.65rem; padding: 0; display: grid; gap: 0.35rem; }
+.fleet-list button {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.45rem;
+  width: 100%; padding: 0.45rem 0.55rem; text-align: left; color: inherit;
+  background: transparent; border: 1px solid #394755; border-radius: 0.45rem; cursor: pointer;
+}
+.fleet-list button[aria-pressed="true"] { border-color: #79d6c8; background: #79d6c811; }
+.fleet-list small { display: block; color: #a9bbcd; font-variant-numeric: tabular-nums; }
+.fleet-list strong { overflow-wrap: anywhere; }
+.robot-label[data-selected="true"] { box-shadow: 0 0 0 1px #f4fbff; }

@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { memo, useLayoutEffect, useRef, type RefObject } from 'react'
-import { Group, Quaternion, Vector3 } from 'three'
+import { memo, useLayoutEffect, useRef } from 'react'
+import { Box3, Group, PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Burger, burgerSize } from './Burger'
 import {
@@ -8,6 +8,7 @@ import {
   type CameraCommand,
 } from './camera'
 import { blendMs, blendPose, toScene } from './coordinates'
+import { robotColor } from './presentation'
 import type { Pose } from './telemetry'
 import type { SceneFeed } from './useTelemetry'
 import { Warehouse } from './Warehouse'
@@ -16,7 +17,10 @@ type SceneProps = {
   feed: SceneFeed
   command: CameraCommand
   lowQuality: boolean
-  label: RefObject<HTMLSpanElement | null>
+  labels: Map<string, HTMLSpanElement>
+  robotIds: string[]
+  selected?: string
+  onSelect: (id: string) => void
   trace: boolean
 }
 
@@ -24,18 +28,21 @@ const polarLimit = Math.PI / 2 - 0.045
 const topAngle = 0.001
 const topHeight = 19.8
 
-function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
-  const model = useRef<Group>(null)
+function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSelect, trace }: SceneProps) {
+  const models = useRef(new Map<string, Group>()).current
   const orbit = useRef<OrbitControls | null>(null)
   const lastPose = useRef<Pose>(undefined)
-  const tracedPose = useRef<Pose>(undefined)
+  const tracedPoses = useRef(new WeakSet<Pose>()).current
+  const previousSelection = useRef<string>(undefined)
+  const centered = useRef(false)
+  const fitted = useRef(false)
   const cameraCommand = useRef(command)
   const transitioning = useRef(false)
   const goalTarget = useRef(new Vector3(0, targetHeight, 0))
   const goalOffset = useRef(new Vector3(...startOffset))
   const scratch = useRef({
     shift: new Vector3(), destination: new Vector3(), screen: new Vector3(),
-    front: new Vector3(), rotation: new Quaternion(),
+    front: new Vector3(), rotation: new Quaternion(), bounds: new Box3(), extent: new Vector3(),
   })
   const { camera, gl, invalidate } = useThree()
 
@@ -61,30 +68,43 @@ function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
     }
   }, [camera, gl, feed, invalidate])
 
-  useLayoutEffect(() => { invalidate() }, [command, lowQuality, invalidate])
+  useLayoutEffect(() => { invalidate() }, [command, lowQuality, selected, invalidate])
 
   useFrame(({ size, scene }, delta) => {
-    const robot = model.current
     const controls = orbit.current
-    if (!robot || !controls) return
+    if (!controls) return
 
-    const { pose, previous, status } = feed.read()
+    const { robots } = feed.read()
     const now = performance.now()
-    const displayed = pose && previous ? blendPose(previous, pose, now - pose.receivedAt) : pose
-    const { shift, destination, screen, front, rotation } = scratch.current
+    const { shift, destination, screen, front, rotation, bounds, extent } = scratch.current
     const nextMode = command.mode
     const oldCommand = cameraCommand.current
     const priorPose = lastPose.current
-    robot.visible = !!displayed
-    if (displayed) {
+    const selectionChanged = selected !== previousSelection.current
+    previousSelection.current = selected
+    const target = selected ? robots.get(selected) : undefined
+    const robot = selected ? models.get(selected) : undefined
+    const { pose, previous, status } = target ?? {}
+    let interpolating = false
+    bounds.makeEmpty()
+    for (const [id, root] of models) {
+      const sample = robots.get(id)
+      const measured = sample?.pose
+      const displayed = measured && sample.previous
+        ? blendPose(sample.previous, measured, now - measured.receivedAt) : measured
+      root.visible = !!displayed
+      if (!displayed) continue
       const [x, z, heading] = toScene(displayed)
-      robot.position.set(x, 0, z)
-      robot.rotation.y = heading
-      if (pose && !priorPose && nextMode === 'free' && !transitioning.current) {
-        shift.set(x - controls.target.x, 0, z - controls.target.z)
-        camera.position.add(shift)
-        controls.target.add(shift)
-      }
+      root.position.set(x, 0, z)
+      root.rotation.y = heading
+      bounds.expandByPoint(root.position)
+      interpolating ||= displayed !== measured
+    }
+    if (!centered.current && nextMode === 'free' && robot?.visible) {
+      shift.set(robot.position.x - controls.target.x, 0, robot.position.z - controls.target.z)
+      camera.position.add(shift)
+      controls.target.add(shift)
+      centered.current = true
     }
     lastPose.current = pose
 
@@ -97,11 +117,13 @@ function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
         goalOffset.current.set(0, topHeight, topAngle * topHeight)
       } else if (command.reset !== oldCommand.reset || oldCommand.mode === 'top') {
         if (command.reset !== oldCommand.reset) {
-          goalTarget.current.set(robot.position.x, targetHeight, robot.position.z)
-          if (!pose) goalTarget.current.set(0, targetHeight, 0)
+          goalTarget.current.set(robot?.visible ? robot.position.x : 0, targetHeight,
+            robot?.visible ? robot.position.z : 0)
+          centered.current = !!robot?.visible
         }
         goalOffset.current.set(...startOffset)
       }
+      if (nextMode === 'fit') fitted.current = false
       if (nextMode === 'follow' && goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
       controls.minPolarAngle = 0
       controls.maxPolarAngle = Math.PI / 2
@@ -110,13 +132,26 @@ function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
       transitioning.current = true
     }
 
-    if (nextMode === 'follow' && displayed) {
+    if (nextMode === 'fit' && !fitted.current && !bounds.isEmpty()) {
+      bounds.getCenter(goalTarget.current).setY(targetHeight)
+      const radius = bounds.getSize(extent).length() / 2 + 0.55
+      const vertical = (camera as PerspectiveCamera).fov * Math.PI / 360
+      const horizontal = Math.atan(Math.tan(vertical) * size.width / size.height)
+      const distance = radius / Math.sin(Math.min(vertical, horizontal))
+      goalOffset.current.set(...startOffset).setLength(Math.min(maxCameraDistance, distance))
+      controls.enableDamping = false
+      controls.enabled = false
+      transitioning.current = true
+      fitted.current = true
+    }
+
+    if (nextMode === 'follow' && robot?.visible) {
       const [x, y, z] = followTarget(robot.position.x, robot.position.z)
       goalTarget.current.set(x, y, z)
-      if (!transitioning.current && pose !== priorPose && !previous && status === 'LIVE' &&
+      if (!transitioning.current && (selectionChanged || (pose !== priorPose && !previous && status === 'LIVE')) &&
           controls.target.distanceToSquared(goalTarget.current) > 0.0144) {
         goalOffset.current.copy(camera.position).sub(controls.target)
-        if (!priorPose && goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
+        if (goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
         controls.enableDamping = false
         controls.enabled = false
         transitioning.current = true
@@ -128,9 +163,8 @@ function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
       destination.copy(goalTarget.current).add(goalOffset.current)
       controls.target.lerp(goalTarget.current, fraction)
       camera.position.lerp(destination, fraction)
-      if ((nextMode === 'follow' && status !== 'LIVE' && displayed) ||
-          (camera.position.distanceToSquared(destination) < 0.000025 &&
-          controls.target.distanceToSquared(goalTarget.current) < 0.000025)) {
+      if (camera.position.distanceToSquared(destination) < 0.000025 &&
+          controls.target.distanceToSquared(goalTarget.current) < 0.000025) {
         camera.position.copy(destination)
         controls.target.copy(goalTarget.current)
         controls.minPolarAngle = nextMode === 'top' ? topAngle : 0
@@ -141,49 +175,61 @@ function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
         controls.enabled = true
         transitioning.current = false
       }
-    } else if (nextMode === 'follow' && displayed) {
+    } else if (nextMode === 'follow' && robot?.visible) {
       shift.copy(goalTarget.current).sub(controls.target)
       camera.position.add(shift)
       controls.target.copy(goalTarget.current)
     }
     controls.update()
 
-    if (label.current) {
-      if (displayed) {
-        screen.copy(robot.position).addScaledVector(camera.up, burgerSize.height + 0.055).project(camera)
+    for (const [id, root] of models) {
+      const label = labels.get(id)
+      if (!label) continue
+      if (root.visible) {
+        screen.copy(root.position).addScaledVector(camera.up, burgerSize.height + 0.055).project(camera)
       }
-      const onScreen = displayed && screen.z >= -1 && screen.z <= 1 &&
+      const onScreen = root.visible && screen.z >= -1 && screen.z <= 1 &&
         Math.abs(screen.x) < 0.89 && Math.abs(screen.y) < 0.89
-      label.current.hidden = !onScreen
+      label.hidden = !onScreen
       if (onScreen) {
-        label.current.style.left = (screen.x + 1) / 2 * size.width + 'px'
-        label.current.style.top = (1 - screen.y) / 2 * size.height + 'px'
+        label.style.left = (screen.x + 1) / 2 * size.width + 'px'
+        label.style.top = (1 - screen.y) / 2 * size.height + 'px'
       }
     }
-    if (transitioning.current || displayed !== pose) invalidate()
+    if (transitioning.current || interpolating) invalidate()
 
     if (trace) {
       gl.render(scene, camera)
-      if (pose && displayed === pose && tracedPose.current !== pose) {
-        tracedPose.current = pose
-        // Read the local +Y of the cone, which its own transform turns into the model's +X.
-        const marker = robot.getObjectByName('robot-front-marker')!
+      const roots = []
+      for (const [id, root] of models) {
+        const sample = robots.get(id)
+        const measured = sample?.pose
+        const blending = measured && sample.previous && now - measured.receivedAt < blendMs
+        const blend = blending && sample.previous ? {
+          stream_id: measured.stream_id, epoch: measured.epoch, from: sample.previous.stamp_ns, to: measured.stamp_ns,
+          fraction: Math.max(0, (now - measured.receivedAt) / blendMs),
+        } : undefined
+        screen.copy(root.position).addScaledVector(camera.up, burgerSize.height / 2).project(camera)
+        roots.push({ robot_id: id, pose: root.position.toArray(), yaw: root.rotation.y, visible: root.visible,
+          status: sample?.status, blend, screen: [(screen.x + 1) / 2, (1 - screen.y) / 2] })
+        if (!measured || blending || tracedPoses.has(measured)) continue
+        tracedPoses.add(measured)
+        const marker = root.getObjectByName('robot-front-marker')!
         front.set(0, 1, 0).applyQuaternion(marker.getWorldQuaternion(rotation))
         gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:rendered', {
           bubbles: true,
-          detail: { stamp_ns: pose.stamp_ns, stream_id: pose.stream_id, epoch: pose.epoch, x: robot.position.x, z: robot.position.z,
-            heading_x: front.x, heading_z: front.z, receive_to_frame_ms: now - pose.receivedAt },
+          detail: { robot_id: id, stamp_ns: measured.stamp_ns, stream_id: measured.stream_id,
+            epoch: measured.epoch, x: root.position.x, z: root.position.z,
+            heading_x: front.x, heading_z: front.z, receive_to_frame_ms: now - measured.receivedAt },
         }))
       }
+      const selectedRoot = roots.find(root => root.robot_id === selected)
       gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:frame', {
         bubbles: true,
         detail: {
-          at: now, interpolating: !!displayed && displayed !== pose, visible: robot.visible,
-          blend: displayed && displayed !== pose && pose && previous ? {
-            stream_id: pose.stream_id, epoch: pose.epoch, from: previous.stamp_ns, to: pose.stamp_ns,
-            fraction: Math.max(0, (now - pose.receivedAt) / blendMs),
-          } : undefined,
-          pose: robot.position.toArray(), yaw: robot.rotation.y, mode: nextMode, transitioning: transitioning.current,
+          at: now, interpolating: !!selectedRoot?.blend, visible: !!selectedRoot?.visible,
+          blend: selectedRoot?.blend, pose: selectedRoot?.pose ?? [0, 0, 0], yaw: selectedRoot?.yaw ?? 0,
+          robots: roots, selected, mode: nextMode, transitioning: transitioning.current,
           target: controls.target.toArray(), camera: camera.position.toArray(),
           calls: gl.info.render.calls, triangles: gl.info.render.triangles,
           geometries: gl.info.memory.geometries, textures: gl.info.memory.textures,
@@ -193,9 +239,17 @@ function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
     }
   }, trace ? 1 : 0)
 
-  return <group ref={model} name="robot-ros-pose" visible={false}>
-    <Burger softShadows={!lowQuality} />
-  </group>
+  return robotIds.map((id, index) => <group key={id}
+    ref={root => { if (root) models.set(id, root); else models.delete(id) }}
+    name={`robot-ros-pose:${id}`} visible={false}
+    onClick={event => {
+      if (event.eventObject.visible && event.delta <= 4) {
+        event.stopPropagation()
+        onSelect(id)
+      }
+    }}>
+    <Burger softShadows={!lowQuality} color={robotColor(index)} selected={id === selected} />
+  </group>)
 }
 
 const initialCamera = { position: [startOffset[0], startOffset[1] + targetHeight, startOffset[2]] as [number, number, number], fov: 42, near: 0.035, far: 90 }
@@ -208,6 +262,6 @@ export default memo(function Scene(props: SceneProps) {
     <directionalLight position={[2, 8, -3]} intensity={2.2} color="#ffe8ce" />
     <directionalLight position={[-6, 3, 5]} intensity={0.7} color="#bedaff" />
     <Warehouse softShadows={!props.lowQuality} />
-    <Vehicle {...props} />
+    <Vehicles {...props} />
   </Canvas>
 })

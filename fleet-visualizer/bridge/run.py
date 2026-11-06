@@ -4,7 +4,7 @@ import asyncio
 from math import isfinite
 from pathlib import Path
 import signal
-from threading import Event
+from threading import Event, Lock
 from urllib.parse import urlsplit
 
 from yaml import YAMLError
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def options():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fleet", type=Path, default=ROOT / "config/fleet.yaml")
-    parser.add_argument("--robot", required=True, help="Robot id in fleet.yaml")
+    parser.add_argument("--robot", help="Limit telemetry to one robot id in fleet.yaml")
     parser.add_argument("--source", choices=("tf", "diagnostic_odom"), default="tf")
     parser.add_argument("--hz", type=float, default=20)
     parser.add_argument("--stale-seconds", type=float, default=1)
@@ -42,15 +42,44 @@ def options():
                     or parsed.path or parsed.query or parsed.fragment or parsed.port == 0):
                 raise ValueError(f"Invalid browser origin: {origin}")
         fleet = load_config(args.fleet, schema_path=args.fleet.with_name("fleet.schema.json"))
-        robot = next((robot for robot in fleet.robots if robot.id == args.robot), None)
-        if robot is None:
-            raise ValueError(f"Unknown robot id {args.robot!r}")
+        robots = select_robots(fleet, args.robot, args.source)
     except (ValueError, OSError, YAMLError) as error:
         parser.error(str(error))
-    return args, robot
+    return args, robots
 
 
-async def run(args, robot):
+def select_robots(fleet, robot_id, source):
+    robots = [robot for robot in fleet.robots if robot_id is None or robot.id == robot_id]
+    if not robots:
+        raise ValueError(f"Unknown robot id {robot_id!r}")
+    if source == "diagnostic_odom" and len(robots) != 1:
+        raise ValueError("diagnostic_odom requires --robot in a multi-robot fleet")
+    return robots
+
+
+class LatestSnapshots:
+    """Coalesce ROS updates while at most one asyncio wakeup is pending."""
+
+    def __init__(self, loop, stream):
+        self.loop = loop
+        self.stream = stream
+        self.lock = Lock()
+        self.pending = {}
+
+    def offer(self, robot_id, snapshot):
+        with self.lock:
+            wake = not self.pending
+            self.pending[robot_id] = snapshot
+        if wake:
+            self.loop.call_soon_threadsafe(self.flush)
+
+    def flush(self):
+        with self.lock:
+            pending, self.pending = self.pending, {}
+        self.stream.update(pending)
+
+
+async def run(args, robots):
     import rclpy
     from rclpy.context import Context
     from rclpy.executors import SingleThreadedExecutor
@@ -58,14 +87,19 @@ async def run(args, robot):
 
     from ros_reader import RosReader
 
-    frame = "map" if args.source == "tf" else robot.namespace.lstrip("/") + "/odom"
-    telemetry = Telemetry(robot.id, frame, args.source, args.stale_seconds)
-    def read_clock():
-        return telemetry.clock_observation
+    telemetry = {
+        robot.id: Telemetry(robot.id, "map" if args.source == "tf" else robot.namespace.lstrip("/") + "/odom",
+                            args.source, args.stale_seconds)
+        for robot in robots
+    }
 
-    stream = Stream(telemetry.identity, stale_ms=1000 * args.stale_seconds,
+    def read_clock(robot_id):
+        return telemetry[robot_id].clock_observation
+
+    stream = Stream([state.identity for state in telemetry.values()], stale_ms=1000 * args.stale_seconds,
                     trace_clock=read_clock if args.trace else None)
     loop = asyncio.get_running_loop()
+    relay = LatestSnapshots(loop, stream)
     stop = asyncio.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, stop.set)
@@ -75,13 +109,12 @@ async def run(args, robot):
     reader = executor = spin = None
     stop_ros = Event()
     try:
-        reader = RosReader(robot.namespace, telemetry, args.hz,
-                           lambda sample: loop.call_soon_threadsafe(stream.update, sample),
-                           context=context)
+        reader = RosReader([(robot.namespace, telemetry[robot.id]) for robot in robots],
+                           args.hz, relay.offer, context=context)
         executor = SingleThreadedExecutor(context=context)
         executor.add_node(reader)
         async with listen(stream, args.bind, args.port, args.origin):
-            print(f"Listening on {args.bind}:{args.port}/telemetry for {robot.id} ({frame})", flush=True)
+            print(f"Listening on {args.bind}:{args.port}/telemetry/fleet for {', '.join(telemetry)}", flush=True)
             def pump_ros():
                 # Fortress can send /clock at physics rate. Keep only its latest sample
                 # and cap dispatch work independently of that publishing rate.

@@ -9,6 +9,7 @@ export const cameraLabels: Record<CameraMode, string> = {
   fit: 'Filoyu kadraja al',
 }
 
+export const warehouseOffset = [0.50, 0.64, 0.94] as const
 export const startOffset = [0.76, 1.05, 0.94] as const
 export const topAngle = 0.001
 export const topOffset = [0, 1, Math.tan(topAngle)] as const

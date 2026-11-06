@@ -6,6 +6,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { chromium, expect } from "@playwright/test";
 
 const { C5_UI_ORIGIN: origin, C43_EVIDENCE_DIR: evidence, DDS_TEST_PAYLOAD: project } = process.env;
+const startupTimeout = Number(process.env.C5_STARTUP_TIMEOUT_MS ?? 120_000);
+if (!Number.isFinite(startupTimeout) || startupTimeout <= 0) throw new Error("Invalid C5 startup timeout");
 if (!origin || !evidence || !project) throw new Error("Set the C5 acceptance environment");
 mkdirSync(evidence, { recursive: true });
 const runner = "./scripts/run_c5_dashboard.sh";
@@ -209,7 +211,7 @@ try {
   startApi();
   let page = await pageForFleet();
   await until(() => last?.robots.length === 2 && last.robots.every((robot) => robot.battery_reliability === "LIVE"
-    && robot.pose_reliability === "LIVE"), "Two verified live robots unavailable");
+    && robot.pose_reliability === "LIVE"), "Two verified live robots unavailable", startupTimeout);
   const details = () => page.locator(".robot-details");
   const capture = (name) => page.screenshot({ path: join(evidence, name + ".png"), fullPage: true });
   const ids = last.robots.map(({ robot_id }) => robot_id);
@@ -307,6 +309,15 @@ try {
       routeEvents.some(({ plan_vertices }) => plan_vertices?.length > 1) &&
       routeEvents.some(({ trail_vertices }) => trail_vertices?.length > 1),
     "Live plan and TF trail did not render", 20000);
+    await until(async () => {
+      for (const id of ids) {
+        const path = routeEvents.findLast(event => event.robot_id === id && event.plan_vertices !== undefined);
+        if (!path?.plan_vertices?.length) continue;
+        await page.getByRole("button", { name: `Robot seç: ${id}` }).click();
+        if (/Güncel.*Durum B/.test(await details().getByTestId("plan-status").textContent())) return true;
+      }
+      return false;
+    }, "Observed Nav2 plan label did not match a visible ROS plan", 20000);
     await capture("active-task-plan");
     await page.getByRole("button", { name: "Robotu takip et" }).click();
     await until(() => traceFrames.at(-1)?.mode === "follow" && !traceFrames.at(-1).transitioning, "Follow camera did not settle", 10000);
@@ -318,6 +329,7 @@ try {
     await capture("camera-fit");
     await page.getByRole("button", { name: "Kamerayı sıfırla" }).click();
     await until(() => traceFrames.at(-1)?.mode === "free" && !traceFrames.at(-1).transitioning, "Reset did not settle", 10000);
+    await capture("camera-reset");
     metrics.layersOn = await measure(page);
     await page.getByLabel(/Gözlemlenen Nav2 planı/).uncheck();
     await page.getByLabel("TF hareket izi").uncheck();

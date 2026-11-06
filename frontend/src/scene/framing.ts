@@ -1,5 +1,5 @@
 import { Box3, Mesh, Vector3, type Object3D } from 'three'
-import { maxCameraDistance, minCameraDistance, startOffset, topOffset } from './camera'
+import { maxCameraDistance, minCameraDistance, topOffset, warehouseOffset } from './camera'
 
 export function warehouseCorners(warehouse: Object3D) {
   const corners: Vector3[] = []
@@ -18,13 +18,14 @@ export function warehouseCorners(warehouse: Object3D) {
 
 export function frameWarehouse(corners: Vector3[], fov: number, aspect: number, top: boolean, target: Vector3, offset: Vector3) {
   new Box3().setFromPoints(corners).getCenter(target)
-  const [x, y, z] = top ? topOffset : startOffset
+  const [x, y, z] = top ? topOffset : warehouseOffset
   const back = offset.set(x, y, z).normalize()
   const right = new Vector3(back.z, 0, -back.x).normalize()
   const up = new Vector3().crossVectors(back, right)
   const point = new Vector3()
-  const vertical = Math.tan(fov * Math.PI / 360) * 0.90
-  const horizontal = vertical * aspect
+  const halfFov = Math.tan(fov * Math.PI / 360)
+  const horizontal = halfFov * aspect * 0.90
+  const vertical = halfFov * (top ? 0.90 : 0.94)
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
   for (const corner of corners) {
     point.copy(corner).sub(target)
@@ -35,8 +36,11 @@ export function frameWarehouse(corners: Vector3[], fov: number, aspect: number, 
     minY = Math.min(minY, py - depth * vertical)
     maxY = Math.max(maxY, py + depth * vertical)
   }
-  // Opposite frustum planes meet at the minimum distance for each axis.
-  const distance = Math.max(minCameraDistance, (maxX - minX) / (2 * horizontal), (maxY - minY) / (2 * vertical))
+  // At distance d, a corner at depth z has a frustum half-span of (d - z) * tan(halfFov).
+  // Center between the opposite constraints and use the more restrictive distance.
+  const horizontalDistance = (maxX - minX) / (2 * horizontal)
+  const verticalDistance = (maxY - minY) / (2 * vertical)
+  const distance = Math.max(minCameraDistance, horizontalDistance, verticalDistance)
   target.addScaledVector(right, (maxX + minX) / 2).addScaledVector(up, (maxY + minY) / 2)
   offset.multiplyScalar(Math.min(maxCameraDistance, distance))
 }

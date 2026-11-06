@@ -37,7 +37,7 @@ export function RobotDetails({ robot, robotId, tf, connected }: {
     <dl className="detail-grid tf-fields">
       <div><dt>TF poz durumu</dt><dd data-testid="tf-status">{tfStatus}</dd></div>
       <div><dt>Gözlemlenen Nav2 planı</dt><dd data-testid="plan-status">
-        {plan?.points ? <>Güncel <small className="tag" title="Aktif Nav2 hedefiyle ilişki doğrulanmadı">Durum B</small></> : plan ? "Gösterim sona erdi" : "Ölçüm yok"}
+        {plan?.points ? <>Güncel <small className="tag" title="Aktif Nav2 hedefiyle ilişki doğrulanmadı">Durum B</small></> : plan ? "Bayat / Gizli" : "Plan yok"}
       </dd></div>
     </dl>
     <details className="measurement-details">
@@ -62,24 +62,26 @@ export function RobotDetails({ robot, robotId, tf, connected }: {
         <div className="detail-identity"><span className="robot-icon"><Bot size={20} /></span>
           <div><h3>{robot.robot_id}</h3><p>{robot.state ? `${labels[robot.state]}${connected && robot.telemetry === "LIVE" ? "" : " · son kayıt"}` : "Durum bilinmiyor"}</p></div>
           <ReliabilityBadge value={robotReliability(robot, connected)} /></div>
-        {(!connected || robot.telemetry !== "LIVE" || robot.pose_reliability !== "LIVE" || robot.battery_reliability !== "LIVE") &&
-          <div className="detail-warning"><CircleAlert size={16} /><span>
-            {robot.telemetry === "BLOCKED" ? "Kaynak oturumu değişti. Telemetri blokeli."
-              : !connected ? "Ürün akışı kesildi. Görev ve durum son eşitlemeden."
-                : "Ürün telemetrisi, poz veya batarya ölçümünün güncelliği doğrulanamadı."}
-          </span></div>}
-        <Battery robot={robot} connected={connected} />
-        <dl className="detail-grid">
-          <div><dt>{connected ? "Aktif görev" : "Görev · son eşitleme"}</dt><dd>{robot.active_task_id ?? "—"}</dd></div>
-          <div><dt>Şarj</dt><dd>{connected ? labels[robot.charging] : "Kullanılamıyor"}
-            {connected && robot.charging_station_id && <small>{robot.charging_station_id}</small>}</dd></div>
-          {connected && robot.battery_energy_wh !== null && robot.battery_reliability === "LIVE" &&
-            <div><dt>Kalan enerji</dt><dd>{displayNumber(robot.battery_energy_wh, 2)} Wh</dd></div>}
-          <div><dt>Ürün telemetrisi</dt><dd title="Snapshot alınırken kaynağın bildirdiği alım yaşı">{age}</dd></div>
-        </dl>
-        {tfFields}
+        <div className="details-scroll">
+          {(!connected || robot.telemetry !== "LIVE" || robot.pose_reliability !== "LIVE" || robot.battery_reliability !== "LIVE") &&
+            <div className="detail-warning"><CircleAlert size={16} /><span>
+              {robot.telemetry === "BLOCKED" ? "Kaynak oturumu değişti. Telemetri blokeli."
+                : !connected ? "Ürün akışı kesildi. Görev ve durum son eşitlemeden."
+                  : "Ürün telemetrisi, poz veya batarya ölçümünün güncelliği doğrulanamadı."}
+            </span></div>}
+          <Battery robot={robot} connected={connected} />
+          <dl className="detail-grid">
+            <div><dt>{connected ? "Aktif görev" : "Görev · son eşitleme"}</dt><dd>{robot.active_task_id ?? "—"}</dd></div>
+            <div><dt>Şarj</dt><dd>{connected ? labels[robot.charging] : "Kullanılamıyor"}
+              {connected && robot.charging_station_id && <small>{robot.charging_station_id}</small>}</dd></div>
+            {connected && robot.battery_energy_wh !== null && robot.battery_reliability === "LIVE" &&
+              <div><dt>Kalan enerji</dt><dd>{displayNumber(robot.battery_energy_wh, 2)} Wh</dd></div>}
+            <div><dt>Ürün telemetrisi</dt><dd title="Snapshot alınırken kaynağın bildirdiği alım yaşı">{age}</dd></div>
+          </dl>
+          {tfFields}
+        </div>
       </div> : robotId ? <div className="details-body"><h3>{robotId}</h3>
-        <p className="tf-note">Ürün snapshot’ı bekleniyor.</p>{tfFields}</div>
+        <p className="tf-note">Ürün snapshot’ı bekleniyor.</p><div className="details-scroll">{tfFields}</div></div>
         : <EmptyState title="Robot verisi bekleniyor" detail="Filo eşitlendiğinde bir robot seçebilirsin." />}
     </details>
   );

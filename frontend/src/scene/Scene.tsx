@@ -2,14 +2,14 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { memo, useLayoutEffect, useRef } from 'react'
 import { Box3, Group, PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { Burger, burgerSize } from './Burger'
+import { Burger, burgerSize, frontMarkerX } from './Burger'
 import {
   followTarget, maxCameraDistance, minCameraDistance, startOffset, targetHeight, topAngle,
   type CameraCommand,
 } from './camera'
 import { blendMs, blendPose, toScene } from './coordinates'
 import { frameWarehouse, warehouseCorners } from './framing'
-import { robotColor } from './presentation'
+import { markerDiameter } from './marker'
 import { RouteLayers } from './RouteLayers'
 import type { RouteOptions } from './routes'
 import type { Pose } from './telemetry'
@@ -21,6 +21,7 @@ type SceneProps = {
   command: CameraCommand
   lowQuality: boolean
   labels: Map<string, HTMLSpanElement>
+  markers: Map<string, HTMLButtonElement>
   robotIds: string[]
   selected?: string
   onSelect: (id: string) => void
@@ -31,13 +32,14 @@ type SceneProps = {
 const polarLimit = Math.PI / 2 - 0.045
 const fov = 42
 
-type LabelPlacement = { label: HTMLSpanElement; left: number; top: number; right: number; bottom: number }
+type ScreenRect = { left: number; top: number; right: number; bottom: number }
+type LabelPlacement = { label: HTMLSpanElement; candidates: ScreenRect[] }
 
-function overlaps(a: LabelPlacement, b: LabelPlacement) {
+function overlaps(a: ScreenRect, b: ScreenRect) {
   return a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top
 }
 
-function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSelect, trace, routes }: SceneProps) {
+function Vehicles({ feed, command, lowQuality, labels, markers, robotIds, selected, onSelect, trace, routes }: SceneProps) {
   const models = useRef(new Map<string, Group>()).current
   const orbit = useRef<OrbitControls | null>(null)
   const lastPose = useRef<Pose>(undefined)
@@ -215,35 +217,49 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
     camera.updateMatrixWorld()
 
     const placements: LabelPlacement[] = []
+    const occupied: ScreenRect[] = []
+    const radius = markerDiameter / 2
     for (const [id, root] of models) {
       const label = labels.get(id)
-      if (!label) continue
-      if (!root.visible) {
-        label.style.visibility = 'hidden'
+      const marker = markers.get(id)
+      if (!label || !marker) continue
+      screen.copy(root.position).project(camera)
+      if (!root.visible || Math.abs(screen.x) > 1 || Math.abs(screen.y) > 1 || Math.abs(screen.z) > 1) {
+        marker.style.visibility = label.style.visibility = 'hidden'
         continue
       }
-      screen.copy(root.position).addScaledVector(camera.up, burgerSize.height + 0.055).project(camera)
+
       const x = (screen.x + 1) / 2 * size.width
-      const y = (1 - screen.y) / 2 * size.height - 5
-      const width = label.offsetWidth
-      const left = x - width / 2
-      const top = y - label.offsetHeight
-      if (screen.z < -1 || screen.z > 1 || left < 3 || left + width > size.width - 3 || top < 3 || y > size.height) {
-        label.style.visibility = 'hidden'
-        continue
-      }
-      const placement = { label, left, top, right: left + width, bottom: y }
-      if (id === selected) placements.unshift(placement)
-      else placements.push(placement)
+      const y = (1 - screen.y) / 2 * size.height
+      const yaw = root.rotation.y
+      front.copy(root.position)
+      front.x += frontMarkerX * Math.cos(yaw)
+      front.z -= frontMarkerX * Math.sin(yaw)
+      front.project(camera)
+      const heading = Math.atan2((screen.y - front.y) * size.height, (front.x - screen.x) * size.width)
+      marker.style.visibility = 'visible'
+      marker.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
+      marker.style.setProperty('--heading', `${heading}rad`)
+
+      occupied.push({ left: x - radius, right: x + radius, top: y - radius, bottom: y + radius })
+      const left = x - label.offsetWidth / 2
+      const right = x + label.offsetWidth / 2
+      const height = label.offsetHeight
+      const above = y - radius - 4
+      const below = y + radius + 4
+      const placement = { label, candidates: [{ left, right, top: above - height, bottom: above }] }
+      if (id === selected) {
+        placement.candidates.push({ left, right, top: below, bottom: below + height })
+        placements.unshift(placement)
+      } else placements.push(placement)
     }
-    const visible: LabelPlacement[] = []
-    for (const placement of placements) {
-      const { label, left, top } = placement
-      const covered = visible.some(other => overlaps(placement, other))
-      label.style.visibility = covered ? 'hidden' : 'visible'
-      if (covered) continue
-      label.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`
-      visible.push(placement)
+    for (const { label, candidates } of placements) {
+      const slot = candidates.find(rect => rect.left >= 3 && rect.right <= size.width - 3 &&
+        rect.top >= 3 && rect.bottom <= size.height - 3 && !occupied.some(other => overlaps(rect, other)))
+      label.style.visibility = slot ? 'visible' : 'hidden'
+      if (!slot) continue
+      label.style.transform = `translate(${slot.left}px, ${slot.top}px)`
+      occupied.push(slot)
     }
     if (transitioning.current || interpolating) invalidate()
 
@@ -288,7 +304,7 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
     }
   }, trace ? 1 : 0)
 
-  return robotIds.map((id, index) => <group key={id}
+  return robotIds.map(id => <group key={id}
     ref={root => { if (root) models.set(id, root); else models.delete(id) }}
     name={`robot-ros-pose:${id}`} visible={false}
     onClick={event => {
@@ -297,7 +313,7 @@ function Vehicles({ feed, command, lowQuality, labels, robotIds, selected, onSel
         onSelect(id)
       }
     }}>
-    <Burger softShadows={!lowQuality} color={robotColor(index)} selected={id === selected} />
+    <Burger softShadows={!lowQuality} />
   </group>)
 }
 

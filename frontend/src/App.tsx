@@ -23,10 +23,10 @@ function activeView() {
   return views.find((view) => `#${view.id}` === window.location.hash) ?? views[0];
 }
 
-function Metric({ label, value, detail, icon: Icon }: {
-  label: string; value: number | null; detail?: string; icon: typeof Bot;
+function Metric({ label, value, detail, description, icon: Icon }: {
+  label: string; value: number | null; detail?: string; description?: string; icon: typeof Bot;
 }) {
-  return <div className="metric"><dt><Icon size={15} aria-hidden="true" />{label}</dt>
+  return <div className="metric" title={description}><dt><Icon size={15} aria-hidden="true" />{label}</dt>
     <dd><strong>{value ?? "—"}</strong>{detail && <small>{detail}</small>}</dd></div>;
 }
 
@@ -55,7 +55,8 @@ export default function App() {
       <a className="skip-link" href="#workspace">İçeriğe geç</a>
       <header className="topbar">
         <a className="brand" href="#overview"><span className="brand-mark"><Network size={19} /></span>
-          <span><strong>Fleet Manager</strong><small>ROS 2 OPERATIONS</small></span></a>
+          <span>{view.id === "overview" ? <h1>Fleet Manager</h1> : <strong>Fleet Manager</strong>}
+            <small>FİLO OPERASYONLARI</small></span></a>
         <nav aria-label="Operasyon görünümleri">
           {views.map(({ id, label, icon: Icon }) => <a href={`#${id}`} key={id}
             aria-current={view.id === id ? "page" : undefined}><Icon size={15} /><span>{label}</span></a>)}
@@ -65,16 +66,14 @@ export default function App() {
             {sync ? sync.toLocaleTimeString("tr-TR") : "—"}</time></div>
           <span className={`connection ${connection.toLowerCase()}`} role="status">
             {connected ? <Signal size={14} /> : <WifiOff size={14} />}
-            <span>C5 WebSocket</span><strong>{connectionLabels[connection]}</strong></span>
+            <strong>{connectionLabels[connection]}</strong></span>
+          <span className="tag readonly"><LockKeyhole size={13} /> SALT OKUNUR</span>
         </div>
       </header>
       <main id="workspace" tabIndex={-1} className={`workspace ${view.id === "overview" ? "overview" : ""}`}>
-      <div className="page-heading">
-        <div><p className="eyebrow">FİLO OPERASYONLARI <span> / </span> C5 · AŞAMA 1.6</p>
-          <h1>{view.id === "overview" ? "Operasyon genel görünümü" : view.label}</h1>
-          {view.id !== "overview" && <p>Fleet Manager tarafından yayınlanan yetkili operasyon verileri.</p>}</div>
-        <span className="tag readonly"><LockKeyhole size={13} /> SALT OKUNUR</span>
-      </div>
+      {view.id !== "overview" && <div className="page-heading">
+        <h1>{view.label}</h1><p>Fleet Manager tarafından yayınlanan yetkili operasyon verileri.</p>
+      </div>}
 
       {error && <div className="connection-banner" role="alert"><WifiOff size={17} /><span>{error}
         {fleet && " Görev ve rezervasyon kayıtları son eşitlemeden."}</span>
@@ -84,11 +83,11 @@ export default function App() {
         <dl className="card metrics" aria-label="Filo göstergeleri">
           <Metric label="Toplam robot" value={fleet?.robots.length ?? null} icon={Bot} />
           <Metric label="Canlı telemetri" value={connected && fleet ? fleet.robots.filter((r) => r.telemetry === "LIVE").length : null}
-            icon={Activity} />
+            description="Doğrulanmış kaynak. Canlı ürün telemetrisi bulunan robotların sayısı." icon={Activity} />
           <Metric label="Görevler" value={fleet?.task_counts.total ?? null}
             detail={fleet ? `${fleet.task_counts.active} aktif${connected ? "" : " · son eşitleme"}` : undefined} icon={ListTodo} />
           <Metric label="Şarjda" value={connected && fleet && !fleet.robots.some((r) => r.charging === "UNAVAILABLE")
-            ? fleet.robots.filter((r) => r.charging === "CHARGING").length : null} icon={BatteryCharging} />
+            ? fleet.robots.filter((r) => r.charging === "CHARGING").length : null} description="Doğrulanmış C4 ölçümü. Şarj olduğu doğrulanan robotların sayısı." icon={BatteryCharging} />
         </dl>
         <div className="operations-grid">
           <ScenePanel feed={sceneFeed} view={scene} robotIds={robotIds} selected={activeId} onSelect={setSelectedId} />

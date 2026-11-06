@@ -254,7 +254,7 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
   tf.poses();
   await expect(state).toHaveText("STALE");
   await expect(page.locator('.scene-label[data-robot-id="robot_alpha"]')).toHaveText("robot_alphaSTALE");
-  await expect(details.getByTestId("plan-status")).toHaveText("Gösterim sona erdi");
+  await expect(details.getByTestId("plan-status")).toHaveText("Bayat / Gizli");
   await expect(page.locator(".scene-indicator")).toHaveText("1 / 2 TF LIVE");
   socket.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
   await expect(details.getByRole("meter")).toBeVisible();
@@ -294,7 +294,12 @@ test("keeps the snapshot strip, warehouse, and fleet cards in view across respon
     tf.poses();
   });
   await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1, name: "Fleet Manager" })).toBeVisible();
+  await expect(page.getByText("SALT OKUNUR", { exact: true })).toBeVisible();
+  await expect(page.getByText(/C5 · AŞAMA/)).toHaveCount(0);
   const metrics = page.getByLabel("Filo göstergeleri");
+  await expect(metrics.locator(".metric").filter({ hasText: "Canlı telemetri" })).toHaveAttribute("title", /^Doğrulanmış kaynak/);
+  await expect(metrics.locator(".metric").filter({ hasText: "Şarjda" })).toHaveAttribute("title", /^Doğrulanmış C4 ölçümü/);
   const metric = (label: string) => metrics.locator(".metric").filter({ hasText: label }).locator("dd");
   for (const [label, value] of [["Toplam robot", "2"], ["Canlı telemetri", "2"], ["Görevler", "52 aktif"], ["Şarjda", "1"]]) {
     await expect(metric(label)).toHaveText(value);
@@ -314,7 +319,11 @@ test("keeps the snapshot strip, warehouse, and fleet cards in view across respon
       expect((await metrics.boundingBox())!.height).toBeLessThan(52);
       expect((await cards.nth(0).boundingBox())!.y).toBe((await cards.nth(1).boundingBox())!.y);
       for (const card of await cards.all()) await expect(card).toBeInViewport({ ratio: 1 });
-      await expect(page.locator(".robot-details")).toBeInViewport();
+      const details = page.locator(".robot-details");
+      await expect(details).toBeInViewport({ ratio: 1 });
+      const scene = (await page.locator(".scene-panel").boundingBox())!;
+      expect(Math.abs((await details.boundingBox())!.height - scene.height)).toBeLessThanOrEqual(1);
+      expect(height - (await cards.nth(1).boundingBox())!.y - (await cards.nth(1).boundingBox())!.height).toBeGreaterThan(0);
     } else {
       const secondCard = (await cards.nth(1).boundingBox())!;
       expect(secondCard.x + secondCard.width).toBeLessThanOrEqual(width);
@@ -333,7 +342,29 @@ test("keeps the snapshot strip, warehouse, and fleet cards in view across respon
   await expect(page.locator(".robot-details").getByRole("heading", { name: extra.robot_id })).toBeVisible();
 });
 
-test("prioritizes the selected robot label when two projected anchors overlap", async ({ page }) => {
+test("scrolls expanded details while keeping the panel heading and robot identity fixed", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await feed(page, (socket) => socket.send(JSON.stringify(fixture)));
+  await page.goto("/");
+  const panel = page.locator(".robot-details");
+  await panel.getByText("Konum ve ölçüm zamanı", { exact: true }).click();
+  const identity = panel.getByRole("heading", { name: valid.robot_id });
+  const title = panel.getByRole("heading", { name: "Robot ayrıntıları" });
+  const before = await Promise.all([identity.boundingBox(), title.boundingBox()]);
+  const scroller = panel.locator(".details-scroll");
+  expect(await scroller.evaluate(e => {
+    const details = e.querySelector(".measurement-details dl")!;
+    for (let index = 0; index < 6; index++) details.append(...Array.from(details.children).slice(0, 6).map(row => row.cloneNode(true)));
+    e.scrollTop = e.scrollHeight;
+    return e.scrollTop;
+  })).toBeGreaterThan(0);
+  expect(await Promise.all([identity.boundingBox(), title.boundingBox()])).toEqual(before);
+  expect(await panel.evaluate(e => e.scrollTop)).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(720);
+});
+
+test("keeps close robots aligned to TF roots at multiple camera distances", async ({ page }) => {
+  await trace(page);
   await feed(page, (socket) => {
     socket.send(JSON.stringify(fixture));
     const tf = telemetry(socket);
@@ -341,17 +372,130 @@ test("prioritizes the selected robot label when two projected anchors overlap", 
     tf.sample(valid.robot_id, 0, 0);
     tf.sample(invalid.robot_id, 0.01, 0);
   });
-  await page.goto("/");
+  await page.goto("/?trace=1");
   const alpha = page.locator('.scene-label[data-robot-id="robot_alpha"]');
   const beta = page.locator('.scene-label[data-robot-id="robot_beta"]');
+  const details = page.locator(".robot-details");
+  const canvas = page.locator("canvas");
+  const checkMarkers = async (selected: string) => {
+    const frame = await page.evaluate(() => Reflect.get(window, "scene_frame"));
+    const view = (await canvas.boundingBox())!;
+    const camera = new PerspectiveCamera(42, view.width / view.height, .035, 90);
+    camera.position.fromArray(frame.camera);
+    camera.lookAt(new Vector3(...frame.target));
+    camera.updateMatrixWorld();
+    expect(frame.robots.map((entry: { pose: number[] }) => entry.pose)).toEqual([[0, 0, -0], [.01, 0, -0]]);
+    for (const root of frame.robots) {
+      const marker = page.getByRole("button", { name: `3D işaretiyle seç: ${root.robot_id}` });
+      await expect(marker).toBeVisible();
+      await expect(marker).toHaveAttribute("aria-pressed", String(root.robot_id === selected));
+      const rect = (await marker.boundingBox())!;
+      const projected = new Vector3(...root.pose).project(camera);
+      expect(rect.width).toBeGreaterThanOrEqual(24);
+      expect(rect.height).toBeGreaterThanOrEqual(24);
+      expect(Math.abs(rect.x + rect.width / 2 - view.x - (projected.x + 1) / 2 * view.width)).toBeLessThan(.05);
+      expect(Math.abs(rect.y + rect.height / 2 - view.y - (1 - projected.y) / 2 * view.height)).toBeLessThan(.05);
+      const forward = new Vector3(...root.pose).add(new Vector3(.27 * Math.cos(root.yaw), 0, -.27 * Math.sin(root.yaw))).project(camera);
+      const heading = Math.atan2((projected.y - forward.y) * view.height, (forward.x - projected.x) * view.width);
+      expect(await marker.evaluate(e => parseFloat(e.style.getPropertyValue("--heading")))).toBeCloseTo(heading, 5);
+    }
+    const label = selected === valid.robot_id ? alpha : beta;
+    await expect(label).toHaveText(`${selected}LIVE`);
+    await expect(selected === valid.robot_id ? beta : alpha).toBeHidden();
+    expect((await label.boundingBox())!.height).toBeLessThanOrEqual(26 * .8);
+  };
   await expect(alpha).toBeVisible();
-  await expect(beta).toBeHidden();
-  await expect(alpha).toHaveText("robot_alphaLIVE");
+  await checkMarkers(valid.robot_id);
+  const bounds = (await canvas.boundingBox())!;
+  const camera = await page.evaluate(() => Reflect.get(window, "scene_frame").camera);
+  await page.mouse.move(bounds.x + bounds.width / 3, bounds.y + bounds.height / 3);
+  await page.mouse.wheel(0, 420);
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame").camera)).not.toEqual(camera);
   await page.getByRole("button", { name: "Robot seç: robot_beta" }).click();
+  await expect(details.getByRole("heading", { name: invalid.robot_id })).toBeVisible();
   await expect(beta).toBeVisible();
-  await expect(alpha).toBeHidden();
-  await expect(beta).toHaveText("robot_betaLIVE");
+  await checkMarkers(invalid.robot_id);
 });
+
+test("refits an untouched camera but preserves zoom, orbit and pan across resize until reset", async ({ page }) => {
+  await trace(page);
+  await feed(page, (socket) => socket.send(JSON.stringify(fixture)));
+  await page.goto("/?trace=1");
+  const frame = () => page.evaluate(() => Reflect.get(window, "scene_frame"));
+  await expect.poll(frame).toBeTruthy();
+  const wide = await frame();
+  const viewport = page.locator("canvas");
+  await page.setViewportSize({ width: 1280, height: 850 });
+  await expect.poll(async () => (await frame()).camera).not.toEqual(wide.camera);
+  const compact = await frame();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const distance = (a: number[], b: number[]) => new Vector3(...a).distanceTo(new Vector3(...b));
+  await expect.poll(async () => distance((await frame()).camera, wide.camera)).toBeLessThan(.005);
+  const bounds = (await viewport.boundingBox())!;
+  const x = bounds.x + bounds.width / 3, y = bounds.y + bounds.height / 3;
+  for (const action of ["zoom", "orbit", "pan"]) {
+    const before = await frame();
+    await page.mouse.move(x, y);
+    if (action === "zoom") await page.mouse.wheel(0, 250);
+    else {
+      const button = action === "pan" ? "right" : "left";
+      await page.mouse.down({ button });
+      await page.mouse.move(x + 35, y + 24, { steps: 5 });
+      await page.mouse.up({ button });
+    }
+    await expect.poll(async () => distance((await frame()).camera, before.camera)).toBeGreaterThan(.1);
+    // Let OrbitControls' damping settle before measuring the resize delta.
+    await expect.poll(async () => {
+      const prior = await frame();
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const next = await frame();
+      return distance(prior.camera, next.camera) + distance(prior.target, next.target);
+    }).toBeLessThan(.00001);
+    const manual = await frame();
+    await page.setViewportSize({ width: 1280, height: 850 });
+    await expect.poll(async () => (await frame()).at).toBeGreaterThan(manual.at);
+    expect(distance((await frame()).camera, manual.camera)).toBeLessThan(.005);
+    expect(distance((await frame()).target, manual.target)).toBeLessThan(.005);
+    await page.getByRole("button", { name: "Kamerayı sıfırla" }).click();
+    await expect.poll(async () => distance((await frame()).camera, compact.camera)).toBeLessThan(.005);
+    expect(distance((await frame()).target, compact.target)).toBeLessThan(.005);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect.poll(async () => distance((await frame()).camera, wide.camera)).toBeLessThan(.005);
+  }
+});
+
+for (const [state, taskId] of [["IDLE", null], ["EXECUTING_TASK", "task_test"]] as const) {
+  test(`shows absent, fresh and expired observed plans with robot state ${state}`, async ({ page }) => {
+    const product = { ...fixture, robots: [{ ...valid, state, active_task_id: taskId }, invalid] };
+    let tf!: ReturnType<typeof telemetry>;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    await feed(page, (socket) => {
+      socket.send(JSON.stringify(product));
+      tf = telemetry(socket);
+      tf.connect();
+      tf.poses();
+      let sequence = product.sequence;
+      timer = setInterval(() => {
+        tf.poses();
+        socket.send(JSON.stringify({ ...product, sequence: ++sequence }));
+      }, 200);
+    });
+    try {
+      await page.goto("/");
+      const details = page.locator(".robot-details");
+      const status = details.getByTestId("plan-status");
+      await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
+      await expect(status).toHaveText("Plan yok");
+      tf.plan(valid.robot_id);
+      await expect(status).toHaveText("Güncel Durum B");
+      await expect(status.getByText("Durum B")).toHaveAttribute("title", "Aktif Nav2 hedefiyle ilişki doğrulanmadı");
+      await expect(status).toHaveText("Bayat / Gizli");
+      await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
+    } finally {
+      clearInterval(timer);
+    }
+  });
+}
 
 test("shows source-reported reception age separately from ROS timestamps", async ({ page }) => {
   let socket!: WebSocketRoute;
@@ -387,9 +531,10 @@ test("frames the warehouse bounds at desktop and mobile aspect ratios", () => {
       camera.lookAt(target);
       camera.updateMatrixWorld();
       const projected = corners.map((point) => point.clone().project(camera));
-      expect(projected.every(({ x, y, z }) => Math.abs(x) <= .901 && Math.abs(y) <= .901 && Math.abs(z) < 1)).toBe(true);
-      const limitingAxis = Math.max(...projected.map(({ x, y }) => Math.max(Math.abs(x), Math.abs(y))));
-      expect(limitingAxis).toBeCloseTo(.90, 5);
+      const verticalLimit = top ? .90 : .94;
+      expect(projected.every(({ x, y, z }) => Math.abs(x) <= .901 && Math.abs(y) <= verticalLimit + .001 && Math.abs(z) < 1)).toBe(true);
+      const limitingAxis = Math.max(...projected.map(({ x, y }) => Math.max(Math.abs(x) / .90, Math.abs(y) / verticalLimit)));
+      expect(limitingAxis).toBeCloseTo(1, 5);
     }
   }
 });

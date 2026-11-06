@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "source_session_id": "b41477be-f1f7-4a3a-b81c-24679ac26cca",
+  "sequence": 448,
+  "generated_at_utc": "2026-11-06T21:58:34.450654Z",
+  "map_frame": "map",
+  "robots": [
+    {
+      "robot_id": "robot_1",
+      "state": "IDLE",
+      "telemetry": "LIVE",
+      "initial_status_verified": true,
+      "status_sim_ns": "131350000000",
+      "status_age_sec": 0.19871333299670368,
+      "pose": {
+        "x": -3.3660474391555977,
+        "y": 3.1259146854757445,
+        "yaw": 0.22848859539614302,
+        "frame_id": "map"
+      },
+      "pose_sim_ns": "131320000000",
+      "pose_reliability": "LIVE",
+      "battery_reliability": "LIVE",
+      "battery_soc_percent": 80.44580841064453,
+      "battery_energy_wh": 80.44580684329401,
+      "battery_sim_ns": "131240000000",
+      "charging": "NOT_CHARGING",
+      "charging_station_id": null,
+      "active_task_id": null
+    },
+    {
+      "robot_id": "robot_2",
+      "state": "RETURNING_TO_PARK",
+      "telemetry": "LIVE",
+      "initial_status_verified": true,
+      "status_sim_ns": "131350000000",
+      "status_age_sec": 0.19748787500429899,
+      "pose": {
+        "x": -1.799188761979621,
+        "y": 0.9805498088239193,
+        "yaw": 1.767537704680848,
+        "frame_id": "map"
+      },
+      "pose_sim_ns": "131320000000",
+      "pose_reliability": "LIVE",
+      "battery_reliability": "LIVE",
+      "battery_soc_percent": 98.37508392333984,
+      "battery_energy_wh": 98.37508583092597,
+      "battery_sim_ns": "131350000000",
+      "charging": "NOT_CHARGING",
+      "charging_station_id": null,
+      "active_task_id": null
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "c45-low",
+      "status": "COMPLETED",
+      "priority": "LOW",
+      "pickup": {
+        "x": -3.7,
+        "y": 3.2,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "dropoff": {
+        "x": -3.2,
+        "y": 3.3,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "assigned_robot_id": "robot_1",
+      "created_at_source_seconds": 788020.144678477,
+      "review_hold": false
+    },
+    {
+      "task_id": "c45-parallel",
+      "status": "COMPLETED",
+      "priority": "HIGH",
+      "pickup": {
+        "x": 2.3,
+        "y": -2.5,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "dropoff": {
+        "x": 2.5,
+        "y": -1.0,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "assigned_robot_id": "robot_2",
+      "created_at_source_seconds": 788020.334272519,
+      "review_hold": false
+    },
+    {
+      "task_id": "c45-urgent",
+      "status": "COMPLETED",
+      "priority": "HIGH",
+      "pickup": {
+        "x": -2.2,
+        "y": 1.8,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "dropoff": {
+        "x": -1.5,
+        "y": 1.8,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "assigned_robot_id": "robot_1",
+      "created_at_source_seconds": 788020.785634436,
+      "review_hold": false
+    }
+  ],
+  "task_counts": {
+    "total": 3,
+    "queued": 0,
+    "active": 0
+  },
+  "stations": [
+    {
+      "station_id": "dock_1",
+      "station_type": "CHARGING",
+      "pose": {
+        "x": 0.5,
+        "y": -2.0,
+        "yaw": 0.0,
+        "frame_id": "map"
+      },
+      "state": "FREE",
+      "reserved_by_robot_id": null,
+      "occupied_by_robot_id": null,
+      "charging": "UNAVAILABLE",
+      "charging_robot_id": null
+    },
+    {
+      "station_id": "park_1",
+      "station_type": "PARKING",
+      "pose": {
+        "x": -2.0,
+        "y": 1.0,
+        "yaw": 1.57,
+        "frame_id": "map"
+      },
+      "state": "OCCUPIED",
+      "reserved_by_robot_id": "robot_2",
+      "occupied_by_robot_id": "robot_2",
+      "charging": "NOT_APPLICABLE",
+      "charging_robot_id": null
+    }
+  ]
+}

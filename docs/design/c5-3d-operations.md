@@ -27,3 +27,7 @@ FastAPI köprüye özel DDS ağındaki `scene` adı ve yapılandırılmış port
 Upstream bağlantı başına 64 KiB WebSocket mesaj sınırı, 1 frame alım su seviyesi ve uygulamada bekleyen en fazla bir olay vardır. 250 ms'den uzun süre relay'de kalan poz atılır. Relay beklemesi plan TTL'sinden düşülür. İstemci gönderimi bir saniye içinde tamamlanamazsa bağlantı 1013 ile kapatılır. Ürün için yalnız son snapshot tutulur. Ürün sessizliği, tek başına açık TF akışını kapatmaz. Köprü sessizliği 2,5 sn sonra kendi yeniden bağlantısını tetikler. Köprü Aşama 4'ten gelen dört eşzamanlı istemci sınırına sahiptir. C5 ürün akışı kendi mevcut istemci sınırını kullanır.
 
 Kamera serbest, takip, üstten, filo kadrajı ve sıfırlama modlarını sunar. WebGL sahnesi genel görünümde tembel yüklenir. Düşük kalite seçeneği piksel oranını 1'e indirir ve temas gölgelerini kapatır. Geometri instancing, rota arabelleği, renderer temizliği ve talep üzerine çizim Visualizer’dan alınmıştır.
+
+## Aşama 1.7B hazır depo
+
+Sunum sahnesi yerel CC0 GLB dekorunu asenkron yükler. Model hazır olunca şematik rafların yerini alır. İstasyonlar ile öncelikli görevin alım ve teslim noktaları doğrulanmış C5 snapshot’ından map koordinatlarında çizilir. Model seçimi, kaynak ve ölçüm kanıtı [Aşama 1.7B doğrulama raporunda](../validation/c5/c5-stage1-7b-validation-2026-11-07.md).

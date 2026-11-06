@@ -1,96 +1,213 @@
-import { OrbitControls } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useRef, type ComponentRef } from 'react'
-import { Group, Vector3 } from 'three'
-import { blendPose, toScene } from './coordinates'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { memo, useLayoutEffect, useRef, type RefObject } from 'react'
+import { Group, Quaternion, Vector3 } from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { Burger, burgerSize } from './Burger'
+import {
+  followTarget, maxCameraDistance, minCameraDistance, startOffset, targetHeight,
+  type CameraCommand,
+} from './camera'
+import { blendMs, blendPose, toScene } from './coordinates'
 import type { Pose } from './telemetry'
+import type { SceneFeed } from './useTelemetry'
+import { Warehouse } from './Warehouse'
 
-type SceneProps = { pose?: Pose; previous?: Pose; follow: boolean }
+type SceneProps = {
+  feed: SceneFeed
+  command: CameraCommand
+  lowQuality: boolean
+  label: RefObject<HTMLSpanElement | null>
+  trace: boolean
+}
 
-function Vehicle({ pose, previous, follow }: SceneProps) {
-  const controls = useRef<ComponentRef<typeof OrbitControls>>(null)
+const polarLimit = Math.PI / 2 - 0.045
+const topAngle = 0.001
+const topHeight = 19.8
+
+function Vehicle({ feed, command, lowQuality, label, trace }: SceneProps) {
   const model = useRef<Group>(null)
-  const centered = useRef(false)
-  const traced = useRef<Pose>(undefined)
-  const shift = useRef(new Vector3())
-  const trace = new URLSearchParams(window.location.search).has('trace')
+  const orbit = useRef<OrbitControls | null>(null)
+  const lastPose = useRef<Pose>(undefined)
+  const tracedPose = useRef<Pose>(undefined)
+  const cameraCommand = useRef(command)
+  const transitioning = useRef(false)
+  const goalTarget = useRef(new Vector3(0, targetHeight, 0))
+  const goalOffset = useRef(new Vector3(...startOffset))
+  const scratch = useRef({
+    shift: new Vector3(), destination: new Vector3(), screen: new Vector3(),
+    front: new Vector3(), rotation: new Quaternion(),
+  })
+  const { camera, gl, invalidate } = useThree()
 
-  useFrame(({ camera, gl, invalidate }) => {
+  useLayoutEffect(() => {
+    const controls = new OrbitControls(camera, gl.domElement)
+    controls.target.set(0, targetHeight, 0)
+    controls.minDistance = minCameraDistance
+    controls.maxDistance = maxCameraDistance
+    controls.maxPolarAngle = polarLimit
+    controls.enableDamping = true
+    controls.dampingFactor = 0.16
+    controls.update()
+    const requestFrame = () => invalidate()
+    controls.addEventListener('change', requestFrame)
+    orbit.current = controls
+    const unsubscribe = feed.subscribe(invalidate)
+    invalidate()
+    return () => {
+      unsubscribe()
+      controls.removeEventListener('change', requestFrame)
+      controls.dispose()
+      orbit.current = null
+    }
+  }, [camera, gl, feed, invalidate])
+
+  useLayoutEffect(() => { invalidate() }, [command, lowQuality, invalidate])
+
+  useFrame(({ size, scene }, delta) => {
     const robot = model.current
-    if (!pose || !robot) return
+    const controls = orbit.current
+    if (!robot || !controls) return
 
+    const { pose, previous, status } = feed.read()
     const now = performance.now()
-    const displayed = previous ? blendPose(previous, pose, now - pose.receivedAt) : pose
-    const [x, z, heading] = toScene(displayed)
-    robot.position.set(x, 0, z)
-    robot.rotation.y = heading
+    const displayed = pose && previous ? blendPose(previous, pose, now - pose.receivedAt) : pose
+    const { shift, destination, screen, front, rotation } = scratch.current
+    const nextMode = command.mode
+    const oldCommand = cameraCommand.current
+    const priorPose = lastPose.current
+    robot.visible = !!displayed
+    if (displayed) {
+      const [x, z, heading] = toScene(displayed)
+      robot.position.set(x, 0, z)
+      robot.rotation.y = heading
+      if (pose && !priorPose && nextMode === 'free' && !transitioning.current) {
+        shift.set(x - controls.target.x, 0, z - controls.target.z)
+        camera.position.add(shift)
+        controls.target.add(shift)
+      }
+    }
+    lastPose.current = pose
 
-    const orbit = controls.current
-    if (orbit && (follow || !centered.current)) {
-      shift.current.set(x - orbit.target.x, 0, z - orbit.target.z)
-      camera.position.add(shift.current)
-      orbit.target.add(shift.current)
-      orbit.update()
-      centered.current = true
+    if (oldCommand !== command) {
+      cameraCommand.current = command
+      goalTarget.current.copy(controls.target)
+      goalOffset.current.copy(camera.position).sub(controls.target)
+      if (nextMode === 'top') {
+        goalTarget.current.set(0, targetHeight, 0)
+        goalOffset.current.set(0, topHeight, topAngle * topHeight)
+      } else if (command.reset !== oldCommand.reset || oldCommand.mode === 'top') {
+        if (command.reset !== oldCommand.reset) {
+          goalTarget.current.set(robot.position.x, targetHeight, robot.position.z)
+          if (!pose) goalTarget.current.set(0, targetHeight, 0)
+        }
+        goalOffset.current.set(...startOffset)
+      }
+      if (nextMode === 'follow' && goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
+      controls.minPolarAngle = 0
+      controls.maxPolarAngle = Math.PI / 2
+      controls.enableDamping = false
+      controls.enabled = false
+      transitioning.current = true
     }
 
-    if (displayed !== pose) invalidate()
-    if (trace && displayed === pose && traced.current !== pose) {
-      traced.current = pose
-      // Sample the actual Three object at frame submission, on the browser's own clock.
-      const front = new Vector3(1, 0, 0).applyQuaternion(robot.quaternion)
-      gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:rendered', {
+    if (nextMode === 'follow' && displayed) {
+      const [x, y, z] = followTarget(robot.position.x, robot.position.z)
+      goalTarget.current.set(x, y, z)
+      if (!transitioning.current && pose !== priorPose && !previous && status === 'LIVE' &&
+          controls.target.distanceToSquared(goalTarget.current) > 0.0144) {
+        goalOffset.current.copy(camera.position).sub(controls.target)
+        if (!priorPose && goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
+        controls.enableDamping = false
+        controls.enabled = false
+        transitioning.current = true
+      }
+    }
+
+    if (transitioning.current) {
+      const fraction = 1 - Math.exp(-Math.min(delta, 0.05) * 14)
+      destination.copy(goalTarget.current).add(goalOffset.current)
+      controls.target.lerp(goalTarget.current, fraction)
+      camera.position.lerp(destination, fraction)
+      if ((nextMode === 'follow' && status !== 'LIVE' && displayed) ||
+          (camera.position.distanceToSquared(destination) < 0.000025 &&
+          controls.target.distanceToSquared(goalTarget.current) < 0.000025)) {
+        camera.position.copy(destination)
+        controls.target.copy(goalTarget.current)
+        controls.minPolarAngle = nextMode === 'top' ? topAngle : 0
+        controls.maxPolarAngle = nextMode === 'top' ? topAngle : polarLimit
+        controls.enableRotate = nextMode !== 'top'
+        controls.enablePan = nextMode !== 'follow'
+        controls.enableDamping = true
+        controls.enabled = true
+        transitioning.current = false
+      }
+    } else if (nextMode === 'follow' && displayed) {
+      shift.copy(goalTarget.current).sub(controls.target)
+      camera.position.add(shift)
+      controls.target.copy(goalTarget.current)
+    }
+    controls.update()
+
+    if (label.current) {
+      if (displayed) {
+        screen.copy(robot.position).addScaledVector(camera.up, burgerSize.height + 0.055).project(camera)
+      }
+      const onScreen = displayed && screen.z >= -1 && screen.z <= 1 &&
+        Math.abs(screen.x) < 0.89 && Math.abs(screen.y) < 0.89
+      label.current.hidden = !onScreen
+      if (onScreen) {
+        label.current.style.left = (screen.x + 1) / 2 * size.width + 'px'
+        label.current.style.top = (1 - screen.y) / 2 * size.height + 'px'
+      }
+    }
+    if (transitioning.current || displayed !== pose) invalidate()
+
+    if (trace) {
+      gl.render(scene, camera)
+      if (pose && displayed === pose && tracedPose.current !== pose) {
+        tracedPose.current = pose
+        // Read the local +Y of the cone, which its own transform turns into the model's +X.
+        const marker = robot.getObjectByName('robot-front-marker')!
+        front.set(0, 1, 0).applyQuaternion(marker.getWorldQuaternion(rotation))
+        gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:rendered', {
+          bubbles: true,
+          detail: { stamp_ns: pose.stamp_ns, stream_id: pose.stream_id, epoch: pose.epoch, x: robot.position.x, z: robot.position.z,
+            heading_x: front.x, heading_z: front.z, receive_to_frame_ms: now - pose.receivedAt },
+        }))
+      }
+      gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:frame', {
         bubbles: true,
-        detail: { stamp_ns: pose.stamp_ns, x: robot.position.x, z: robot.position.z,
-          heading_x: front.x, heading_z: front.z, receive_to_frame_ms: now - pose.receivedAt },
+        detail: {
+          at: now, interpolating: !!displayed && displayed !== pose, visible: robot.visible,
+          blend: displayed && displayed !== pose && pose && previous ? {
+            stream_id: pose.stream_id, epoch: pose.epoch, from: previous.stamp_ns, to: pose.stamp_ns,
+            fraction: Math.max(0, (now - pose.receivedAt) / blendMs),
+          } : undefined,
+          pose: robot.position.toArray(), yaw: robot.rotation.y, mode: nextMode, transitioning: transitioning.current,
+          target: controls.target.toArray(), camera: camera.position.toArray(),
+          calls: gl.info.render.calls, triangles: gl.info.render.triangles,
+          geometries: gl.info.memory.geometries, textures: gl.info.memory.textures,
+          dpr: gl.getPixelRatio(),
+        },
       }))
     }
-  })
+  }, trace ? 1 : 0)
 
-  return <>
-    <OrbitControls ref={controls} makeDefault minDistance={1.2} maxDistance={24}
-      maxPolarAngle={Math.PI / 2 - 0.06} />
-    <group ref={model} visible={!!pose}>
-      <mesh position={[0, 0.15, 0]}>
-        <cylinderGeometry args={[0.225, 0.24, 0.16, 32]} />
-        <meshStandardMaterial color="#2d7888" roughness={0.55} />
-      </mesh>
-      <mesh position={[0, 0.245, 0]}>
-        <cylinderGeometry args={[0.19, 0.19, 0.035, 32]} />
-        <meshStandardMaterial color="#c8e5e3" />
-      </mesh>
-      <mesh position={[-0.06, 0.285, 0]}>
-        <cylinderGeometry args={[0.069, 0.069, 0.064, 24]} />
-        <meshStandardMaterial color="#172e3a" />
-      </mesh>
-      {[-0.225, 0.225].map(z => <mesh key={z} position={[0, 0.09, z]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.086, 0.086, 0.046, 20]} />
-        <meshStandardMaterial color="#14232c" />
-      </mesh>)}
-      <mesh position={[0.25, 0.165, 0]}>
-        <boxGeometry args={[0.05, 0.055, 0.14]} />
-        <meshStandardMaterial color="#f5b767" emissive="#cb7b36" emissiveIntensity={0.7} />
-      </mesh>
-      <mesh position={[0.37, 0.032, 0]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.11, 0.23, 3]} />
-        <meshBasicMaterial color="#ffb967" />
-      </mesh>
-    </group>
-  </>
+  return <group ref={model} name="robot-ros-pose" visible={false}>
+    <Burger softShadows={!lowQuality} />
+  </group>
 }
 
-export function Scene(props: SceneProps) {
-  return <Canvas frameloop="demand" dpr={[1, 1.75]} camera={{ position: [4.8, 6.6, 6.5], fov: 42 }}
-    fallback={<p className="scene-error">3D görünüm için WebGL desteği gerekiyor.</p>}>
-    <color attach="background" args={['#15252e']} />
-    <ambientLight intensity={1.9} />
-    <directionalLight position={[4, 7, -2]} intensity={2.2} />
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.012, 0]}>
-      <planeGeometry args={[14, 14]} />
-      <meshStandardMaterial color="#263d47" roughness={1} />
-    </mesh>
-    <gridHelper args={[14, 28, '#699097', '#395760']} />
-    <axesHelper args={[0.65]} position={[0, 0.006, 0]} />
+const initialCamera = { position: [startOffset[0], startOffset[1] + targetHeight, startOffset[2]] as [number, number, number], fov: 42, near: 0.035, far: 90 }
+
+export default memo(function Scene(props: SceneProps) {
+  return <Canvas frameloop="demand" dpr={props.lowQuality ? 1 : [1, 1.5]} camera={initialCamera}
+    fallback={<p className="scene-message">3D görünüm için WebGL desteği gerekiyor.</p>}>
+    <color attach="background" args={['#141c27']} />
+    <hemisphereLight args={['#d4e6fa', '#657383', 2.3]} />
+    <directionalLight position={[2, 8, -3]} intensity={2.2} color="#ffe8ce" />
+    <directionalLight position={[-6, 3, 5]} intensity={0.7} color="#bedaff" />
+    <Warehouse softShadows={!props.lowQuality} />
     <Vehicle {...props} />
   </Canvas>
-}
+})

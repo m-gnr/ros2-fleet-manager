@@ -5,8 +5,28 @@ import type { Telemetry } from './telemetry'
 const retryMs = 750
 const heartbeatTimeoutMs = 2500
 
+function createSceneFeed() {
+  let current = initial
+  const listeners = new Set<() => void>()
+  return {
+    read: () => current,
+    subscribe(listener: () => void) {
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
+    update(next: Telemetry) {
+      const poseChanged = current.pose !== next.pose || current.previous !== next.previous
+      current = next
+      if (poseChanged) listeners.forEach(listener => listener())
+    },
+  }
+}
+
+export type SceneFeed = ReturnType<typeof createSceneFeed>
+
 export function useTelemetry(url: string) {
   const [view, setView] = useState(initial)
+  const [feed] = useState(createSceneFeed)
   useEffect(() => {
     let state: Telemetry = initial
     let socket: WebSocket | undefined
@@ -17,6 +37,7 @@ export function useTelemetry(url: string) {
     function update(next: Telemetry) {
       if (next !== state) {
         state = next
+        feed.update(next)
         setView(next)
       }
     }
@@ -69,6 +90,6 @@ export function useTelemetry(url: string) {
       window.clearInterval(timer)
       window.clearTimeout(retry)
     }
-  }, [url])
-  return view
+  }, [url, feed])
+  return { view, feed }
 }

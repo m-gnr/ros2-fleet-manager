@@ -1,6 +1,6 @@
 # Fleet Visualizer
 
-Tek bir robotun Gazebo Fortress simülasyonundaki ROS 2 pozunu etkileşimli 3D sahnede gösterir. Filo tanımından seçilen robotun konumu, yönü, ölçüm zamanı ve veri tazeliği tarayıcıya aktarılır. Serbest orbit, yakınlaştırma, kamera kaydırma ve isteğe bağlı robot takibi yerel görüntü kontrolleridir.
+Tek bir robotun Gazebo Fortress simülasyonundaki ROS 2 pozunu etkileşimli 3D sahnede gösterir. Filo tanımından seçilen robotun konumu, yönü, ölçüm zamanı ve veri tazeliği tarayıcıya aktarılır. Depo sahnesi, metre ölçekli TurtleBot3 Burger temsili ve kamera kontrolleri aynı salt okunur telemetriyi kullanır.
 
 **Fleet Visualizer bağımsız bir deneysel görselleştirme prototipidir; C5'in yerine geçmez ve Fleet Manager için ikinci bir hakikat kaynağı oluşturmaz.**
 
@@ -18,7 +18,15 @@ Köprü, [C1 doğrulayıcısıyla](../docs/configuration-c1.md) okunan `config/f
 
 Köprü yalnız seçilen namespace'in `/tf` topic'indeki iki dinamik bağlantıyı kullanır. Sensör için `/tf_static` üzerinde yayınlanan `base_link → base_link/lidar` dönüşümü bu hesabın dışında kalır. AMCL, dönüşüm damgasını 1 saniyelik toleransla ileri alır. Köprü bileşke pozu odometri örneğinin tam damgasında çözer ve poz damgasını güncellik denetiminden geçirir. `--source diagnostic_odom` ayrı bir başlangıç modudur ve panelde `<namespace>/odom` çerçevesini gösterir. TF kesintisinde otomatik kaynak değişimi yerine son doğrulanan poz tutulur. `RobotStatus.pose` ve C4 alanlarının değerlendirmesi [ön incelemede](../docs/validation/fleet-visualizer/preflight.md) yer alır.
 
-ROS `(x, y)` metre cinsinden Three.js `(X, Y, Z) = (x, 0, -y)` olur. Modelin önü yerel `+X` yönündedir. Three.js `+Y` ekseni çevresine uygulanan ROS yaw, ön vektörü `(cos(yaw), 0, -sin(yaw))` yapar. Panel son kabul edilen ham ölçümü gösterir. 3D model iki kabul edilmiş ölçüm arasında en fazla 45 ms, en kısa açı yönünde interpolasyon uygular. Kesintide son ölçüme sabitlenir. Izgara şematik bir depo zeminidir. Ölçüm çerçevesi Nav2 `map` düzlemidir ve Gazebo dünya pozu ayrı bir veridir.
+ROS `(x, y)` metre cinsinden Three.js `(X, Y, Z) = (x, 0, -y)` olur. Modelin önü yerel `+X` yönündedir. Three.js `+Y` ekseni çevresine uygulanan ROS yaw, ön vektörü `(cos(yaw), 0, -sin(yaw))` yapar. Panel son kabul edilen ham ölçümü gösterir. 3D model iki kabul edilmiş ölçüm arasında en fazla 45 ms, en kısa açı yönünde interpolasyon uygular. Kesintide son ölçüme sabitlenir. Ölçüm çerçevesi Nav2 `map` düzlemidir. Gazebo dünya pozu ayrı bir veridir.
+
+## 3D sahne ve kontroller
+
+- **TEMSİLİ DEPO** etiketi 1 m grid, raf, depolama bölgesi, koridor ve yer işaretlerinin görsel referans olduğunu belirtir. Raflar ve koridorlar Gazebo dünya dosyasından türetilmez. Depo katmanı herhangi bir navigasyon girdisi sağlamaz.
+- Burger temsili katlı şasi, iki tekerlek, üst LiDAR ve önde kehribar renkli bir yön işareti kullanır. Robot kimliği modelin yanında gösterilir. Gövde yaklaşık 0,138 × 0,178 × 0,192 m boyut referansıyla özgün Three.js geometrisinden oluşturuldu. Bu ölçü dışındaki halka, ok ve etiket görsel kılavuzdur. [ROBOTIS e-Manual](https://emanual.robotis.com/docs/en/platform/turtlebot3/features/)
+- **Serbest** modda sürükleyerek orbit, sağ tuşla pan, tekerlekle zoom yapılır. **Robotu takip et** görünür pozu izler ve ilk geçişte yakınlaşır. **Üstten** depo planına geçer, pan ve zoom açıktır. **Sıfırla** son doğrulanan robot konumuna, poz yoksa depo merkezine göre başlangıç açısı ve uzaklığında serbest moda döner.
+- **Görsel kalite** menüsünde Standart mod en fazla 1,5× piksel oranı ve yumuşak temas gölgesi kullanır. Düşük mod sabit 1× piksel oranıyla gölgeleri kaldırır. `?quality=low` ilk açılışta Düşük modu seçer. Sahne veri, kamera veya boyut değişiminde render edilir.
+- Robot seçimi köprünün `--robot` seçeneğiyle yapılır. Arayüz o anda yayınlanan tek robot kimliğini, poz kaynağını ve çerçeveyi gösterir. Ölçüm gelene kadar model gizlidir.
 
 ## WebSocket sözleşmesi
 
@@ -47,6 +55,15 @@ Her mesajda `version: 1`, `type`, `robot_id`, `frame_id`, `source`, `stream_id` 
 ```
 
 Tarayıcı, mesaj biçimi ve sayısal alanlar yanında kimlik, çerçeve, oturum, epoch ve artan damgayı denetler. `CONNECTED` ve `DISCONNECTED` WebSocket durumlarıdır. ROS tazeliği ayrı gösterilir. Yeni bağlantıda canlılık için yeni bir geçerli ölçüm gerekir. Köprü, Gazebo saatine göre poz yaşını ve kendi monotonik saatine göre alım ile saat ilerleme sürelerini kontrol eder. Tarayıcı kendi monotonik saatiyle veri ve bağlantı zaman aşımını takip eder.
+
+| Gösterge | Anlamı |
+| --- | --- |
+| `CONNECTED` | WebSocket açık. Geçerli ROS pozu ayrıca doğrulanır. |
+| `DISCONNECTED` | WebSocket kapalı veya bağlantı zaman aşımında. Son geçerli poz elde tutulur ve istemci yeniden bağlanmayı dener. |
+| `LIVE` | Kimlik, oturum, epoch ve artan ROS damgasıyla kabul edilmiş güncel ölçüm. |
+| `NO_DATA` | Etkin ROS akışında geçerli yeni ölçüm bekleniyor. |
+| `STALE` | Son kabul edilen poz saklanır ve robotun görsel hareketi durur. Takip hedefi bu poza sabitlenir. |
+| `FRAME_ERROR` | TF zinciri veya koordinat çerçevesi doğrulanamadı. Kaynak otomatik değiştirilmez. |
 
 ## Çalıştırma
 
@@ -95,6 +112,9 @@ PYTHONPATH=fleet-visualizer/bridge python3 -m unittest discover \
   -s fleet-visualizer/bridge/tests -p '*_checks.py'
 npm --prefix fleet-visualizer/frontend run test
 npm --prefix fleet-visualizer/frontend run build
+CHROME_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+  VISUALIZER_EVIDENCE="$PWD/fleet-visualizer/artifacts/stage-2/fixture" \
+  npm --prefix fleet-visualizer/frontend run verify:browser
 
 docker run --rm --network none --entrypoint /ros_entrypoint.sh \
   -e ROS_LOCALHOST_ONLY=1 -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
@@ -102,10 +122,10 @@ docker run --rm --network none --entrypoint /ros_entrypoint.sh \
   bash -c 'PYTHONPATH=/app/fleet-visualizer/bridge:$PYTHONPATH python3 -m unittest discover -s /checks -p "*_checks.py"'
 ```
 
-Host köprü testleri için Python ve `websockets==15.0.1` gerekir. ROS testleri, Humble imajında ayrı çalışır. Canlı Chrome, ROS, WebSocket ve kaynak ölçümü komutları [doğrulama ekindedir](../docs/validation/fleet-visualizer/commands.md).
+Host köprü testleri için Python ve `websockets==15.0.1` gerekir. ROS testleri, Humble imajında ayrı çalışır. `verify:browser` yerel frontend açıkken gerçek Chrome/WebGL ve yalnız test sürecinde tanımlanan WebSocket fixture'ıyla çalışır. Canlı ROS kabulü için ayrı `verify:live` kullanılır. [Aşama 2 komut eki](../docs/validation/fleet-visualizer/stage-2/commands.md).
 
 ## Sınırlar ve lisans
 
 Bu sahne tek robota, doğrulanmış namespace/frame düzenine ve yerel kullanıcıya yöneliktir. ROS saati geri sarılırsa TF önbelleği temizlenir. Başka bir koordinat düzeni için robotun gerçek frame zinciri ayrıca doğrulanmalıdır. WebSocket origin kontrolü yerel tarayıcı erişimini sınırlar. İstemci kimlik doğrulaması bu prototipin kapsamı dışındadır. WareTrack yalnız tasarım referansı olarak incelendi. Uygulama ve robot geometrisi özgün geliştirildi. [WareTrack değerlendirmesi](../docs/validation/fleet-visualizer/preflight.md#waretrack).
 
-[Doğrulama raporu ve ölçümler](../docs/validation/fleet-visualizer/report.md).
+[Aşama 2 tasarımı](../docs/design/fleet-visualizer-stage-2.md) · [Aşama 2 doğrulaması ve ekran görüntüleri](../docs/validation/fleet-visualizer/stage-2/report.md) · [Aşama 1 kabulü](../docs/validation/fleet-visualizer/report.md).

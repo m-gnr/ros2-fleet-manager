@@ -1,105 +1,104 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Group, InstancedMesh, Object3D } from 'three'
+import { Color, Group, InstancedMesh, Object3D } from 'three'
+import { FloorSigns } from './FloorSigns'
 import { loadWarehouseDecor } from './warehouseDecor'
+import { palletRow, rearRack, sideRack, warehouseSize } from './warehouseLayout'
 
-type Box = [x: number, y: number, z: number, width: number, height: number, depth: number]
-const warehouseSize = 14
+type Box = [x: number, y: number, z: number, width: number, height: number, depth: number, color: string]
 
-function Boxes({ name, color, boxes }: { name: string; color: string; boxes: Box[] }) {
+function Boxes({ name, boxes }: { name: string; boxes: Box[] }) {
   const mesh = useRef<InstancedMesh>(null)
   useLayoutEffect(() => {
     const instance = new Object3D()
-    boxes.forEach(([x, y, z, w, h, d], index) => {
+    const color = new Color()
+    boxes.forEach(([x, y, z, w, h, d, paint], index) => {
       instance.position.set(x, y, z)
       instance.scale.set(w, h, d)
       instance.updateMatrix()
       mesh.current!.setMatrixAt(index, instance.matrix)
+      mesh.current!.setColorAt(index, color.set(paint))
     })
     mesh.current!.instanceMatrix.needsUpdate = true
+    mesh.current!.computeBoundingBox()
     mesh.current!.computeBoundingSphere()
   }, [boxes])
 
   return <instancedMesh name={name} ref={mesh} args={[undefined, undefined, boxes.length]}>
     <boxGeometry />
-    <meshStandardMaterial color={color} roughness={0.88} />
+    <meshStandardMaterial roughness={0.88} />
   </instancedMesh>
 }
 
-const frames: Box[] = []
-const beams: Box[] = []
-const shelves: Box[] = []
-const crates: Box[] = []
-const cartons: Box[] = []
-const crateBands: Box[] = []
-const shadows: Box[] = []
-const zones: Box[] = []
-const edges: Box[] = []
 const paint: Box[] = []
-const curbs: Box[] = []
-const stripes: Box[] = []
-const rail: Box[] = []
+const trim: Box[] = []
+const shadows: Box[] = []
+const cartons: Box[] = [
+  [-2.06, 1.473, -4.95, .36, .26, .42, '#b99568'],
+  [1.97, 1.473, -4.97, .41, .26, .47, '#c7a77c'],
+  [2.46, 1.505, -4.96, .43, .324, .49, '#b7956d'],
+  [2.92, 1.449, -4.95, .36, .212, .39, '#cfb18a'],
+]
+const fallback: Box[] = []
+const safety = '#bb8a38'
+const stripe = '#dcb36b'
+const concrete = '#c8d2d3'
 
-for (const z of [-4.9, 4.9]) {
-  zones.push([0, -0.018, z, 11.5, 0.005, 2.4])
-  edges.push([0, -0.012, z - 1.2, 11.5, 0.005, 0.025], [0, -0.012, z + 1.2, 11.5, 0.005, 0.025])
-  rail.push([0, 0.14, z * 1.29, 12.7, 0.28, 0.13])
-  for (const x of [-3.8, 0, 3.8]) {
-    shadows.push([x, -0.009, z, 2.96, 0.004, 1.27])
-    for (const dx of [-1.3, 1.3]) {
-      for (const dz of [-0.43, 0.43]) {
-        frames.push([x + dx, 0.79, z + dz, 0.065, 1.58, 0.065])
-        curbs.push([x + dx, 0.065, z + dz, 0.13, 0.13, 0.13])
-      }
+function bay(x: number, z: number, width: number, depth: number) {
+  paint.push([x, -0.025, z, width, 0.008, depth, '#bfcacc'])
+  for (const side of [-1, 1]) {
+    paint.push([x + side * width / 2, -0.017, z, 0.034, 0.006, depth, safety])
+    paint.push([x, -0.017, z + side * depth / 2, width, 0.006, 0.034, safety])
+  }
+  shadows.push([x, -0.013, z, width - .14, 0.003, depth - .10, '#a5b2b5'])
+}
+
+bay(0, rearRack.z, 8.65, 1.0)
+bay(sideRack.x, 0.14, 1.02, 4.74)
+bay(3.28, palletRow.z, 3.05, 0.89)
+
+for (const x of [-4.42, 4.43]) {
+  paint.push([x, -0.019, 0, 0.031, 0.006, 8.88, stripe])
+}
+for (const z of [-4.43, 4.42]) {
+  paint.push([0, -0.019, z, 8.86, 0.006, 0.031, stripe])
+}
+for (let index = 0; index < 8; index++) {
+  paint.push([-3.75 + index * 0.21, -0.014, 4.94, 0.1, 0.006, 0.54, '#f9f4e6'])
+  paint.push([4.92, -0.014, -2.13 + index * 0.21, 0.46, 0.006, 0.1, '#f9f4e6'])
+}
+
+// Low cutaway edges on the far sides leave the foreground and robot approaches open.
+trim.push([0, .17, -5.38, 11.25, .34, .13, concrete], [0, .35, -5.38, 11.25, .028, .16, '#e1e8e7'])
+trim.push([-5.59, .17, -.12, .14, .34, 10.49, concrete], [-5.59, .35, -.12, .16, .028, 10.49, '#e1e8e7'])
+for (const x of [-5.45, 5.45]) {
+  trim.push([x, .058, 5.25, .18, .195, .18, '#7d9296'], [x, .157, 5.25, .17, .048, .17, stripe])
+}
+
+function schematicRack(x: number, z: number, length: number, height: number, count: number, side = false) {
+  const box = (along: number, y: number, across: number, w: number, h: number, d: number, color: string) =>
+    fallback.push(side ? [x + across, y, z - along, d, h, w, color] : [x + along, y, z + across, w, h, d, color])
+  for (let index = 0; index <= count; index++) {
+    for (const across of [-.29, .29]) {
+      box(length * (index / count - .5), height / 2, across, .065, height, .065, '#738c97')
     }
-    for (const level of [0.17, 0.75, 1.33]) {
-      shelves.push([x, level, z, 2.55, 0.055, 0.84])
-      for (const dz of [-0.44, 0.44]) beams.push([x, level, z + dz, 2.66, 0.075, 0.044])
-      for (const offset of [-0.85, 0, 0.85]) {
-        if (level === 1.33 && offset === 0) continue
-        const stack = offset === 0 ? crates : cartons
-        const height = offset === 0 ? 0.37 : 0.29
-        stack.push([x + offset, level + 0.028 + height / 2, z, 0.65, height, 0.61])
-        crateBands.push([x + offset, level + 0.029 + height, z, 0.075, 0.006, 0.615])
-      }
+  }
+  for (const level of [.16, .50, .82]) {
+    for (const across of [-.29, .29]) box(0, level * height, across, length, .053, .062, '#b78042')
+    box(0, level * height, 0, length, .03, .54, '#c2b6a0')
+    for (let index = 0; index < count; index++) {
+      const middle = length * ((index + .5) / count - .5)
+      box(middle, level * height + .035, 0, .74, .038, .49, '#9b815e')
+      box(middle, level * height + .14, 0, .66, .18, .45, index % 2 ? '#b9c4c4' : '#c6aa83')
     }
   }
 }
 
-for (const z of [-2.9, 2.9]) {
-  paint.push([0, -0.008, z, 11.4, 0.004, 0.045])
-  paint.push([0, -0.008, z + Math.sign(z) * 0.18, 11.4, 0.004, 0.018])
+schematicRack(0, rearRack.z, 7.6, 1.94, 3)
+schematicRack(sideRack.x, .15, 4.25, 1.34, 2, true)
+for (const x of palletRow.x) {
+  fallback.push([x, .04, palletRow.z, .94, .09, .61, '#a7875a'],
+    [x, .17, palletRow.z, .81, .17, .53, '#b7c3c5'])
 }
-for (let x = -5; x <= 5; x++) {
-  paint.push([x, -0.007, 0, 0.49, 0.004, 0.026])
-}
-for (const x of [-5.55, 5.55]) {
-  for (let index = -5; index <= 5; index++) {
-    stripes.push([x, -0.007, index * 0.48, 0.55, 0.004, 0.21])
-  }
-  rail.push([x * 1.14, 0.14, 0, 0.13, 0.28, 12.7])
-}
-
-export const Warehouse = memo(function Warehouse({ softShadows }: { softShadows: boolean }) {
-  return <group name="schematic-warehouse">
-    <Boxes name="storage-zones" color="#ced8dc" boxes={zones} />
-    <Boxes name="zone-outlines" color="#a8b8c0" boxes={edges} />
-    <Boxes name="aisle-markings" color="#f7f9fa" boxes={paint} />
-    <Boxes name="walkway-crossings" color="#f5f8f8" boxes={stripes} />
-    <Boxes name="perimeter-curbs" color="#c8d2d7" boxes={rail} />
-    {softShadows && <Boxes name="shelf-shadows" color="#b6c2c9" boxes={shadows} />}
-    <Boxes name="rack-frames" color="#b3c1c9" boxes={frames} />
-    <Boxes name="rack-beams" color="#dbe4e8" boxes={beams} />
-    <Boxes name="rack-decks" color="#ecf0f1" boxes={shelves} />
-    <Boxes name="pallet-cases" color="#c1d0d5" boxes={crates} />
-    <Boxes name="pallet-cartons" color="#e8dfd1" boxes={cartons} />
-    <Boxes name="case-bands" color="#d2c4b3" boxes={crateBands} />
-    <Boxes name="rack-guards" color="#aebdc5" boxes={curbs} />
-  </group>
-})
-
-const importedZones: Box[] = [[0, -0.018, -5.34, 12.15, 0.005, 1.8]]
-const importedEdges: Box[] = [[0, -0.012, -4.44, 12.15, 0.005, 0.035]]
-const importedShadows: Box[] = [[0, -0.009, -5.3, 11.4, 0.004, 0.94]]
 
 export const WarehouseEnvironment = memo(function WarehouseEnvironment({ softShadows }: { softShadows: boolean }) {
   const [decor, setDecor] = useState<Group>()
@@ -122,19 +121,19 @@ export const WarehouseEnvironment = memo(function WarehouseEnvironment({ softSha
   }, [])
 
   return <group name="warehouse-environment">
-    <mesh name="warehouse-floor" position={[0, -0.1, 0]}>
-      <boxGeometry args={[warehouseSize, 0.15, warehouseSize]} />
-      <meshStandardMaterial color="#e0e5e7" roughness={0.97} />
+    <mesh name="warehouse-floor" position={[0, -.107, 0]}>
+      <boxGeometry args={[warehouseSize[0], .15, warehouseSize[1]]} />
+      <meshStandardMaterial color="#e0e4e3" roughness={0.97} />
     </mesh>
-    <gridHelper args={[warehouseSize, warehouseSize, '#c7d0d5', '#d2dade']} position={[0, -0.015, 0]} />
+    <gridHelper args={[10.7, 11, '#cbd2d2', '#d3d9d8']} position={[0, -.030, 0]} />
+    <Boxes name="safety-markings" boxes={paint} />
+    <Boxes name="cutaway-edges" boxes={trim} />
+    {softShadows && <Boxes name="storage-shadows" boxes={shadows} />}
+    <FloorSigns />
     {decor ? <group name="warehouse-layout">
-      <Boxes name="storage-zones" color="#ccd6da" boxes={importedZones} />
-      <Boxes name="zone-outlines" color="#b68441" boxes={importedEdges} />
-      <Boxes name="aisle-markings" color="#f7f9fa" boxes={paint} />
-      <Boxes name="walkway-crossings" color="#f5f8f8" boxes={stripes} />
-      <Boxes name="perimeter-curbs" color="#c8d2d7" boxes={rail} />
-      {softShadows && <Boxes name="shelf-shadows" color="#b6c2c9" boxes={importedShadows} />}
       <primitive object={decor} />
-    </group> : <Warehouse softShadows={softShadows} />}
+      <Boxes name="rear-shelf-cartons" boxes={cartons} />
+    </group>
+      : <Boxes name="schematic-warehouse" boxes={fallback} />}
   </group>
 })

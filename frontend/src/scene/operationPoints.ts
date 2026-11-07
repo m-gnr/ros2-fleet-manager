@@ -6,7 +6,7 @@ export const pointStyle = {
   CHARGING: { name: 'Şarj', color: '#0a806e' },
   PARKING: { name: 'Park', color: '#3263ab' },
   SAFE_WAITING: { name: 'Bekleme', color: '#576875' },
-  pickup: { name: 'Alım', color: '#a35210' },
+  pickup: { name: 'Alım', color: '#275c99' },
   dropoff: { name: 'Teslim', color: '#7850a9' },
 }
 
@@ -18,6 +18,7 @@ export type OperationPoint = {
   yaw: number
   detail?: string
   owner?: string
+  chargingRobot?: string
 }
 
 export function operationPoints(fleet: Fleet | null, selected: string | undefined, connected: boolean) {
@@ -38,11 +39,16 @@ export function operationPoints(fleet: Fleet | null, selected: string | undefine
   for (const station of fleet.stations) {
     if (!station.pose || station.pose.frame_id !== fleet.map_frame) continue
     const [x, z, yaw] = toScene(station.pose)
-    const owner = station.occupied_by_robot_id ?? station.reserved_by_robot_id
-    const charging = station.charging === 'CHARGING' ? labels.CHARGING : undefined
+    const ownerId = station.occupied_by_robot_id ?? station.reserved_by_robot_id
+    const owner = connected ? fleet.robots.find(robot => robot.robot_id === ownerId && robot.telemetry === 'LIVE') : undefined
+    const chargingRobot = station.station_type === 'CHARGING' &&
+      (station.state === 'OCCUPIED' || station.state === 'RELEASING') &&
+      station.charging === 'CHARGING' && owner && station.charging_robot_id === owner.robot_id &&
+      owner.battery_reliability === 'LIVE' && owner.charging === 'CHARGING' &&
+      owner.charging_station_id === station.station_id ? owner.robot_id : undefined
     points.push({ key: `station:${station.station_id}`, id: station.station_id, kind: station.station_type,
-      position: [x, 0, z], yaw, owner: connected ? owner ?? undefined : undefined,
-      detail: connected ? [labels[station.state], charging].filter(Boolean).join(' · ') : 'Son eşitleme' })
+      position: [x, 0, z], yaw, owner: owner?.robot_id, chargingRobot,
+      detail: connected ? [labels[station.state], chargingRobot && labels.CHARGING].filter(Boolean).join(' · ') : 'Son eşitleme' })
   }
   return points
 }

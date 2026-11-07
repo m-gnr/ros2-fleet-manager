@@ -1,4 +1,5 @@
 import { BatteryCharging, Bot, ChevronRight, CircleAlert, Radio } from "lucide-react";
+import burgerPreview from "./scene/assets/burger-preview.webp";
 import type { Telemetry } from "./scene/telemetry";
 import type { Fleet, Reliability, Robot } from "./fleet";
 import { currentBattery, displayNumber, labels, poseLabel, reliabilityLabel, robotReliability, simTime, telemetryAge } from "./presentation";
@@ -26,13 +27,15 @@ export function EmptyState({ title, detail }: { title: string; detail: string })
   return <div className="empty"><Radio size={24} /><strong>{title}</strong><p>{detail}</p></div>;
 }
 
-export function RobotDetails({ robot, robotId, tf, connected }: {
-  robot: Robot | undefined; robotId?: string; tf?: Telemetry; connected: boolean;
+export function RobotDetails({ robot, robotId, tf, connected, preview }: {
+  robot: Robot | undefined; robotId?: string; tf?: Telemetry; connected: boolean; preview?: boolean;
 }) {
   const pose = tf?.pose;
   const tfStatus = tf?.status ?? "NO_DATA";
   const plan = tf?.path;
   const age = robot && telemetryAge(robot.status_age_sec, robotReliability(robot, connected));
+  const charging = connected && robot?.telemetry === "LIVE" && robot.battery_reliability === "LIVE" &&
+    robot.charging === "CHARGING";
   const tfFields = robotId && <>
     <dl className="detail-grid tf-fields">
       <div><dt>TF poz durumu</dt><dd data-testid="tf-status">{tfStatus}</dd></div>
@@ -79,6 +82,12 @@ export function RobotDetails({ robot, robotId, tf, connected }: {
             <div><dt>Ürün telemetrisi</dt><dd title="Snapshot alınırken kaynağın bildirdiği alım yaşı">{age}</dd></div>
           </dl>
           {tfFields}
+          {preview && <figure className="robot-model-preview">
+            <figcaption><small>MODEL ÖNİZLEMESİ</small><strong>TurtleBot3<br />Burger</strong>
+              {charging && <span><BatteryCharging size={14} /> Şarj oluyor</span>}
+            </figcaption>
+            <img src={burgerPreview} alt="TurtleBot3 Burger modelinin izometrik görünümü" width={278} height={313} />
+          </figure>}
         </div>
       </div> : robotId ? <div className="details-body"><h3>{robotId}</h3>
         <p className="tf-note">Ürün snapshot’ı bekleniyor.</p><div className="details-scroll">{tfFields}</div></div>

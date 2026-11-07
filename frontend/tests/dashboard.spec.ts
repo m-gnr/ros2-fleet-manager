@@ -71,7 +71,7 @@ function telemetry(socket: WebSocketRoute) {
 
 async function trace(page: Page) {
   await page.addInitScript(() => {
-    for (const name of ["frame", "routes"]) {
+    for (const name of ["frame", "routes", "storage", "warehouse-bounds"]) {
       window.addEventListener("fleet-visualizer:" + name, (event) => {
         const detail = (event as CustomEvent).detail;
         Reflect.set(window, "scene_" + name, detail);
@@ -211,6 +211,19 @@ test("fits, follows, orbits, pans, zooms and displays at mobile widths", async (
         const current = await frame();
         return [current.mode, current.transitioning];
       }).toEqual([mode, false]);
+      if (mode === "follow") {
+        const { camera: position, target, pose: root } = await frame();
+        const view = (await viewport.locator("canvas").boundingBox())!;
+        const camera = new PerspectiveCamera(42, view.width / view.height, .035, 90);
+        camera.position.fromArray(position);
+        camera.lookAt(new Vector3(...target));
+        camera.updateMatrixWorld();
+        const bodyTop = new Vector3(root[0], .192, root[2]).project(camera);
+        const label = page.locator(".scene-label.selected");
+        await expect(label).toBeVisible();
+        const rect = (await label.boundingBox())!;
+        expect(rect.y + rect.height).toBeLessThan(view.y + (1 - bodyTop.y) * view.height / 2);
+      }
     }
     for (const [width, height] of [[1280, 850], [1440, 900], [1920, 1080], [390, 844]]) {
       await page.setViewportSize({ width, height });
@@ -599,6 +612,13 @@ test("places verified operation markers on map coordinates and prioritizes the s
   await expect(point("pickup:other_task")).toHaveCount(1);
   await expect(point("station:dock_test")).toContainText("robot_alpha");
   await expect(point("station:dock_test")).toContainText("İşgal altında");
+  await expect(point("station:dock_test")).toContainText("Şarj oluyor");
+  const marker = page.locator('button[data-robot-id="robot_alpha"]');
+  await expect(marker).toHaveAttribute("data-charging", "true");
+  const preview = page.locator(".robot-model-preview");
+  await expect(preview.getByRole("img")).toBeVisible();
+  await expect(preview).toContainText("Şarj oluyor");
+  await expect(page.locator("canvas")).toHaveCount(1);
   await expect(point("station:park_test")).toContainText("Serbest");
   await expect(point("station:no_pose")).toHaveCount(0);
   await expect(point("station:wrong_frame")).toHaveCount(0);
@@ -607,11 +627,26 @@ test("places verified operation markers on map coordinates and prioritizes the s
   await expect.poll(drawnPoints).toContainEqual(["pickup:other_task", [3.4, 0, 1.8], pose.yaw]);
   await expect.poll(drawnPoints).toContainEqual(["dropoff:other_task", [-3.2, 0, -2.4], pose.yaw]);
   await expect.poll(drawnPoints).toContainEqual(["station:park_test", [-2.4, 0, 1.1], pose.yaw]);
+  await expect.poll(drawnPoints).toContainEqual(["station:dock_test", [1, 0, -1], pose.yaw]);
+  const renderedPoints = await page.evaluate(() => Reflect.get(window, "scene_frame").points);
+  const dock = renderedPoints.find((item: { key: string }) => item.key === "station:dock_test");
+  const parked = renderedPoints.find((item: { key: string }) => item.key === "station:park_test");
+  expect(dock.dockPosition[0]).toBeCloseTo(1);
+  expect(dock.dockPosition[2]).toBeCloseTo(-1.57);
+  expect(parked.dockPosition).toBeUndefined();
   await page.getByRole("button", { name: "Robot seç: robot_beta", exact: true }).click();
   await expect(point("pickup:task_test")).toHaveCount(1);
   await expect(point("pickup:other_task")).toHaveCount(0);
-  socket!.send(JSON.stringify({ ...snapshot, sequence: snapshot.sequence + 1, tasks: [] }));
+  await expect(preview).not.toContainText("Şarj oluyor");
+  await page.getByRole("button", { name: "Robot seç: robot_alpha", exact: true }).click();
+  socket!.send(JSON.stringify({ ...snapshot, sequence: snapshot.sequence + 1, tasks: [],
+    robots: [{ ...valid, telemetry: "STALE", battery_reliability: "STALE" }, invalid] }));
   await expect(page.locator('[data-operation-point^="pickup:"], [data-operation-point^="dropoff:"]')).toHaveCount(0);
+  await expect.poll(drawnPoints).toHaveLength(2);
+  await expect(point("station:dock_test")).toContainText("İşgal altında");
+  await expect(point("station:dock_test")).not.toContainText(/robot_alpha|Şarj oluyor/);
+  await expect(marker).not.toHaveAttribute("data-charging", "true");
+  await expect(preview).not.toContainText("Şarj oluyor");
   await socket!.close();
   await expect(point("station:dock_test")).toContainText("Son eşitleme");
   await expect(point("station:dock_test")).not.toContainText("robot_alpha");
@@ -675,4 +710,33 @@ test("keeps live robots and camera controls when the local GLB fails", async ({ 
     const frame = Reflect.get(window, "scene_frame");
     return [frame?.warehouse, frame?.mode, frame?.transitioning];
   })).toEqual(["schematic", "top", false]);
+});
+
+test("frames the imported storage and keeps its footprint outside the open operations floor", async ({ page }) => {
+  await trace(page);
+  await feed(page, (socket) => socket.send(JSON.stringify(fixture)));
+  await page.goto("/?trace=1");
+  await warehouseReady(page);
+  const { storage, corners, frame } = await page.evaluate(() => ({
+    storage: Reflect.get(window, "scene_storage"),
+    corners: Reflect.get(window, "scene_warehouse-bounds") as number[][],
+    frame: Reflect.get(window, "scene_frame"),
+  }));
+  expect(storage.map(({ name }: { name: string }) => name)).toEqual(["rear-rack", "side-rack", "pallet-row"]);
+  const [rear, side, pallets] = storage;
+  expect(rear.max[2]).toBeLessThan(-4.4);
+  expect(rear.max[1]).toBeGreaterThan(1.8);
+  expect(side.max[0]).toBeLessThan(-4.4);
+  expect(side.max[2] - side.min[2]).toBeGreaterThan(4);
+  expect(pallets.min[2]).toBeGreaterThan(4.4);
+  expect(pallets.max[1]).toBeLessThan(.5);
+
+  const view = (await page.locator("canvas").boundingBox())!;
+  const camera = new PerspectiveCamera(42, view.width / view.height, .035, 90);
+  camera.position.fromArray(frame.camera);
+  camera.lookAt(new Vector3(...frame.target));
+  camera.updateMatrixWorld();
+  const projected = corners.map(point => new Vector3().fromArray(point).project(camera));
+  expect(Math.max(...projected.map(({ x }) => Math.abs(x)))).toBeLessThan(.96);
+  expect(Math.max(...projected.map(({ y }) => Math.abs(y)))).toBeLessThan(.96);
 });

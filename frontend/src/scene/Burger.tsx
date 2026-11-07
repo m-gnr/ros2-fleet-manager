@@ -16,7 +16,7 @@ function ContactShadow() {
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         const radius = Math.hypot(x + 0.5 - size / 2, y + 0.5 - size / 2) / (size / 2)
-        pixels[(y * size + x) * 4 + 3] = Math.round(140 * Math.max(0, 1 - radius) ** 2)
+        pixels[(y * size + x) * 4 + 3] = Math.round(190 * Math.max(0, 1 - radius) ** 2)
       }
     }
     const texture = new DataTexture(pixels, size, size, RGBAFormat)
@@ -84,7 +84,7 @@ export const Burger = memo(function Burger({ softShadows }: { softShadows: boole
     </group>
     <mesh name="robot-front-marker" position={[frontMarkerX, 0.015, 0]} rotation={[0, 0, -Math.PI / 2]}>
       <coneGeometry args={[0.058, 0.13, 3]} />
-      <meshBasicMaterial color="#ffd487" />
+      <meshBasicMaterial color="#975918" />
     </mesh>
   </>
 })

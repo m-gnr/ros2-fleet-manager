@@ -1,43 +1,87 @@
 import { memo } from 'react'
-import { Shape } from 'three'
+import { Path, Shape, Vector2 } from 'three'
 import { pointStyle, type OperationPoint } from './operationPoints'
 
-function icon(vertices: [number, number][]) {
-  const shape = new Shape()
-  shape.moveTo(...vertices[0])
-  for (const vertex of vertices.slice(1)) shape.lineTo(...vertex)
-  return shape
+type Vertex = [number, number]
+
+function outline(vertices: Vertex[]) {
+  return new Shape().setFromPoints(vertices.map(([x, y]) => new Vector2(x, y)))
 }
 
-const lightning = icon([[-.045, .2], [.14, .2], [.035, .04], [.15, .04], [-.08, -.2], [-.01, -.02], [-.13, -.02]])
-const parking = icon([[-.12, -.19], [-.12, .19], [.08, .19], [.16, .13], [.16, .02],
+function inset(shape: Shape, factor: number) {
+  return new Path().setFromPoints(shape.getPoints().reverse().map(({ x, y }) => new Vector2(x * factor, y * factor)))
+}
+
+function panel(vertices: Vertex[], fill: string, symbols: Shape[]) {
+  const border = outline(vertices)
+  border.holes.push(inset(border, .90))
+  return { pad: outline(vertices), border, fill, symbols }
+}
+
+function bay(x: number, y: number): Vertex[] {
+  const corner = .09
+  return [[-x + corner, -y], [x - corner, -y], [x, -y + corner], [x, y - corner],
+    [x - corner, y], [-x + corner, y], [-x, y - corner], [-x, -y + corner]]
+}
+
+// Keep the bolt alongside the TF root so a docked robot leaves it visible.
+const lightning = outline([[-.425, .20], [-.24, .20], [-.345, .04], [-.23, .04],
+  [-.46, -.20], [-.39, -.02], [-.51, -.02]])
+const parking = outline([[-.12, -.19], [-.12, .19], [.08, .19], [.16, .13], [.16, .02],
   [.08, -.04], [-.035, -.04], [-.035, .035], [.055, .035], [.08, .06], [.08, .095],
   [.055, .115], [-.035, .115], [-.035, -.19]])
+const heading = outline([[.27, -.035], [.37, -.035], [.37, -.105], [.49, 0], [.37, .105], [.37, .035], [.27, .035]])
+const pickupArrow = outline([[-.09, .105], [0, .20], [.09, .105], [.034, .105], [.034, .025], [-.034, .025], [-.034, .105]])
+const dropoffArrow = outline([[-.09, .12], [0, .025], [.09, .12], [.034, .12], [.034, .20], [-.034, .20], [-.034, .12]])
+const carton = outline([[-.13, -.175], [.13, -.175], [.13, -.012], [-.13, -.012]])
+carton.holes.push(new Path().moveTo(-.085, -.051).lineTo(-.085, -.136).lineTo(.085, -.136).lineTo(.085, -.051))
+
+const panels = {
+  CHARGING: panel(bay(.68, .46), '#b0dcd1', [lightning]),
+  PARKING: panel(bay(.59, .40), '#b9cfdf', [parking, heading]),
+  SAFE_WAITING: panel(bay(.44, .35), '#c4ced1', []),
+  pickup: panel(bay(.33, .30), '#3372ad', [pickupArrow, carton]),
+  dropoff: panel([[0, -.40], [.39, 0], [0, .40], [-.39, 0]], '#8058a7', [dropoffArrow, carton]),
+}
+
+function ChargingUnit({ charging }: { charging: boolean }) {
+  return <group name="charging-unit" position-x={.57}>
+    <mesh position-y={.018}>
+      <boxGeometry args={[.21, .036, .62]} />
+      <meshStandardMaterial color="#284d4c" roughness={.84} />
+    </mesh>
+    <mesh position={[.022, .134, 0]}>
+      <boxGeometry args={[.145, .24, .49]} />
+      <meshStandardMaterial color="#2a665f" roughness={.64} />
+    </mesh>
+    <mesh position={[.022, .251, 0]}>
+      <boxGeometry args={[.15, .014, .45]} />
+      <meshBasicMaterial color={charging ? '#80e8b9' : '#a4bfba'} />
+    </mesh>
+  </group>
+}
 
 export const OperationMarkers = memo(function OperationMarkers({ points }: { points: OperationPoint[] }) {
   return <group name="operation-points">
-    {points.map(({ key, kind, position, yaw }) => {
-      const segments = kind === 'pickup' ? 3 : kind === 'dropoff' ? 4 : 32
-      const radius = segments === 32 ? 0.43 : kind === 'dropoff' ? 0.49 : 0.34
-      const color = pointStyle[kind].color
+    {points.map(({ key, kind, position, yaw, chargingRobot }) => {
+      const { pad, border, fill, symbols } = panels[kind]
+      const isTask = kind === 'pickup' || kind === 'dropoff'
       return <group key={key} name={key} position={position} rotation-y={yaw}>
         <group rotation-x={-Math.PI / 2}>
-          <mesh position-z={kind === 'dropoff' ? 0.014 : 0.009}>
-            {kind === 'dropoff'
-              ? <ringGeometry args={[radius * 0.68, radius, segments]} />
-              : <circleGeometry args={[radius, segments]} />}
-            <meshBasicMaterial color={color} />
+          <mesh name="operation-pad" position-z={.006}>
+            <shapeGeometry args={[pad]} />
+            <meshBasicMaterial color={chargingRobot ? '#87ccba' : fill} />
           </mesh>
-          <mesh position-z={kind === 'dropoff' ? 0.016 : 0.011}>
-            <ringGeometry args={[radius * 0.78, radius * 0.89, segments]} />
-            <meshBasicMaterial color="#fffaf1" />
+          <mesh position-z={.010}>
+            <shapeGeometry args={[border]} />
+            <meshBasicMaterial color={isTask ? '#f8f4ef' : pointStyle[kind].color} />
           </mesh>
-          {(kind === 'CHARGING' || kind === 'PARKING') &&
-            <mesh position-z={0.013}>
-              <shapeGeometry args={[kind === 'CHARGING' ? lightning : parking]} />
-              <meshBasicMaterial color="#fffaf1" />
-            </mesh>}
+          {symbols.length > 0 && <mesh name="operation-symbol" position-z={.013} rotation-z={isTask ? -yaw : 0}>
+            <shapeGeometry args={[symbols]} />
+            <meshBasicMaterial color={isTask ? '#fffaf1' : pointStyle[kind].color} />
+          </mesh>}
         </group>
+        {kind === 'CHARGING' && <ChargingUnit charging={!!chargingRobot} />}
       </group>
     })}
   </group>

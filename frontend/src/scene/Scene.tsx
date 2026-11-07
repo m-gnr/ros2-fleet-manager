@@ -4,7 +4,7 @@ import { Box3, Group, PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Burger, burgerSize, frontMarkerX } from './Burger'
 import {
-  followTarget, maxCameraDistance, minCameraDistance, startOffset, targetHeight, topAngle,
+  followDistance, followTarget, maxCameraDistance, minCameraDistance, startOffset, targetHeight, topAngle,
   type CameraCommand,
 } from './camera'
 import { blendMs, blendPose, toScene } from './coordinates'
@@ -122,6 +122,9 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:warehouse-bounds', {
         bubbles: true, detail: warehouseFrame.current.map(corner => corner.toArray()),
       }))
+      if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:storage', {
+        bubbles: true, detail: layout?.getObjectByName('warehouse-decor')?.userData.storageBounds ?? [],
+      }))
     }
     if (resized && preset.current && nextMode === 'fit') fitted.current = false
     const oldCommand = cameraCommand.current
@@ -163,7 +166,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
         preset.current = true
         fitted.current = false
       }
-      if (nextMode === 'follow' && goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
+      if (nextMode === 'follow' && goalOffset.current.length() > followDistance) goalOffset.current.setLength(followDistance)
       controls.minPolarAngle = 0
       controls.maxPolarAngle = Math.PI / 2
       controls.enableDamping = false
@@ -204,7 +207,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       if (!transitioning.current && (selectionChanged || (pose !== priorPose && !previous && status === 'LIVE')) &&
           controls.target.distanceToSquared(goalTarget.current) > 0.0144) {
         goalOffset.current.copy(camera.position).sub(controls.target)
-        if (goalOffset.current.length() > 3.2) goalOffset.current.setLength(3.2)
+        if (goalOffset.current.length() > followDistance) goalOffset.current.setLength(followDistance)
         controls.enableDamping = false
         controls.enabled = false
         transitioning.current = true
@@ -265,7 +268,11 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       const left = x - label.offsetWidth / 2
       const right = x + label.offsetWidth / 2
       const height = label.offsetHeight
-      const above = y - radius - 4
+      front.copy(root.position)
+      front.y += burgerSize.height
+      front.project(camera)
+      const bodyTop = (1 - front.y) / 2 * size.height
+      const above = Math.min(y - radius, bodyTop) - 4
       const below = y + radius + 4
       const placement = { label, candidates: [{ left, right, top: above - height, bottom: above }] }
       if (id === selected) {
@@ -291,6 +298,10 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
         { left: x - gap - width, right: x - gap, top: y - height / 2, bottom: y + height / 2 },
         { left: x - width / 2, right: x + width / 2, top: y + gap, bottom: y + gap + height },
         { left: x - width / 2, right: x + width / 2, top: y - gap - height, bottom: y - gap },
+        { left: x + gap, right: x + gap + width, top: y + gap / 2, bottom: y + gap / 2 + height },
+        { left: x - gap - width, right: x - gap, top: y + gap / 2, bottom: y + gap / 2 + height },
+        { left: x + gap, right: x + gap + width, top: y - gap / 2 - height, bottom: y - gap / 2 },
+        { left: x - gap - width, right: x - gap, top: y - gap / 2 - height, bottom: y - gap / 2 },
       ] })
     }
     for (const { label, candidates } of placements) {
@@ -341,7 +352,9 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
           dpr: gl.getPixelRatio(), warehouse: layout ? 'glb' : 'schematic',
           points: points.map(point => {
             const root = scene.getObjectByName(point.key)!
-            return { ...point, position: root.getWorldPosition(screen).toArray(), yaw: root.rotation.y }
+            const dock = root.getObjectByName('charging-unit')
+            return { ...point, position: root.getWorldPosition(screen).toArray(), yaw: root.rotation.y,
+              dockPosition: dock?.getWorldPosition(screen).toArray() }
           }),
         },
       }))
@@ -358,6 +371,10 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       }
     }}>
     <Burger softShadows={!lowQuality} />
+    {id === selected && <mesh name="selected-robot-halo" rotation-x={-Math.PI / 2} position-y={.018}>
+      <ringGeometry args={[.228, .25, 32]} />
+      <meshBasicMaterial color="#0e5d55" transparent opacity={.56} depthWrite={false} />
+    </mesh>}
   </group>)
 }
 
@@ -366,7 +383,7 @@ const initialCamera = { position: [8, 11, 10] as [number, number, number], fov, 
 export default memo(function Scene(props: SceneProps) {
   return <Canvas frameloop="demand" dpr={props.lowQuality ? 1 : [1, 1.5]} camera={initialCamera}
     fallback={<p className="scene-message">3D görünüm için WebGL desteği gerekiyor.</p>}>
-    <color attach="background" args={['#eef2f3']} />
+    <color attach="background" args={['#edf2f1']} />
     <hemisphereLight args={['#ffffff', '#c2cbd1', 1.65]} />
     <directionalLight position={[2, 8, -3]} intensity={1.95} color="#fff6e9" />
     <directionalLight position={[-6, 3, 5]} intensity={0.42} color="#e0ecfc" />

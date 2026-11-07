@@ -67,9 +67,10 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
           return <Fragment key={id}>
             <button type="button" className={`scene-marker ${status.toLowerCase()}`} data-robot-id={id} tabIndex={-1}
               aria-label={`3D işaretiyle seç: ${id}`} aria-pressed={isSelected} title={`${id} · ${status}`}
+              data-charging={points.some(point => point.chargingRobot === id) || undefined}
               style={{ color, width: markerDiameter, height: markerDiameter }} onClick={() => onSelect(id)}
               ref={(node) => { if (node) markers.set(id, node); else markers.delete(id); }}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 8l7 4-7 4z" fill="currentColor" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7l8 5-8 5 2-5z" fill="currentColor" /></svg>
             </button>
             <span data-robot-id={id} title={id} ref={(node) => {
               if (node) labels.set(id, node);

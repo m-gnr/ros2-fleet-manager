@@ -1,12 +1,11 @@
-import { BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial, Object3D } from 'three'
+import { Box3, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial, Object3D } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import { palletRow, rearRack, sideRack, type StorageBounds } from './warehouseLayout'
 import warehouseUrl from './assets/warehouse-aisle.glb?url'
 
-// The pinned GLB has separate named assemblies. Keep the rack and its stock,
-// then move a few low accessories to the edge of the display platform.
-const rearParts = /^(00[6-9]|01[0-9]|02[0-46-8])-/
-const sideParts = /^(026|031|035)-/
+const rearParts = /^(00[6-9]|01[0-9]|02[0-46])-/
+const sideParts = /^(00[6-9]|010|013|014|018|019|021)-/
 
 export async function loadWarehouseDecor() {
   const { scene } = await new GLTFLoader().loadAsync(warehouseUrl)
@@ -16,9 +15,14 @@ export async function loadWarehouseDecor() {
   const group = new Group()
   group.name = 'warehouse-decor'
 
-  function bake(part: Object3D, x: number, z: number, sx: number, sy: number, sz: number, yaw = 0) {
+  const storageBounds: StorageBounds[] = []
+  group.userData.storageBounds = storageBounds
+
+  function bake(part: Object3D, name: string, x: number, z: number,
+    scale: readonly [number, number, number], yaw = 0) {
+    const bounds = new Box3()
     part.position.set(x, 0, z)
-    part.scale.set(sx, sy, sz)
+    part.scale.set(...scale)
     part.rotation.y = yaw
     part.updateMatrixWorld(true)
     part.traverse(object => {
@@ -38,11 +42,14 @@ export async function loadWarehouseDecor() {
       }
       geometry.setIndex(object.geometry.index)
       geometry.applyMatrix4(object.matrixWorld)
+      geometry.computeBoundingBox()
+      bounds.union(geometry.boundingBox!)
       const material = object.material as MeshStandardMaterial
       const batch = batches.get(material) ?? []
       batch.push(geometry)
       batches.set(material, batch)
     })
+    if (!bounds.isEmpty()) storageBounds.push({ name, min: bounds.min.toArray(), max: bounds.max.toArray() })
   }
 
   function dispose() {
@@ -65,10 +72,11 @@ export async function loadWarehouseDecor() {
     if (!source) throw new Error('Warehouse asset is missing its aisle')
     const rear = new Group()
     const side = new Group()
+    const pallets = new Group()
     for (const part of source.children) {
       if (rearParts.test(part.name)) {
         const rack = part.clone()
-        // The source beams span half the gap between the supplied upright frames.
+        // The source beams span half the gap between the supplied uprights.
         if (part.name.includes('pallet-rack-beam-level')) rack.scale.x *= 2
         rear.add(rack)
         if (part.name.startsWith('017-')) {
@@ -76,15 +84,22 @@ export async function loadWarehouseDecor() {
           topShelf.position.x = 6.75
           rear.add(topShelf)
         }
+        if (sideParts.test(part.name)) side.add(rack.clone())
       }
-      if (sideParts.test(part.name)) {
-        const prop = part.clone()
-        prop.position.set(0, 0, side.children.length * -1.25)
-        side.add(prop)
+      if (part.name.startsWith('024-')) {
+        const crate = part.clone()
+        crate.position.set(4.05, 1.45, 0)
+        side.add(crate)
+      }
+      if (/^(020|026)-/.test(part.name)) {
+        const stock = part.clone()
+        stock.position.set(palletRow.x[pallets.children.length], 0, 0)
+        pallets.add(stock)
       }
     }
-    bake(rear, -5.45, -5.3, 1.35, 0.61, 0.81)
-    bake(side, -5.65, -0.9, 0.8, 0.48, 0.78, -0.12)
+    bake(rear, 'rear-rack', rearRack.x, rearRack.z, rearRack.scale)
+    bake(side, 'side-rack', sideRack.x, sideRack.z, sideRack.scale, Math.PI / 2)
+    bake(pallets, 'pallet-row', 0, palletRow.z, [1, 0.44, 0.70])
     for (const [sourceMaterial, batch] of batches) {
       const geometry = mergeGeometries(batch)
       if (!geometry) throw new Error('Warehouse geometry could not be batched')

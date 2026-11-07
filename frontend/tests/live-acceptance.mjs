@@ -293,6 +293,7 @@ try {
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(details().getByRole("meter")).toHaveCount(0);
   await expect(details().getByText(/Ürün akışı kesildi/)).toBeVisible();
+  if (verifyWarehouse) await expect(page.locator(".scene-marker[data-charging=true]")).toHaveCount(0);
   await page.screenshot({ path: join(evidence, "connection-loss.png"), fullPage: true });
   const reconnect = performance.now();
   startApi();
@@ -304,9 +305,18 @@ try {
 
   await until(() => last?.stations.some((station) => station.charging === "CHARGING"),
     "Verified charging not displayed", 60000);
-  const chargingId = last.stations.find((station) => station.charging === "CHARGING").charging_robot_id;
+  const chargingStation = last.stations.find((station) => station.charging === "CHARGING");
+  const chargingId = chargingStation.charging_robot_id;
   await page.getByRole("button", { name: `Robot seç: ${chargingId}` }).click();
   await expect(details().getByText("Şarj oluyor", { exact: true }).first()).toBeVisible();
+  if (verifyWarehouse) {
+    const key = `station:${chargingStation.station_id}`;
+    await until(() => traceFrames.at(-1)?.points?.some(point =>
+      point.key === key && point.chargingRobot === chargingId && point.owner === chargingId && point.dockPosition),
+    "Verified C4 owner did not appear on the 3D dock", 8000);
+    await expect(page.locator(".scene-marker[data-charging=true]")).toHaveAttribute("data-robot-id", chargingId);
+    await expect(page.locator(".robot-model-preview")).toContainText("Şarj oluyor");
+  }
   await capture("charging-scene");
   await page.getByRole("link", { name: "İstasyonlar / Şarj", exact: true }).click();
   await expect(page.getByRole("cell", { name: /Şarj oluyor/ })).toBeVisible();

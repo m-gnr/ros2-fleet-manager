@@ -1,0 +1,10 @@
+backend-1     | {"event": "C45_AFTER_CHARGE", "robots": {"robot_1": {"stamp_ns": 77070000000, "energy_wh": 81.25142776706996, "soc_percent": 81.25142669677734}, "robot_2": {"stamp_ns": 77070000000, "energy_wh": 100.0, "soc_percent": 100.0}}}
+backend-1     | {"event": "C45_CHARGED_PREEMPTION", "proof": {"robot_id": "robot_1", "goal_uuid": "954efe6e-7ca5-4b05-bec3-3d77de2ab961", "nav2_goal_uuid": "f08e4af3-f6a4-4103-a4bf-514ee12a8929", "epoch": 3, "nav2_terminal_ns": 77985000000, "nav2_terminal_monotonic_ns": 821464711588971, "decision_ns": 78395000000, "decision_monotonic_ns": 821465116795429, "stop_window_start_ns": 78155000000, "odometry_ns": 78365000000, "odometry_received_monotonic_ns": 821465089810846, "frame_id": "robot_1/odom", "linear_m_s": 0.0, "angular_rad_s": 0.0}, "independent_samples": 13}
+backend-1     | {"event": "C45_LATE_TERMINAL_BLOCKED", "goal_uuid": "954efe6e-7ca5-4b05-bec3-3d77de2ab961", "epoch": 3}
+backend-1     | {"event": "C45_AFTER_TRANSPORT", "robots": {"robot_1": {"stamp_ns": 125275000000, "energy_wh": 80.44119409061665, "soc_percent": 80.44119262695312}, "robot_2": {"stamp_ns": 125370000000, "energy_wh": 98.32909003056945, "soc_percent": 98.32908630371094}}}
+backend-1     | {"event": "C45_LOW_RESUMED", "epoch": 5, "original_epoch": 3}
+backend-1     | {"event": "C5_SOURCE_MATCHED", "sequence": 450}
+backend-1     | {"event": "C5_MEASURE_START", "mode": "publisher-enabled"}
+backend-1     | {"event": "C5_MEASURE_END", "mode": "publisher-enabled", "samples": 291, "seconds": 15.035870673018508, "consumer_tick_delay_p95_ms": 2.543124998919663, "backend_fm_cpu_percent": 34.58522907710037, "backend_fm_rss_bytes": 98037760}
+backend-1     | {"event": "C5_MEASURE_START", "mode": "publisher-disabled"}
+backend-1     | {"event": "C5_MEASURE_END", "mode": "publisher-disabled", "samples": 158, "seconds": 8.049821338034235, "consumer_tick_delay_p95_ms": 2.1929999813437435, "backend_fm_cpu_percent": 31.791016552237412, "backend_fm_rss_bytes": 98320384}

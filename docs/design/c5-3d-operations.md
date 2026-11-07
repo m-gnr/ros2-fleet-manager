@@ -31,3 +31,7 @@ Kamera serbest, takip, üstten, filo kadrajı ve sıfırlama modlarını sunar. 
 ## Aşama 1.7B hazır depo
 
 Sunum sahnesi yerel CC0 GLB dekorunu asenkron yükler. Model hazır olunca şematik rafların yerini alır. İstasyonlar ile öncelikli görevin alım ve teslim noktaları doğrulanmış C5 snapshot’ından map koordinatlarında çizilir. Model seçimi, kaynak ve ölçüm kanıtı [Aşama 1.7B doğrulama raporunda](../validation/c5/c5-stage1-7b-validation-2026-11-07.md).
+
+## Aşama 1.7C depo sunumu
+
+Raf ve palet ayak izleri çevrede tutulur. Depo zemini, raf numaraları ve güvenlik çizgileri temsili geometri grubunda kalır. Operasyon katmanında şarj ünitesi ve park yönü istasyon snapshot’ındaki map pozu ve yönüyle hizalanır. Alım ve teslim alanları öncelikli görev çiftiyle birlikte görünür. Ayrıntı panelindeki Burger önizlemesi aynı gövdeden alınmış statik bir görseldir. Yerleşim gerekçesi, Chrome ölçümleri ve canlı kanıt [Aşama 1.7C raporunda](../validation/c5/c5-stage1-7c-validation-2026-11-07.md).

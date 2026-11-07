@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { memo, useLayoutEffect, useRef } from 'react'
-import { Box3, Group, PerspectiveCamera, Quaternion, Vector3 } from 'three'
+import { Box3, Group, PerspectiveCamera, Quaternion, Ray, Vector3, type Object3D } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { Burger, burgerSize, frontMarkerX } from './Burger'
 import {
@@ -53,6 +53,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
   const cameraCommand = useRef(command)
   const warehouseLayout = useRef<Group>(undefined)
   const warehouseFrame = useRef<Vector3[]>(undefined)
+  const cutaways = useRef<{ object: Object3D; bounds: Box3 }[]>([])
   const aspect = useRef(0)
   const preset = useRef(true)
   const transitioning = useRef(false)
@@ -61,6 +62,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
   const scratch = useRef({
     shift: new Vector3(), destination: new Vector3(), screen: new Vector3(),
     front: new Vector3(), rotation: new Quaternion(), bounds: new Box3(), extent: new Vector3(),
+    ray: new Ray(), body: new Vector3(), obstruction: new Vector3(),
   })
   const filteredId = routes.selectedOnly ? selected : undefined
   const { camera, gl, invalidate } = useThree()
@@ -106,7 +108,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
 
     const { robots } = feed.read()
     const now = performance.now()
-    const { shift, destination, screen, front, rotation, bounds, extent } = scratch.current
+    const { shift, destination, screen, front, rotation, bounds, extent, ray, body, obstruction } = scratch.current
     const nextMode = command.mode
     const nextAspect = size.width / size.height
     if (!Number.isFinite(nextAspect) || nextAspect <= 0) return
@@ -119,8 +121,21 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
     if (!warehouseFrame.current || layoutChanged) {
       warehouseLayout.current = layout
       warehouseFrame.current = warehouseCorners(environment)
+      cutaways.current = []
+      const decorBounds: { name: string; min: number[]; max: number[] }[] = []
+      environment.traverse(object => {
+        if (!object.userData.cutaway) return
+        const box = new Box3().setFromObject(object)
+        if (trace) decorBounds.push({ name: object.name, min: box.min.toArray(), max: box.max.toArray() })
+        // Expand the sightline test by the Burger envelope so partial cover also triggers a cutaway.
+        box.expandByScalar(Math.hypot(burgerSize.length, burgerSize.width, burgerSize.height) / 2)
+        cutaways.current.push({ object, bounds: box })
+      })
       if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:warehouse-bounds', {
         bubbles: true, detail: warehouseFrame.current.map(corner => corner.toArray()),
+      }))
+      if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:decor-bounds', {
+        bubbles: true, detail: { layout: layout ? 'glb' : 'schematic', boxes: decorBounds },
       }))
       if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:storage', {
         bubbles: true, detail: layout?.getObjectByName('warehouse-decor')?.userData.storageBounds ?? [],
@@ -239,6 +254,21 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
     controls.update()
     camera.updateMatrixWorld()
 
+    for (const cutaway of cutaways.current) cutaway.object.visible = true
+    for (const root of models.values()) {
+      if (!root.visible) continue
+      body.copy(root.position).addScaledVector(camera.up, burgerSize.height / 2)
+      const distance = ray.direction.copy(body).sub(camera.position).length()
+      ray.direction.normalize()
+      ray.origin.copy(camera.position)
+      for (const { object, bounds } of cutaways.current) {
+        if (object.visible && (bounds.containsPoint(ray.origin) ||
+            (ray.intersectBox(bounds, obstruction) && obstruction.distanceTo(ray.origin) < distance))) {
+          object.visible = false
+        }
+      }
+    }
+
     const placements: LabelPlacement[] = []
     const occupied: ScreenRect[] = []
     const radius = markerDiameter / 2
@@ -350,10 +380,17 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
           calls: gl.info.render.calls, triangles: gl.info.render.triangles,
           geometries: gl.info.memory.geometries, textures: gl.info.memory.textures,
           dpr: gl.getPixelRatio(), warehouse: layout ? 'glb' : 'schematic',
+          cutaway: cutaways.current.filter(({ object }) => !object.visible).map(({ object }) => object.name),
           points: points.map(point => {
             const root = scene.getObjectByName(point.key)!
             const dock = root.getObjectByName('charging-unit')
-            return { ...point, position: root.getWorldPosition(screen).toArray(), yaw: root.rotation.y,
+            const pad = root.getObjectByName('operation-pad')!
+            const symbol = root.getObjectByName('operation-symbol')
+            return { ...point,
+              padSize: bounds.setFromObject(pad, true).getSize(extent).toArray(),
+              padPosition: pad.getWorldPosition(screen).toArray(),
+              symbol: !!symbol,
+              position: root.getWorldPosition(screen).toArray(), yaw: root.rotation.y,
               dockPosition: dock?.getWorldPosition(screen).toArray() }
           }),
         },

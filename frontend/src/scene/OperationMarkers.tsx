@@ -19,33 +19,33 @@ function panel(vertices: Vertex[], fill: string, symbols: Shape[]) {
 }
 
 function bay(x: number, y: number): Vertex[] {
-  const corner = .09
+  const corner = .055
   return [[-x + corner, -y], [x - corner, -y], [x, -y + corner], [x, y - corner],
     [x - corner, y], [-x + corner, y], [-x, y - corner], [-x, -y + corner]]
 }
 
 // Keep the bolt alongside the TF root so a docked robot leaves it visible.
-const lightning = outline([[-.425, .20], [-.24, .20], [-.345, .04], [-.23, .04],
-  [-.46, -.20], [-.39, -.02], [-.51, -.02]])
+const lightning = outline([[-.33, .20], [-.15, .20], [-.245, .04], [-.14, .04],
+  [-.37, -.20], [-.30, -.02], [-.42, -.02]])
 const parking = outline([[-.12, -.19], [-.12, .19], [.08, .19], [.16, .13], [.16, .02],
   [.08, -.04], [-.035, -.04], [-.035, .035], [.055, .035], [.08, .06], [.08, .095],
   [.055, .115], [-.035, .115], [-.035, -.19]])
-const heading = outline([[.27, -.035], [.37, -.035], [.37, -.105], [.49, 0], [.37, .105], [.37, .035], [.27, .035]])
+const heading = outline([[.20, -.033], [.30, -.033], [.30, -.095], [.41, 0], [.30, .095], [.30, .033], [.20, .033]])
 const pickupArrow = outline([[-.09, .105], [0, .20], [.09, .105], [.034, .105], [.034, .025], [-.034, .025], [-.034, .105]])
 const dropoffArrow = outline([[-.09, .12], [0, .025], [.09, .12], [.034, .12], [.034, .20], [-.034, .20], [-.034, .12]])
 const carton = outline([[-.13, -.175], [.13, -.175], [.13, -.012], [-.13, -.012]])
 carton.holes.push(new Path().moveTo(-.085, -.051).lineTo(-.085, -.136).lineTo(.085, -.136).lineTo(.085, -.051))
 
 const panels = {
-  CHARGING: panel(bay(.68, .46), '#b0dcd1', [lightning]),
-  PARKING: panel(bay(.59, .40), '#b9cfdf', [parking, heading]),
+  CHARGING: panel(bay(.46, .46), '#a4d8cb', [lightning]),
+  PARKING: panel(bay(.46, .46), '#bccbd6', [parking, heading]),
   SAFE_WAITING: panel(bay(.44, .35), '#c4ced1', []),
-  pickup: panel(bay(.33, .30), '#3372ad', [pickupArrow, carton]),
-  dropoff: panel([[0, -.40], [.39, 0], [0, .40], [-.39, 0]], '#8058a7', [dropoffArrow, carton]),
+  pickup: panel(bay(.46, .46), '#9dc8ef', [pickupArrow, carton]),
+  dropoff: panel(bay(.46, .46), '#d4b7ec', [dropoffArrow, carton]),
 }
 
 function ChargingUnit({ charging }: { charging: boolean }) {
-  return <group name="charging-unit" position-x={.57}>
+  return <group name="charging-unit" position-x={.57} position-y={-.032}>
     <mesh position-y={.018}>
       <boxGeometry args={[.21, .036, .62]} />
       <meshStandardMaterial color="#284d4c" roughness={.84} />
@@ -62,24 +62,36 @@ function ChargingUnit({ charging }: { charging: boolean }) {
 }
 
 export const OperationMarkers = memo(function OperationMarkers({ points }: { points: OperationPoint[] }) {
+  const pickup = points.find(point => point.kind === 'pickup')
+  const dropoff = points.find(point => point.kind === 'dropoff')
+  const sharedTaskPosition = pickup && dropoff &&
+    pickup.position[0] === dropoff.position[0] && pickup.position[2] === dropoff.position[2]
+
   return <group name="operation-points">
     {points.map(({ key, kind, position, yaw, chargingRobot }) => {
       const { pad, border, fill, symbols } = panels[kind]
       const isTask = kind === 'pickup' || kind === 'dropoff'
+      const split = isTask && sharedTaskPosition
+      // Raise overlapping paint layers by millimetres to keep their depths distinct.
+      const height = kind === 'dropoff' ? -.002 : isTask ? -.006 : -.010
+      const color = pointStyle[kind].color
       return <group key={key} name={key} position={position} rotation-y={yaw}>
-        <group rotation-x={-Math.PI / 2}>
-          <mesh name="operation-pad" position-z={.006}>
-            <shapeGeometry args={[pad]} />
-            <meshBasicMaterial color={chargingRobot ? '#87ccba' : fill} />
-          </mesh>
-          <mesh position-z={.010}>
-            <shapeGeometry args={[border]} />
-            <meshBasicMaterial color={isTask ? '#f8f4ef' : pointStyle[kind].color} />
-          </mesh>
-          {symbols.length > 0 && <mesh name="operation-symbol" position-z={.013} rotation-z={isTask ? -yaw : 0}>
-            <shapeGeometry args={[symbols]} />
-            <meshBasicMaterial color={isTask ? '#fffaf1' : pointStyle[kind].color} />
-          </mesh>}
+        <group position-y={height} rotation-y={isTask ? -yaw : 0}>
+          <group rotation-x={-Math.PI / 2} position-x={split ? (kind === 'pickup' ? -.23 : .23) : 0}
+            scale-x={split ? .5 : 1}>
+            <mesh name="operation-pad">
+              <shapeGeometry args={[pad]} />
+              <meshBasicMaterial color={chargingRobot ? '#88d5bc' : fill} />
+            </mesh>
+            <mesh name="operation-border" position-z={.001}>
+              <shapeGeometry args={[border]} />
+              <meshBasicMaterial color={color} />
+            </mesh>
+            {symbols.length > 0 && <mesh name="operation-symbol" position-z={.002} scale-x={split ? 1.45 : 1}>
+              <shapeGeometry args={[symbols]} />
+              <meshBasicMaterial color={color} />
+            </mesh>}
+          </group>
         </group>
         {kind === 'CHARGING' && <ChargingUnit charging={!!chargingRobot} />}
       </group>

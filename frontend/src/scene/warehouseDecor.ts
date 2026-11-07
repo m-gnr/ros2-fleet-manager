@@ -11,7 +11,6 @@ export async function loadWarehouseDecor() {
   const { scene } = await new GLTFLoader().loadAsync(warehouseUrl)
   const geometries = new Set<BufferGeometry>()
   const materials = new Set<MeshStandardMaterial>()
-  const batches = new Map<MeshStandardMaterial, BufferGeometry[]>()
   const group = new Group()
   group.name = 'warehouse-decor'
 
@@ -21,6 +20,7 @@ export async function loadWarehouseDecor() {
   function bake(part: Object3D, name: string, x: number, z: number,
     scale: readonly [number, number, number], yaw = 0) {
     const bounds = new Box3()
+    const batches = new Map<MeshStandardMaterial, BufferGeometry[]>()
     part.position.set(x, 0, z)
     part.scale.set(...scale)
     part.rotation.y = yaw
@@ -50,6 +50,20 @@ export async function loadWarehouseDecor() {
       batches.set(material, batch)
     })
     if (!bounds.isEmpty()) storageBounds.push({ name, min: bounds.min.toArray(), max: bounds.max.toArray() })
+    const storage = new Group()
+    storage.name = name
+    storage.userData.cutaway = true
+    group.add(storage)
+    for (const [sourceMaterial, batch] of batches) {
+      const geometry = mergeGeometries(batch)
+      if (!geometry) throw new Error('Warehouse geometry could not be batched')
+      const material = sourceMaterial.clone()
+      // Static display lighting has no environment map for fully metallic glTF materials.
+      material.metalness = Math.min(material.metalness, 0.24)
+      const mesh = new Mesh(geometry, material)
+      mesh.name = `warehouse-decor:${material.name}`
+      storage.add(mesh)
+    }
   }
 
   function dispose() {
@@ -100,17 +114,7 @@ export async function loadWarehouseDecor() {
     bake(rear, 'rear-rack', rearRack.x, rearRack.z, rearRack.scale)
     bake(side, 'side-rack', sideRack.x, sideRack.z, sideRack.scale, Math.PI / 2)
     bake(pallets, 'pallet-row', 0, palletRow.z, [1, 0.44, 0.70])
-    for (const [sourceMaterial, batch] of batches) {
-      const geometry = mergeGeometries(batch)
-      if (!geometry) throw new Error('Warehouse geometry could not be batched')
-      const material = sourceMaterial.clone()
-      // Static display lighting has no environment map for fully metallic glTF materials.
-      material.metalness = Math.min(material.metalness, 0.24)
-      const mesh = new Mesh(geometry, material)
-      mesh.name = `warehouse-decor:${material.name}`
-      group.add(mesh)
-    }
-    if (!group.children.length) throw new Error('Warehouse asset has no matching parts')
+    if (!storageBounds.length) throw new Error('Warehouse asset has no matching parts')
     return { group, dispose }
   } catch (error) {
     dispose()

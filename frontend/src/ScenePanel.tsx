@@ -1,4 +1,4 @@
-import { Box, Crosshair, Layers, Maximize, Orbit, RotateCcw, Scan } from "lucide-react";
+import { Box, Crosshair, Layers, Maximize, Orbit, PackageCheck, PackageOpen, RotateCcw, Scan, SquareParking, Zap } from "lucide-react";
 import { Component, Fragment, lazy, Suspense, useMemo, useRef, useState, type ReactNode } from "react";
 import { cameraLabels, resetCamera, selectCamera, type CameraCommand, type CameraMode } from "./scene/camera";
 import type { Fleet as SceneView } from "./scene/fleet";
@@ -14,6 +14,7 @@ const Scene = lazy(() => import("./scene/Scene"));
 const modes = [
   ["free", Orbit], ["follow", Crosshair], ["top", Layers], ["fit", Maximize],
 ] as const;
+const pointIcons = { CHARGING: Zap, PARKING: SquareParking, pickup: PackageOpen, dropoff: PackageCheck, SAFE_WAITING: Box };
 const trace = new URLSearchParams(window.location.search).get("trace") === "1";
 
 class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -82,9 +83,10 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
         })}
         {points.map(({ key, id, kind, detail, owner }) => {
           const { name, color } = pointStyle[kind];
+          const Icon = pointIcons[kind];
           return <span key={key} className="scene-point-label" data-operation-point={key} title={[name, id, detail, owner].filter(Boolean).join(" · ")}
             ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
-            <strong style={{ color }}>{name}</strong> <span>{id}</span>{detail && <small>{detail}</small>}{owner && <small>{owner}</small>}
+            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> <span>{id}</span>{detail && <small>{detail}</small>}{owner && <small>{owner}</small>}
           </span>;
         })}
       </div>

@@ -4,7 +4,7 @@ import { toScene } from './coordinates'
 
 export const pointStyle = {
   CHARGING: { name: 'Şarj', color: '#0a806e' },
-  PARKING: { name: 'Park', color: '#3263ab' },
+  PARKING: { name: 'Park', color: '#415e77' },
   SAFE_WAITING: { name: 'Bekleme', color: '#576875' },
   pickup: { name: 'Alım', color: '#275c99' },
   dropoff: { name: 'Teslim', color: '#7850a9' },

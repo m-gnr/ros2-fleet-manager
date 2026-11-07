@@ -71,7 +71,7 @@ function telemetry(socket: WebSocketRoute) {
 
 async function trace(page: Page) {
   await page.addInitScript(() => {
-    for (const name of ["frame", "routes", "storage", "warehouse-bounds"]) {
+    for (const name of ["frame", "routes", "storage", "warehouse-bounds", "decor-bounds"]) {
       window.addEventListener("fleet-visualizer:" + name, (event) => {
         const detail = (event as CustomEvent).detail;
         Reflect.set(window, "scene_" + name, detail);
@@ -634,9 +634,23 @@ test("places verified operation markers on map coordinates and prioritizes the s
   expect(dock.dockPosition[0]).toBeCloseTo(1);
   expect(dock.dockPosition[2]).toBeCloseTo(-1.57);
   expect(parked.dockPosition).toBeUndefined();
+  for (const point of renderedPoints) {
+    expect(point.padSize[0]).toBeCloseTo(.92);
+    expect(point.padSize[2]).toBeCloseTo(.92);
+    expect(point.padPosition[0]).toBeCloseTo(point.position[0]);
+    expect(point.padPosition[2]).toBeCloseTo(point.position[2]);
+    expect(point.padPosition[1]).toBeGreaterThan(-.032);
+    expect(point.padPosition[1]).toBeLessThan(0);
+    expect(point.symbol).toBe(true);
+  }
   await page.getByRole("button", { name: "Robot seç: robot_beta", exact: true }).click();
   await expect(point("pickup:task_test")).toHaveCount(1);
   await expect(point("pickup:other_task")).toHaveCount(0);
+  // This task uses the same map pose for both steps. Keep both halves and their own symbols.
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.points
+    .filter(({ id }: { id: string }) => id === "task_test")
+    .map(({ padSize, padPosition }: { padSize: number[]; padPosition: number[] }) =>
+      [Number(padSize[0].toFixed(2)), Number(padPosition[0].toFixed(2))]))).toEqual([[.46, -.23], [.46, .23]]);
   await expect(preview).not.toContainText("Şarj oluyor");
   await page.getByRole("button", { name: "Robot seç: robot_alpha", exact: true }).click();
   socket!.send(JSON.stringify({ ...snapshot, sequence: snapshot.sequence + 1, tasks: [],
@@ -712,13 +726,14 @@ test("keeps live robots and camera controls when the local GLB fails", async ({ 
   })).toEqual(["schematic", "top", false]);
 });
 
-test("frames the imported storage and keeps its footprint outside the open operations floor", async ({ page }) => {
+test("frames the walls and keeps raised decor outside the open operations floor", async ({ page }) => {
   await trace(page);
   await feed(page, (socket) => socket.send(JSON.stringify(fixture)));
   await page.goto("/?trace=1");
   await warehouseReady(page);
-  const { storage, corners, frame } = await page.evaluate(() => ({
+  const { storage, decor, corners, frame } = await page.evaluate(() => ({
     storage: Reflect.get(window, "scene_storage"),
+    decor: Reflect.get(window, "scene_decor-bounds").boxes,
     corners: Reflect.get(window, "scene_warehouse-bounds") as number[][],
     frame: Reflect.get(window, "scene_frame"),
   }));
@@ -730,6 +745,16 @@ test("frames the imported storage and keeps its footprint outside the open opera
   expect(side.max[2] - side.min[2]).toBeGreaterThan(4);
   expect(pallets.min[2]).toBeGreaterThan(4.4);
   expect(pallets.max[1]).toBeLessThan(.5);
+  const [rearWall, leftWall, rightWall] = decor;
+  expect(rearWall.name).toBe("rear-wall");
+  expect(rearWall.max[2]).toBeLessThan(-5.1);
+  expect(rearWall.max[1]).toBeGreaterThan(2.3);
+  expect(leftWall.name).toBe("left-wall");
+  expect(leftWall.max[0]).toBeLessThan(-5.4);
+  expect(rightWall.name).toBe("right-wall");
+  expect(rightWall.min[0]).toBeGreaterThan(5.4);
+  expect(rightWall.max[1]).toBeLessThan(1.0);
+  expect(frame.cutaway).toEqual([]);
 
   const view = (await page.locator("canvas").boundingBox())!;
   const camera = new PerspectiveCamera(42, view.width / view.height, .035, 90);
@@ -739,4 +764,37 @@ test("frames the imported storage and keeps its footprint outside the open opera
   const projected = corners.map(point => new Vector3().fromArray(point).project(camera));
   expect(Math.max(...projected.map(({ x }) => Math.abs(x)))).toBeLessThan(.96);
   expect(Math.max(...projected.map(({ y }) => Math.abs(y)))).toBeLessThan(.96);
+});
+
+test("cuts away obstructing decor when orbiting behind the depot and restores the default view", async ({ page }) => {
+  await trace(page);
+  await feed(page, (socket) => {
+    socket.send(JSON.stringify(fixture));
+    const tf = telemetry(socket);
+    tf.connect();
+    tf.sample(valid.robot_id, 0, 3.8);
+    tf.sample(invalid.robot_id, 1, 1);
+  });
+  await page.goto("/?trace=1");
+  await warehouseReady(page);
+  const frame = () => page.evaluate(() => Reflect.get(window, "scene_frame"));
+  expect((await frame()).cutaway).toEqual([]);
+  const view = (await page.locator("canvas").boundingBox())!;
+  const x = view.x + view.width / 2;
+  const y = view.y + view.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + .46 * view.height, y - .14 * view.height, { steps: 18 });
+  await page.mouse.up();
+  await expect.poll(async () => (await frame()).cutaway).toContain("rear-wall");
+  await expect.poll(async () => (await frame()).cutaway).toContain("rear-rack");
+  expect((await frame()).robots[0].pose).toEqual([0, 0, -3.8]);
+  await page.getByRole("button", { name: "Kamerayı sıfırla", exact: true }).click();
+  await expect.poll(async () => {
+    const current = await frame();
+    return [current.transitioning, current.cutaway];
+  }).toEqual([false, []]);
+  const marker = page.locator('button[data-robot-id="robot_alpha"]');
+  await expect(marker).toBeVisible();
+  await expect(marker).toHaveCSS("width", "26px");
 });

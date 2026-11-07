@@ -20,6 +20,7 @@ const scenePackets = [];
 const rendered = [];
 const routeEvents = [];
 const traceFrames = [];
+let decorBounds;
 const operationSources = new Map();
 const pointChecks = new Map();
 const verifyWarehouse = process.env.C5_VERIFY_WAREHOUSE === "1";
@@ -30,9 +31,10 @@ if (sceneEnabled) {
     if (type === "rendered") rendered.push(detail);
     if (type === "routes") routeEvents.push(detail);
     if (type === "frame") traceFrames.push(detail);
+    if (type === "decor-bounds" && detail.layout === "glb") decorBounds = detail.boxes;
   });
   await context.addInitScript(() => {
-    for (const type of ["rendered", "routes", "frame"]) {
+    for (const type of ["rendered", "routes", "frame", "decor-bounds"]) {
       window.addEventListener("fleet-visualizer:" + type, (e) => window.recordScene(type, e.detail));
     }
   });
@@ -452,6 +454,7 @@ try {
     chargeOwners: [...chargeOwners], tasks: Object.fromEntries([...taskStates].map(([id, states]) => [id, [...states]])) }));
 } finally {
   if (sceneEnabled) {
+    if (decorBounds) writeFileSync(join(evidence, "decor-bounds.json"), JSON.stringify(decorBounds, null, 2));
     writeFileSync(join(evidence, "scene-packets.json"), JSON.stringify(scenePackets));
     writeFileSync(join(evidence, "scene-rendered.json"), JSON.stringify(rendered));
     writeFileSync(join(evidence, "scene-routes.json"), JSON.stringify(routeEvents));

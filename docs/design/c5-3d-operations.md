@@ -35,3 +35,9 @@ Sunum sahnesi yerel CC0 GLB dekorunu asenkron yükler. Model hazır olunca şema
 ## Aşama 1.7C depo sunumu
 
 Raf ve palet ayak izleri çevrede tutulur. Depo zemini, raf numaraları ve güvenlik çizgileri temsili geometri grubunda kalır. Operasyon katmanında şarj ünitesi ve park yönü istasyon snapshot’ındaki map pozu ve yönüyle hizalanır. Alım ve teslim alanları öncelikli görev çiftiyle birlikte görünür. Ayrıntı panelindeki Burger önizlemesi aynı gövdeden alınmış statik bir görseldir. Yerleşim gerekçesi, Chrome ölçümleri ve canlı kanıt [Aşama 1.7C raporunda](../validation/c5/c5-stage1-7c-validation-2026-11-07.md).
+
+## Aşama 1.7D duvarlar ve operasyon bölgeleri
+
+Arka duvar, yükleme kepengi, yan kesitler ve koridor boyası sunum geometrisidir. Yerleşim haritanın operasyon alanını çevreler. Serbest kameradan bir dekor grubunun kutusu robot gövdesine görüşü kapatırsa grup geçici olarak kesilir. İlk ve üstten kadraj, dekorun tam sınırlarına göre hesaplanır.
+
+Şarj, park, alım ve teslim zeminde 0,92 m kare, simge ve metinle ayrılır. Alım ve teslim aynı map noktasındaysa kareyi paylaşır. Zemin boyası görsel ölçüdür. İstasyon sahipliği, C4 şarj durumu ve görev çiftinin seçimi mevcut snapshot kurallarını kullanır. [Yerleşim ve doğrulama](../validation/c5/c5-stage1-7d-validation-2026-11-07.md)

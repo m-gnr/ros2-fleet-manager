@@ -1,0 +1,32 @@
+
+> fleet-operations-dashboard@0.1.0 test
+> playwright test --workers=1
+
+
+Running 21 tests using 1 worker
+
+(node:66449) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/dashboard.spec.ts:91:1 › lists robots, selects by 3D scene and keyboard, and masks invalid battery (6.7s)
+  ✓   2 tests/dashboard.spec.ts:134:1 › displays loading, empty and protocol error states (6.4s)
+  ✓   3 tests/dashboard.spec.ts:146:1 › rejects older snapshots and resynchronizes after a disconnected socket (6.4s)
+  ✓   4 tests/dashboard.spec.ts:172:1 › fits, follows, orbits, pans, zooms and displays at mobile widths (8.6s)
+  ✓   5 tests/dashboard.spec.ts:240:1 › keeps product and TF validity separate, clears the observed plan at an epoch fence (10.8s)
+  ✓   6 tests/dashboard.spec.ts:296:1 › transforms measured ROS axes and yaw and bounds interpolation (3ms)
+  ✓   7 tests/dashboard.spec.ts:303:1 › keeps the snapshot strip, warehouse, and fleet cards in view across responsive layouts (4.9s)
+  ✓   8 tests/dashboard.spec.ts:363:1 › scrolls expanded details while keeping the panel heading and robot identity fixed (6.8s)
+  ✓   9 tests/dashboard.spec.ts:384:1 › keeps close robots aligned to TF roots at multiple camera distances (6.5s)
+  ✓  10 tests/dashboard.spec.ts:439:1 › refits an untouched camera but preserves zoom, orbit and pan across resize until reset (14.7s)
+  ✓  11 tests/dashboard.spec.ts:487:3 › shows absent, fresh and expired observed plans with robot state IDLE (9.1s)
+  ✓  12 tests/dashboard.spec.ts:487:3 › shows absent, fresh and expired observed plans with robot state EXECUTING_TASK (8.6s)
+  ✓  13 tests/dashboard.spec.ts:519:1 › shows source-reported reception age separately from ROS timestamps (7.0s)
+  ✓  14 tests/dashboard.spec.ts:540:1 › frames the warehouse bounds at desktop and mobile aspect ratios (9ms)
+  ✓  15 tests/dashboard.spec.ts:561:1 › formats ROS time without clock conversion and masks an invalid age (14ms)
+  ✓  16 tests/dashboard.spec.ts:570:1 › disposes orbit listeners and the WebGL context when leaving the overview (7.8s)
+  ✓  17 tests/dashboard.spec.ts:591:1 › places verified operation markers on map coordinates and prioritizes the selected robot's task (5.1s)
+  ✓  18 tests/dashboard.spec.ts:669:1 › loads the local GLB without resetting an edited camera (4.9s)
+  ✓  19 tests/dashboard.spec.ts:709:1 › keeps live robots and camera controls when the local GLB fails (13.0s)
+  ✓  20 tests/dashboard.spec.ts:729:1 › frames the walls and keeps raised decor outside the open operations floor (11.7s)
+  ✓  21 tests/dashboard.spec.ts:769:1 › cuts away obstructing decor when orbiting behind the depot and restores the default view (14.0s)
+
+  21 passed (2.6m)

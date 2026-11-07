@@ -22,6 +22,7 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [C5 Aşama 1.5 3D operasyon paneli](design/c5-3d-operations.md) · [Karar](decisions/c5-stage1-5-3d-decision-2026-11-06.md) · [Doğrulama](validation/c5/c5-stage1-5-validation-2026-11-06.md)
 - [C5 Aşama 1.6 arayüz doğrulaması](validation/c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](validation/c5/c5-stage1-6-commands-2026-11-06.md)
 - [C5 Aşama 1.6 görsel kabul düzeltmesi](validation/c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-6-visual-commands-2026-11-06.md)
+- [C5 Aşama 1.7D depo duvarları ve operasyon bölgeleri](validation/c5/c5-stage1-7d-validation-2026-11-07.md) · [Doğrulama komutları](validation/c5/c5-stage1-7d-commands-2026-11-07.md)
 - [C5 Aşama 1.7C depo sunumu ve operasyon alanları](validation/c5/c5-stage1-7c-validation-2026-11-07.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-7c-commands-2026-11-07.md)
 - [C5 Aşama 1.7B hazır depo entegrasyonu](validation/c5/c5-stage1-7b-validation-2026-11-07.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-7b-commands-2026-11-07.md)
 

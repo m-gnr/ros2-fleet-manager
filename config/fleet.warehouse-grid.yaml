@@ -1,0 +1,96 @@
+# Shared profile. W/E/S/N denote the perimeter edges; offsets are metres.
+fleet:
+  name: warehouse_grid_large
+  map_path: warehouse:generated
+  use_sim_time: true
+  battery_models:
+    turtlebot3_burger:
+      usable_capacity_wh: 100.0
+      consumption_wh_per_meter: 0.20
+      idle_power_w: 2.0
+      charge_power_w: 20.0
+
+robots:
+  - id: robot_alpha
+    name: robot_alpha
+    namespace: /robot_alpha
+    initial_pose: {x: E-4.75, y: N-2.75, yaw: 1.5707963267948966}
+    battery_model: turtlebot3_burger
+    nav2_action_name: /robot_alpha/navigate_to_pose
+    nav2_params_path: simulation-c2-3-params.template.yaml
+  - id: robot_beta
+    name: robot_beta
+    namespace: /robot_beta
+    initial_pose: {x: E-4.5, y: -2.75, yaw: 0.0}
+    battery_model: turtlebot3_burger
+    nav2_action_name: /robot_beta/navigate_to_pose
+    nav2_params_path: simulation-c2-3-params.template.yaml
+
+stations:
+  charging_stations:
+    - {id: dock_1, pose: {x: E-4.75, y: N-0.75, yaw: 1.5707963267948966}, tolerance_radius: 0.30}
+    - {id: dock_2, pose: {x: E-3.5, y: N-0.75, yaw: 1.5707963267948966}, tolerance_radius: 0.30}
+    - {id: dock_3, pose: {x: E-2.25, y: N-0.75, yaw: 1.5707963267948966}, tolerance_radius: 0.30}
+    - {id: dock_4, pose: {x: E-1.0, y: N-0.75, yaw: 1.5707963267948966}, tolerance_radius: 0.30}
+  parking_stations:
+    - {id: park_1, pose: {x: -4.0, y: N-0.75, yaw: 1.5707963267948966}}
+    - {id: park_2, pose: {x: -2.75, y: N-0.75, yaw: 1.5707963267948966}}
+    - {id: park_3, pose: {x: -1.5, y: N-0.75, yaw: 1.5707963267948966}}
+  safe_waiting_areas: []
+
+policies:
+  assignment: priority_fifo_nearest_eligible
+  preemption_priority: HIGH
+  max_preemptions: 2
+  extra_swap_enabled: false
+  automatic_retry: false
+  automatic_reassignment: false
+  charge_target_soc_percent: 80
+  charge_queue: lowest_soc_fifo
+  emergency_soc_percent: 8.0
+  low_soc_percent: 25.0
+  safety_margin_wh: 10.0
+
+warehouse:
+  frame_id: map
+  grid_m: 0.25
+  width: 20.0
+  depth: 12.0
+  wall_thickness_m: 0.10
+  wall_height_m: 1.9
+  door: {side: west, center: 0.0, width: 2.0}
+  dock_approach_m: 2.0
+  dock_rack_clearance_m: 2.0
+  racks:
+    - {id: rack_a1, bays: 3, height: 1.1, bounds: {x_min: W+2.25, x_max: W+5, y_min: N-4.5, y_max: N-3.5}}
+    - {id: rack_a2, bays: 3, height: 1.1, bounds: {x_min: W+6.75, x_max: W+10, y_min: N-4.5, y_max: N-3.5}}
+    - {id: rack_a3, bays: 3, height: 1.1, bounds: {x_min: E-10, x_max: E-6.75, y_min: N-4.5, y_max: N-3.5}}
+    - {id: rack_a4, bays: 3, height: 1.1, bounds: {x_min: E-5, x_max: E-1.75, y_min: N-4.5, y_max: N-4}}
+    - {id: rack_b1, bays: 3, height: 0.9, bounds: {x_min: W+2.25, x_max: W+5, y_min: -1.75, y_max: -0.75}}
+    - {id: rack_b2, bays: 3, height: 0.9, bounds: {x_min: W+6.75, x_max: W+10, y_min: -1.75, y_max: -0.75}}
+    - {id: rack_b3, bays: 3, height: 0.9, bounds: {x_min: E-10, x_max: E-6.75, y_min: -1.75, y_max: -0.75}}
+    - {id: rack_b4, bays: 3, height: 0.9, bounds: {x_min: E-5, x_max: E-1.75, y_min: -1.75, y_max: -0.75}}
+    - {id: rack_c1, bays: 3, height: 0.85, bounds: {x_min: W+2.25, x_max: W+5, y_min: S+1, y_max: S+2}}
+    - {id: rack_c2, bays: 3, height: 0.85, bounds: {x_min: W+6.75, x_max: W+10, y_min: S+1, y_max: S+2}}
+    - {id: rack_c3, bays: 3, height: 0.85, bounds: {x_min: E-10, x_max: E-6.75, y_min: S+1, y_max: S+2}}
+    - {id: rack_c4, bays: 3, height: 0.85, bounds: {x_min: E-5, x_max: E-1.75, y_min: S+1, y_max: S+2}}
+  aisles:
+    - {id: aisle_a, label: ANA KORİDOR A, axis: x, bounds: {x_min: W+1, x_max: E-5.25, y_min: N-3.5, y_max: N-1.25}}
+    - {id: aisle_b, label: ANA KORİDOR B, axis: x, bounds: {x_min: W+1, x_max: E-1, y_min: -0.75, y_max: N-4.5}}
+    - {id: aisle_c, label: ANA KORİDOR C, axis: x, bounds: {x_min: W+1, x_max: E-1, y_min: S+2, y_max: -1.75}}
+    - {id: aisle_cross_w, label: ENİNE GEÇİT 1, axis: y, bounds: {x_min: W+5, x_max: W+6.75, y_min: S+2, y_max: N-1.25}}
+    - {id: aisle_cross_e, label: ENİNE GEÇİT 2, axis: y, bounds: {x_min: E-6.75, x_max: E-5, y_min: S+2, y_max: N-1.25}}
+    - {id: pickup_access, label: ALIM ERİŞİMİ, axis: y, bounds: {x_min: W+0.25, x_max: W+1.25, y_min: -3.75, y_max: N-1.5}}
+    - {id: pickup_entry, label: GİRİŞ BAĞLANTISI, axis: x, bounds: {x_min: W, x_max: W+1.25, y_min: -0.75, y_max: 0.75}}
+  zones:
+    - {id: pickup_zone, label: ALIM, kind: pickup, callout: {x: W+4.25, y: 0.75}, bounds: {x_min: W+1, x_max: W+2.25, y_min: S+0.5, y_max: N-1}}
+    - {id: delivery_zone, label: TESLİM, kind: dropoff, bounds: {x_min: E-1.75, x_max: E, y_min: S+0.5, y_max: 1.25}}
+    - {id: charge_zone, label: ŞARJ, kind: charging, callout: {x: E-6.75, y: N-1.5}, bounds: {x_min: E-5.25, x_max: E, y_min: N-3, y_max: N}}
+    - {id: park_zone, label: PARK, kind: parking, callout: {x: 0.75, y: N-1}, bounds: {x_min: -4.75, x_max: -0.75, y_min: N-1.25, y_max: N}}
+  transfer_points:
+    - {id: pickup_1, kind: pickup, pose: {x: W+1.75, y: N-2.5, yaw: 3.141592653589793}}
+    - {id: pickup_2, kind: pickup, pose: {x: W+1.75, y: 0.25, yaw: 3.141592653589793}}
+    - {id: pickup_3, kind: pickup, pose: {x: W+1.75, y: -2.75, yaw: 3.141592653589793}}
+    - {id: delivery-01, kind: dropoff, pose: {x: E-0.75, y: -2.75, yaw: 0.0}}
+    - {id: delivery-02, kind: dropoff, pose: {x: E-0.75, y: 0.25, yaw: 0.0}}
+    - {id: delivery-03, kind: dropoff, pose: {x: E-0.75, y: S+1.25, yaw: 0.0}}

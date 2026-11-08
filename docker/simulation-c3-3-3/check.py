@@ -130,7 +130,7 @@ def generate_params_for_robots(config, fleet_data):
     return params_files
 
 
-def prepare_world(config, fleet_data):
+def prepare_world(config, fleet_data, target=None):
     """Generate dual-robot Gazebo world SDF aligning with map boundaries and fleet.yaml poses."""
     room = config["room"]
     sensor = config["sensor"]
@@ -299,7 +299,7 @@ def prepare_world(config, fleet_data):
   </world>
 </sdf>
 """
-    target = Path("/tmp/c3-3-3-world.sdf")
+    target = Path(target) if target is not None else Path("/tmp/c3-3-3-world.sdf")
     target.write_text(sdf)
     return str(target)
 

@@ -8,7 +8,8 @@ import { markerDiameter } from "./scene/marker";
 import type { SceneFeed } from "./scene/sceneFeed";
 
 import type { Fleet } from "./fleet";
-import { operationPoints, pointStyle } from "./scene/operationPoints";
+import { useGridLayout } from "./scene/useGridLayout";
+import { operationLabels, operationPoints, pointStyle } from "./scene/operationPoints";
 
 const Scene = lazy(() => import("./scene/Scene"));
 const modes = [
@@ -43,7 +44,11 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
   const markers = useRef(new Map<string, HTMLButtonElement>()).current;
   const labels = useRef(new Map<string, HTMLSpanElement>()).current;
   const pointLabels = useRef(new Map<string, HTMLSpanElement>()).current;
-  const points = useMemo(() => operationPoints(fleet, selected, connected), [fleet, selected, connected]);
+  const leaders = useRef(new Map<string, SVGLineElement>()).current;
+  const profile = useGridLayout(fleet?.backend_session_id, fleet?.source_session_id);
+  const layout = profile?.layout;
+  const points = useMemo(() => operationPoints(fleet, selected, connected, layout), [fleet, selected, connected, layout]);
+  const operationTags = useMemo(() => operationLabels(points, layout), [points, layout]);
   const live = robotIds.filter((id) => view.robots.get(id)?.status === "LIVE").length;
 
   function chooseMode(mode: CameraMode) {
@@ -55,16 +60,24 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
       <div className="scene-heading"><span className="scene-icon"><Box size={17} /></span>
         <div><h2 id="scene-heading">Depo görünümü</h2><p>ROS TF · map çerçevesi</p></div></div>
       <div className="scene-legend"><span className="tag map-tag">TEMSİLİ 3D DEPO</span>
-        <small>Raflar ve sınırlar görsel temsildir.</small></div>
+        <small>{profile?.mismatch ? "Izgara profili filo snapshot’ıyla eşleşmedi." :
+          "Raflar ve sınırlar görsel temsildir."}</small></div>
     </div>
     <div className="scene-viewport" aria-label="Etkileşimli 3D depo">
       <SceneBoundary>
         <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
-          <Scene feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
-            robotIds={robotIds} points={points} pointLabels={pointLabels} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
+          <Scene layout={layout} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
+            robotIds={robotIds} points={points} labelPoints={operationTags} pointLabels={pointLabels} leaders={leaders} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
         </Suspense>
       </SceneBoundary>
       <div className="scene-labels">
+        <svg className="scene-leaders" aria-hidden="true">
+          {operationTags.filter(tag => tag.leader).map(({ key, kind }) => <line key={key}
+            data-leader={key} stroke={pointStyle[kind].color} ref={node => {
+              if (node) leaders.set(key, node);
+              else leaders.delete(key);
+            }} />)}
+        </svg>
         {robotIds.map((id, index) => {
           const status = view.robots.get(id)?.status ?? "NO_DATA";
           const isSelected = id === selected;
@@ -85,15 +98,17 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
             </span>
           </Fragment>;
         })}
-        {points.map(({ key, id, kind, detail, owner, chargingRobot }) => {
+        {operationTags.map(({ key, id, kind, detail, owner, chargingRobot, groupText, compact }) => {
           const { name, color } = pointStyle[kind];
           const Icon = pointIcons[kind];
           const task = kind === "pickup" || kind === "dropoff";
-          return <span key={key} className="scene-point-label" data-operation-point={key} title={[name, id, detail, owner].filter(Boolean).join(" · ")}
+          return <span key={key} className={groupText ? "scene-point-label grouped" : "scene-point-label"} data-operation-point={key} data-callout={compact ? "" : undefined} title={[name, groupText ?? id, detail, owner].filter(Boolean).join(" · ")}
             ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
-            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> {task
+            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> {groupText ? <>{compact && <small className="zone-summary">{compact}</small>}
+              <small className={compact ? "zone-details" : undefined}>{groupText.split(" · ").map(member =>
+                <span className="zone-member" key={member}>{member}</span>)}</small></> : task
               ? <span>{shortTaskId(id)}</span>
-              : <small>{chargingRobot ? "Aktif" : detail}</small>}
+              : <small>{layout && <span>{id} · </span>}{chargingRobot ? "Aktif" : detail}</small>}
           </span>;
         })}
       </div>

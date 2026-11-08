@@ -7,7 +7,10 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
+from pydantic import TypeAdapter
+
 from .models import FleetConfig
+from .anchored import AnchoredFleetConfig
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
@@ -34,7 +37,7 @@ def read_yaml(path):
 
 
 def generated_schema():
-    return {"$schema": "https://json-schema.org/draft/2020-12/schema", **FleetConfig.model_json_schema()}
+    return {"$schema": "https://json-schema.org/draft/2020-12/schema", **TypeAdapter(FleetConfig | AnchoredFleetConfig).json_schema()}
 
 
 def require_file(base, value, label):
@@ -45,11 +48,12 @@ def require_file(base, value, label):
 
 
 def check_assets(config, base):
-    map_path = require_file(base, config.fleet.map_path, "fleet.map_path")
-    map_data = read_yaml(map_path)
-    if not isinstance(map_data, dict) or not isinstance(map_data.get("image"), str):
-        raise ValueError("fleet.map_path: map YAML must contain an image path")
-    require_file(map_path.parent, map_data["image"], "map.image")
+    if config.fleet.map_path != "warehouse:generated":
+        map_path = require_file(base, config.fleet.map_path, "fleet.map_path")
+        map_data = read_yaml(map_path)
+        if not isinstance(map_data, dict) or not isinstance(map_data.get("image"), str):
+            raise ValueError("fleet.map_path: map YAML must contain an image path")
+        require_file(map_path.parent, map_data["image"], "map.image")
     for robot in config.robots:
         path = require_file(base, robot.nav2_params_path, f"robots.{robot.id}.nav2_params_path")
         # Parse the existing B3 template without writing rendered files into config/.
@@ -94,9 +98,13 @@ def load_config(path, schema_path=None):
         raise ValueError("fleet.schema.json differs from Pydantic contract; regenerate schema")
     Draft202012Validator.check_schema(schema)
     data = read_yaml(path)
-    errors = sorted(Draft202012Validator(schema).iter_errors(data), key=lambda error: str(list(error.path)))
+    warehouse = data.get("warehouse") if isinstance(data, dict) else None
+    anchored = isinstance(warehouse, dict) and "width" in warehouse
+    kind = "AnchoredFleetConfig" if anchored else "FleetConfig"
+    selected = {"$ref": f"#/$defs/{kind}", "$defs": schema["$defs"]}
+    errors = sorted(Draft202012Validator(selected).iter_errors(data), key=lambda error: str(list(error.path)))
     if errors:
         raise ValueError("\n".join(f"{'.'.join(map(str, error.path)) or '$'}: {error.message}" for error in errors))
-    config = FleetConfig.model_validate(data)
+    config = AnchoredFleetConfig.model_validate(data).resolve() if anchored else FleetConfig.model_validate(data)
     check_assets(config, path.parent)
     return config

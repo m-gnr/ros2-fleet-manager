@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react'
 import { BufferGeometry, CanvasTexture, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
-type Sign = { text: string; x: number; z: number; width: number; yaw?: number; wallY?: number }
+export type Sign = { text: string; x: number; z: number; width: number; yaw?: number; wallY?: number }
 
 const floorSigns: Sign[] = [
   { text: 'A01  /  DEPOLAMA', x: -.16, z: -4.16, width: 2.75 },
@@ -17,10 +17,10 @@ const doorSigns: Sign[] = [
   { text: 'GİRİŞ / YÜKLEME', x: 4.75, z: -5.25, width: 1.36, wallY: 2.07 },
 ]
 
-export const FloorSigns = memo(function FloorSigns({ loadingDoor = false }: { loadingDoor?: boolean }) {
+export const FloorSigns = memo(function FloorSigns({ loadingDoor = false, custom }: { loadingDoor?: boolean; custom?: Sign[] }) {
   const [signage, setSignage] = useState<{ geometry: BufferGeometry; material: MeshBasicMaterial }>()
   useEffect(() => {
-    const signs = loadingDoor ? doorSigns : floorSigns
+    const signs = custom ?? (loadingDoor ? doorSigns : floorSigns)
     const canvas = document.createElement('canvas')
     canvas.width = 512
     canvas.height = signs.length * 64
@@ -50,6 +50,6 @@ export const FloorSigns = memo(function FloorSigns({ loadingDoor = false }: { lo
       texture.dispose()
       material.dispose()
     }
-  }, [loadingDoor])
+  }, [loadingDoor, custom])
   return signage && <mesh name={loadingDoor ? 'loading-door-sign' : 'warehouse-signs'} {...signage} dispose={null} />
 })

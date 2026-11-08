@@ -4,7 +4,7 @@ import { FloorSigns } from './FloorSigns'
 import { loadWarehouseDecor } from './warehouseDecor'
 import { innerRack, palletRow, partitions, rearRack, sideRack, wallSections, warehouseSize, type DecorBox } from './warehouseLayout'
 
-function Boxes({ name, boxes, cutaway = false }: { name: string; boxes: DecorBox[]; cutaway?: boolean }) {
+export function Boxes({ name, boxes, cutaway = false }: { name: string; boxes: DecorBox[]; cutaway?: boolean }) {
   const mesh = useRef<InstancedMesh>(null)
   useLayoutEffect(() => {
     const instance = new Object3D()

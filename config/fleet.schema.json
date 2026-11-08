@@ -1,6 +1,445 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
+    "AnchoredAisle": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "bounds": {
+          "$ref": "#/$defs/AnchoredRect"
+        },
+        "axis": {
+          "enum": [
+            "x",
+            "y"
+          ],
+          "title": "Axis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "bounds",
+        "axis"
+      ],
+      "title": "AnchoredAisle",
+      "type": "object"
+    },
+    "AnchoredDock": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "pose": {
+          "$ref": "#/$defs/AnchoredPose"
+        },
+        "tolerance_radius": {
+          "description": "Dock contact region radius, metres.",
+          "exclusiveMinimum": 0,
+          "title": "Tolerance Radius",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "pose",
+        "tolerance_radius"
+      ],
+      "title": "AnchoredDock",
+      "type": "object"
+    },
+    "AnchoredFleetConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "fleet": {
+          "$ref": "#/$defs/Fleet"
+        },
+        "robots": {
+          "items": {
+            "$ref": "#/$defs/AnchoredRobot"
+          },
+          "title": "Robots",
+          "type": "array"
+        },
+        "stations": {
+          "$ref": "#/$defs/AnchoredStations"
+        },
+        "policies": {
+          "$ref": "#/$defs/Policies"
+        },
+        "warehouse": {
+          "$ref": "#/$defs/WarehouseSource"
+        }
+      },
+      "required": [
+        "fleet",
+        "robots",
+        "stations",
+        "policies",
+        "warehouse"
+      ],
+      "title": "AnchoredFleetConfig",
+      "type": "object"
+    },
+    "AnchoredPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[WE]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[SN]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "Y"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "AnchoredPoint",
+      "type": "object"
+    },
+    "AnchoredPose": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[WE]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[SN]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "Y"
+        },
+        "yaw": {
+          "title": "Yaw",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "yaw"
+      ],
+      "title": "AnchoredPose",
+      "type": "object"
+    },
+    "AnchoredRack": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "bounds": {
+          "$ref": "#/$defs/AnchoredRect"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "bays": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Bays",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "bounds",
+        "height",
+        "bays"
+      ],
+      "title": "AnchoredRack",
+      "type": "object"
+    },
+    "AnchoredRect": {
+      "additionalProperties": false,
+      "properties": {
+        "x_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[WE]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "X Min"
+        },
+        "x_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[WE]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "X Max"
+        },
+        "y_min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[SN]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "Y Min"
+        },
+        "y_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^[SN]([+-][0-9]+(\\.[0-9]+)?)?$",
+              "type": "string"
+            }
+          ],
+          "title": "Y Max"
+        }
+      },
+      "required": [
+        "x_min",
+        "x_max",
+        "y_min",
+        "y_max"
+      ],
+      "title": "AnchoredRect",
+      "type": "object"
+    },
+    "AnchoredRobot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "namespace": {
+          "pattern": "^/[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*$",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "initial_pose": {
+          "$ref": "#/$defs/AnchoredPose"
+        },
+        "battery_model": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Battery Model",
+          "type": "string"
+        },
+        "nav2_action_name": {
+          "pattern": "^/[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*$",
+          "title": "Nav2 Action Name",
+          "type": "string"
+        },
+        "nav2_params_path": {
+          "description": "Nav2 template path relative to fleet YAML.",
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Nav2 Params Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "namespace",
+        "initial_pose",
+        "battery_model",
+        "nav2_action_name",
+        "nav2_params_path"
+      ],
+      "title": "AnchoredRobot",
+      "type": "object"
+    },
+    "AnchoredStation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "pose": {
+          "$ref": "#/$defs/AnchoredPose"
+        }
+      },
+      "required": [
+        "id",
+        "pose"
+      ],
+      "title": "AnchoredStation",
+      "type": "object"
+    },
+    "AnchoredStations": {
+      "additionalProperties": false,
+      "properties": {
+        "charging_stations": {
+          "items": {
+            "$ref": "#/$defs/AnchoredDock"
+          },
+          "title": "Charging Stations",
+          "type": "array"
+        },
+        "parking_stations": {
+          "items": {
+            "$ref": "#/$defs/AnchoredStation"
+          },
+          "title": "Parking Stations",
+          "type": "array"
+        },
+        "safe_waiting_areas": {
+          "items": {
+            "$ref": "#/$defs/AnchoredStation"
+          },
+          "title": "Safe Waiting Areas",
+          "type": "array"
+        }
+      },
+      "required": [
+        "charging_stations",
+        "parking_stations",
+        "safe_waiting_areas"
+      ],
+      "title": "AnchoredStations",
+      "type": "object"
+    },
+    "AnchoredTransfer": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "pickup",
+            "dropoff"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "pose": {
+          "$ref": "#/$defs/AnchoredPose"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "pose"
+      ],
+      "title": "AnchoredTransfer",
+      "type": "object"
+    },
+    "AnchoredZone": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "bounds": {
+          "$ref": "#/$defs/AnchoredRect"
+        },
+        "kind": {
+          "enum": [
+            "pickup",
+            "dropoff",
+            "charging",
+            "parking"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "callout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnchoredPoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "bounds",
+        "kind"
+      ],
+      "title": "AnchoredZone",
+      "type": "object"
+    },
     "BatteryModel": {
       "additionalProperties": false,
       "properties": {
@@ -70,7 +509,7 @@
           "type": "string"
         },
         "map_path": {
-          "description": "File path relative to the fleet YAML directory.",
+          "description": "Map YAML relative to this file, or 'warehouse:generated'.",
           "minLength": 1,
           "pattern": "\\S",
           "title": "Map Path",
@@ -99,6 +538,94 @@
         "battery_models"
       ],
       "title": "Fleet",
+      "type": "object"
+    },
+    "FleetConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "fleet": {
+          "$ref": "#/$defs/Fleet"
+        },
+        "robots": {
+          "items": {
+            "$ref": "#/$defs/Robot"
+          },
+          "minItems": 1,
+          "title": "Robots",
+          "type": "array"
+        },
+        "stations": {
+          "$ref": "#/$defs/Stations"
+        },
+        "policies": {
+          "$ref": "#/$defs/Policies"
+        },
+        "warehouse": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WarehouseLayout"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "fleet",
+        "robots",
+        "stations",
+        "policies"
+      ],
+      "title": "FleetConfig",
+      "type": "object"
+    },
+    "MapPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "MapPoint",
+      "type": "object"
+    },
+    "MapRectangle": {
+      "additionalProperties": false,
+      "properties": {
+        "x_min": {
+          "title": "X Min",
+          "type": "number"
+        },
+        "y_min": {
+          "title": "Y Min",
+          "type": "number"
+        },
+        "x_max": {
+          "title": "X Max",
+          "type": "number"
+        },
+        "y_max": {
+          "title": "Y Max",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x_min",
+        "y_min",
+        "x_max",
+        "y_max"
+      ],
+      "title": "MapRectangle",
       "type": "object"
     },
     "Policies": {
@@ -309,34 +836,407 @@
       ],
       "title": "Stations",
       "type": "object"
-    }
-  },
-  "additionalProperties": false,
-  "properties": {
-    "fleet": {
-      "$ref": "#/$defs/Fleet"
     },
-    "robots": {
-      "items": {
-        "$ref": "#/$defs/Robot"
+    "TransferPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "pickup",
+            "dropoff"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "pose": {
+          "$ref": "#/$defs/TransferPose"
+        }
       },
-      "minItems": 1,
-      "title": "Robots",
-      "type": "array"
+      "required": [
+        "id",
+        "kind",
+        "pose"
+      ],
+      "title": "TransferPoint",
+      "type": "object"
     },
-    "stations": {
-      "$ref": "#/$defs/Stations"
+    "TransferPose": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "yaw": {
+          "title": "Yaw",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "yaw"
+      ],
+      "title": "TransferPose",
+      "type": "object"
     },
-    "policies": {
-      "$ref": "#/$defs/Policies"
+    "WarehouseAisle": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "bounds": {
+          "$ref": "#/$defs/MapRectangle"
+        },
+        "axis": {
+          "enum": [
+            "x",
+            "y"
+          ],
+          "title": "Axis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "bounds",
+        "axis"
+      ],
+      "title": "WarehouseAisle",
+      "type": "object"
+    },
+    "WarehouseDoor": {
+      "additionalProperties": false,
+      "properties": {
+        "side": {
+          "enum": [
+            "north",
+            "south",
+            "east",
+            "west"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "center": {
+          "title": "Center",
+          "type": "number"
+        },
+        "width": {
+          "minimum": 1,
+          "title": "Width",
+          "type": "number"
+        }
+      },
+      "required": [
+        "side",
+        "center",
+        "width"
+      ],
+      "title": "WarehouseDoor",
+      "type": "object"
+    },
+    "WarehouseLayout": {
+      "additionalProperties": false,
+      "properties": {
+        "frame_id": {
+          "const": "map",
+          "title": "Frame Id",
+          "type": "string"
+        },
+        "grid_m": {
+          "exclusiveMinimum": 0,
+          "title": "Grid M",
+          "type": "number"
+        },
+        "bounds": {
+          "$ref": "#/$defs/MapRectangle"
+        },
+        "wall_thickness_m": {
+          "exclusiveMinimum": 0,
+          "title": "Wall Thickness M",
+          "type": "number"
+        },
+        "wall_height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Wall Height M",
+          "type": "number"
+        },
+        "door": {
+          "$ref": "#/$defs/WarehouseDoor"
+        },
+        "racks": {
+          "items": {
+            "$ref": "#/$defs/WarehouseRack"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Racks",
+          "type": "array"
+        },
+        "aisles": {
+          "items": {
+            "$ref": "#/$defs/WarehouseAisle"
+          },
+          "maxItems": 24,
+          "minItems": 3,
+          "title": "Aisles",
+          "type": "array"
+        },
+        "zones": {
+          "items": {
+            "$ref": "#/$defs/WarehouseZone"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Zones",
+          "type": "array"
+        },
+        "transfer_points": {
+          "items": {
+            "$ref": "#/$defs/TransferPoint"
+          },
+          "maxItems": 8,
+          "minItems": 4,
+          "title": "Transfer Points",
+          "type": "array"
+        },
+        "dock_approach_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Dock Approach M"
+        },
+        "dock_rack_clearance_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Dock Rack Clearance M"
+        }
+      },
+      "required": [
+        "frame_id",
+        "grid_m",
+        "bounds",
+        "wall_thickness_m",
+        "wall_height_m",
+        "door",
+        "racks",
+        "aisles",
+        "zones",
+        "transfer_points"
+      ],
+      "title": "WarehouseLayout",
+      "type": "object"
+    },
+    "WarehouseRack": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "bounds": {
+          "$ref": "#/$defs/MapRectangle"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "number"
+        },
+        "bays": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Bays",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "bounds",
+        "height",
+        "bays"
+      ],
+      "title": "WarehouseRack",
+      "type": "object"
+    },
+    "WarehouseSource": {
+      "additionalProperties": false,
+      "properties": {
+        "frame_id": {
+          "const": "map",
+          "title": "Frame Id",
+          "type": "string"
+        },
+        "grid_m": {
+          "exclusiveMinimum": 0,
+          "title": "Grid M",
+          "type": "number"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "number"
+        },
+        "depth": {
+          "exclusiveMinimum": 0,
+          "title": "Depth",
+          "type": "number"
+        },
+        "wall_thickness_m": {
+          "exclusiveMinimum": 0,
+          "title": "Wall Thickness M",
+          "type": "number"
+        },
+        "wall_height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Wall Height M",
+          "type": "number"
+        },
+        "door": {
+          "$ref": "#/$defs/WarehouseDoor"
+        },
+        "racks": {
+          "items": {
+            "$ref": "#/$defs/AnchoredRack"
+          },
+          "title": "Racks",
+          "type": "array"
+        },
+        "aisles": {
+          "items": {
+            "$ref": "#/$defs/AnchoredAisle"
+          },
+          "title": "Aisles",
+          "type": "array"
+        },
+        "zones": {
+          "items": {
+            "$ref": "#/$defs/AnchoredZone"
+          },
+          "title": "Zones",
+          "type": "array"
+        },
+        "transfer_points": {
+          "items": {
+            "$ref": "#/$defs/AnchoredTransfer"
+          },
+          "title": "Transfer Points",
+          "type": "array"
+        },
+        "dock_approach_m": {
+          "minimum": 2,
+          "title": "Dock Approach M",
+          "type": "number"
+        },
+        "dock_rack_clearance_m": {
+          "minimum": 2,
+          "title": "Dock Rack Clearance M",
+          "type": "number"
+        }
+      },
+      "required": [
+        "frame_id",
+        "grid_m",
+        "width",
+        "depth",
+        "wall_thickness_m",
+        "wall_height_m",
+        "door",
+        "racks",
+        "aisles",
+        "zones",
+        "transfer_points",
+        "dock_approach_m",
+        "dock_rack_clearance_m"
+      ],
+      "title": "WarehouseSource",
+      "type": "object"
+    },
+    "WarehouseZone": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "bounds": {
+          "$ref": "#/$defs/MapRectangle"
+        },
+        "kind": {
+          "enum": [
+            "pickup",
+            "dropoff",
+            "charging",
+            "parking"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "callout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MapPoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "bounds",
+        "kind"
+      ],
+      "title": "WarehouseZone",
+      "type": "object"
     }
   },
-  "required": [
-    "fleet",
-    "robots",
-    "stations",
-    "policies"
-  ],
-  "title": "FleetConfig",
-  "type": "object"
+  "anyOf": [
+    {
+      "$ref": "#/$defs/FleetConfig"
+    },
+    {
+      "$ref": "#/$defs/AnchoredFleetConfig"
+    }
+  ]
 }

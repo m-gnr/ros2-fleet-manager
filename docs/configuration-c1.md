@@ -90,3 +90,13 @@ C4.4 mevcut `charge_power_w`, `tolerance_radius`, düşük SoC ve %80 hedef alan
 
 > [!NOTE]
 > **İstasyon Yapılandırma Yerleşimi:** Nihai Mimari PDF'nin Bölüm 3 tablosunda istasyonlar için `fleet.stations` ifadesi geçerken, Bölüm 10 örnek YAML'ında `stations` kök düzeyde gösterilmektedir. C1 uygulamasında modülerliği ve okunabilirliği korumak adına Bölüm 10'daki kök düzey `stations` yapısı uygulanmıştır. İlerleyen aşamalarda değişiklik talep edilirse şema ve Pydantic modeli bu karara göre güncellenecektir.
+
+## İsteğe bağlı depo yerleşim profili
+
+[Filo yerleşim örneği](../config/fleet.warehouse-grid.yaml), `warehouse` bloğunu şarj ve park kaynaklarıyla aynı YAML dosyasına koyar. Geometri koordinatları `map` çerçevesinde metre, poz açıları radyandır. `grid_m` dikdörtgen kenarları, kapı boşluğu ve transfer merkezleri için hizalamayı tanımlar. `bounds` çevrenin dört kenarını, `door` kenar üzerindeki tek açıklığı tanımlar. `racks`, `aisles`, `zones` ve `transfer_points` raf ayak izlerini, açık koridorları, operasyon ceplerini ve görev uçlarını belirtir.
+
+Şarj ve park merkezleri ile yaklaşma yönü, aynı profilin kök `stations` pozlarından gelir. `warehouse.transfer_points` yer işareti ve görev ucu kataloğudur. Etkin görev kendi snapshot pozunu taşır. `--fleet` ile bu profil açıldığında salt okunur `GET /api/warehouse-layout`, çalışan kaynak snapshot’ı profille eşleştiği sürece geometriyi sunar. İstasyon düzenlemesi için ilgili profili yeniden yükleyen kontrollü süreç başlangıcı gerekir. 20 × 12 m profili `width` ve `depth` ile açılır. W/E/S/N değerleri merkezden türeyen sınırları, bunlara eklenen sayılar metre cinsinden ofsetleri gösterir. Örneğin `E-4.75` doğu kenarından 4,75 m içeridir. Sayısal koordinatlar merkez çerçevesinde kalır. Rafların ölçüsü korunur. Geçitleri kapatan veya ızgara hizasını bozan ölçüler doğrulamada reddedilir.
+
+`fleet.map_path: warehouse:generated` kullanan profil için `scripts/generate_warehouse_grid.py` aynı çözülmüş veriden SDF, PGM, harita YAML’i ve iki Nav2 parametre dosyası üretir. Nav2 harita sunucusu ve yerel/küresel costmap statik katmanları üretilen haritayı kullanır. Tarayıcı da API’nin aynı çözülmüş duvar ve raf ayak izlerini kullanır. [Üretim ve canlı doğrulama](validation/c5/warehouse-grid-20x12-validation-2026-11-08.md)
+
+Bölgeye eklenen isteğe bağlı `callout` noktası map çerçevesinde etiketin tercih edilen yeridir. Nokta ızgarada, tüm bölge ve raf ayak izlerinin dışında olmalıdır. Şarj yaklaşma uzunluğu fiziksel pedin ön yüzünden ölçülür. [Açıklık denetimi](validation/c5/warehouse-grid-clearance-2026-11-08.md)

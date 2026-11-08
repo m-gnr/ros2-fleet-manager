@@ -14,18 +14,25 @@ import { RouteLayers } from './RouteLayers'
 import type { RouteOptions } from './routes'
 import type { Pose } from './telemetry'
 import type { SceneFeed } from './sceneFeed'
+import { GridWarehouse } from './GridWarehouse'
+import { crossesRack } from './gridClearance'
+import type { GridLayout } from './gridLayout'
 import { WarehouseEnvironment } from './Warehouse'
 import { OperationMarkers } from './OperationMarkers'
-import type { OperationPoint } from './operationPoints'
+import { calloutCandidates, hitsArea, insideFloor, projectedArea, screenPoint, type ScreenRect } from './calloutPlacement'
+import type { OperationLabel, OperationPoint } from './operationPoints'
 
 type SceneProps = {
+  layout?: GridLayout
   feed: SceneFeed
   command: CameraCommand
   lowQuality: boolean
   labels: Map<string, HTMLSpanElement>
   markers: Map<string, HTMLButtonElement>
   points: OperationPoint[]
+  labelPoints: OperationLabel[]
   pointLabels: Map<string, HTMLSpanElement>
+  leaders: Map<string, SVGLineElement>
   robotIds: string[]
   selected?: string
   onSelect: (id: string) => void
@@ -35,15 +42,16 @@ type SceneProps = {
 
 const polarLimit = Math.PI / 2 - 0.045
 const fov = 42
+const calloutOverview = [0.40, 1.50, 0.94] as const
 
-type ScreenRect = { left: number; top: number; right: number; bottom: number }
-type LabelPlacement = { label: HTMLSpanElement; candidates: ScreenRect[]; taskAnchor?: [number, number] }
+type LabelPlacement = { label: HTMLSpanElement; candidates: ScreenRect[]; taskAnchor?: [number, number]; scale: number;
+  leader?: { line: SVGLineElement; target: [number, number] } }
 
 function overlaps(a: ScreenRect, b: ScreenRect) {
   return a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top
 }
 
-function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLabels, robotIds, selected, onSelect, trace, routes }: SceneProps) {
+function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, points, labelPoints, pointLabels, leaders, robotIds, selected, onSelect, trace, routes }: SceneProps) {
   const models = useRef(new Map<string, Group>()).current
   const orbit = useRef<OrbitControls | null>(null)
   const lastPose = useRef<Pose>(undefined)
@@ -54,6 +62,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
   const warehouseLayout = useRef<Group>(undefined)
   const warehouseFrame = useRef<Vector3[]>(undefined)
   const cutaways = useRef<{ object: Object3D; bounds: Box3 }[]>([])
+  const rackConflicts = useRef(new WeakMap<object, Set<string>>())
   const aspect = useRef(0)
   const preset = useRef(true)
   const transitioning = useRef(false)
@@ -116,10 +125,12 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
     const firstFrame = aspect.current === 0
     aspect.current = nextAspect
     const environment = scene.getObjectByName('warehouse-environment')!
-    const layout = environment.getObjectByName('warehouse-layout') as Group | undefined
+    const layout = (environment.getObjectByName('warehouse-grid') ??
+      environment.getObjectByName('warehouse-layout')) as Group | undefined
     const layoutChanged = warehouseLayout.current !== layout
     if (!warehouseFrame.current || layoutChanged) {
       warehouseLayout.current = layout
+      rackConflicts.current = new WeakMap()
       warehouseFrame.current = warehouseCorners(environment)
       cutaways.current = []
       const decorBounds: { name: string; min: number[]; max: number[] }[] = []
@@ -135,7 +146,7 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
         bubbles: true, detail: warehouseFrame.current.map(corner => corner.toArray()),
       }))
       if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:decor-bounds', {
-        bubbles: true, detail: { layout: layout ? 'glb' : 'schematic', boxes: decorBounds },
+        bubbles: true, detail: { layout: grid ? 'grid' : layout ? 'glb' : 'schematic', boxes: decorBounds },
       }))
       if (trace) gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:storage', {
         bubbles: true, detail: layout?.getObjectByName('warehouse-decor')?.userData.storageBounds ?? [],
@@ -190,7 +201,8 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
     }
 
     if (warehouseMode && (restoreWarehouse || ((resized || layoutChanged) && preset.current))) {
-      frameWarehouse(warehouseFrame.current, fov, nextAspect, nextMode === 'top', goalTarget.current, goalOffset.current)
+      frameWarehouse(warehouseFrame.current, fov, nextAspect, nextMode === 'top', goalTarget.current,
+        goalOffset.current, grid?.zones.some(zone => zone.callout) ? calloutOverview : undefined)
       if (firstFrame || !transitioning.current) {
         controls.target.copy(goalTarget.current)
         camera.position.copy(goalTarget.current).add(goalOffset.current)
@@ -254,7 +266,40 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
     controls.update()
     camera.updateMatrixWorld()
 
-    for (const cutaway of cutaways.current) cutaway.object.visible = true
+    const hiddenRacks = new Set<string>()
+    if (grid) {
+      const record = <T,>(samples: readonly T[], point: (sample: T) => readonly [number, number],
+        starts?: (sample: T) => boolean) => {
+        let hits = rackConflicts.current.get(samples)
+        if (!hits) {
+          hits = new Set()
+          for (let i = 0; i < samples.length; i++) {
+            const [x, y] = point(samples[i])
+            const [a, b] = i && !starts?.(samples[i]) ? point(samples[i - 1]) : [x, y]
+            for (const rack of grid.racks) {
+              if (!hits.has(rack.id) && crossesRack(rack.bounds, a, b, x, y)) hits.add(rack.id)
+            }
+          }
+          rackConflicts.current.set(samples, hits)
+        }
+        for (const id of hits) hiddenRacks.add(id)
+      }
+      for (const sample of robots.values()) {
+        if (sample.pose) {
+          const { x, y } = sample.pose
+          for (const rack of grid.racks) if (crossesRack(rack.bounds, x, y, x, y)) hiddenRacks.add(rack.id)
+        }
+        if (sample.path?.points) record(sample.path.points, point => point)
+        if (sample.trail) record(sample.trail, ({ pose }) => [pose.x, pose.y], point => point.start)
+      }
+    }
+    for (const { object } of cutaways.current) {
+      const { side, edge } = object.userData
+      const nearWall = (side === 'north' && -camera.position.z > edge) ||
+        (side === 'south' && -camera.position.z < edge) ||
+        (side === 'east' && camera.position.x > edge) || (side === 'west' && camera.position.x < edge)
+      object.visible = !nearWall && !hiddenRacks.has(object.name)
+    }
     for (const root of models.values()) {
       if (!root.visible) continue
       body.copy(root.position).addScaledVector(camera.up, burgerSize.height / 2)
@@ -269,9 +314,19 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       }
     }
 
+    const placementAreas = grid && leaders.size ? {
+      floor: projectedArea(grid.bounds, 0, camera, size.width, size.height),
+      blocked: [
+        ...grid.racks.map(item => projectedArea(item.bounds, item.height, camera, size.width, size.height)),
+        ...grid.zones.map(item => projectedArea(item.bounds, 0, camera, size.width, size.height)),
+      ],
+    } : undefined
+    for (const line of leaders.values()) line.style.visibility = 'hidden'
     const placements: LabelPlacement[] = []
     const occupied: ScreenRect[] = []
     const radius = markerDiameter / 2
+    const labelScale = (anchor: Vector3) => grid
+      ? Math.max(.82, Math.min(1.15, 1.15 - camera.position.distanceTo(anchor) / 65)) : 1
     for (const [id, root] of models) {
       const label = labels.get(id)
       const marker = markers.get(id)
@@ -294,23 +349,26 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       marker.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
       marker.style.setProperty('--heading', `${heading}rad`)
 
-      occupied.push({ left: x - radius, right: x + radius, top: y - radius, bottom: y + radius })
-      const left = x - label.offsetWidth / 2
-      const right = x + label.offsetWidth / 2
-      const height = label.offsetHeight
+      const scale = labelScale(root.position)
+      const left = x - label.offsetWidth * scale / 2
+      const right = x + label.offsetWidth * scale / 2
+      const height = label.offsetHeight * scale
       front.copy(root.position)
       front.y += burgerSize.height
       front.project(camera)
       const bodyTop = (1 - front.y) / 2 * size.height
+      const bodyRadius = grid ? Math.max(radius, Math.abs(y - bodyTop) * 1.45) : radius
+      occupied.push({ left: x - bodyRadius, right: x + bodyRadius, top: grid ? Math.min(y - radius, bodyTop) : y - radius,
+        bottom: y + radius })
       const above = Math.min(y - radius, bodyTop) - 4
       const below = y + radius + 4
-      const placement = { label, candidates: [{ left, right, top: above - height, bottom: above }] }
+      const placement = { label, scale, candidates: [{ left, right, top: above - height, bottom: above }] }
       if (id === selected) {
         placement.candidates.push({ left, right, top: below, bottom: below + height })
         placements.unshift(placement)
       } else placements.push(placement)
     }
-    for (const point of points) {
+    for (const point of labelPoints) {
       const label = pointLabels.get(point.key)
       if (!label) continue
       screen.fromArray(point.position).project(camera)
@@ -320,11 +378,14 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       }
       const x = (screen.x + 1) / 2 * size.width
       const y = (1 - screen.y) / 2 * size.height
-      const width = label.offsetWidth
-      const height = label.offsetHeight
+      const distance = camera.position.distanceTo(front.fromArray(point.position))
+      if (point.leader) label.toggleAttribute('data-detailed', distance < 16)
+      const scale = labelScale(front)
+      const width = label.offsetWidth * scale
+      const height = label.offsetHeight * scale
       const gap = 18
       const task = point.kind === 'pickup' || point.kind === 'dropoff'
-      placements.push({ label, taskAnchor: task ? [x, y] : undefined, candidates: [
+      const candidates: ScreenRect[] = [
         { left: x + gap, right: x + gap + width, top: y - height / 2, bottom: y + height / 2 },
         { left: x - gap - width, right: x - gap, top: y - height / 2, bottom: y + height / 2 },
         { left: x - width / 2, right: x + width / 2, top: y + gap, bottom: y + gap + height },
@@ -333,19 +394,43 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
         { left: x - gap - width, right: x - gap, top: y + gap / 2, bottom: y + gap / 2 + height },
         { left: x + gap, right: x + gap + width, top: y - gap / 2 - height, bottom: y - gap / 2 },
         { left: x - gap - width, right: x - gap, top: y - gap / 2 - height, bottom: y - gap / 2 },
-      ] })
+      ]
+      const line = leaders.get(point.key)
+      if (point.leader && line) {
+        const target = screenPoint(front.fromArray(point.leader), camera, size.width, size.height)
+        placements.push({ label, scale, candidates: calloutCandidates(x, y, width, height), leader: { line, target } })
+        continue
+      }
+      if (point.groupText) {
+        // Try the group's own floor anchor and its vertical offsets before moving sideways.
+        candidates.unshift({ left: x - width / 2, right: x + width / 2,
+          top: y - height / 2, bottom: y + height / 2 }, ...candidates.splice(2, 2))
+      }
+      placements.push({ label, scale, taskAnchor: task ? [x, y] : undefined, candidates })
     }
     let visibleTask: [number, number] | undefined
-    for (const { label, candidates, taskAnchor } of placements) {
+    for (const { label, candidates, taskAnchor, scale, leader } of placements) {
       // When two task anchors almost coincide, a distant second label would
       // read as a different location. Both ground symbols remain visible.
       const sharesAnchor = taskAnchor && visibleTask &&
         Math.hypot(taskAnchor[0] - visibleTask[0], taskAnchor[1] - visibleTask[1]) < 12
       const slot = !sharesAnchor && candidates.find(rect => rect.left >= 3 && rect.right <= size.width - 3 &&
-        rect.top >= 3 && rect.bottom <= size.height - 3 && !occupied.some(other => overlaps(rect, other)))
+        rect.top >= 3 && rect.bottom <= size.height - 3 && !occupied.some(other => overlaps(rect, other)) &&
+        (!leader || (placementAreas && insideFloor(rect, placementAreas.floor) &&
+          !placementAreas.blocked.some(area => hitsArea(rect, area)))))
       label.style.visibility = slot ? 'visible' : 'hidden'
       if (!slot) continue
-      label.style.transform = `translate(${slot.left}px, ${slot.top}px)`
+      label.style.transformOrigin = "top left"
+      label.style.transform = `translate(${slot.left}px, ${slot.top}px) scale(${scale})`
+      if (leader) {
+        const [x, y] = leader.target
+        const { line } = leader
+        line.setAttribute('x1', String(Math.max(slot.left, Math.min(slot.right, x))))
+        line.setAttribute('y1', String(Math.max(slot.top, Math.min(slot.bottom, y))))
+        line.setAttribute('x2', String(x))
+        line.setAttribute('y2', String(y))
+        line.style.visibility = 'visible'
+      }
       occupied.push(slot)
       if (taskAnchor) visibleTask = taskAnchor
     }
@@ -382,11 +467,12 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
         detail: {
           at: now, interpolating: !!selectedRoot?.blend, visible: !!selectedRoot?.visible,
           blend: selectedRoot?.blend, pose: selectedRoot?.pose ?? [0, 0, 0], yaw: selectedRoot?.yaw ?? 0,
-          robots: roots, selected, mode: nextMode, transitioning: transitioning.current,
+          robots: roots, selected, mode: nextMode, reset: command.reset, transitioning: transitioning.current,
           target: controls.target.toArray(), camera: camera.position.toArray(),
           calls: gl.info.render.calls, triangles: gl.info.render.triangles,
           geometries: gl.info.memory.geometries, textures: gl.info.memory.textures,
-          dpr: gl.getPixelRatio(), warehouse: layout ? 'glb' : 'schematic',
+          dpr: gl.getPixelRatio(), warehouse: grid ? 'grid' : layout ? 'glb' : 'schematic',
+          routeHiddenRacks: [...hiddenRacks],
           cutaway: cutaways.current.filter(({ object }) => !object.visible).map(({ object }) => object.name),
           points: points.map(point => {
             const root = scene.getObjectByName(point.key)!
@@ -435,8 +521,9 @@ export default memo(function Scene(props: SceneProps) {
     <hemisphereLight args={['#ffffff', '#c2cbd1', 1.65]} />
     <directionalLight position={[2, 8, -3]} intensity={1.95} color="#fff6e9" />
     <directionalLight position={[-6, 3, 5]} intensity={0.42} color="#e0ecfc" />
-    <WarehouseEnvironment softShadows={!props.lowQuality} />
-    <OperationMarkers points={props.points} />
+    {props.layout ? <GridWarehouse layout={props.layout} softShadows={!props.lowQuality} />
+      : <WarehouseEnvironment softShadows={!props.lowQuality} />}
+    <OperationMarkers points={props.points} grid={!!props.layout} dockApproach={props.layout?.dock_approach_m} />
     {props.robotIds.map((id, index) => <RouteLayers key={id} feed={props.feed} id={id} colorIndex={index}
       selected={id === props.selected} options={props.routes} trace={props.trace} />)}
     <Vehicles {...props} />

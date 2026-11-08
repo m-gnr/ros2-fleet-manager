@@ -16,16 +16,19 @@ export function warehouseCorners(warehouse: Object3D) {
   return corners
 }
 
-export function frameWarehouse(corners: Vector3[], fov: number, aspect: number, top: boolean, target: Vector3, offset: Vector3) {
+export function frameWarehouse(corners: Vector3[], fov: number, aspect: number, top: boolean,
+  target: Vector3, offset: Vector3, overview: readonly [number, number, number] = warehouseOffset) {
   new Box3().setFromPoints(corners).getCenter(target)
-  const [x, y, z] = top ? topOffset : warehouseOffset
+  const [x, y, z] = top ? topOffset : overview
   const back = offset.set(x, y, z).normalize()
   const right = new Vector3(back.z, 0, -back.x).normalize()
   const up = new Vector3().crossVectors(back, right)
   const point = new Vector3()
   const halfFov = Math.tan(fov * Math.PI / 360)
   const horizontal = halfFov * aspect * 0.90
-  const vertical = halfFov * (top ? 0.90 : 0.94)
+  // The steeper grid overview also leaves room above the top view for the TF badge.
+  const topFill = overview === warehouseOffset ? .90 : .84
+  const vertical = halfFov * (top ? topFill : .94)
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
   for (const corner of corners) {
     point.copy(corner).sub(target)

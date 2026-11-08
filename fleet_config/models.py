@@ -4,6 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .warehouse import WarehouseLayout
+
 Identifier = Annotated[str, Field(pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")]
 RosName = Annotated[str, Field(pattern=r"^/[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*$")]
 Text = Annotated[str, Field(min_length=1, pattern=r"\S")]
@@ -31,7 +33,7 @@ class BatteryModel(Contract):
 
 class Fleet(Contract):
     name: Text
-    map_path: Text = Field(description="File path relative to the fleet YAML directory.")
+    map_path: Text = Field(description="Map YAML relative to this file, or 'warehouse:generated'.")
     use_sim_time: Literal[True]
     battery_models: Annotated[dict[Identifier, BatteryModel], Field(min_length=1)]
 
@@ -106,6 +108,7 @@ class FleetConfig(Contract):
     robots: Annotated[list[Robot], Field(min_length=1)]
     stations: Stations
     policies: Policies
+    warehouse: WarehouseLayout | None = Field(default_factory=lambda: None)
 
     @model_validator(mode="after")
     def references_and_ownership(self):
@@ -136,4 +139,21 @@ class FleetConfig(Contract):
         poses = [(station.pose.x, station.pose.y) for station in stations]
         if len(set(poses)) != len(poses):
             raise ValueError("stations: resources share the same physical position")
+        if self.fleet.map_path == "warehouse:generated" and self.warehouse is None:
+            raise ValueError("warehouse:generated requires warehouse geometry")
+        if self.warehouse is not None:
+            if not 2 <= len(self.stations.charging_stations) <= 4 or not self.stations.parking_stations:
+                raise ValueError("warehouse profile requires two to four charging stations and a parking station")
+            for kind, group in (("charging", self.stations.charging_stations),
+                                ("parking", self.stations.parking_stations)):
+                for station in group:
+                    if not self.warehouse.zone(kind).contains(station.pose.x, station.pose.y, .4):
+                        raise ValueError(f"{station.id}: resource pose is outside its warehouse zone")
+            self.warehouse.check_service(self.stations.charging_stations, self.stations.parking_stations)
+            transfer_ids = {point.id for point in self.warehouse.transfer_points}
+            transfer_poses = {(point.pose.x, point.pose.y) for point in self.warehouse.transfer_points}
+            if transfer_ids.intersection(ids) or transfer_poses.intersection(poses):
+                raise ValueError("warehouse transfer points share an ID or position with a resource")
+            if len(transfer_poses) != len(self.warehouse.transfer_points):
+                raise ValueError("warehouse transfer points share a position")
         return self

@@ -43,13 +43,15 @@ function serviceFrame(x: number, y: number) {
 }
 const chargingFrame = serviceFrame(.68, 1.02)
 const parkFrame = serviceFrame(.75, .64)
+const gridCharging = panel(bay(.44, .345), '#a4d8cb', [lightning])
 const serviceBorders = {
   CHARGING: [panels.CHARGING.border, chargingFrame],
   PARKING: [panels.PARKING.border, parkFrame],
 }
 
-function ChargingUnit({ charging }: { charging: boolean }) {
-  return <group name="charging-unit" position-z={.88} position-y={-.032}>
+function ChargingUnit({ charging, offset }: { charging: boolean; offset?: number }) {
+  return <group name="charging-unit" position={[offset ?? 0, -.032, offset === undefined ? .88 : 0]}
+    rotation-y={offset === undefined ? 0 : Math.PI / 2}>
     <mesh position-y={.018}>
       <boxGeometry args={[.62, .036, .21]} />
       <meshStandardMaterial color="#284d4c" roughness={.84} />
@@ -65,9 +67,9 @@ function ChargingUnit({ charging }: { charging: boolean }) {
   </group>
 }
 
-export const OperationMarkers = memo(function OperationMarkers({ points }: { points: OperationPoint[] }) {
-  const pickup = points.find(point => point.kind === 'pickup')
-  const dropoff = points.find(point => point.kind === 'dropoff')
+export const OperationMarkers = memo(function OperationMarkers({ points, grid = false, dockApproach }: { points: OperationPoint[]; grid?: boolean; dockApproach?: number | null }) {
+  const pickup = points.find(point => point.kind === 'pickup' && !point.layoutBay)
+  const dropoff = points.find(point => point.kind === 'dropoff' && !point.layoutBay)
   const dx = pickup && dropoff ? dropoff.position[0] - pickup.position[0] : undefined
   const dy = pickup && dropoff ? pickup.position[2] - dropoff.position[2] : undefined
   const clipped = useMemo(() => {
@@ -80,20 +82,20 @@ export const OperationMarkers = memo(function OperationMarkers({ points }: { poi
   }, [dx, dy])
 
   return <group name="operation-points">
-    {points.map(({ key, kind, position, yaw, chargingRobot }) => {
+    {points.map(({ key, kind, position, yaw, chargingRobot, layoutBay, dockOffset }) => {
       const isTask = kind === 'pickup' || kind === 'dropoff'
-      const clip = isTask ? clipped?.[kind] : undefined
-      const { pad, border, fill, symbols } = clip?.panel ?? panels[kind]
-      const borderShapes = kind === 'CHARGING' || kind === 'PARKING' ? serviceBorders[kind] : border
+      const clip = isTask && !layoutBay ? clipped?.[kind] : undefined
+      const { pad, border, fill, symbols } = clip?.panel ?? (grid && kind === 'CHARGING' ? gridCharging : panels[kind])
+      const borderShapes = !grid && (kind === 'CHARGING' || kind === 'PARKING') ? serviceBorders[kind] : border
       // Raise overlapping paint layers by millimetres to keep their depths distinct.
-      const height = kind === 'dropoff' ? -.002 : isTask ? -.006 : -.010
+      const height = layoutBay ? -.015 : kind === 'dropoff' ? -.002 : isTask ? -.006 : -.010
       const color = pointStyle[kind].color
       return <group key={key} name={key} position={position} rotation-y={yaw}>
         <group position-y={height} rotation-y={isTask ? -yaw : 0}>
           <group rotation-x={-Math.PI / 2}>
             <mesh name="operation-pad">
               <shapeGeometry args={[pad]} />
-              <meshBasicMaterial color={chargingRobot ? '#88d5bc' : fill} />
+              <meshBasicMaterial color={chargingRobot ? '#88d5bc' : fill} transparent={layoutBay} opacity={layoutBay ? .38 : 1} />
             </mesh>
             <mesh name="operation-border" position-z={.001}>
               <shapeGeometry args={[borderShapes]} />
@@ -105,7 +107,16 @@ export const OperationMarkers = memo(function OperationMarkers({ points }: { poi
             </mesh>}
           </group>
         </group>
-        {kind === 'CHARGING' && <ChargingUnit charging={!!chargingRobot} />}
+        {grid && kind !== 'PARKING' && <mesh name="approach-arrow" position-y={height + .003} rotation-x={-Math.PI / 2}>
+          <shapeGeometry args={[heading]} />
+          <meshBasicMaterial color={color} />
+        </mesh>}
+        {kind === 'CHARGING' && dockApproach && [-.5, .5].map(side =>
+          <mesh key={side} position={[-.44 - dockApproach / 2, -.014, side]} rotation-x={-Math.PI / 2}>
+            <planeGeometry args={[dockApproach, .025]} />
+            <meshBasicMaterial color="#508a7c" />
+          </mesh>)}
+        {kind === 'CHARGING' && <ChargingUnit charging={!!chargingRobot} offset={dockOffset} />}
       </group>
     })}
   </group>

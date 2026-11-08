@@ -96,7 +96,7 @@ async def send_latest(socket, feed, *, poll_sec=POLL_SEC):
             await asyncio.wait_for(socket.close(close_code), SEND_TIMEOUT_SEC)
 
 
-def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None):
+def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None, fleet_config=None):
     origins = frozenset(origins)
     for origin in origins:
         url = urlsplit(origin)
@@ -172,6 +172,26 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
         snapshot = current()
         return envelope(snapshot, "stations", snapshot.stations)
 
+    @app.get("/api/warehouse-layout")
+    async def warehouse_layout():
+        if fleet_config is None or fleet_config.warehouse is None:
+            return {"layout": None}
+        snapshot = current()
+        groups = (
+            ("CHARGING", fleet_config.stations.charging_stations),
+            ("PARKING", fleet_config.stations.parking_stations),
+            ("SAFE_WAITING", fleet_config.stations.safe_waiting_areas),
+        )
+        expected = {(item.id, kind, item.pose.x, item.pose.y, item.pose.yaw)
+                    for kind, stations in groups for item in stations}
+        actual = {(item.station_id, item.station_type, item.pose.x, item.pose.y, item.pose.yaw)
+                  for item in snapshot.stations if item.pose and item.pose.frame_id == "map"}
+        compatible = (snapshot.map_frame == fleet_config.warehouse.frame_id
+                      and len(snapshot.stations) == len(expected) and actual == expected
+                      and {robot.robot_id for robot in snapshot.robots} == {robot.id for robot in fleet_config.robots})
+        return {**envelope(snapshot, "layout", fleet_config.warehouse.scene_payload() if compatible else None),
+                "profile_mismatch": not compatible}
+
     @app.websocket("/ws/fleet")
     async def stream(socket: WebSocket):
         nonlocal clients
@@ -206,16 +226,19 @@ def main():
     args = parser.parse_args()
     bridge_url = None
     topics = None
-    if args.scene_port is not None:
-        if args.fleet is None or not 1 <= args.scene_port <= 65535:
-            parser.error("--scene-port requires a valid port and --fleet")
+    config = None
+    if args.fleet is not None:
         from fleet_config import load_config
 
-        fleet = load_config(args.fleet, schema_path=args.fleet.with_name("fleet.schema.json"))
-        topics = {robot.id: robot.namespace + "/plan" for robot in fleet.robots}
+        config = load_config(args.fleet, schema_path=args.fleet.with_name("fleet.schema.json"))
+    if args.scene_port is not None:
+        if config is None or not 1 <= args.scene_port <= 65535:
+            parser.error("--scene-port requires a valid port and --fleet")
+        topics = {robot.id: robot.namespace + "/plan" for robot in config.robots}
         bridge_url = f"ws://scene:{args.scene_port}/telemetry/fleet"
     uvicorn.run(
-        create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics),
+        create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics,
+                   fleet_config=config),
         host="0.0.0.0" if args.container_bind else "127.0.0.1", port=args.port,
         proxy_headers=False, server_header=False, ws="websockets", ws_max_size=1024, ws_max_queue=1,
         ws_per_message_deflate=False, limit_concurrency=64, timeout_graceful_shutdown=3,

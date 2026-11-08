@@ -1,0 +1,714 @@
+{
+  "chrome": "156.0.8078.80",
+  "before": {
+    "warehouse": "glb",
+    "robots": [
+      {
+        "robot_id": "robot_alpha",
+        "pose": [
+          4.75,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "visible": true,
+        "status": "LIVE",
+        "screen": [
+          0.7779104501054277,
+          0.377720868538381
+        ]
+      },
+      {
+        "robot_id": "robot_beta",
+        "pose": [
+          5,
+          0,
+          1.75
+        ],
+        "yaw": 0,
+        "visible": true,
+        "status": "LIVE",
+        "screen": [
+          0.7594083283272319,
+          0.6362557629620206
+        ]
+      }
+    ],
+    "points": [
+      {
+        "key": "pickup:delivery-01",
+        "id": "delivery-01",
+        "kind": "pickup",
+        "position": [
+          -5,
+          0,
+          -1.75
+        ],
+        "yaw": 3.141592653589793,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          -5,
+          -0.006,
+          -1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "dropoff:delivery-01",
+        "id": "delivery-01",
+        "kind": "dropoff",
+        "position": [
+          5,
+          0,
+          1.75
+        ],
+        "yaw": 0,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5,
+          -0.002,
+          1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "station:dock_1",
+        "id": "dock_1",
+        "kind": "CHARGING",
+        "position": [
+          4.75,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "owner": "robot_alpha",
+        "chargingRobot": "robot_alpha",
+        "detail": "İşgal altında · Şarj oluyor",
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          4.75,
+          -0.01,
+          -3.25
+        ],
+        "symbol": true,
+        "dockPosition": [
+          5.63,
+          -0.032,
+          -3.25
+        ],
+        "dockBounds": {
+          "min": [
+            5.525000003278255,
+            -0.031999999225139616,
+            -3.560000002384186
+          ],
+          "max": [
+            5.734999996721744,
+            0.22600000021606684,
+            -2.939999997615814
+          ]
+        }
+      },
+      {
+        "key": "station:dock_2",
+        "id": "dock_2",
+        "kind": "CHARGING",
+        "position": [
+          5.5,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "detail": "Serbest",
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5.5,
+          -0.01,
+          -3.25
+        ],
+        "symbol": true,
+        "dockPosition": [
+          6.38,
+          -0.032,
+          -3.25
+        ],
+        "dockBounds": {
+          "min": [
+            6.275000003278255,
+            -0.031999999225139616,
+            -3.560000002384186
+          ],
+          "max": [
+            6.484999996721744,
+            0.22600000021606684,
+            -2.939999997615814
+          ]
+        }
+      },
+      {
+        "key": "station:park_1",
+        "id": "park_1",
+        "kind": "PARKING",
+        "position": [
+          5.25,
+          0,
+          -1
+        ],
+        "yaw": 0,
+        "detail": "Serbest",
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5.25,
+          -0.01,
+          -1
+        ],
+        "symbol": true
+      }
+    ],
+    "route": [
+      [
+        -5,
+        1.75
+      ],
+      [
+        0,
+        1.75
+      ],
+      [
+        0,
+        -1.75
+      ],
+      [
+        5,
+        -1.75
+      ]
+    ],
+    "calls": 95
+  },
+  "after": {
+    "warehouse": "grid",
+    "robots": [
+      {
+        "robot_id": "robot_alpha",
+        "pose": [
+          4.75,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "visible": true,
+        "status": "LIVE",
+        "screen": [
+          0.7977492374005362,
+          0.3655704410025229
+        ]
+      },
+      {
+        "robot_id": "robot_beta",
+        "pose": [
+          5,
+          0,
+          1.75
+        ],
+        "yaw": 0,
+        "visible": true,
+        "status": "LIVE",
+        "screen": [
+          0.7808363705897239,
+          0.685638151543984
+        ]
+      }
+    ],
+    "points": [
+      {
+        "key": "pickup:delivery-01",
+        "id": "delivery-01",
+        "kind": "pickup",
+        "position": [
+          -5,
+          0,
+          -1.75
+        ],
+        "yaw": 3.141592653589793,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          -5,
+          -0.006,
+          -1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "dropoff:delivery-01",
+        "id": "delivery-01",
+        "kind": "dropoff",
+        "position": [
+          5,
+          0,
+          1.75
+        ],
+        "yaw": 0,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5,
+          -0.002,
+          1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "station:dock_1",
+        "id": "dock_1",
+        "kind": "CHARGING",
+        "position": [
+          4.75,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "owner": "robot_alpha",
+        "chargingRobot": "robot_alpha",
+        "dockOffset": 0.585,
+        "detail": "İşgal altında · Şarj oluyor",
+        "padSize": [
+          0.6899999976158142,
+          1.5265566588595902e-16,
+          0.8799999952316284
+        ],
+        "padPosition": [
+          4.75,
+          -0.01,
+          -3.25
+        ],
+        "symbol": true,
+        "dockPosition": [
+          4.75,
+          -0.032,
+          -3.835
+        ],
+        "dockBounds": {
+          "min": [
+            4.439999997615814,
+            -0.031999999225139616,
+            -3.9399999967217445
+          ],
+          "max": [
+            5.060000002384186,
+            0.22600000021606684,
+            -3.7300000032782554
+          ]
+        }
+      },
+      {
+        "key": "station:dock_2",
+        "id": "dock_2",
+        "kind": "CHARGING",
+        "position": [
+          5.5,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "dockOffset": 0.585,
+        "detail": "Serbest",
+        "padSize": [
+          0.6899999976158142,
+          1.5265566588595902e-16,
+          0.8799999952316284
+        ],
+        "padPosition": [
+          5.5,
+          -0.01,
+          -3.25
+        ],
+        "symbol": true,
+        "dockPosition": [
+          5.5,
+          -0.032,
+          -3.835
+        ],
+        "dockBounds": {
+          "min": [
+            5.189999997615814,
+            -0.031999999225139616,
+            -3.9399999967217445
+          ],
+          "max": [
+            5.810000002384186,
+            0.22600000021606684,
+            -3.7300000032782554
+          ]
+        }
+      },
+      {
+        "key": "station:park_1",
+        "id": "park_1",
+        "kind": "PARKING",
+        "position": [
+          5.25,
+          0,
+          -1
+        ],
+        "yaw": 0,
+        "detail": "Serbest",
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5.25,
+          -0.01,
+          -1
+        ],
+        "symbol": true
+      },
+      {
+        "key": "bay:pickup_2",
+        "id": "pickup_2",
+        "kind": "pickup",
+        "position": [
+          -5,
+          0,
+          1.75
+        ],
+        "yaw": 3.141592653589793,
+        "layoutBay": true,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          -5,
+          -0.015,
+          1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "bay:delivery_2",
+        "id": "delivery_2",
+        "kind": "dropoff",
+        "position": [
+          5,
+          0,
+          3
+        ],
+        "yaw": 0,
+        "layoutBay": true,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5,
+          -0.015,
+          3
+        ],
+        "symbol": true
+      }
+    ],
+    "route": [
+      [
+        -5,
+        1.75
+      ],
+      [
+        0,
+        1.75
+      ],
+      [
+        0,
+        -1.75
+      ],
+      [
+        5,
+        -1.75
+      ]
+    ],
+    "calls": 90
+  },
+  "moved": {
+    "warehouse": "grid",
+    "robots": [
+      {
+        "robot_id": "robot_alpha",
+        "pose": [
+          4.5,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "visible": true,
+        "status": "LIVE",
+        "screen": [
+          0.7850944688614794,
+          0.3605284447315749
+        ]
+      },
+      {
+        "robot_id": "robot_beta",
+        "pose": [
+          5,
+          0,
+          1.75
+        ],
+        "yaw": 0,
+        "visible": true,
+        "status": "LIVE",
+        "screen": [
+          0.7808363705897239,
+          0.685638151543984
+        ]
+      }
+    ],
+    "points": [
+      {
+        "key": "pickup:delivery-01",
+        "id": "delivery-01",
+        "kind": "pickup",
+        "position": [
+          -5,
+          0,
+          -1.75
+        ],
+        "yaw": 3.141592653589793,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          -5,
+          -0.006,
+          -1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "dropoff:delivery-01",
+        "id": "delivery-01",
+        "kind": "dropoff",
+        "position": [
+          5,
+          0,
+          1.75
+        ],
+        "yaw": 0,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5,
+          -0.002,
+          1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "station:dock_1",
+        "id": "dock_1",
+        "kind": "CHARGING",
+        "position": [
+          4.5,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "owner": "robot_alpha",
+        "chargingRobot": "robot_alpha",
+        "dockOffset": 0.585,
+        "detail": "İşgal altında · Şarj oluyor",
+        "padSize": [
+          0.6899999976158142,
+          1.5265566588595902e-16,
+          0.8799999952316284
+        ],
+        "padPosition": [
+          4.5,
+          -0.01,
+          -3.25
+        ],
+        "symbol": true,
+        "dockPosition": [
+          4.5,
+          -0.032,
+          -3.835
+        ],
+        "dockBounds": {
+          "min": [
+            4.189999997615814,
+            -0.031999999225139616,
+            -3.9399999967217445
+          ],
+          "max": [
+            4.810000002384186,
+            0.22600000021606684,
+            -3.7300000032782554
+          ]
+        }
+      },
+      {
+        "key": "station:dock_2",
+        "id": "dock_2",
+        "kind": "CHARGING",
+        "position": [
+          5.5,
+          0,
+          -3.25
+        ],
+        "yaw": 1.5707963267948966,
+        "dockOffset": 0.585,
+        "detail": "Serbest",
+        "padSize": [
+          0.6899999976158142,
+          1.5265566588595902e-16,
+          0.8799999952316284
+        ],
+        "padPosition": [
+          5.5,
+          -0.01,
+          -3.25
+        ],
+        "symbol": true,
+        "dockPosition": [
+          5.5,
+          -0.032,
+          -3.835
+        ],
+        "dockBounds": {
+          "min": [
+            5.189999997615814,
+            -0.031999999225139616,
+            -3.9399999967217445
+          ],
+          "max": [
+            5.810000002384186,
+            0.22600000021606684,
+            -3.7300000032782554
+          ]
+        }
+      },
+      {
+        "key": "station:park_1",
+        "id": "park_1",
+        "kind": "PARKING",
+        "position": [
+          5.25,
+          0,
+          -1
+        ],
+        "yaw": 0,
+        "detail": "Serbest",
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5.25,
+          -0.01,
+          -1
+        ],
+        "symbol": true
+      },
+      {
+        "key": "bay:pickup_2",
+        "id": "pickup_2",
+        "kind": "pickup",
+        "position": [
+          -5,
+          0,
+          1.75
+        ],
+        "yaw": 3.141592653589793,
+        "layoutBay": true,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          -5,
+          -0.015,
+          1.75
+        ],
+        "symbol": true
+      },
+      {
+        "key": "bay:delivery_2",
+        "id": "delivery_2",
+        "kind": "dropoff",
+        "position": [
+          5,
+          0,
+          3
+        ],
+        "yaw": 0,
+        "layoutBay": true,
+        "padSize": [
+          0.9200000166893005,
+          2.0469737016526324e-16,
+          0.9200000166893005
+        ],
+        "padPosition": [
+          5,
+          -0.015,
+          3
+        ],
+        "symbol": true
+      }
+    ],
+    "route": [
+      [
+        -5,
+        1.75
+      ],
+      [
+        0,
+        1.75
+      ],
+      [
+        0,
+        -1.75
+      ],
+      [
+        5,
+        -1.75
+      ]
+    ],
+    "calls": 90
+  }
+}

@@ -24,6 +24,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [C5 Aşama 1.6 görsel kabul düzeltmesi](validation/c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-6-visual-commands-2026-11-06.md)
 - [C5 Aşama 1.7D depo duvarları ve operasyon bölgeleri](validation/c5/c5-stage1-7d-validation-2026-11-07.md) · [Doğrulama komutları](validation/c5/c5-stage1-7d-commands-2026-11-07.md)
 - [C5 Aşama 1.7E işlevsel depo iç yerleşimi](validation/c5/c5-stage1-7e-validation-2026-11-08.md) · [Doğrulama komutları](validation/c5/c5-stage1-7e-commands-2026-11-08.md)
+- [C5 ızgara tabanlı depo profili](validation/c5/warehouse-grid-validation-2026-11-08.md) · Tek YAML, koridorlar ve Chrome kabulü.
+- [C5 20 × 12 m depo ve Fortress doğrulaması](validation/c5/warehouse-grid-20x12-validation-2026-11-08.md) · Ortak üretim, gerçek dock/teslim hedefleri ve karşılıklı geçiş.
+- [C5 üstten depo açıklığı ve etiket denetimi](validation/c5/warehouse-grid-clearance-2026-11-08.md) · Şarj ve alım erişimi, raf dışı etiketler ve Nav2 rota ölçümü.
 - [C5 Aşama 1.7C depo sunumu ve operasyon alanları](validation/c5/c5-stage1-7c-validation-2026-11-07.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-7c-commands-2026-11-07.md)
 - [C5 Aşama 1.7B hazır depo entegrasyonu](validation/c5/c5-stage1-7b-validation-2026-11-07.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-7b-commands-2026-11-07.md)
 

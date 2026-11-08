@@ -7,6 +7,10 @@ import { simTime, telemetryAge } from "../src/presentation";
 import { backend, restarted, pose, valid, invalid, fixture, feed, telemetry } from "./dashboard-fixtures";
 import { taskPad } from "../src/scene/taskPad";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/warehouse-layout", route => route.fulfill({ json: { layout: null } }));
+});
+
 async function trace(page: Page) {
   await page.addInitScript(() => {
     for (const name of ["frame", "routes", "storage", "warehouse-bounds", "decor-bounds"]) {

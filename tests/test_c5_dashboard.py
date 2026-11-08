@@ -137,6 +137,7 @@ def test_http_readonly_origin_and_restart(tmp_path):
         assert {(route.path, tuple(route.methods or ())) for route in app.routes if hasattr(route, "methods")} == {
             (path, ("GET",)) for path in (
                 "/api/health", "/api/fleet", "/api/robots", "/api/robots/{robot_id}", "/api/tasks", "/api/stations",
+                "/api/warehouse-layout",
             )
         }
         assert client.post("/api/tasks", json={}).status_code == 405

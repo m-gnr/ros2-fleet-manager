@@ -37,6 +37,7 @@ const result = {chrome:chrome.version(), gpu:(await system.send('SystemInfo.getI
 try {
   for (const [width,height] of mode === 'quick' ? [[1440,900]] : [[1280,850],[1440,900],[1920,1080],[390,844]]) {
     const page = await chrome.newPage({viewport:{width,height},deviceScaleFactor:1});
+    await page.route('**/api/warehouse-layout', route => route.fulfill({ json: { layout: null } }));
     const errors = [];
     page.on('pageerror',error=>errors.push(error.message));
     page.on('console',msg=>{ if(msg.type()==='error')errors.push(msg.text()); });

@@ -207,7 +207,7 @@ def test_paths_independent_of_cwd(sample, monkeypatch, tmp_path):
 def test_schema_drift_rejected(sample, tmp_path):
     path, _ = sample
     schema = generated_schema()
-    del schema["required"]
+    del schema["$defs"]["FleetConfig"]["required"]
     altered = tmp_path / "schema.json"
     altered.write_text(json.dumps(schema))
     with pytest.raises(ValueError, match="differs"):

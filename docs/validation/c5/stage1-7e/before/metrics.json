@@ -1,0 +1,992 @@
+{
+  "chrome": "156.0.8078.80",
+  "gpu": [
+    {
+      "vendorId": 4203,
+      "deviceId": 0,
+      "vendorString": "Google Inc. (Apple)",
+      "deviceString": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Version 26.6.2 (Build 25G83))",
+      "driverVendor": "Apple",
+      "driverVersion": "26.6.2"
+    }
+  ],
+  "fixtureTaskPoints": [
+    {
+      "key": "pickup:delivery-01",
+      "pose": {
+        "x": 2.3,
+        "y": -2.5,
+        "yaw": 0,
+        "frame_id": "map"
+      }
+    },
+    {
+      "key": "dropoff:delivery-01",
+      "pose": {
+        "x": 2.5,
+        "y": -1,
+        "yaw": 0,
+        "frame_id": "map"
+      }
+    },
+    {
+      "key": "pickup:shipment-warehouse-0217",
+      "pose": {
+        "x": -3.7,
+        "y": 3.2,
+        "yaw": 0,
+        "frame_id": "map"
+      }
+    },
+    {
+      "key": "dropoff:shipment-warehouse-0217",
+      "pose": {
+        "x": -3.2,
+        "y": 3.3,
+        "yaw": 0,
+        "frame_id": "map"
+      }
+    }
+  ],
+  "windows": [
+    {
+      "width": 1280,
+      "height": 850,
+      "canvas": [
+        938.40625,
+        535.109375
+      ],
+      "dpr": 1,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+      "scrollWidth": 1280,
+      "scrollHeight": 850,
+      "panelBottom": 741,
+      "cardsBottom": 838,
+      "firstFrameMs": 207.2000002861023,
+      "firstDecorMs": 289.5,
+      "asset": {
+        "fetchMs": 12,
+        "startMs": 205.2000002861023,
+        "endMs": 217.2000002861023,
+        "decodedBodySize": 2012360,
+        "fetchToFrameMs": 84.2999997138977
+      },
+      "frame": {
+        "at": 339.40000009536743,
+        "interpolating": false,
+        "visible": true,
+        "pose": [
+          0.5,
+          0,
+          2
+        ],
+        "yaw": 1.5707963267948966,
+        "robots": [
+          {
+            "robot_id": "robot_alpha",
+            "pose": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.5384083655914709,
+              0.5387254248913946
+            ]
+          },
+          {
+            "robot_id": "robot_beta",
+            "pose": [
+              2.190164034155779,
+              0,
+              0.36776135392632664
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.6402805300703007,
+              0.4912801760642613
+            ]
+          }
+        ],
+        "selected": "robot_alpha",
+        "mode": "free",
+        "transitioning": false,
+        "target": [
+          -0.5874962127078951,
+          -0.1314435022215492,
+          1.4426409800619264
+        ],
+        "camera": [
+          4.1090472623452285,
+          10.435779316647977,
+          12.479518146436764
+        ],
+        "calls": 83,
+        "triangles": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "dpr": 1,
+        "warehouse": "glb",
+        "cutaway": [],
+        "points": [
+          {
+            "key": "pickup:delivery-01",
+            "id": "delivery-01",
+            "kind": "pickup",
+            "position": [
+              2.3,
+              0,
+              2.5
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.3,
+              -0.006,
+              2.5
+            ],
+            "symbol": true
+          },
+          {
+            "key": "dropoff:delivery-01",
+            "id": "delivery-01",
+            "kind": "dropoff",
+            "position": [
+              2.5,
+              0,
+              1
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.5,
+              -0.002,
+              1
+            ],
+            "symbol": true
+          },
+          {
+            "key": "station:dock_1",
+            "id": "dock_1",
+            "kind": "CHARGING",
+            "position": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 0,
+            "owner": "robot_alpha",
+            "chargingRobot": "robot_alpha",
+            "detail": "İşgal altında · Şarj oluyor",
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              0.5,
+              -0.01,
+              2
+            ],
+            "symbol": true,
+            "dockPosition": [
+              1.0699999999999998,
+              -0.032,
+              2
+            ]
+          },
+          {
+            "key": "station:park_1",
+            "id": "park_1",
+            "kind": "PARKING",
+            "position": [
+              -2,
+              0,
+              -1
+            ],
+            "yaw": 1.57,
+            "detail": "Serbest",
+            "padSize": [
+              0.9206447496241756,
+              2.0469737016526324e-16,
+              0.9206447496241759
+            ],
+            "padPosition": [
+              -2,
+              -0.01,
+              -1
+            ],
+            "symbol": true
+          }
+        ]
+      },
+      "markerLabels": [
+        {
+          "key": "pickup:delivery-01",
+          "visible": true,
+          "text": "Alım delivery-01"
+        },
+        {
+          "key": "dropoff:delivery-01",
+          "visible": true,
+          "text": "Teslim delivery-01"
+        },
+        {
+          "key": "station:dock_1",
+          "visible": true,
+          "text": "Şarj dock_1İşgal altında · Şarj oluyorrobot_alpha"
+        },
+        {
+          "key": "station:park_1",
+          "visible": true,
+          "text": "Park park_1Serbest"
+        }
+      ],
+      "projection": {
+        "horizontal": 0.7018109651215042,
+        "vertical": 0.94,
+        "clipped": false
+      },
+      "performance": {
+        "seconds": 5.0165,
+        "raf": {
+          "samples": 302,
+          "fps": 60.00199342170836,
+          "p95": 16.799999999999727
+        },
+        "scene": {
+          "samples": 189,
+          "fps": 37.727519014990264,
+          "p95": 66.2000002861023
+        },
+        "callsP95": 83,
+        "trianglesP95": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "chromeRssBytes": 1107165184,
+        "heapUsedBytes": 13657664,
+        "chromeCpuPercentOneCore": 35.26303199441842
+      },
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "canvas": [
+        1063.203125,
+        585.109375
+      ],
+      "dpr": 1,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+      "scrollWidth": 1440,
+      "scrollHeight": 900,
+      "panelBottom": 791,
+      "cardsBottom": 888,
+      "firstFrameMs": 176.40000009536743,
+      "firstDecorMs": 244.59999990463257,
+      "asset": {
+        "fetchMs": 5.099999904632568,
+        "startMs": 210.40000009536743,
+        "endMs": 215.5,
+        "decodedBodySize": 2012360,
+        "fetchToFrameMs": 34.19999980926514
+      },
+      "frame": {
+        "at": 319.30000019073486,
+        "interpolating": false,
+        "visible": true,
+        "pose": [
+          0.5,
+          0,
+          2
+        ],
+        "yaw": 1.5707963267948966,
+        "robots": [
+          {
+            "robot_id": "robot_alpha",
+            "pose": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.5388974013244705,
+              0.5387254248913946
+            ]
+          },
+          {
+            "robot_id": "robot_beta",
+            "pose": [
+              2.190164034155779,
+              0,
+              0.36776135392632664
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.6371403272719791,
+              0.49128017606426116
+            ]
+          }
+        ],
+        "selected": "robot_alpha",
+        "mode": "free",
+        "transitioning": false,
+        "target": [
+          -0.6230351068723801,
+          -0.1314435022215492,
+          1.4577639137489413
+        ],
+        "camera": [
+          4.073508368180742,
+          10.435779316647977,
+          12.49464108012378
+        ],
+        "calls": 83,
+        "triangles": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "dpr": 1,
+        "warehouse": "glb",
+        "cutaway": [],
+        "points": [
+          {
+            "key": "pickup:delivery-01",
+            "id": "delivery-01",
+            "kind": "pickup",
+            "position": [
+              2.3,
+              0,
+              2.5
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.3,
+              -0.006,
+              2.5
+            ],
+            "symbol": true
+          },
+          {
+            "key": "dropoff:delivery-01",
+            "id": "delivery-01",
+            "kind": "dropoff",
+            "position": [
+              2.5,
+              0,
+              1
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.5,
+              -0.002,
+              1
+            ],
+            "symbol": true
+          },
+          {
+            "key": "station:dock_1",
+            "id": "dock_1",
+            "kind": "CHARGING",
+            "position": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 0,
+            "owner": "robot_alpha",
+            "chargingRobot": "robot_alpha",
+            "detail": "İşgal altında · Şarj oluyor",
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              0.5,
+              -0.01,
+              2
+            ],
+            "symbol": true,
+            "dockPosition": [
+              1.0699999999999998,
+              -0.032,
+              2
+            ]
+          },
+          {
+            "key": "station:park_1",
+            "id": "park_1",
+            "kind": "PARKING",
+            "position": [
+              -2,
+              0,
+              -1
+            ],
+            "yaw": 1.57,
+            "detail": "Serbest",
+            "padSize": [
+              0.9206447496241756,
+              2.0469737016526324e-16,
+              0.9206447496241759
+            ],
+            "padPosition": [
+              -2,
+              -0.01,
+              -1
+            ],
+            "symbol": true
+          }
+        ]
+      },
+      "markerLabels": [
+        {
+          "key": "pickup:delivery-01",
+          "visible": true,
+          "text": "Alım delivery-01"
+        },
+        {
+          "key": "dropoff:delivery-01",
+          "visible": true,
+          "text": "Teslim delivery-01"
+        },
+        {
+          "key": "station:dock_1",
+          "visible": true,
+          "text": "Şarj dock_1İşgal altında · Şarj oluyorrobot_alpha"
+        },
+        {
+          "key": "station:park_1",
+          "visible": true,
+          "text": "Park park_1Serbest"
+        }
+      ],
+      "projection": {
+        "horizontal": 0.6768739504917097,
+        "vertical": 0.9399999999999998,
+        "clipped": false
+      },
+      "performance": {
+        "seconds": 5.016400000000001,
+        "raf": {
+          "samples": 302,
+          "fps": 60.003189538314324,
+          "p95": 16.700000000000273
+        },
+        "scene": {
+          "samples": 183,
+          "fps": 36.64478717905503,
+          "p95": 66.7000002861023
+        },
+        "callsP95": 83,
+        "trianglesP95": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "chromeRssBytes": 1122795520,
+        "heapUsedBytes": 13941432,
+        "chromeCpuPercentOneCore": 33.055198947452354
+      },
+      "selectionMs": 106,
+      "cameraMs": {
+        "follow": 632,
+        "top": 625,
+        "fit": 623,
+        "reset": 634
+      },
+      "errors": []
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "canvas": [
+        1500,
+        765.109375
+      ],
+      "dpr": 1,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+      "scrollWidth": 1920,
+      "scrollHeight": 1080,
+      "panelBottom": 971,
+      "cardsBottom": 1068,
+      "firstFrameMs": 160.2999997138977,
+      "firstDecorMs": 233.19999980926514,
+      "asset": {
+        "fetchMs": 4.900000095367432,
+        "startMs": 192.19999980926514,
+        "endMs": 197.09999990463257,
+        "decodedBodySize": 2012360,
+        "fetchToFrameMs": 41
+      },
+      "frame": {
+        "at": 315,
+        "interpolating": false,
+        "visible": true,
+        "pose": [
+          0.5,
+          0,
+          2
+        ],
+        "yaw": 1.5707963267948966,
+        "robots": [
+          {
+            "robot_id": "robot_alpha",
+            "pose": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.5398863770520993,
+              0.5387254248913946
+            ]
+          },
+          {
+            "robot_id": "robot_beta",
+            "pose": [
+              2.190164034155779,
+              0,
+              0.36776135392632664
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.6307899030845221,
+              0.4912801760642612
+            ]
+          }
+        ],
+        "selected": "robot_alpha",
+        "mode": "free",
+        "transitioning": false,
+        "target": [
+          -0.7033818640659394,
+          -0.1314435022215492,
+          1.491954023193009
+        ],
+        "camera": [
+          3.993161610987183,
+          10.435779316647977,
+          12.528831189567846
+        ],
+        "calls": 83,
+        "triangles": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "dpr": 1,
+        "warehouse": "glb",
+        "cutaway": [],
+        "points": [
+          {
+            "key": "pickup:delivery-01",
+            "id": "delivery-01",
+            "kind": "pickup",
+            "position": [
+              2.3,
+              0,
+              2.5
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.3,
+              -0.006,
+              2.5
+            ],
+            "symbol": true
+          },
+          {
+            "key": "dropoff:delivery-01",
+            "id": "delivery-01",
+            "kind": "dropoff",
+            "position": [
+              2.5,
+              0,
+              1
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.5,
+              -0.002,
+              1
+            ],
+            "symbol": true
+          },
+          {
+            "key": "station:dock_1",
+            "id": "dock_1",
+            "kind": "CHARGING",
+            "position": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 0,
+            "owner": "robot_alpha",
+            "chargingRobot": "robot_alpha",
+            "detail": "İşgal altında · Şarj oluyor",
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              0.5,
+              -0.01,
+              2
+            ],
+            "symbol": true,
+            "dockPosition": [
+              1.0699999999999998,
+              -0.032,
+              2
+            ]
+          },
+          {
+            "key": "station:park_1",
+            "id": "park_1",
+            "kind": "PARKING",
+            "position": [
+              -2,
+              0,
+              -1
+            ],
+            "yaw": 1.57,
+            "detail": "Serbest",
+            "padSize": [
+              0.9206447496241756,
+              2.0469737016526324e-16,
+              0.9206447496241759
+            ],
+            "padPosition": [
+              -2,
+              -0.01,
+              -1
+            ],
+            "symbol": true
+          }
+        ]
+      },
+      "markerLabels": [
+        {
+          "key": "pickup:delivery-01",
+          "visible": true,
+          "text": "Alım delivery-01"
+        },
+        {
+          "key": "dropoff:delivery-01",
+          "visible": true,
+          "text": "Teslim delivery-01"
+        },
+        {
+          "key": "station:dock_1",
+          "visible": true,
+          "text": "Şarj dock_1İşgal altında · Şarj oluyorrobot_alpha"
+        },
+        {
+          "key": "station:park_1",
+          "visible": true,
+          "text": "Park park_1Serbest"
+        }
+      ],
+      "projection": {
+        "horizontal": 0.626443888792299,
+        "vertical": 0.94,
+        "clipped": false
+      },
+      "performance": {
+        "seconds": 5.016400000000001,
+        "raf": {
+          "samples": 302,
+          "fps": 60.003189538314324,
+          "p95": 16.700000000000728
+        },
+        "scene": {
+          "samples": 186,
+          "fps": 37.12473912132335,
+          "p95": 66.69999980926514
+        },
+        "callsP95": 83,
+        "trianglesP95": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "chromeRssBytes": 1154580480,
+        "heapUsedBytes": 22211492,
+        "chromeCpuPercentOneCore": 33.79188262499002
+      },
+      "errors": []
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "canvas": [
+        368,
+        327.59375
+      ],
+      "dpr": 1,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+      "scrollWidth": 390,
+      "scrollHeight": 1422,
+      "panelBottom": 1409.65625,
+      "cardsBottom": 829.046875,
+      "firstFrameMs": 350.40000009536743,
+      "firstDecorMs": 425,
+      "asset": {
+        "fetchMs": 6,
+        "startMs": 385.90000009536743,
+        "endMs": 391.90000009536743,
+        "decodedBodySize": 2012360,
+        "fetchToFrameMs": 39.09999990463257
+      },
+      "frame": {
+        "at": 522.5,
+        "interpolating": false,
+        "visible": true,
+        "pose": [
+          0.5,
+          0,
+          2
+        ],
+        "yaw": 1.5707963267948966,
+        "robots": [
+          {
+            "robot_id": "robot_alpha",
+            "pose": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.5239081240913186,
+              0.5315819485198463
+            ]
+          },
+          {
+            "robot_id": "robot_beta",
+            "pose": [
+              2.1611398677435596,
+              0,
+              0.2420261818829867
+            ],
+            "yaw": 1.5707963267948966,
+            "visible": true,
+            "status": "LIVE",
+            "screen": [
+              0.6563396657153828,
+              0.4871964115746329
+            ]
+          }
+        ],
+        "selected": "robot_alpha",
+        "mode": "free",
+        "transitioning": false,
+        "target": [
+          -0.21954424395015124,
+          -0.1314435022215492,
+          1.2860656742075671
+        ],
+        "camera": [
+          5.4825069531982065,
+          12.69817169136226,
+          14.68588598750621
+        ],
+        "calls": 83,
+        "triangles": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "dpr": 1,
+        "warehouse": "glb",
+        "cutaway": [],
+        "points": [
+          {
+            "key": "pickup:delivery-01",
+            "id": "delivery-01",
+            "kind": "pickup",
+            "position": [
+              2.3,
+              0,
+              2.5
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.3,
+              -0.006,
+              2.5
+            ],
+            "symbol": true
+          },
+          {
+            "key": "dropoff:delivery-01",
+            "id": "delivery-01",
+            "kind": "dropoff",
+            "position": [
+              2.5,
+              0,
+              1
+            ],
+            "yaw": 0,
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              2.5,
+              -0.002,
+              1
+            ],
+            "symbol": true
+          },
+          {
+            "key": "station:dock_1",
+            "id": "dock_1",
+            "kind": "CHARGING",
+            "position": [
+              0.5,
+              0,
+              2
+            ],
+            "yaw": 0,
+            "owner": "robot_alpha",
+            "chargingRobot": "robot_alpha",
+            "detail": "İşgal altında · Şarj oluyor",
+            "padSize": [
+              0.9200000166893005,
+              2.0469737016526324e-16,
+              0.9200000166893005
+            ],
+            "padPosition": [
+              0.5,
+              -0.01,
+              2
+            ],
+            "symbol": true,
+            "dockPosition": [
+              1.0699999999999998,
+              -0.032,
+              2
+            ]
+          },
+          {
+            "key": "station:park_1",
+            "id": "park_1",
+            "kind": "PARKING",
+            "position": [
+              -2,
+              0,
+              -1
+            ],
+            "yaw": 1.57,
+            "detail": "Serbest",
+            "padSize": [
+              0.9206447496241756,
+              2.0469737016526324e-16,
+              0.9206447496241759
+            ],
+            "padPosition": [
+              -2,
+              -0.01,
+              -1
+            ],
+            "symbol": true
+          }
+        ]
+      },
+      "markerLabels": [
+        {
+          "key": "pickup:delivery-01",
+          "visible": false,
+          "text": "Alım delivery-01"
+        },
+        {
+          "key": "dropoff:delivery-01",
+          "visible": false,
+          "text": "Teslim delivery-01"
+        },
+        {
+          "key": "station:dock_1",
+          "visible": true,
+          "text": "Şarj dock_1İşgal altında · Şarj oluyorrobot_alpha"
+        },
+        {
+          "key": "station:park_1",
+          "visible": true,
+          "text": "Park park_1Serbest"
+        }
+      ],
+      "projection": {
+        "horizontal": 0.9000000000000001,
+        "vertical": 0.7643611584973327,
+        "clipped": false
+      },
+      "performance": {
+        "seconds": 5.0165,
+        "raf": {
+          "samples": 302,
+          "fps": 60.00199342170836,
+          "p95": 16.700000000000728
+        },
+        "scene": {
+          "samples": 185,
+          "fps": 36.8,
+          "p95": 66.69999980926514
+        },
+        "callsP95": 83,
+        "trianglesP95": 97720,
+        "geometries": 83,
+        "textures": 5,
+        "chromeRssBytes": 1123565568,
+        "heapUsedBytes": 17078636,
+        "chromeCpuPercentOneCore": 33.462932323333
+      },
+      "errors": []
+    }
+  ]
+}

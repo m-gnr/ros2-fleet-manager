@@ -1,0 +1,10 @@
+# C5 1.7E — Yerleşim öncesi kaynak incelemesi
+
+8 Kasım 2026 · Taban: `23823f6` (1.7D doğrulaması), sahne uygulaması `1ab5b3a`.
+
+- `Warehouse`, `warehouseLayout`, `warehouseDecor` ve `FloorSigns` temsili dekoru tanımlıyor. Zemin 11,35 × 10,95 m; arka GLB rafı X ≈ −3,84…3,85, Z ≈ −5,36…−4,48 m; sol raf X ≈ −5,39…−4,51 m. GLB parçaları bölüm/malzeme bazında birleştiriliyor. [1.7D ölçümü](../stage1-7d/geometry.json)
+- `operationPoints` map çerçevesindeki ürün snapshot’ını kullanıyor: seçili robotun aktif görevi, varsa diğer aktif görev, sonra kuyruktaki görev. İstasyon pozu da snapshot’tan; `fleet.yaml` ile doğrulama kaynağı aynı. ROS → Three.js dönüşümü (x, 0, −y). Dock: (0,50; −2,00), yaw 0, tolerans 0,30 m; park: (−2,00; 1,00), yaw 1,57 rad. Park için tanımlı yaklaşma poligonu yok.
+- 1.7D bağımsız kayıtlarında 12.446 TF noktası ve 164 geçerli Nav2 planı var. Bu Nav2 plan noktaları X −3,70…2,70, Z −3,30…2,50 m arasında; dağılım sağ arka cepte ve parkın batısında dekor için boşluk gösteriyor. [Tarihsel sonuç](../c5-stage1-7d-validation-2026-11-07.md#canlı-iki-robotlu-fortress)
+- [1.7D görev kanıtı](../stage1-7d/live/independent-operation-points.json): sol üst görev çifti Three.js XZ (−3,70; −3,20) → (−3,20; −3,30), 0,51 m aralıkla aynı operasyon cebinde. Sağ görev çifti (2,30; 2,50) → (2,50; 1,00). C4.5 kaynak kodundaki HIGH görevi (−2,20; −1,80) → (−1,50; −1,80). Bu örnekler sabit istasyon değildir.
+- C4.5, C3.3.3 SDF üretimini ve C4.4 dock ekini kullanıyor. Dünyada 12 m zemin, dört fiziksel dış duvar (merkez çizgileri x/y = ±4,50 m), robotlar ve pasif fiziksel dock pedi var; içeride fiziksel raf ya da bölme yok. Robot gövdesi 0,50 × 0,30 m; tekerler dahil öndeki destek küresi dahil ihtiyatlı yatay yarıçap 0,45 m. Geometri kabulünde buna 0,12 m görsel pay eklenir.
+- Tasarım yönü: arka raflara paralel kısa sağ raf, kepenkten bu rafın iki ucuna açılan yükleme alanı, alçak kesik park bölmeleri, ortada açık koridor ve sağda genel teslim hazırlık zemini. Dock ve park boyası snapshot pozuna bağlı olacak. Yükseltilmiş dekor ölçülmüş segmentler ve istasyon çevresi karşısında sınanacak.

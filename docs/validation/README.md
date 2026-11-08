@@ -38,6 +38,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C5 Aşama 1.7B | [Rapor](c5/c5-stage1-7b-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7b-commands-2026-11-07.md) | Yerel CC0 depo, dört viewport, 19 Chrome testi ve iki robotlu canlı Fortress |
 | C5 Aşama 1.7C | [Rapor](c5/c5-stage1-7c-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7c-commands-2026-11-07.md) | Sunum yerleşimi, kaynak temelli operasyon alanları, dört Chrome viewport’u ve iki robotlu Fortress |
 | C5 Aşama 1.7D | [Rapor](c5/c5-stage1-7d-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7d-commands-2026-11-07.md) | Depo duvarları, kare operasyon bölgeleri, Chrome ve kayıtlı TF/Nav2 açıklığı |
+| C5 Aşama 1.7E | [Rapor](c5/c5-stage1-7e-validation-2026-11-08.md) · [Komutlar](c5/c5-stage1-7e-commands-2026-11-08.md) | İşlevsel iç yerleşim, yakın görev işaretleri, Chrome ve canlı TF/Nav2 ayak izi denetimi |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

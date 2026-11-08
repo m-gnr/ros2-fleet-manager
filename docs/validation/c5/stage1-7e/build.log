@@ -1,0 +1,30 @@
+
+> fleet-operations-dashboard@0.1.0 build
+> tsc --noEmit && vite build --outDir /tmp/c5-wh17e/release --emptyOutDir
+
+vite v7.3.7 building client environment for production...
+transforming...
+node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 1903 modules transformed.
+rendering chunks...
+computing gzip size...
+../../../../../tmp/c5-wh17e/release/index.html                               0.54 kB │ gzip:   0.34 kB
+../../../../../tmp/c5-wh17e/release/assets/burger-preview-BPnEJROC.webp      7.18 kB
+../../../../../tmp/c5-wh17e/release/assets/warehouse-aisle-CKO2_hVv.glb  2,012.36 kB
+../../../../../tmp/c5-wh17e/release/assets/index-BE-hoUE0.css               15.93 kB │ gzip:   4.32 kB
+../../../../../tmp/c5-wh17e/release/assets/Scene-CR2Y8qOc.js               266.42 kB │ gzip:  83.90 kB
+../../../../../tmp/c5-wh17e/release/assets/three-webgl-C0hmANdu.js         350.24 kB │ gzip:  89.99 kB
+../../../../../tmp/c5-wh17e/release/assets/index-B2px-Zdj.js               353.59 kB │ gzip: 109.92 kB
+../../../../../tmp/c5-wh17e/release/assets/three-core-DzgmOPtA.js          374.83 kB │ gzip: 102.36 kB
+✓ built in 1.83s

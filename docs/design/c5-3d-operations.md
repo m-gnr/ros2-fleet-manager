@@ -41,3 +41,7 @@ Raf ve palet ayak izleri çevrede tutulur. Depo zemini, raf numaraları ve güve
 Arka duvar, yükleme kepengi, yan kesitler ve koridor boyası sunum geometrisidir. Yerleşim haritanın operasyon alanını çevreler. Serbest kameradan bir dekor grubunun kutusu robot gövdesine görüşü kapatırsa grup geçici olarak kesilir. İlk ve üstten kadraj, dekorun tam sınırlarına göre hesaplanır.
 
 Şarj, park, alım ve teslim zeminde 0,92 m kare, simge ve metinle ayrılır. Alım ve teslim aynı map noktasındaysa kareyi paylaşır. Zemin boyası görsel ölçüdür. İstasyon sahipliği, C4 şarj durumu ve görev çiftinin seçimi mevcut snapshot kurallarını kullanır. [Yerleşim ve doğrulama](../validation/c5/c5-stage1-7d-validation-2026-11-07.md)
+
+## Aşama 1.7E işlevsel iç yerleşim
+
+Ana koridor, kepenk önü, raf geçidi ve operasyon cepleri temsili dekor grubunda kalır. Alçak bölmeler bağımsız kesilebilir; GLB iç rafı ayrı bir statik mesh’tir. İstasyon çerçeveleri ve görev işaretleri canlı snapshot katmanındadır. Kesişen alım/teslim kareleri ayırıcı doğruyla bölünür, map pozları değişmez. Sahne etiketleri kısa durum gösterir; sahiplik kaydı robot ayrıntılarında açılır. [Yerleşim ve ölçüm kapsamı](../validation/c5/c5-stage1-7e-validation-2026-11-08.md)

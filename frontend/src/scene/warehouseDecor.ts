@@ -1,7 +1,7 @@
 import { Box3, BufferAttribute, BufferGeometry, Group, Mesh, MeshStandardMaterial, Object3D } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
-import { palletRow, rearRack, sideRack, type StorageBounds } from './warehouseLayout'
+import { innerRack, palletRow, rearRack, sideRack, type StorageBounds } from './warehouseLayout'
 import warehouseUrl from './assets/warehouse-aisle.glb?url'
 
 const rearParts = /^(00[6-9]|01[0-9]|02[0-46])-/
@@ -14,11 +14,14 @@ export async function loadWarehouseDecor() {
   const group = new Group()
   group.name = 'warehouse-decor'
 
+  // This stock row uses opaque untextured colors from the local GLB.
+  // Baking them into the vertices keeps it independently cuttable in one draw.
+  const innerMaterial = new MeshStandardMaterial({ vertexColors: true, roughness: .73 })
   const storageBounds: StorageBounds[] = []
   group.userData.storageBounds = storageBounds
 
   function bake(part: Object3D, name: string, x: number, z: number,
-    scale: readonly [number, number, number], yaw = 0) {
+    scale: readonly [number, number, number], yaw = 0, colorBatch?: MeshStandardMaterial) {
     const bounds = new Box3()
     const batches = new Map<MeshStandardMaterial, BufferGeometry[]>()
     part.position.set(x, 0, z)
@@ -44,7 +47,18 @@ export async function loadWarehouseDecor() {
       geometry.applyMatrix4(object.matrixWorld)
       geometry.computeBoundingBox()
       bounds.union(geometry.boundingBox!)
-      const material = object.material as MeshStandardMaterial
+      const sourceMaterial = object.material as MeshStandardMaterial
+      const material = colorBatch ?? sourceMaterial
+      if (colorBatch) {
+        const colors = new Float32Array(geometry.getAttribute('position').count * 3)
+        const { r, g, b } = sourceMaterial.color
+        for (let i = 0; i < colors.length; i += 3) {
+          colors[i] = r
+          colors[i + 1] = g
+          colors[i + 2] = b
+        }
+        geometry.setAttribute('color', new BufferAttribute(colors, 3))
+      }
       const batch = batches.get(material) ?? []
       batch.push(geometry)
       batches.set(material, batch)
@@ -57,7 +71,7 @@ export async function loadWarehouseDecor() {
     for (const [sourceMaterial, batch] of batches) {
       const geometry = mergeGeometries(batch)
       if (!geometry) throw new Error('Warehouse geometry could not be batched')
-      const material = sourceMaterial.clone()
+      const material = sourceMaterial === colorBatch ? colorBatch : sourceMaterial.clone()
       // Static display lighting has no environment map for fully metallic glTF materials.
       material.metalness = Math.min(material.metalness, 0.24)
       const mesh = new Mesh(geometry, material)
@@ -70,9 +84,10 @@ export async function loadWarehouseDecor() {
     group.traverse(object => {
       if (object instanceof Mesh) {
         object.geometry.dispose()
-        object.material.dispose()
+        if (object.material !== innerMaterial) object.material.dispose()
       }
     })
+    innerMaterial.dispose()
   }
 
   try {
@@ -112,7 +127,8 @@ export async function loadWarehouseDecor() {
       }
     }
     bake(rear, 'rear-rack', rearRack.x, rearRack.z, rearRack.scale)
-    bake(side, 'side-rack', sideRack.x, sideRack.z, sideRack.scale, Math.PI / 2)
+    bake(side.clone(), 'side-rack', sideRack.x, sideRack.z, sideRack.scale, Math.PI / 2)
+    bake(side, 'inner-rack', innerRack.x, innerRack.z, innerRack.scale, 0, innerMaterial)
     bake(pallets, 'pallet-row', 0, palletRow.z, [1, 0.44, 0.70])
     if (!storageBounds.length) throw new Error('Warehouse asset has no matching parts')
     return { group, dispose }

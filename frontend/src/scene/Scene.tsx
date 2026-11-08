@@ -37,7 +37,7 @@ const polarLimit = Math.PI / 2 - 0.045
 const fov = 42
 
 type ScreenRect = { left: number; top: number; right: number; bottom: number }
-type LabelPlacement = { label: HTMLSpanElement; candidates: ScreenRect[] }
+type LabelPlacement = { label: HTMLSpanElement; candidates: ScreenRect[]; taskAnchor?: [number, number] }
 
 function overlaps(a: ScreenRect, b: ScreenRect) {
   return a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top
@@ -323,7 +323,8 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
       const width = label.offsetWidth
       const height = label.offsetHeight
       const gap = 18
-      placements.push({ label, candidates: [
+      const task = point.kind === 'pickup' || point.kind === 'dropoff'
+      placements.push({ label, taskAnchor: task ? [x, y] : undefined, candidates: [
         { left: x + gap, right: x + gap + width, top: y - height / 2, bottom: y + height / 2 },
         { left: x - gap - width, right: x - gap, top: y - height / 2, bottom: y + height / 2 },
         { left: x - width / 2, right: x + width / 2, top: y + gap, bottom: y + gap + height },
@@ -334,13 +335,19 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
         { left: x - gap - width, right: x - gap, top: y - gap / 2 - height, bottom: y - gap / 2 },
       ] })
     }
-    for (const { label, candidates } of placements) {
-      const slot = candidates.find(rect => rect.left >= 3 && rect.right <= size.width - 3 &&
+    let visibleTask: [number, number] | undefined
+    for (const { label, candidates, taskAnchor } of placements) {
+      // When two task anchors almost coincide, a distant second label would
+      // read as a different location. Both ground symbols remain visible.
+      const sharesAnchor = taskAnchor && visibleTask &&
+        Math.hypot(taskAnchor[0] - visibleTask[0], taskAnchor[1] - visibleTask[1]) < 12
+      const slot = !sharesAnchor && candidates.find(rect => rect.left >= 3 && rect.right <= size.width - 3 &&
         rect.top >= 3 && rect.bottom <= size.height - 3 && !occupied.some(other => overlaps(rect, other)))
       label.style.visibility = slot ? 'visible' : 'hidden'
       if (!slot) continue
       label.style.transform = `translate(${slot.left}px, ${slot.top}px)`
       occupied.push(slot)
+      if (taskAnchor) visibleTask = taskAnchor
     }
     if (transitioning.current || interpolating) invalidate()
 
@@ -391,7 +398,11 @@ function Vehicles({ feed, command, lowQuality, labels, markers, points, pointLab
               padPosition: pad.getWorldPosition(screen).toArray(),
               symbol: !!symbol,
               position: root.getWorldPosition(screen).toArray(), yaw: root.rotation.y,
-              dockPosition: dock?.getWorldPosition(screen).toArray() }
+              dockPosition: dock?.getWorldPosition(screen).toArray(),
+              dockBounds: dock ? (() => {
+                bounds.setFromObject(dock)
+                return { min: bounds.min.toArray(), max: bounds.max.toArray() }
+              })() : undefined }
           }),
         },
       }))

@@ -27,8 +27,8 @@ export function EmptyState({ title, detail }: { title: string; detail: string })
   return <div className="empty"><Radio size={24} /><strong>{title}</strong><p>{detail}</p></div>;
 }
 
-export function RobotDetails({ robot, robotId, tf, connected, preview }: {
-  robot: Robot | undefined; robotId?: string; tf?: Telemetry; connected: boolean; preview?: boolean;
+export function RobotDetails({ robot, robotId, tf, connected, preview, stations = [] }: {
+  robot: Robot | undefined; robotId?: string; tf?: Telemetry; connected: boolean; preview?: boolean; stations?: Fleet["stations"];
 }) {
   const pose = tf?.pose;
   const tfStatus = tf?.status ?? "NO_DATA";
@@ -36,6 +36,8 @@ export function RobotDetails({ robot, robotId, tf, connected, preview }: {
   const age = robot && telemetryAge(robot.status_age_sec, robotReliability(robot, connected));
   const charging = connected && robot?.telemetry === "LIVE" && robot.battery_reliability === "LIVE" &&
     robot.charging === "CHARGING";
+  const resources = robot && stations.filter(station => station.reserved_by_robot_id === robot.robot_id ||
+    station.occupied_by_robot_id === robot.robot_id);
   const tfFields = robotId && <>
     <dl className="detail-grid tf-fields">
       <div><dt>TF poz durumu</dt><dd data-testid="tf-status">{tfStatus}</dd></div>
@@ -81,6 +83,14 @@ export function RobotDetails({ robot, robotId, tf, connected, preview }: {
               <div><dt>Kalan enerji</dt><dd>{displayNumber(robot.battery_energy_wh, 2)} Wh</dd></div>}
             <div><dt>Ürün telemetrisi</dt><dd title="Snapshot alınırken kaynağın bildirdiği alım yaşı">{age}</dd></div>
           </dl>
+          {resources && resources.length > 0 && <details className="measurement-details">
+            <summary>İstasyon sahipliği{connected ? "" : " · son eşitleme"}</summary>
+            {resources.map(station => <dl className="detail-grid" key={station.station_id}>
+              <div><dt>İstasyon</dt><dd>{station.station_id} · {labels[station.state]}</dd></div>
+              <div><dt>Rezerve eden</dt><dd>{station.reserved_by_robot_id ?? "—"}</dd></div>
+              <div><dt>İşgal eden</dt><dd>{station.occupied_by_robot_id ?? "—"}</dd></div>
+            </dl>)}
+          </details>}
           {tfFields}
           {preview && <figure className="robot-model-preview">
             <figcaption><small>MODEL ÖNİZLEMESİ</small><strong>TurtleBot3<br />Burger</strong>

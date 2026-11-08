@@ -1,73 +1,11 @@
 import { expect, test, type Page, type WebSocketRoute } from "@playwright/test";
 import { PerspectiveCamera, Vector3 } from "three";
-import type { Fleet, Robot } from "../src/fleet";
 import { blendPose, toScene } from "../src/scene/coordinates";
 import { frameWarehouse } from "../src/scene/framing";
 import { simTime, telemetryAge } from "../src/presentation";
 
-const backend = "c98d630d-85a8-4173-955d-430ac96d6049";
-const producer = "acdc62c6-569f-4eec-aa8e-fe3fd5bb32d2";
-const restarted = "7f54a72b-be30-420f-a82b-e1f7212bde7b";
-const pose = { x: 0, y: 1, yaw: Math.PI / 2, frame_id: "map" };
-const valid: Robot = {
-  robot_id: "robot_alpha", state: "CHARGING", telemetry: "LIVE", status_sim_ns: "1000000000",
-  status_age_sec: 0.1, pose, pose_reliability: "LIVE", pose_sim_ns: "900000000", initial_status_verified: true,
-  battery_soc_percent: 72.5, battery_energy_wh: 72.5, battery_sim_ns: "900000000", battery_reliability: "LIVE",
-  charging: "CHARGING", charging_station_id: "dock_test", active_task_id: null,
-};
-const invalid: Robot = {
-  ...valid, robot_id: "robot_beta", state: "EXECUTING_TASK", pose: { ...pose, x: -1, frame_id: "odom" },
-  battery_reliability: "UNAVAILABLE", battery_soc_percent: null, battery_energy_wh: null, battery_sim_ns: null,
-  charging: "UNAVAILABLE", charging_station_id: null, active_task_id: "task_test",
-};
-const fixture: Fleet = {
-  schema_version: 1, backend_session_id: backend, source_session_id: producer, sequence: 8,
-  generated_at_utc: "2026-11-06T16:00:00Z", map_frame: "map", robots: [valid, invalid],
-  tasks: [{ task_id: "task_test", status: "ASSIGNED", priority: "HIGH", pickup: pose, dropoff: pose,
-    assigned_robot_id: "robot_beta", created_at_source_seconds: 4, review_hold: false }],
-  task_counts: { total: 1, queued: 0, active: 1 },
-  stations: [{ station_id: "dock_test", station_type: "CHARGING", pose: { ...pose, x: 1 },
-    state: "OCCUPIED", reserved_by_robot_id: "robot_alpha", occupied_by_robot_id: "robot_alpha",
-    charging: "CHARGING", charging_robot_id: "robot_alpha" }],
-};
-
-async function feed(page: Page, handler: (socket: WebSocketRoute) => void) {
-  await page.routeWebSocket("**/ws/fleet", handler);
-}
-
-function telemetry(socket: WebSocketRoute) {
-  const ids = [valid.robot_id, invalid.robot_id];
-  const send = (packet: object) => socket.send(JSON.stringify({ type: "scene", packet }));
-  let stamp = 1_000_000_000;
-  let epoch = 0;
-  const identity = (id: string) => ({ robot_id: id, frame_id: "map", source: "tf", version: 1, epoch,
-    stream_id: id === valid.robot_id ? backend : producer });
-  const sample = (id: string, x: number, y: number, sourceStamp = stamp) => send({
-    ...identity(id), type: "robot_pose", stamp_ns: String(sourceStamp), x, y, yaw: Math.PI / 2,
-  });
-  const status = (id: string, value: string) => send({ ...identity(id), type: "data_status", status: value });
-  const plan = (id: string, topic = `/${id}/plan`) => send({
-    ...identity(id), type: "robot_path", stamp_ns: String(stamp), source_topic: topic,
-    plan_source: "nav2_observed_plan", ttl_ms: 2000, points: [[-2, 1], [-1, 0]],
-  });
-  function connect() {
-    socket.send('{"type":"scene_connected"}');
-    send({ type: "fleet_hello", version: 1, robot_ids: ids });
-    for (const id of ids) send({ ...identity(id), type: "hello", after_stamp_ns: "0",
-      stale_after_ms: 2000, path_topic: `/${id}/plan` });
-  }
-  function poses() {
-    stamp += 100_000_000;
-    sample(valid.robot_id, -2, 1);
-    sample(invalid.robot_id, 2, -1);
-  }
-  function rewind() {
-    epoch++;
-    stamp = 1_000_000_000;
-    status(valid.robot_id, "NO_DATA");
-  }
-  return { connect, poses, sample, status, plan, rewind };
-}
+import { backend, restarted, pose, valid, invalid, fixture, feed, telemetry } from "./dashboard-fixtures";
+import { taskPad } from "../src/scene/taskPad";
 
 async function trace(page: Page) {
   await page.addInitScript(() => {
@@ -610,9 +548,12 @@ test("places verified operation markers on map coordinates and prioritizes the s
   await page.goto("/?trace=1");
   const point = (id: string) => page.locator(`[data-operation-point="${id}"]`);
   await expect(point("pickup:other_task")).toHaveCount(1);
-  await expect(point("station:dock_test")).toContainText("robot_alpha");
-  await expect(point("station:dock_test")).toContainText("İşgal altında");
-  await expect(point("station:dock_test")).toContainText("Şarj oluyor");
+  await expect(point("station:dock_test")).toHaveText("Şarj Aktif");
+  await expect(point("station:dock_test")).toHaveAttribute("title", /İşgal altında · Şarj oluyor · robot_alpha/);
+  const ownership = page.locator(".robot-details details").filter({ hasText: "İstasyon sahipliği" });
+  await ownership.getByText("İstasyon sahipliği", { exact: true }).click();
+  await expect(ownership.getByText("dock_test · İşgal altında", { exact: true })).toBeVisible();
+  await expect(ownership.getByText("robot_alpha", { exact: true })).toHaveCount(2);
   const marker = page.locator('button[data-robot-id="robot_alpha"]');
   await expect(marker).toHaveAttribute("data-charging", "true");
   const preview = page.locator(".robot-model-preview");
@@ -631,8 +572,8 @@ test("places verified operation markers on map coordinates and prioritizes the s
   const renderedPoints = await page.evaluate(() => Reflect.get(window, "scene_frame").points);
   const dock = renderedPoints.find((item: { key: string }) => item.key === "station:dock_test");
   const parked = renderedPoints.find((item: { key: string }) => item.key === "station:park_test");
-  expect(dock.dockPosition[0]).toBeCloseTo(1);
-  expect(dock.dockPosition[2]).toBeCloseTo(-1.57);
+  expect(dock.dockPosition[0]).toBeCloseTo(1.88);
+  expect(dock.dockPosition[2]).toBeCloseTo(-1);
   expect(parked.dockPosition).toBeUndefined();
   for (const point of renderedPoints) {
     expect(point.padSize[0]).toBeCloseTo(.92);
@@ -650,7 +591,7 @@ test("places verified operation markers on map coordinates and prioritizes the s
   await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.points
     .filter(({ id }: { id: string }) => id === "task_test")
     .map(({ padSize, padPosition }: { padSize: number[]; padPosition: number[] }) =>
-      [Number(padSize[0].toFixed(2)), Number(padPosition[0].toFixed(2))]))).toEqual([[.46, -.23], [.46, .23]]);
+      [Number(padSize[0].toFixed(2)), Number(padPosition[0].toFixed(2))]))).toEqual([[.46, 0], [.46, 0]]);
   await expect(preview).not.toContainText("Şarj oluyor");
   await page.getByRole("button", { name: "Robot seç: robot_alpha", exact: true }).click();
   socket!.send(JSON.stringify({ ...snapshot, sequence: snapshot.sequence + 1, tasks: [],
@@ -737,15 +678,23 @@ test("frames the walls and keeps raised decor outside the open operations floor"
     corners: Reflect.get(window, "scene_warehouse-bounds") as number[][],
     frame: Reflect.get(window, "scene_frame"),
   }));
-  expect(storage.map(({ name }: { name: string }) => name)).toEqual(["rear-rack", "side-rack", "pallet-row"]);
-  const [rear, side, pallets] = storage;
+  expect(storage.map(({ name }: { name: string }) => name)).toEqual(["rear-rack", "side-rack", "inner-rack", "pallet-row"]);
+  const [rear, side, inner, pallets] = storage;
   expect(rear.max[2]).toBeLessThan(-4.4);
   expect(rear.max[1]).toBeGreaterThan(1.8);
   expect(side.max[0]).toBeLessThan(-4.4);
   expect(side.max[2] - side.min[2]).toBeGreaterThan(4);
+  expect(inner.min[0]).toBeGreaterThan(1.8);
+  expect(inner.max[0]).toBeLessThan(3.55);
+  expect(inner.max[2]).toBeLessThan(-1.8);
+  expect(rear.max[2]).toBeLessThan(inner.min[2] - 1);
   expect(pallets.min[2]).toBeGreaterThan(4.4);
   expect(pallets.max[1]).toBeLessThan(.5);
-  const [rearWall, leftWall, rightWall] = decor;
+  const section = (name: string) => decor.find((item: { name: string }) => item.name === name);
+  const [rearWall, leftWall, rightWall] = ["rear-wall", "left-wall", "right-wall"].map(section);
+  const partitions = ["loading-divider", "park-divider-north", "park-divider-south"].map(section);
+  expect(partitions.every(item => item.max[1] < .30)).toBe(true);
+  expect(partitions[2].min[2] - partitions[1].max[2]).toBeGreaterThan(1.1);
   expect(rearWall.name).toBe("rear-wall");
   expect(rearWall.max[2]).toBeLessThan(-5.1);
   expect(rearWall.max[1]).toBeGreaterThan(2.3);
@@ -797,4 +746,52 @@ test("cuts away obstructing decor when orbiting behind the depot and restores th
   const marker = page.locator('button[data-robot-id="robot_alpha"]');
   await expect(marker).toBeVisible();
   await expect(marker).toHaveCSS("width", "26px");
+});
+
+test("keeps nearby task pads distinct and anchors the selected label to the correct robot", async ({ page }) => {
+  await trace(page);
+  const id = "shipment-very-long-order-0217";
+  const pickup = { ...pose, x: -3.4, y: 3.20 };
+  const dropoff = { ...pose, x: -3.32, y: 3.24 };
+  await feed(page, (socket) => {
+    socket.send(JSON.stringify({ ...fixture, tasks: [{ ...fixture.tasks[0], task_id: id, pickup, dropoff }],
+      robots: [valid, { ...invalid, active_task_id: id }] }));
+    const tf = telemetry(socket);
+    tf.connect();
+    tf.sample(valid.robot_id, pickup.x, pickup.y);
+    tf.sample(invalid.robot_id, pickup.x + .01, pickup.y);
+  });
+  await page.goto("/?trace=1");
+  await warehouseReady(page);
+  const selected = page.locator(".scene-label.selected");
+  await expect(selected).toHaveAttribute("data-robot-id", valid.robot_id);
+  await expect(selected).toBeVisible();
+  await expect(page.locator(`.scene-label[data-robot-id="${invalid.robot_id}"]`)).toBeHidden();
+  const labels = page.locator('[data-operation-point^="pickup:"], [data-operation-point^="dropoff:"]');
+  await expect(labels).toHaveCount(2);
+  await expect(labels.first()).toContainText("shipmen…0217");
+  await expect(labels.first()).toHaveAttribute("title", `Alım · ${id}`);
+  await expect(labels.last()).toHaveAttribute("title", `Teslim · ${id}`);
+  expect(await labels.filter({ visible: true }).count()).toBeLessThan(2);
+  const frame = await page.evaluate(() => Reflect.get(window, "scene_frame"));
+  expect(frame.points.filter(({ id: pointId }: { id: string }) => pointId === id).map(
+    ({ position, symbol }: { position: number[]; symbol: boolean }) => [position, symbol]
+  )).toEqual([[[pickup.x, 0, -pickup.y], true], [[dropoff.x, 0, -dropoff.y], true]]);
+  const rects = await page.locator(".scene-label:visible, .scene-point-label:visible").evaluateAll(elements =>
+    elements.map(e => e.getBoundingClientRect().toJSON()));
+  for (let i = 0; i < rects.length; i++) for (const b of rects.slice(i + 1)) {
+    const a = rects[i];
+    expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
+  }
+});
+
+test("cuts diagonal overlap at the shared bisector and leaves distant pads square", () => {
+  const dx = .31, dy = -.14, middle = (dx * dx + dy * dy) / 2;
+  const pickup = taskPad(dx, dy, true)!;
+  const dropoff = taskPad(-dx, -dy, false)!;
+  const projection = (x: number, y: number) => x * dx + y * dy;
+  expect(pickup.vertices.every(([x, y]) => projection(x, y) <= middle + 1e-12)).toBe(true);
+  expect(dropoff.vertices.every(([x, y]) => projection(x + dx, y + dy) >= middle - 1e-12)).toBe(true);
+  expect(pickup.vertices.some(([x, y]) => Math.abs(projection(x, y) - middle) < 1e-12)).toBe(true);
+  expect(taskPad(.95, -.14, true)).toBeUndefined();
 });

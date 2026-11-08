@@ -92,12 +92,12 @@ export default function App() {
         <div className="operations-grid">
           <ScenePanel fleet={fleet} connected={connected} feed={sceneFeed} view={scene} robotIds={robotIds} selected={activeId} onSelect={setSelectedId} />
           <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} tfRobots={scene.robots} />
-          <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} connected={connected} preview />
+          <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} stations={fleet?.stations} connected={connected} preview />
         </div>
       </>}
       {view.id === "robots" && <div className="operations-grid robot-view">
         <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} />
-        <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} connected={connected} />
+        <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} stations={fleet?.stations} connected={connected} />
       </div>}
       {view.id === "tasks" && <TaskList fleet={fleet} connected={connected} />}
       {view.id === "stations" && <StationOverview fleet={fleet} connected={connected} />}

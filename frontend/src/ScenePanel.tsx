@@ -15,6 +15,10 @@ const modes = [
   ["free", Orbit], ["follow", Crosshair], ["top", Layers], ["fit", Maximize],
 ] as const;
 const pointIcons = { CHARGING: Zap, PARKING: SquareParking, pickup: PackageOpen, dropoff: PackageCheck, SAFE_WAITING: Box };
+const shortTaskId = (id: string) => {
+  const chars = Array.from(id);
+  return chars.length > 13 ? `${chars.slice(0, 7).join("")}…${chars.slice(-4).join("")}` : id;
+};
 const trace = new URLSearchParams(window.location.search).get("trace") === "1";
 
 class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -73,20 +77,23 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
               ref={(node) => { if (node) markers.set(id, node); else markers.delete(id); }}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7l8 5-8 5 2-5z" fill="currentColor" /></svg>
             </button>
-            <span data-robot-id={id} title={id} ref={(node) => {
+            <span data-robot-id={id} title={`${id} · ${status}`} ref={(node) => {
               if (node) labels.set(id, node);
               else labels.delete(id);
             }} className={`scene-label ${status.toLowerCase()} ${isSelected ? "selected" : ""}`}>
-              <i style={{ background: color }} /><span>{id}</span><small>{status}</small>
+              <i style={{ background: color }} /><span>{id}</span>{(isSelected || status !== "LIVE") && <small>{status}</small>}
             </span>
           </Fragment>;
         })}
-        {points.map(({ key, id, kind, detail, owner }) => {
+        {points.map(({ key, id, kind, detail, owner, chargingRobot }) => {
           const { name, color } = pointStyle[kind];
           const Icon = pointIcons[kind];
+          const task = kind === "pickup" || kind === "dropoff";
           return <span key={key} className="scene-point-label" data-operation-point={key} title={[name, id, detail, owner].filter(Boolean).join(" · ")}
             ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
-            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> <span>{id}</span>{detail && <small>{detail}</small>}{owner && <small>{owner}</small>}
+            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> {task
+              ? <span>{shortTaskId(id)}</span>
+              : <small>{chargingRobot ? "Aktif" : detail}</small>}
           </span>;
         })}
       </div>

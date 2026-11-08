@@ -2,7 +2,7 @@ import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Color, Group, InstancedMesh, Object3D } from 'three'
 import { FloorSigns } from './FloorSigns'
 import { loadWarehouseDecor } from './warehouseDecor'
-import { palletRow, rearRack, sideRack, wallSections, warehouseSize, type DecorBox } from './warehouseLayout'
+import { innerRack, palletRow, partitions, rearRack, sideRack, wallSections, warehouseSize, type DecorBox } from './warehouseLayout'
 
 function Boxes({ name, boxes, cutaway = false }: { name: string; boxes: DecorBox[]; cutaway?: boolean }) {
   const mesh = useRef<InstancedMesh>(null)
@@ -38,6 +38,7 @@ const cartons: DecorBox[] = [
 ]
 const fallbackRear: DecorBox[] = []
 const fallbackSide: DecorBox[] = []
+const fallbackInner: DecorBox[] = []
 const fallbackPallets: DecorBox[] = []
 const safety = '#bb8a38'
 const stripe = '#dcb36b'
@@ -55,34 +56,45 @@ bay(0, rearRack.z, 8.65, 1.0)
 bay(sideRack.x, 0.14, 1.02, 4.74)
 bay(3.28, palletRow.z, 3.05, 0.75)
 
-for (const x of [-4.42, 4.43]) {
-  paint.push([x, -0.019, 0, 0.031, 0.006, 8.88, stripe])
-}
-for (const z of [-4.43, 4.42]) {
-  paint.push([0, -0.019, z, 8.86, 0.006, 0.031, stripe])
-}
-for (let index = 0; index < 8; index++) {
-  paint.push([-3.75 + index * 0.21, -0.014, 4.94, 0.1, 0.006, 0.54, '#f9f4e6'])
-  paint.push([4.92, -0.014, -2.13 + index * 0.21, 0.46, 0.006, 0.1, '#f9f4e6'])
-}
+bay(2.70, innerRack.z, 1.66, .90)
 
-// Painted aisle edges and a striped staging apron. These never constrain navigation.
-for (const z of [-3.88, 3.56]) {
-  for (let x = -3.70; x <= 3.72; x += .74) {
-    paint.push([x, -.019, z, .44, .005, .030, '#d4a454'])
+// Cross aisle connects the loading apron, the parallel racks, and the open spine.
+paint.push([0, -.027, -1.14, 1.92, .006, 4.18, '#d1dedb'],
+  [2.67, -.027, -3.19, 3.46, .006, .95, '#d1dedb'],
+  [3.92, -.026, -2.45, .88, .006, 1.47, '#d1dedb'],
+  [4.50, -.025, -4.53, 1.72, .008, 1.23, '#dfc897'],
+  [2.80, -.025, 1.92, 2.56, .008, 3.65, '#dcd5e3'],
+  [-3.04, -.025, -3.14, 2.38, .008, 1.18, '#dad9ce'])
+for (const x of [-.96, .96]) {
+  for (let z = -2.82; z <= .66; z += .48) {
+    paint.push([x, -.017, z, .028, .006, .27, '#91aaa6'])
   }
 }
-for (let index = 0; index < 7; index++) {
-  paint.push([4.26 + index * .16, -.017, -4.83, .066, .006, .55, '#e8bb61'])
+for (const z of [-3.66, -2.72]) {
+  for (let x = 1.12; x <= 4.23; x += .48) {
+    paint.push([x, -.017, z, .27, .006, .026, '#91aaa6'])
+  }
 }
-paint.push([-2.85, -.019, 4.60, 2.08, .005, .034, stripe],
-  [-2.85, -.019, 5.27, 2.08, .005, .034, stripe])
+for (const x of [3.64, 5.33]) {
+  for (let i = 0; i < 5; i++) paint.push([x, -.016, -5.01 + i * .19, .052, .006, .108, safety])
+}
+for (const z of [.095, 3.745]) paint.push([2.80, -.017, z, 2.56, .006, .034, '#a296b2'])
+for (const x of [1.52, 4.08]) paint.push([x, -.017, 1.92, .034, .006, 3.65, '#a296b2'])
+
+const dividerBoxes = partitions.map(({ name, x, z, width, depth }) => ({
+  name, boxes: [
+    [x, .115, z, width, .26, depth, '#708b91'],
+    [x, .258, z, width, .042, depth + .018, '#d5a54e'],
+  ] satisfies DecorBox[],
+}))
+
 for (const x of [-5.45, 5.45]) {
   trim.push([x, .058, 5.25, .18, .195, .18, '#7d9296'], [x, .157, 5.25, .17, .048, .17, stripe])
 }
 
-function schematicRack(x: number, z: number, length: number, height: number, count: number, side = false) {
-  const boxes = side ? fallbackSide : fallbackRear
+function schematicRack(x: number, z: number, length: number, height: number, count: number, name: 'rear' | 'side' | 'inner' = 'rear') {
+  const boxes = name === 'side' ? fallbackSide : name === 'inner' ? fallbackInner : fallbackRear
+  const side = name === 'side'
   const box = (along: number, y: number, across: number, w: number, h: number, d: number, color: string) =>
     boxes.push(side ? [x + across, y, z - along, d, h, w, color] : [x + along, y, z + across, w, h, d, color])
   for (let index = 0; index <= count; index++) {
@@ -102,7 +114,8 @@ function schematicRack(x: number, z: number, length: number, height: number, cou
 }
 
 schematicRack(0, rearRack.z, 7.6, 1.94, 3)
-schematicRack(sideRack.x, .15, 4.25, 1.34, 2, true)
+schematicRack(sideRack.x, .15, 4.25, 1.34, 2, 'side')
+schematicRack(2.70, innerRack.z, 1.45, .94, 2, 'inner')
 for (const x of palletRow.x) {
   fallbackPallets.push([x, .04, palletRow.z, .94, .09, .61, '#a7875a'],
     [x, .17, palletRow.z, .81, .17, .53, '#b7c3c5'])
@@ -136,6 +149,7 @@ export const WarehouseEnvironment = memo(function WarehouseEnvironment({ softSha
     <gridHelper args={[10.7, 11, '#cbd2d2', '#d3d9d8']} position={[0, -.030, 0]} />
     <Boxes name="safety-markings" boxes={paint} />
     <Boxes name="corner-bollards" boxes={trim} />
+    {dividerBoxes.map(({ name, boxes }) => <Boxes key={name} name={name} boxes={boxes} cutaway />)}
     {wallSections.map(({ name, boxes }) => <group key={name} name={name} userData={{ cutaway: true }}>
       <Boxes name={`${name}-panels`} boxes={boxes} />
       {name === 'rear-wall' && <FloorSigns loadingDoor />}
@@ -149,6 +163,7 @@ export const WarehouseEnvironment = memo(function WarehouseEnvironment({ softSha
       : <group name="schematic-warehouse">
         <Boxes name="schematic-rear-rack" boxes={fallbackRear} cutaway />
         <Boxes name="schematic-side-rack" boxes={fallbackSide} cutaway />
+        <Boxes name="schematic-inner-rack" boxes={fallbackInner} cutaway />
         <Boxes name="schematic-pallet-row" boxes={fallbackPallets} cutaway />
       </group>}
   </group>

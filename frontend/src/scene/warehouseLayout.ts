@@ -3,6 +3,7 @@
 export const warehouseSize = [11.35, 10.95] as const
 export const rearRack = { x: -3.8, z: -4.96, scale: [0.94, 0.49, 0.72] } as const
 export const sideRack = { x: -4.99, z: 2.28, scale: [0.79, 0.34, 0.72] } as const
+export const innerRack = { x: 1.94, z: -2.23, scale: [0.28, 0.24, 0.56] } as const
 export const palletRow = { x: [2.55, 4.02], z: 5.08 } as const
 
 export type StorageBounds = { name: string; min: number[]; max: number[] }
@@ -57,3 +58,10 @@ export const wallSections = [
   { name: 'left-wall', boxes: leftWall },
   { name: 'right-wall', boxes: rightWall },
 ]
+
+// Short dividers define the edges of the bays. Their gaps remain open.
+export const partitions = [
+  { name: 'loading-divider', x: 3.33, z: -4.03, width: .84, depth: .12 },
+  { name: 'park-divider-north', x: -3.49, z: -.62, width: .12, depth: .92 },
+  { name: 'park-divider-south', x: -3.49, z: 1.52, width: .12, depth: .92 },
+] as const

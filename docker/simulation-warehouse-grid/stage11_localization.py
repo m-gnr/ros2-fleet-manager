@@ -1,0 +1,237 @@
+"""Independent fresh-world pickup measurements; no AMCL/Nav2 parameter changes."""
+import argparse
+from bisect import bisect_left
+from datetime import datetime, timezone
+import json
+from math import atan2, cos, hypot, isfinite, sin
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from lifecycle_msgs.srv import GetState
+from nav2_msgs.action import NavigateToPose
+from nav_msgs.msg import Odometry
+import rclpy
+from rclpy.action import ActionClient
+from rclpy.duration import Duration
+from rclpy.parameter import Parameter
+from rclpy.qos import qos_profile_sensor_data
+from rclpy.signals import SignalHandlerOptions
+from rclpy.time import Time
+from ros_gz_interfaces.msg import Contacts
+from rosidl_runtime_py.convert import message_to_ordereddict
+from sensor_msgs.msg import LaserScan
+from tf2_msgs.msg import TFMessage
+from tf2_ros import Buffer, TransformException
+
+from fleet_config import load_config
+from stage11_metrics import aligned_displacement_error
+
+
+def stamp(s):
+    return s.sec*10**9+s.nanosec
+
+
+def angle(value):
+    return atan2(sin(value),cos(value))
+
+
+def planar(p):
+    q=p.orientation
+    return [p.position.x,p.position.y,atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))]
+
+
+def physical_at(samples, ns):
+    i=bisect_left([r[0] for r in samples],ns)
+    if i<len(samples) and samples[i][0]==ns:
+        return samples[i][1],0
+    if 0<i<len(samples) and samples[i][0]-samples[i-1][0]<=100_000_000:
+        a,b=samples[i-1],samples[i]
+        t=(ns-a[0])/(b[0]-a[0])
+        return [a[1][0]+t*(b[1][0]-a[1][0]),a[1][1]+t*(b[1][1]-a[1][1]),
+                a[1][2]+t*angle(b[1][2]-a[1][2])],b[0]-a[0]
+    return None,None
+
+
+def probe(profile, out):
+    cfg=load_config(profile)
+    robot=next(r for r in cfg.robots if r.id=='robot_beta')
+    target=next(p for p in cfg.warehouse.transfer_points if p.id=='pick_A2').pose
+    out.mkdir(parents=True,exist_ok=True)
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
+    node=rclpy.create_node('stage11_localization',parameter_overrides=[Parameter('use_sim_time',value=True)])
+    buffer=Buffer(cache_time=Duration(seconds=300))
+    physical={r.id:[] for r in cfg.robots}
+    odoms=[]; amcl=[]; scans=[]; contacts=[]; samples=[]
+    stream=(out/'localization.jsonl').open('w')
+    def emit(kind,**data):
+        stream.write(json.dumps(dict(utc=datetime.now(timezone.utc).isoformat(),monotonic=time.monotonic(),
+            sim_ns=node.get_clock().now().nanoseconds,kind=kind,**data),allow_nan=False)+'\n');stream.flush()
+    def on_tf(msg):
+        for t in msg.transforms:
+            buffer.set_transform(t,'stage11_observer')
+        emit('TF',message=message_to_ordereddict(msg))
+    node.create_subscription(TFMessage,robot.namespace+'/tf',on_tf,50)
+    for item in cfg.robots:
+        def on_pose(msg,rid=item.id):
+            physical[rid].append((stamp(msg.header.stamp),planar(msg.pose)))
+            emit('PHYSICAL',robot=rid,message=message_to_ordereddict(msg))
+        node.create_subscription(PoseStamped,item.namespace+'/physical_pose',on_pose,qos_profile_sensor_data)
+    def on_odom(msg):
+        odoms.append(msg);emit('ODOMETRY',message=message_to_ordereddict(msg))
+    def on_amcl(msg):
+        amcl.append(msg);emit('AMCL',message=message_to_ordereddict(msg))
+    def on_scan(msg):
+        scans.append(msg)
+    def on_contact(msg):
+        for c in msg.contacts:
+            names=[c.collision1.name,c.collision2.name]
+            if any(p.startswith(('rack_','wall_')) or p=='robot_alpha' for n in names for p in n.split('::')):
+                contacts.append(names);emit('UNSAFE_CONTACT',names=names)
+    node.create_subscription(Odometry,robot.namespace+'/odom',on_odom,qos_profile_sensor_data)
+    node.create_subscription(PoseWithCovarianceStamped,robot.namespace+'/amcl_pose',on_amcl,30)
+    node.create_subscription(LaserScan,robot.namespace+'/scan',on_scan,qos_profile_sensor_data)
+    for link in ('base_link','left_wheel','right_wheel','caster'):
+        node.create_subscription(Contacts,robot.namespace+'/contact_'+link,on_contact,20)
+    client=ActionClient(node,NavigateToPose,robot.nav2_action_name)
+    lifecycle={r.id:node.create_client(GetState,r.namespace+'/bt_navigator/get_state') for r in cfg.robots}
+    report=dict(target=target.model_dump(),robot=robot.id,result='doğrulanamadı')
+    def spin_until(predicate,timeout,label):
+        end=time.monotonic()+timeout
+        while time.monotonic()<end:
+            rclpy.spin_once(node,timeout_sec=.01)
+            if contacts:raise RuntimeError('Contact safety stop')
+            if predicate():return
+        raise TimeoutError(label)
+    def map_pose(ns):
+        try:
+            t=buffer.lookup_transform('map',robot.id+'/base_link',Time(nanoseconds=ns))
+            q=t.transform.rotation
+            return [t.transform.translation.x,t.transform.translation.y,
+                    atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))]
+        except TransformException:
+            return None
+    def sample(label, ns):
+        truth,bracket=physical_at(physical[robot.id],ns)
+        estimate=map_pose(ns)
+        if truth is None or estimate is None:return None
+        covariance=min(amcl,key=lambda m:abs(stamp(m.header.stamp)-ns)) if amcl else None
+        odom=min(odoms,key=lambda m:abs(stamp(m.header.stamp)-ns)) if odoms else None
+        result=dict(label=label,sim_ns=ns,physical=truth,map_tf=estimate,physical_interpolation_bracket_ns=bracket,
+            map_physical_error_m=hypot(truth[0]-estimate[0],truth[1]-estimate[1]),
+            map_physical_yaw_error_rad=abs(angle(truth[2]-estimate[2])),
+            physical_target_error_m=hypot(truth[0]-target.x,truth[1]-target.y),
+            physical_target_yaw_error_rad=abs(angle(truth[2]-target.yaw)),
+            map_target_error_m=hypot(estimate[0]-target.x,estimate[1]-target.y))
+        if covariance:
+            result.update(amcl_stamp_ns=stamp(covariance.header.stamp),amcl_age_ns=ns-stamp(covariance.header.stamp),
+                amcl_pose=planar(covariance.pose.pose),amcl_covariance=list(covariance.pose.covariance))
+        if odom:
+            result.update(odom_stamp_ns=stamp(odom.header.stamp),odom_delta_ns=stamp(odom.header.stamp)-ns,
+                odom_pose=planar(odom.pose.pose),linear_speed_m_s=hypot(odom.twist.twist.linear.x,odom.twist.twist.linear.y),
+                angular_speed_rad_s=abs(odom.twist.twist.angular.z))
+        return result
+    goal_handle=None
+    try:
+        spin_until(lambda:all(physical[r.id] for r in cfg.robots) and odoms and amcl and scans and
+                   client.server_is_ready() and all(c.service_is_ready() for c in lifecycle.values()),120,'readiness')
+        for rid,c in lifecycle.items():
+            def active():
+                f=c.call_async(GetState.Request());spin_until(f.done,5,'lifecycle response')
+                return f.result().current_state.label=='active'
+            spin_until(active,25,'active lifecycle')
+        start=time.monotonic()
+        spin_until(lambda:time.monotonic()-start>=1.,3,'stationary reset window')
+        reset={}
+        for r in cfg.robots:
+            rows=physical[r.id];ns,pose=rows[-1]
+            error=hypot(pose[0]-r.initial_pose.x,pose[1]-r.initial_pose.y)
+            yaw=abs(angle(pose[2]-r.initial_pose.yaw))
+            assert error<=.05 and yaw<=.05
+            reset[r.id]=dict(sim_ns=ns,pose=pose,error_m=error,yaw_error_rad=yaw)
+        assert hypot(odoms[-1].twist.twist.linear.x,odoms[-1].twist.twist.linear.y)<=.01
+        assert abs(odoms[-1].twist.twist.angular.z)<=.01
+        report['reset']=reset
+        report['initial']=sample('initial',physical[robot.id][-1][0])
+        (out/'reset.json').write_text(json.dumps(report['reset'],indent=2))
+        goal=NavigateToPose.Goal()
+        goal.pose.header.frame_id='map';goal.pose.header.stamp=node.get_clock().now().to_msg()
+        goal.pose.pose.position.x=target.x;goal.pose.pose.position.y=target.y
+        goal.pose.pose.orientation.z=sin(target.yaw/2);goal.pose.pose.orientation.w=cos(target.yaw/2)
+        sent=client.send_goal_async(goal)
+        spin_until(sent.done,5,'goal acknowledgement')
+        goal_handle=sent.result();assert goal_handle.accepted
+        report['goal_uuid']=bytes(goal_handle.goal_id.uuid).hex()
+        result=goal_handle.get_result_async();spin_until(result.done,160,'Nav2 terminal')
+        report['nav2_terminal']=result.result().status
+        report['terminal_received_sim_ns']=node.get_clock().now().nanoseconds
+        terminal_ns=physical[robot.id][-1][0]
+        start=time.monotonic();spin_until(lambda:time.monotonic()-start>=2.,4,'post terminal standstill')
+        report['terminal']=sample('terminal_physical_stamp',terminal_ns)
+        report['stopped']=sample('two_seconds_after_terminal',physical[robot.id][-1][0])
+        assert report['terminal'] and report['stopped']
+        report['aligned_odom_displacement_error_m']=aligned_displacement_error(report['initial'],report['stopped'])
+        obstacles=[b for _,b,_ in cfg.warehouse.obstacles()]
+        def residuals(scan,pose):
+            values=[]
+            for i,value in enumerate(scan.ranges):
+                if not isfinite(value) or not scan.range_min<=value<=scan.range_max:continue
+                a=pose[2]+scan.angle_min+i*scan.angle_increment
+                x,y=pose[0]+value*cos(a),pose[1]+value*sin(a)
+                values.append(min(hypot(max(b.x_min-x,0,x-b.x_max),max(b.y_min-y,0,y-b.y_max)) for b in obstacles))
+            return values
+        def metrics(values):
+            values=sorted(values)
+            return dict(count=len(values),median_m=values[len(values)//2],p90_m=values[int(.9*(len(values)-1))],
+                        within_10cm=sum(v<=.1 for v in values)/len(values)) if values else None
+        for scan in scans[::5]:
+            ns=stamp(scan.header.stamp);truth,bracket=physical_at(physical[robot.id],ns);estimate=map_pose(ns)
+            if truth is None or estimate is None:continue
+            # The profile's lidar has zero XY/yaw offset. Assert this contract rather than hide it.
+            sensor=json.loads(Path('config/simulation-c3-3-3.json').read_text())['sensor']['pose']
+            assert sensor[0:2]==[0.,0.] and sensor[3:]==[0.,0.,0.]
+            row=dict(stamp_ns=ns,physical_interpolation_bracket_ns=bracket,
+                map=metrics(residuals(scan,estimate)),physical=metrics(residuals(scan,truth)))
+            samples.append(row);emit('SCAN_MAP_RESIDUAL',**row)
+        report['scan_map_samples']=samples
+        report['contacts']=contacts
+        report['result']='geçti' if report['nav2_terminal']==4 and report['stopped']['physical_target_error_m']<=.35 else 'başarısız'
+    except Exception as exc:
+        report['error']=repr(exc)
+        if goal_handle and not goal_handle.get_result_async().done():
+            cancelled=goal_handle.cancel_goal_async()
+            try:spin_until(cancelled.done,5,'safety cancellation')
+            except Exception:pass
+        raise
+    finally:
+        (out/'localization.json').write_text(json.dumps(report,indent=2,allow_nan=False))
+        stream.close();node.destroy_node();rclpy.try_shutdown()
+
+
+def main():
+    cli=argparse.ArgumentParser(description=__doc__)
+    cli.add_argument('profile',type=Path);cli.add_argument('output',type=Path)
+    cli.add_argument('--probe',action='store_true')
+    args=cli.parse_args()
+    if args.probe:
+        probe(args.profile,args.output);return
+    for i in range(1,4):
+        out=args.output/f'trial-{i}';out.mkdir(parents=True,exist_ok=False)
+        with (out/'simulation.log').open('w') as log:
+            server=subprocess.Popen([sys.executable,'docker/simulation-warehouse-grid/serve.py',str(args.profile),
+                str(out/'generated'),'routes'],stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+            try:
+                with (out/'probe.log').open('w') as plog:
+                    result=subprocess.run([sys.executable,__file__,str(args.profile),str(out),'--probe'],
+                        stdout=plog,stderr=subprocess.STDOUT,timeout=330)
+                if result.returncode:raise RuntimeError(f'trial {i} observer failed: {result.returncode}')
+            finally:
+                server.send_signal(signal.SIGTERM);server.wait(timeout=40)
+                (out/'shutdown.json').write_text(json.dumps(dict(simulation_exit=server.returncode)))
+
+
+if __name__=='__main__':
+    main()

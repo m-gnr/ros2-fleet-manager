@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { EmptyState, RobotDetails, RobotList, StationOverview, TaskList } from "./Operations";
 import { ScenePanel } from "./ScenePanel";
+import { TaskComposer, useTaskCatalog } from "./TaskComposer";
 import { useFleet, type Connection } from "./useFleet";
 
 const views = [
@@ -35,6 +36,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string>();
   const { fleet, connection, error, scene, sceneFeed, reconnect } = useFleet();
   const connected = connection === "CONNECTED";
+  const catalog = useTaskCatalog(fleet);
   const productIds = fleet?.robots.map((robot) => robot.robot_id).join("\0") ?? "";
   const robotIds = useMemo(() => [...new Set([
     ...(productIds ? productIds.split("\0") : []), ...(scene.roster ?? []),
@@ -67,7 +69,7 @@ export default function App() {
           <span className={`connection ${connection.toLowerCase()}`} role="status">
             {connected ? <Signal size={14} /> : <WifiOff size={14} />}
             <strong>{connectionLabels[connection]}</strong></span>
-          <span className="tag readonly"><LockKeyhole size={13} /> SALT OKUNUR</span>
+          <span className="tag readonly"><LockKeyhole size={13} /> {catalog?.enabled ? 'GÖREV GİRİŞİ' : 'SALT OKUNUR'}</span>
         </div>
       </header>
       <main id="workspace" tabIndex={-1} className={`workspace ${view.id === "overview" ? "overview" : ""}`}>
@@ -99,7 +101,8 @@ export default function App() {
         <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} />
         <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} stations={fleet?.stations} connected={connected} />
       </div>}
-      {view.id === "tasks" && <TaskList fleet={fleet} connected={connected} />}
+      {view.id === "tasks" && <><TaskComposer key={catalog?.session} catalog={catalog} fleet={fleet} connected={connected} />
+        <TaskList fleet={fleet} connected={connected} /></>}
       {view.id === "stations" && <StationOverview fleet={fleet} connected={connected} />}
       {!fleet && !error && view.id !== "overview" && <div role="status" className="initial-note">
         <EmptyState title="İlk eşitleme" detail="Fleet Manager snapshot’ı bekleniyor." /></div>}

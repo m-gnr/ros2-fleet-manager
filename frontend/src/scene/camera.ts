@@ -16,7 +16,7 @@ export const topOffset = [0, 1, Math.tan(topAngle)] as const
 export const followDistance = 2.55
 export const targetHeight = 0.12
 export const minCameraDistance = 0.85
-export const maxCameraDistance = 48
+export const maxCameraDistance = 140
 
 export function selectCamera(command: CameraCommand, mode: CameraMode): CameraCommand {
   if (mode === 'fit') return { ...command, mode, fit: (command.fit ?? 0) + 1 }

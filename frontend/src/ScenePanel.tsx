@@ -9,6 +9,7 @@ import type { SceneFeed } from "./scene/sceneFeed";
 
 import type { Fleet } from "./fleet";
 import { useGridLayout } from "./scene/useGridLayout";
+import { useCostmap } from "./scene/Costmap";
 import { operationLabels, operationPoints, pointStyle } from "./scene/operationPoints";
 
 const Scene = lazy(() => import("./scene/Scene"));
@@ -40,6 +41,7 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
 }) {
   const [command, setCommand] = useState<CameraCommand>({ mode: "free", reset: 0 });
   const [lowQuality, setLowQuality] = useState(false);
+  const [showCostmap, setShowCostmap] = useState(false);
   const [routes, setRoutes] = useState<RouteOptions>({ plan: true, trail: true, selectedOnly: false, highlight: false });
   const markers = useRef(new Map<string, HTMLButtonElement>()).current;
   const labels = useRef(new Map<string, HTMLSpanElement>()).current;
@@ -47,6 +49,7 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
   const leaders = useRef(new Map<string, SVGLineElement>()).current;
   const profile = useGridLayout(fleet?.backend_session_id, fleet?.source_session_id);
   const layout = profile?.layout;
+  const costmap = useCostmap(showCostmap && layout ? fleet?.backend_session_id + '/' + fleet?.source_session_id : undefined);
   const points = useMemo(() => operationPoints(fleet, selected, connected, layout), [fleet, selected, connected, layout]);
   const operationTags = useMemo(() => operationLabels(points, layout), [points, layout]);
   const live = robotIds.filter((id) => view.robots.get(id)?.status === "LIVE").length;
@@ -59,14 +62,14 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
     <div className="card-heading">
       <div className="scene-heading"><span className="scene-icon"><Box size={17} /></span>
         <div><h2 id="scene-heading">Depo görünümü</h2><p>ROS TF · map çerçevesi</p></div></div>
-      <div className="scene-legend"><span className="tag map-tag">TEMSİLİ 3D DEPO</span>
+      <div className="scene-legend"><span className="tag map-tag">{layout ? 'ORTAK DEPO HARİTASI' : 'TEMSİLİ 3D DEPO'}</span>
         <small>{profile?.mismatch ? "Izgara profili filo snapshot’ıyla eşleşmedi." :
-          "Raflar ve sınırlar görsel temsildir."}</small></div>
+          layout ? "Ortak YAML · harita ve dünya geometrisi" : "Raflar ve sınırlar görsel temsildir."}</small></div>
     </div>
     <div className="scene-viewport" aria-label="Etkileşimli 3D depo">
       <SceneBoundary>
         <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
-          <Scene layout={layout} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
+          <Scene layout={layout} costmap={showCostmap ? costmap : undefined} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
             robotIds={robotIds} points={points} labelPoints={operationTags} pointLabels={pointLabels} leaders={leaders} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
         </Suspense>
       </SceneBoundary>
@@ -98,21 +101,23 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
             </span>
           </Fragment>;
         })}
-        {operationTags.map(({ key, id, kind, detail, owner, chargingRobot, groupText, compact }) => {
+        {operationTags.map(({ key, id, kind, detail, owner, chargingRobot, groupText, compact, titleOverride }) => {
           const { name, color } = pointStyle[kind];
           const Icon = pointIcons[kind];
           const task = kind === "pickup" || kind === "dropoff";
           return <span key={key} className={groupText ? "scene-point-label grouped" : "scene-point-label"} data-operation-point={key} data-callout={compact ? "" : undefined} title={[name, groupText ?? id, detail, owner].filter(Boolean).join(" · ")}
             ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
-            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> {groupText ? <>{compact && <small className="zone-summary">{compact}</small>}
+            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{titleOverride ?? name}</strong> {groupText ? <>{compact && <small className="zone-summary">{compact}</small>}
               <small className={compact ? "zone-details" : undefined}>{groupText.split(" · ").map(member =>
-                <span className="zone-member" key={member}>{member}</span>)}</small></> : task
+                <span className="zone-member" key={member}>{member}</span>)}</small></> : titleOverride ? detail && <small>{detail}</small> : task
               ? <span>{shortTaskId(id)}</span>
               : <small>{layout && <span>{id} · </span>}{chargingRobot ? "Aktif" : detail}</small>}
           </span>;
         })}
       </div>
       <span className="scene-indicator"><i data-live={live > 0} />{live} / {robotIds.length} TF LIVE</span>
+      {showCostmap && <span className="costmap-key">{costmap ? costmap.source === 'nav2_recorded'
+        ? 'Nav2 global costmap · kayıt' : 'Üretilen statik harita' : 'Costmap bekleniyor'} · Engel / şişirme</span>}
       <span className="scene-hint"><Scan size={13} /> Sürükle · sağ tuşla kaydır · kaydırarak yakınlaş</span>
     </div>
     <div className="scene-footer">
@@ -122,6 +127,10 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
         <i className="trail-key" />TF hareket izi</label>
       <label className="scene-quality"><input type="checkbox" checked={lowQuality} onChange={(e) => setLowQuality(e.target.checked)} />
         Düşük kalite</label>
+      {layout && <label><input type="checkbox" checked={showCostmap} onChange={e => {
+        setShowCostmap(e.target.checked);
+        if (e.target.checked) chooseMode('top');
+      }} />Costmap katmanı</label>}
       <div className="scene-controls" aria-label="Kamera kontrolleri">
         {modes.map(([mode, Icon]) => <button type="button" key={mode} aria-pressed={command.mode === mode}
           aria-label={cameraLabels[mode]} title={cameraLabels[mode]} onClick={() => chooseMode(mode)}><Icon size={17} /></button>)}

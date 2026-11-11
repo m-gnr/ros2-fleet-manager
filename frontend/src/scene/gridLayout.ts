@@ -11,10 +11,15 @@ const layout = z.object({
   door: z.object({ side: side, center: z.number(), width: z.number().positive() }),
   walls: z.array(z.object({ id: z.string(), side, edge: z.number(), bounds })),
   racks: z.array(z.object({ id: z.string(), bounds, height: z.number().positive(), bays: z.number().int().positive() })),
-  aisles: z.array(area.extend({ axis: z.enum(['x', 'y']) })),
+  aisles: z.array(area.extend({ axis: z.enum(['x', 'y']), role: z.enum(['main', 'cross', 'access']).nullable().optional() })),
   zones: z.array(area.extend({ kind: z.enum(['pickup', 'dropoff', 'charging', 'parking']), callout: pose.pick({ x: true, y: true }).nullable().optional() })),
   dock_approach_m: z.number().nullable().optional(),
-  transfer_points: z.array(z.object({ id: z.string(), kind: transferKind, pose })),
+  approach_clearance_m: z.number().positive().nullable().optional(),
+  transfer_points: z.array(z.object({ id: z.string(), kind: transferKind, pose,
+    zone_id: z.string().nullable().optional(), rack_id: z.string().nullable().optional(),
+    roles: z.array(transferKind).nullable().optional() })),
+  example_tasks: z.array(z.object({ id: z.string(), pickup: z.string(), dropoff: z.string(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH']) })).optional(),
 })
 
 export const layoutResponse = z.object({

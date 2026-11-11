@@ -103,7 +103,7 @@ function warehouseGeometry(layout: GridLayout) {
     }
     const zoneZ = zone.kind === 'pickup' ? z + depth * .11 :
       zone.kind === 'charging' ? z + depth * .36 : z - depth * (zone.kind === 'dropoff' ? .13 : .36)
-    if (!zone.callout) signs.push({ text: zone.label, x, z: zoneZ, width: Math.min(width - .25, 1.65) })
+    if (!zone.callout && !layout.example_tasks?.length) signs.push({ text: zone.label, x, z: zoneZ, width: Math.min(width - .25, 1.65) })
   }
   const racks = layout.racks.map(rack => {
     const { x, z, width, depth } = rectangle(rack.bounds)

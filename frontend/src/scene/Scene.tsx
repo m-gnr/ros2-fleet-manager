@@ -19,11 +19,13 @@ import { crossesRack } from './gridClearance'
 import type { GridLayout } from './gridLayout'
 import { WarehouseEnvironment } from './Warehouse'
 import { OperationMarkers } from './OperationMarkers'
+import { Costmap, type CostmapGrid } from './Costmap'
 import { calloutCandidates, hitsArea, insideFloor, projectedArea, screenPoint, type ScreenRect } from './calloutPlacement'
 import type { OperationLabel, OperationPoint } from './operationPoints'
 
 type SceneProps = {
   layout?: GridLayout
+  costmap?: CostmapGrid
   feed: SceneFeed
   command: CameraCommand
   lowQuality: boolean
@@ -267,7 +269,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
     camera.updateMatrixWorld()
 
     const hiddenRacks = new Set<string>()
-    if (grid) {
+    if (grid && !grid.approach_clearance_m) {
       const record = <T,>(samples: readonly T[], point: (sample: T) => readonly [number, number],
         starts?: (sample: T) => boolean) => {
         let hits = rackConflicts.current.get(samples)
@@ -318,7 +320,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
       floor: projectedArea(grid.bounds, 0, camera, size.width, size.height),
       blocked: [
         ...grid.racks.map(item => projectedArea(item.bounds, item.height, camera, size.width, size.height)),
-        ...grid.zones.map(item => projectedArea(item.bounds, 0, camera, size.width, size.height)),
+        ...(grid.example_tasks?.length ? [] : grid.zones.map(item => projectedArea(item.bounds, 0, camera, size.width, size.height))),
       ],
     } : undefined
     for (const line of leaders.values()) line.style.visibility = 'hidden'
@@ -379,6 +381,10 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
       const x = (screen.x + 1) / 2 * size.width
       const y = (1 - screen.y) / 2 * size.height
       const distance = camera.position.distanceTo(front.fromArray(point.position))
+      if ((point.lod === 'near' && distance >= 16) || (point.lod === 'far' && distance < 16)) {
+        label.style.visibility = 'hidden'
+        continue
+      }
       if (point.leader) label.toggleAttribute('data-detailed', distance < 16)
       const scale = labelScale(front)
       const width = label.offsetWidth * scale
@@ -512,7 +518,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
   </group>)
 }
 
-const initialCamera = { position: [8, 11, 10] as [number, number, number], fov, near: 0.035, far: 90 }
+const initialCamera = { position: [8, 11, 10] as [number, number, number], fov, near: 0.035, far: 240 }
 
 export default memo(function Scene(props: SceneProps) {
   return <Canvas frameloop="demand" dpr={props.lowQuality ? 1 : [1, 1.5]} camera={initialCamera}
@@ -524,6 +530,7 @@ export default memo(function Scene(props: SceneProps) {
     {props.layout ? <GridWarehouse layout={props.layout} softShadows={!props.lowQuality} />
       : <WarehouseEnvironment softShadows={!props.lowQuality} />}
     <OperationMarkers points={props.points} grid={!!props.layout} dockApproach={props.layout?.dock_approach_m} />
+    {props.costmap && <Costmap grid={props.costmap} />}
     {props.robotIds.map((id, index) => <RouteLayers key={id} feed={props.feed} id={id} colorIndex={index}
       selected={id === props.selected} options={props.routes} trace={props.trace} />)}
     <Vehicles {...props} />

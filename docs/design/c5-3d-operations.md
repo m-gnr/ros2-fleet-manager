@@ -45,3 +45,17 @@ Arka duvar, yükleme kepengi, yan kesitler ve koridor boyası sunum geometrisidi
 ## Aşama 1.7E işlevsel iç yerleşim
 
 Ana koridor, kepenk önü, raf geçidi ve operasyon cepleri temsili dekor grubunda kalır. Alçak bölmeler bağımsız kesilebilir; GLB iç rafı ayrı bir statik mesh’tir. İstasyon çerçeveleri ve görev işaretleri canlı snapshot katmanındadır. Kesişen alım/teslim kareleri ayırıcı doğruyla bölünür, map pozları değişmez. Sahne etiketleri kısa durum gösterir; sahiplik kaydı robot ayrıntılarında açılır. [Yerleşim ve ölçüm kapsamı](../validation/c5/c5-stage1-7e-validation-2026-11-08.md)
+
+## 11 Kasım 2026 dağıtılmış depo ve katalogdan görev girişi
+
+Kullanıcı 30 × 18 m, raflara dağılmış alım ve birden fazla teslim bölgesi istedi. Mevcut 12 blok ile 8–10 pick sınırının çelişkisi açıklanınca 10 daha uzun blok ve 10 pick seçeneğini onayladı. Boyut, geometri, yaklaşma pozları, uç rolleri ve örnek görevler [tek profil dosyasındadır](../../config/fleet.warehouse-30x18.yaml). Bu seçim ürünün final kabulü değildir.
+
+Görev oluşturma için API içinde ikinci bir Fleet Manager kurmak, SQLite’a doğrudan HTTP callback’inden yazmak ve mevcut tek consumer’a olay göndermek seçenekleri değerlendirildi. Üçüncü yol uygulandı. `runtime.py`, mevcut builder, `FleetEventLoop`, `FleetROS2Adapter` ve `OutboxDispatcher` sınıflarını çalıştırır. `publish_fleet(..., fleet_config=config)` aynı consumer’ın yanında izinleri 0600 olan yerel görev soketini açar. API ayrı süreçte kalır. Soket yolu snapshot’ın `.tasks.sock` uzantılı karşılığıdır ve container’ın yerel dosya sisteminde bulunur.
+
+`GET /api/task-catalog` çalışan kaynak oturumunu, çözülmüş profilin SHA-256 özetini, nokta rollerini ve örnek görevleri verir. `--task-socket` ile açılan API `POST /api/tasks` yolunu etkinleştirir. Tam Origin, JSON içerik türü, sınırlı istek boyutu, UUID, kaynak oturumu, profil özeti ve uç rollerinin hepsi doğrulanır. İstemci koordinat gönderemez. Noktalar consumer tarafında yeniden katalogdan çözülür ve `SUBMIT_TASK` olayına dönüşür. Kalıcılık ve sonraki atama mevcut domain/transaction/Outbox yolundan ilerler.
+
+Aynı UUID ve aynı değişmez içerikle tekrar gönderim mevcut görevi döndürür. Aynı UUID’nin başka uç veya öncelikle kullanılması reddedilir. Ağ yanıtı kaybolduğunda arayüz kabulü belirsiz gösterir ve aynı UUID’yi korur. Görev kabulü robotun hareket ettiğinin veya görevin tamamlandığının kanıtı değildir. Oturum/profil değişimi eski isteği engeller. Var olan dolu DB ile runtime yeniden başlatması otomatik replay oluşturmaz.
+
+Katalog bulunan yeni profilde uzak görünüm bölge etiketlerini, yakın görünüm tek tek nokta ID’lerini kullanır. Rafların izdüşümü ve robot işaretleri etiket yerleştirmesinden çıkarılır. Şarj telemetrisi güncel değilse bölge sayacı `—/6` biçiminde maskelenir. Yer bulunamazsa etiket gizlenir. 30 × 18 m profilinde rota yakınlığı fiziksel rafı gizlemez. Görsel kamera kesiti ayrıca korunur. Raf yapıları mevcut `Boxes` instancing yolundan çizilir. Kamera sınırı daha büyük deponun mobil kadrajına izin verecek şekilde genişletildi.
+
+`GET /api/warehouse-costmap`, varsayılan olarak ortak YAML’den üretilen statik doluluk rasterini verir. `--costmap` ile açıldığında aynı profil özetini taşıyan Nav2 global costmap kaydını sunar ve arayüz bunu kayıt olarak işaretler. Sürekli canlı costmap akışı bu uçla uygulanmış sayılmaz. [Host, Chrome ve Fortress kanıtları](../validation/c5/warehouse-30x18-validation-2026-11-11.md)

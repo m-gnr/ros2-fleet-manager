@@ -3,11 +3,13 @@ import argparse
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
+import json
 import time
 from urllib.parse import urlsplit
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -96,7 +98,8 @@ async def send_latest(socket, feed, *, poll_sec=POLL_SEC):
             await asyncio.wait_for(socket.close(close_code), SEND_TIMEOUT_SEC)
 
 
-def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None, fleet_config=None):
+def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None, fleet_config=None,
+               task_socket=None, costmap_path=None):
     origins = frozenset(origins)
     for origin in origins:
         url = urlsplit(origin)
@@ -121,7 +124,8 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
-    app.add_middleware(CORSMiddleware, allow_origins=list(origins), allow_methods=["GET"], allow_headers=[])
+    app.add_middleware(CORSMiddleware, allow_origins=list(origins), allow_methods=["GET", "POST"] if task_socket else ["GET"],
+                       allow_headers=["Content-Type"])
 
     @app.middleware("http")
     async def prevent_cache(request, call_next):
@@ -172,8 +176,9 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
         snapshot = current()
         return envelope(snapshot, "stations", snapshot.stations)
 
-    @app.get("/api/warehouse-layout")
-    async def warehouse_layout():
+    def warehouse_payload():
+        from fleet_config.occupancy import profile_digest
+
         if fleet_config is None or fleet_config.warehouse is None:
             return {"layout": None}
         snapshot = current()
@@ -190,7 +195,69 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
                       and len(snapshot.stations) == len(expected) and actual == expected
                       and {robot.robot_id for robot in snapshot.robots} == {robot.id for robot in fleet_config.robots})
         return {**envelope(snapshot, "layout", fleet_config.warehouse.scene_payload() if compatible else None),
-                "profile_mismatch": not compatible}
+                "profile_mismatch": not compatible, "profile_digest": profile_digest(fleet_config)}
+
+    @app.get("/api/warehouse-layout")
+    async def warehouse_layout():
+        return warehouse_payload()
+
+    @app.get("/api/task-catalog")
+    async def task_catalog():
+        payload = warehouse_payload()
+        layout = payload["layout"]
+        return {**payload, "enabled": bool(layout and task_socket and Path(task_socket).is_socket())}
+
+    async def submit_task(request: Request):
+        from .task_ingress import MAX_REQUEST_BYTES, TaskRequest, endpoints, send_task
+
+        if request.headers.get("origin") not in origins or request.headers.get("content-type") != "application/json":
+            raise HTTPException(403, "Exact browser origin and JSON content type required")
+        payload = warehouse_payload()
+        if payload["layout"] is None or task_socket is None:
+            raise HTTPException(503, "Task ingress unavailable")
+        raw = bytearray()
+        async for chunk in request.stream():
+            raw.extend(chunk)
+            if len(raw) > MAX_REQUEST_BYTES:
+                raise HTTPException(413, "Task request too large")
+        try:
+            command = TaskRequest.model_validate_json(bytes(raw))
+            if (command.source_session_id != payload["source_session_id"] or
+                    command.profile_digest != payload["profile_digest"]):
+                raise HTTPException(409, "Fleet session changed")
+            endpoints(fleet_config, command)
+        except (ValueError, ValidationError) as error:
+            raise HTTPException(422, "Invalid task endpoints, roles or request") from error
+        try:
+            response = await asyncio.wait_for(send_task(task_socket, command), timeout=6)
+        except (OSError, ValueError, asyncio.TimeoutError) as error:
+            raise HTTPException(503, "Task acknowledgement unavailable. Retry with the same request ID") from error
+        if "error" in response:
+            raise HTTPException(409, response["error"])
+        return JSONResponse(response, status_code=200 if response["outcome"] == "DUPLICATE" else 201)
+
+    if task_socket is not None:
+        app.add_api_route("/api/tasks", submit_task, methods=["POST"])
+
+    @app.get("/api/warehouse-costmap")
+    async def warehouse_costmap():
+        from fleet_config.occupancy import encode_grid, profile_digest, raster
+
+        if warehouse_payload()["layout"] is None:
+            raise HTTPException(503, "Warehouse profile unavailable")
+        digest = profile_digest(fleet_config)
+        if costmap_path is not None:
+            try:
+                if Path(costmap_path).stat().st_size > 16_000_000:
+                    raise ValueError("Costmap capture exceeds size limit")
+                recorded = json.loads(Path(costmap_path).read_text())
+                if recorded["profile_digest"] != digest or recorded["source"] != "nav2_recorded":
+                    raise ValueError("Costmap profile mismatch")
+                return recorded
+            except (OSError, ValueError, KeyError) as error:
+                raise HTTPException(503, "Recorded costmap unavailable or profile mismatch") from error
+        metadata, cells = raster(fleet_config.warehouse)
+        return {**encode_grid(metadata, cells, "generated_occupancy"), "profile_digest": digest}
 
     @app.websocket("/ws/fleet")
     async def stream(socket: WebSocket):
@@ -223,6 +290,8 @@ def main():
     parser.add_argument("--container-bind", action="store_true")
     parser.add_argument("--scene-port", type=int)
     parser.add_argument("--fleet", type=Path)
+    parser.add_argument("--task-socket", type=Path)
+    parser.add_argument("--costmap", type=Path)
     args = parser.parse_args()
     bridge_url = None
     topics = None
@@ -238,7 +307,7 @@ def main():
         bridge_url = f"ws://scene:{args.scene_port}/telemetry/fleet"
     uvicorn.run(
         create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics,
-                   fleet_config=config),
+                   fleet_config=config, task_socket=args.task_socket, costmap_path=args.costmap),
         host="0.0.0.0" if args.container_bind else "127.0.0.1", port=args.port,
         proxy_headers=False, server_header=False, ws="websockets", ws_max_size=1024, ws_max_queue=1,
         ws_per_message_deflate=False, limit_concurrency=64, timeout_graceful_shutdown=3,

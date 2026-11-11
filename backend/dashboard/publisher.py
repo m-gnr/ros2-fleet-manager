@@ -1,6 +1,6 @@
 """Project one committed Fleet Manager generation onto a private latest-value file."""
 import asyncio
-from contextlib import asynccontextmanager, suppress
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from datetime import datetime, timezone
 from itertools import chain, islice
 import logging
@@ -154,8 +154,7 @@ def _write(path, sample, session, sequence, captured_ns, utc):
             temporary_path.unlink(missing_ok=True)
 
 
-async def _publish(consumer, path):
-    session = str(uuid4())
+async def _publish(consumer, path, session):
     sequence = 0
     failed = False
     while True:
@@ -174,14 +173,24 @@ async def _publish(consumer, path):
 
 
 @asynccontextmanager
-async def publish_fleet(consumer, path):
+async def publish_fleet(consumer, path, *, fleet_config=None):
     """Optional producer. Its lifetime follows the consumer, never HTTP clients."""
     consumer.enable_dashboard_sampling()
-    task = asyncio.create_task(_publish(consumer, Path(path)))
+    session = str(uuid4())
     try:
-        yield
+        async with AsyncExitStack() as stack:
+            if fleet_config is not None and fleet_config.warehouse is not None:
+                from .task_ingress import task_server
+
+                await stack.enter_async_context(task_server(
+                    consumer, Path(path).with_suffix('.tasks.sock'), fleet_config, session,
+                ))
+            task = asyncio.create_task(_publish(consumer, Path(path), session))
+            try:
+                yield
+            finally:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
     finally:
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            await task
         consumer.disable_dashboard_sampling()

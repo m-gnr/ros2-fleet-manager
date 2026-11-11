@@ -91,6 +91,8 @@ def main():
         if database.exists():
             with sqlite3.connect(database) as source, sqlite3.connect(args.output/'fleet.sqlite3') as target:
                 source.backup(target)
+        if any(code != 0 for code in exits.values()):
+            raise RuntimeError(f'Unclean child shutdown: {exits}')
 
 
 if __name__ == '__main__':

@@ -72,8 +72,17 @@ try{
   }
   await until(()=>latest?.tasks.length===tasks.length,'Accepted task snapshot unavailable',10000);
   await page.screenshot({path:join(output,'accepted.png'),fullPage:true});
-  await page.getByRole('link',{name:'Genel görünüm',exact:true}).click();
   const ids=report.responses.map(r=>r.body.task_id);
+  await until(()=>ids.every(id=>latest?.tasks.some(t=>t.task_id===id&&t.status==='EXECUTING')),
+    'Live EXECUTING tasks not available',60000);
+  for(const id of ids){
+    const row=page.getByRole('row').filter({hasText:id});
+    await row.getByText('Yürütülüyor',{exact:true}).waitFor({timeout:5000});
+  }
+  report.visibleExecuting=await page.locator('tbody').innerText();
+  await page.screenshot({path:join(output,'executing-tasks.png'),fullPage:true});
+  await page.getByRole('link',{name:'Genel görünüm',exact:true}).click();
+  await page.getByRole('heading',{name:'Depo görünümü',exact:true}).waitFor();
   let lastShot=0;
   await until(async()=>{
     const tasks=latest?.tasks.filter(t=>ids.includes(t.task_id))??[];
@@ -87,6 +96,12 @@ try{
   },'Tasks did not complete within the 12-minute observation window',720000);
   await page.screenshot({path:join(output,'completed-overview.png'),fullPage:true});
   await page.getByRole('link',{name:'Görevler',exact:true}).click();
+  await page.getByRole('heading',{name:'Görevler',exact:true}).waitFor();
+  for(const id of ids){
+    const row=page.getByRole('row').filter({hasText:id});
+    await row.getByText('Tamamlandı',{exact:true}).waitFor({timeout:5000});
+  }
+  report.visibleCompleted=await page.locator('tbody').innerText();
   await page.screenshot({path:join(output,'completed.png'),fullPage:true});
   report.final=latest;
   assert.equal(latest.tasks.length,tasks.length);

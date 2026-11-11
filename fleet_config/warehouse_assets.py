@@ -2,7 +2,7 @@
 import argparse
 from decimal import Decimal
 import json
-from math import isclose, pi
+from math import pi
 from pathlib import Path
 import sys
 import tempfile
@@ -11,6 +11,7 @@ from xml.etree import ElementTree as ET
 import yaml
 
 from fleet_config import load_config
+from fleet_config.occupancy import encode_grid, raster
 
 ROOT = Path(__file__).resolve().parents[1]
 for component in ("simulation-c3-3-3", "simulation-c4-4"):
@@ -20,10 +21,7 @@ from dock_world import install_docks
 
 
 def blocks(layout):
-    for wall in layout.walls():
-        yield wall["id"], wall["bounds"], layout.wall_height_m
-    for rack in layout.racks:
-        yield rack.id, rack.bounds, rack.height
+    return layout.obstacles()
 
 
 def static_box(world, name, x, y, z, width, depth, height, color):
@@ -40,31 +38,19 @@ def static_box(world, name, x, y, z, width, depth, height, color):
             ET.SubElement(mat, "diffuse").text = color
 
 
-def make_map(layout, solids, out):
-    b = layout.bounds
-    resolution = next((value for value in (.05, .025, .01, .005)
-                       if all(isclose(edge / value, round(edge / value), abs_tol=1e-7)
-                              for _, bounds, _ in solids
-                              for edge in (bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max))), None)
-    if resolution is None:
-        raise ValueError("wall/rack edges must align exactly with a supported map resolution")
-    # Exterior apron has a physical floor. Cells beyond it stay occupied to bound planning.
-    border = 1.5
-    x0, y0 = b.x_min-border, b.y_min-border
-    cols, rows = round((b.x_max-b.x_min+2*border)/resolution), round((b.y_max-b.y_min+2*border)/resolution)
-    if rows * cols > 4_000_000:
-        raise ValueError("generated occupancy image exceeds 4 million cells")
-    image = bytearray([254]) * (cols*rows)
-    for _, rect, _ in solids:
-        left, right = (round((x-x0)/resolution) for x in (rect.x_min, rect.x_max))
-        bottom, top = (round((y-y0)/resolution) for y in (rect.y_min, rect.y_max))
-        for row in range(rows-top, rows-bottom):
-            image[row*cols+left:row*cols+right] = bytes(right-left)
+def make_map(layout, out):
+    metadata, cells = raster(layout)
+    resolution = metadata["resolution"]
+    x0, y0 = metadata["origin"]
+    cols, rows = metadata["width"], metadata["height"]
+    image = bytearray(0 if value else 254 for row in range(rows-1, -1, -1)
+                      for value in cells[row*cols:(row+1)*cols])
     (out / "map.pgm").write_bytes(f"P5\n{cols} {rows}\n255\n".encode() + image)
     (out / "map.yaml").write_text(yaml.safe_dump(dict(
         image="map.pgm", mode="trinary", resolution=resolution, origin=[x0,y0,0.0],
         negate=0, occupied_thresh=.65, free_thresh=.25,
     ), sort_keys=False))
+    (out / "occupancy.json").write_text(json.dumps(encode_grid(metadata, cells, "generated_occupancy")))
     return resolution
 
 
@@ -90,6 +76,8 @@ def generate(path, out, scenario="delivery"):
         for robot, (start, _) in zip(data["robots"], pairs, strict=True):
             robot["initial_pose"] = start
         goals = {robot["id"]: goal for robot, (_, goal) in zip(data["robots"], pairs, strict=True)}
+    elif scenario == "routes":
+        goals = {task.id: task.model_dump() for task in layout.example_tasks}
     else:
         dock = next(item for item in config.stations.charging_stations if item.id == "dock_1")
         delivery = next(point for point in layout.transfer_points
@@ -99,7 +87,7 @@ def generate(path, out, scenario="delivery"):
             config.robots[1].id: delivery.pose.model_dump(),
         }
     solids = list(blocks(layout))
-    resolution = make_map(layout, solids, out)
+    resolution = make_map(layout, out)
     settings = json.loads((ROOT / "config/simulation-c3-3-3.json").read_text())
     with tempfile.TemporaryDirectory() as folder:
         original = prepare_world(settings, data, Path(folder) / "robots.sdf")
@@ -119,6 +107,17 @@ def generate(path, out, scenario="delivery"):
     sdf = out / "warehouse.sdf"
     tree.write(sdf, encoding="utf-8", xml_declaration=True)
     install_docks(sdf, config.stations.charging_stations, config.robots)
+    tree = ET.parse(sdf)
+    for robot in config.robots:
+        model = tree.getroot().find(f".//model[@name='{robot.id}']")
+        for link in model.findall("link"):
+            for collision in link.findall("collision"):
+                sensor = ET.SubElement(link, "sensor", name="acceptance_contact_" + collision.get("name"), type="contact")
+                ET.SubElement(sensor, "always_on").text = "true"
+                contact = ET.SubElement(sensor, "contact")
+                ET.SubElement(contact, "collision").text = collision.get("name")
+                ET.SubElement(contact, "topic").text = robot.namespace + '/contact_' + link.get("name")
+    tree.write(sdf, encoding="utf-8", xml_declaration=True)
 
     for robot in data["robots"]:
         name, ns, start = robot["id"], robot["namespace"], robot["initial_pose"]
@@ -146,6 +145,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("profile", type=Path)
     parser.add_argument("output", type=Path)
-    parser.add_argument("--scenario", choices=("delivery","passing"), default="delivery")
+    parser.add_argument("--scenario", choices=("delivery", "passing", "routes"), default="delivery")
     args = parser.parse_args()
     generate(args.profile, args.output, args.scenario)

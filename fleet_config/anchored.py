@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from .models import ChargingStation, Contract, Fleet, FleetConfig, Policies, Robot, Station
-from .warehouse import Area, TransferPoint, WarehouseDoor, WarehouseRack, WarehouseZone
+from .warehouse import Area, ExampleTask, TransferPoint, WarehouseDoor, WarehouseRack, WarehouseZone
 
 XAxis = float | Annotated[str, Field(pattern=r"^[WE]([+-][0-9]+(\.[0-9]+)?)?$")]
 YAxis = float | Annotated[str, Field(pattern=r"^[SN]([+-][0-9]+(\.[0-9]+)?)?$")]
@@ -51,6 +51,7 @@ class AnchoredRack(WarehouseRack):
 class AnchoredAisle(Area):
     bounds: AnchoredRect
     axis: Literal["x", "y"]
+    role: Literal["main", "cross", "access"] | None = Field(default_factory=lambda: None)
 
 
 class AnchoredPoint(Contract):
@@ -81,6 +82,8 @@ class WarehouseSource(Contract):
     transfer_points: list[AnchoredTransfer]
     dock_approach_m: Annotated[float, Field(ge=2)]
     dock_rack_clearance_m: Annotated[float, Field(ge=2)]
+    approach_clearance_m: Annotated[float, Field(gt=0)] | None = Field(default_factory=lambda: None)
+    example_tasks: list[ExampleTask] = Field(default_factory=list)
 
 
 class AnchoredFleetConfig(Contract):

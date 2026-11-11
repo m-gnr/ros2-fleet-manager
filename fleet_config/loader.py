@@ -107,4 +107,8 @@ def load_config(path, schema_path=None):
         raise ValueError("\n".join(f"{'.'.join(map(str, error.path)) or '$'}: {error.message}" for error in errors))
     config = AnchoredFleetConfig.model_validate(data).resolve() if anchored else FleetConfig.model_validate(data)
     check_assets(config, path.parent)
+    if config.warehouse is not None and config.warehouse.approach_clearance_m is not None:
+        from .occupancy import check_approaches, raster
+
+        check_approaches(config, *raster(config.warehouse))
     return config

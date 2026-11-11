@@ -1,0 +1,576 @@
+# Dimensions are defined once. All robot approach poses use the map frame in metres.
+fleet:
+  name: warehouse_distributed_30x18
+  map_path: warehouse:generated
+  use_sim_time: true
+  battery_models:
+    turtlebot3_burger:
+      usable_capacity_wh: 100.0
+      consumption_wh_per_meter: 0.2
+      idle_power_w: 2.0
+      charge_power_w: 20.0
+robots:
+- id: robot_alpha
+  name: robot_alpha
+  namespace: /robot_alpha
+  initial_pose:
+    x: -10.0
+    y: 5.25
+    yaw: 0.0
+  battery_model: turtlebot3_burger
+  nav2_action_name: /robot_alpha/navigate_to_pose
+  nav2_params_path: simulation-c2-3-params.template.yaml
+- id: robot_beta
+  name: robot_beta
+  namespace: /robot_beta
+  initial_pose:
+    x: 5.25
+    y: 7.75
+    yaw: 1.5707963267948966
+  battery_model: turtlebot3_burger
+  nav2_action_name: /robot_beta/navigate_to_pose
+  nav2_params_path: simulation-c2-3-params.template.yaml
+stations:
+  charging_stations:
+  - id: dock_1
+    pose:
+      x: E-8
+      y: N-0.75
+      yaw: 1.5707963267948966
+    tolerance_radius: 0.3
+  - id: dock_2
+    pose:
+      x: E-6.75
+      y: N-0.75
+      yaw: 1.5707963267948966
+    tolerance_radius: 0.3
+  - id: dock_3
+    pose:
+      x: E-5.5
+      y: N-0.75
+      yaw: 1.5707963267948966
+    tolerance_radius: 0.3
+  - id: dock_4
+    pose:
+      x: E-4.25
+      y: N-0.75
+      yaw: 1.5707963267948966
+    tolerance_radius: 0.3
+  - id: dock_5
+    pose:
+      x: E-3
+      y: N-0.75
+      yaw: 1.5707963267948966
+    tolerance_radius: 0.3
+  - id: dock_6
+    pose:
+      x: E-1.75
+      y: N-0.75
+      yaw: 1.5707963267948966
+    tolerance_radius: 0.3
+  parking_stations:
+  - id: park_1
+    pose:
+      x: 5.25
+      y: 5.25
+      yaw: 1.5707963267948966
+  - id: park_2
+    pose:
+      x: 5.25
+      y: 6.5
+      yaw: 1.5707963267948966
+  - id: park_3
+    pose:
+      x: 5.25
+      y: 7.75
+      yaw: 1.5707963267948966
+  safe_waiting_areas: []
+policies:
+  assignment: priority_fifo_nearest_eligible
+  preemption_priority: HIGH
+  max_preemptions: 2
+  extra_swap_enabled: false
+  automatic_retry: false
+  automatic_reassignment: false
+  charge_target_soc_percent: 80
+  charge_queue: lowest_soc_fifo
+  emergency_soc_percent: 8.0
+  low_soc_percent: 25.0
+  safety_margin_wh: 10.0
+warehouse:
+  frame_id: map
+  grid_m: 0.25
+  width: 30.0
+  depth: 18.0
+  wall_thickness_m: 0.1
+  wall_height_m: 1.9
+  door:
+    side: west
+    center: 0.0
+    width: 2.0
+  dock_approach_m: 2.0
+  dock_rack_clearance_m: 2.0
+  approach_clearance_m: 0.45
+  racks:
+  - id: rack_A1
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: -11.5
+      x_max: -2.25
+      y_min: 6.5
+      y_max: 7.5
+  - id: rack_A2
+    bays: 4
+    height: 1.15
+    bounds:
+      x_min: 0.25
+      x_max: 4.25
+      y_min: 6.5
+      y_max: 7.5
+  - id: rack_B1
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: -11.5
+      x_max: -2.25
+      y_min: 3.25
+      y_max: 4.25
+  - id: rack_B2
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: 0.25
+      x_max: 10.25
+      y_min: 3.25
+      y_max: 4.25
+  - id: rack_C1
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: -11.5
+      x_max: -2.25
+      y_min: 0.0
+      y_max: 1.0
+  - id: rack_C2
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: 3.0
+      x_max: 10.25
+      y_min: 0.0
+      y_max: 1.0
+  - id: rack_D1
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: -11.5
+      x_max: -2.25
+      y_min: -3.25
+      y_max: -2.25
+  - id: rack_D2
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: 0.25
+      x_max: 10.25
+      y_min: -3.25
+      y_max: -2.25
+  - id: rack_E1
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: -11.5
+      x_max: -2.25
+      y_min: -6.5
+      y_max: -5.5
+  - id: rack_E2
+    bays: 6
+    height: 1.15
+    bounds:
+      x_min: 0.25
+      x_max: 10.25
+      y_min: -6.5
+      y_max: -5.5
+  aisles:
+  - id: aisle_a
+    label: ANA KORİDOR A
+    axis: x
+    role: main
+    bounds:
+      x_min: -13.25
+      x_max: 4.5
+      y_min: 4.25
+      y_max: 6.5
+  - id: aisle_b
+    label: ANA KORİDOR B
+    axis: x
+    role: main
+    bounds:
+      x_min: -13.25
+      x_max: 12.25
+      y_min: 1.0
+      y_max: 3.25
+  - id: aisle_c
+    label: ANA KORİDOR C
+    axis: x
+    role: main
+    bounds:
+      x_min: -13.25
+      x_max: 12.25
+      y_min: -2.25
+      y_max: 0.0
+  - id: aisle_d
+    label: ANA KORİDOR D
+    axis: x
+    role: main
+    bounds:
+      x_min: -13.25
+      x_max: 12.25
+      y_min: -5.5
+      y_max: -3.25
+  - id: cross_w
+    label: ENİNE GEÇİT W
+    axis: y
+    role: cross
+    bounds:
+      x_min: -13.25
+      x_max: -11.5
+      y_min: -7.25
+      y_max: 8.0
+  - id: cross_m
+    label: ENİNE GEÇİT M
+    axis: y
+    role: cross
+    bounds:
+      x_min: -2.0
+      x_max: 0.0
+      y_min: -7.25
+      y_max: 8.0
+  - id: cross_e
+    label: ENİNE GEÇİT E
+    axis: y
+    role: cross
+    bounds:
+      x_min: 10.5
+      x_max: 12.25
+      y_min: -7.25
+      y_max: 4.75
+  - id: inbound_access
+    label: MAL KABUL GİRİŞİ
+    axis: x
+    role: access
+    bounds:
+      x_min: -15.0
+      x_max: -11.5
+      y_min: -0.75
+      y_max: 0.75
+  zones:
+  - id: pick_zone_A1
+    label: Raf A
+    kind: pickup
+    bounds:
+      x_min: -7.75
+      x_max: -6.25
+      y_min: 5.25
+      y_max: 6.25
+  - id: pick_zone_A2
+    label: Raf A
+    kind: pickup
+    bounds:
+      x_min: 1.5
+      x_max: 3.0
+      y_min: 5.25
+      y_max: 6.25
+  - id: pick_zone_B1
+    label: Raf B
+    kind: pickup
+    bounds:
+      x_min: -7.75
+      x_max: -6.25
+      y_min: 2.0
+      y_max: 3.0
+  - id: pick_zone_B2
+    label: Raf B
+    kind: pickup
+    bounds:
+      x_min: 5.25
+      x_max: 6.75
+      y_min: 2.0
+      y_max: 3.0
+  - id: pick_zone_C1
+    label: Raf C
+    kind: pickup
+    bounds:
+      x_min: -7.75
+      x_max: -6.25
+      y_min: -1.25
+      y_max: -0.25
+  - id: pick_zone_C2
+    label: Raf C
+    kind: pickup
+    bounds:
+      x_min: 5.25
+      x_max: 6.75
+      y_min: -1.25
+      y_max: -0.25
+  - id: pick_zone_D1
+    label: Raf D
+    kind: pickup
+    bounds:
+      x_min: -8.75
+      x_max: -7.25
+      y_min: -4.5
+      y_max: -3.5
+  - id: pick_zone_D2
+    label: Raf D
+    kind: pickup
+    bounds:
+      x_min: 6.25
+      x_max: 7.75
+      y_min: -4.5
+      y_max: -3.5
+  - id: pick_zone_E1
+    label: Raf E
+    kind: pickup
+    bounds:
+      x_min: -5.75
+      x_max: -4.25
+      y_min: -5.25
+      y_max: -4.25
+  - id: pick_zone_E2
+    label: Raf E
+    kind: pickup
+    bounds:
+      x_min: 2.25
+      x_max: 3.75
+      y_min: -5.25
+      y_max: -4.25
+  - id: inbound_zone
+    label: Mal kabul
+    kind: pickup
+    bounds:
+      x_min: -14.5
+      x_max: -13.0
+      y_min: -2.75
+      y_max: 2.75
+  - id: packing_zone
+    label: Paketleme
+    kind: dropoff
+    bounds:
+      x_min: -4.0
+      x_max: 2.0
+      y_min: -8.5
+      y_max: -7.0
+  - id: shipping_zone
+    label: Sevkiyat
+    kind: dropoff
+    bounds:
+      x_min: 12.5
+      x_max: 14.75
+      y_min: -7.75
+      y_max: -3.25
+  - id: quality_zone
+    label: Kalite kontrol
+    kind: dropoff
+    bounds:
+      x_min: 0.25
+      x_max: 2.75
+      y_min: -0.25
+      y_max: 1.5
+  - id: charge_zone
+    label: Şarj
+    kind: charging
+    bounds:
+      x_min: 6.25
+      x_max: 14.75
+      y_min: 5.0
+      y_max: 8.75
+  - id: park_zone
+    label: Park
+    kind: parking
+    bounds:
+      x_min: 4.5
+      x_max: 6.0
+      y_min: 4.75
+      y_max: 8.5
+  transfer_points:
+  - id: pick_A1
+    kind: pickup
+    zone_id: pick_zone_A1
+    rack_id: rack_A1
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: -7.0
+      y: 5.75
+      yaw: 1.5707963267948966
+  - id: pick_A2
+    kind: pickup
+    zone_id: pick_zone_A2
+    rack_id: rack_A2
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: 2.25
+      y: 5.75
+      yaw: 1.5707963267948966
+  - id: pick_B1
+    kind: pickup
+    zone_id: pick_zone_B1
+    rack_id: rack_B1
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: -7.0
+      y: 2.5
+      yaw: 1.5707963267948966
+  - id: pick_B2
+    kind: pickup
+    zone_id: pick_zone_B2
+    rack_id: rack_B2
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: 6.0
+      y: 2.5
+      yaw: 1.5707963267948966
+  - id: pick_C1
+    kind: pickup
+    zone_id: pick_zone_C1
+    rack_id: rack_C1
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: -7.0
+      y: -0.75
+      yaw: 1.5707963267948966
+  - id: pick_C2
+    kind: pickup
+    zone_id: pick_zone_C2
+    rack_id: rack_C2
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: 6.0
+      y: -0.75
+      yaw: 1.5707963267948966
+  - id: pick_D1
+    kind: pickup
+    zone_id: pick_zone_D1
+    rack_id: rack_D1
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: -8.0
+      y: -4.0
+      yaw: 1.5707963267948966
+  - id: pick_D2
+    kind: pickup
+    zone_id: pick_zone_D2
+    rack_id: rack_D2
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: 7.0
+      y: -4.0
+      yaw: 1.5707963267948966
+  - id: pick_E1
+    kind: pickup
+    zone_id: pick_zone_E1
+    rack_id: rack_E1
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: -5.0
+      y: -4.75
+      yaw: -1.5707963267948966
+  - id: pick_E2
+    kind: pickup
+    zone_id: pick_zone_E2
+    rack_id: rack_E2
+    roles:
+    - pickup
+    - dropoff
+    pose:
+      x: 3.0
+      y: -4.75
+      yaw: -1.5707963267948966
+  - id: inbound_1
+    kind: pickup
+    zone_id: inbound_zone
+    pose:
+      x: -13.75
+      y: -1.25
+      yaw: 3.141592653589793
+  - id: inbound_2
+    kind: pickup
+    zone_id: inbound_zone
+    pose:
+      x: -13.75
+      y: 1.25
+      yaw: 3.141592653589793
+  - id: packing_1
+    kind: dropoff
+    zone_id: packing_zone
+    pose:
+      x: -2.75
+      y: -7.75
+      yaw: -1.5707963267948966
+  - id: packing_2
+    kind: dropoff
+    zone_id: packing_zone
+    pose:
+      x: 0.75
+      y: -7.75
+      yaw: -1.5707963267948966
+  - id: delivery-01
+    kind: dropoff
+    zone_id: shipping_zone
+    pose:
+      x: 13.75
+      y: -6.75
+      yaw: 0.0
+  - id: shipping_2
+    kind: dropoff
+    zone_id: shipping_zone
+    pose:
+      x: 13.75
+      y: -5.25
+      yaw: 0.0
+  - id: shipping_3
+    kind: dropoff
+    zone_id: shipping_zone
+    pose:
+      x: 13.75
+      y: -3.75
+      yaw: 0.0
+  - id: quality_1
+    kind: dropoff
+    zone_id: quality_zone
+    pose:
+      x: 1.5
+      y: 0.5
+      yaw: 1.5707963267948966
+  example_tasks:
+  - id: rack_to_packing
+    pickup: pick_A1
+    dropoff: packing_1
+    priority: LOW
+  - id: rack_to_shipping
+    pickup: pick_C2
+    dropoff: delivery-01
+    priority: MEDIUM
+  - id: inbound_to_rack
+    pickup: inbound_1
+    dropoff: pick_B1
+    priority: LOW

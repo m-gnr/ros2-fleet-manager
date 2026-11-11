@@ -101,6 +101,24 @@ C4.4 mevcut `charge_power_w`, `tolerance_radius`, düşük SoC ve %80 hedef alan
 
 Bölgeye eklenen isteğe bağlı `callout` noktası map çerçevesinde etiketin tercih edilen yeridir. Nokta ızgarada, tüm bölge ve raf ayak izlerinin dışında olmalıdır. Şarj yaklaşma uzunluğu fiziksel pedin ön yüzünden ölçülür. [Açıklık denetimi](validation/c5/warehouse-grid-clearance-2026-11-08.md)
 
+## Dağıtılmış operasyon profili
+
+[30 × 18 m profili](../config/fleet.warehouse-30x18.yaml) aynı sözleşmenin yeni bir örneğidir. 20 × 12 m ve 12 × 8 m dosyaları ayrı profil olarak korunur. `width` ve `depth` çevre boyutlarını bir kez tanımlar. `grid_m` değişmemiştir.
+
+| Alan | Birim / anlam | Doğrulama |
+|---|---|---|
+| `aisles[].role` | `main`, `cross`, `access` | Ana koridor en az 1,75 m, enine geçit en az 1,50 m |
+| `transfer_points[].pose` | m ve rad, `map` çerçevesinde robot yaklaşma merkezi | Kendi bölgesinde, ızgarada ve serbest alanda |
+| `zone_id` | Bölge kimliği | Noktanın alım/teslim türüne uygun bölge |
+| `rack_id` | Hizmet verilen raf bloğu | Var olan rafı gösterir, yaklaşma yönü en yakın raf yüzüne bakar |
+| `roles` | İzinli `pickup` / `dropoff` işlemleri | Boş ve yinelenen rol reddedilir. Raf noktası her iki işlemde kullanılabilir |
+| `example_tasks` | Örnek görev kimliği, alım ve teslim ID’leri, öncelik | Farklı uçlar, mevcut kimlikler ve uygun roller |
+| `approach_clearance_m` | m, yaklaşma merkezinin ihtiyatlı fiziksel yarıçapı | 30 × 18 m profilinde 0,45 m. Dolu raster hücresine değen veya çevre dışına çıkan zarf reddedilir |
+
+Yeni isteğe bağlı alanlar bulunmayan eski profiller eski sözleşmeyle yüklenir. Alım/teslim bölgeleri çoğalabilir. Şarj ve park için birer bölge vardır. Şarj yuvası üst sınırı altıya çıkarılmıştır. Kaynak kimliği veya pozunu paylaşan iki kayıt reddedilir.
+
+Doğrulayıcı ve SDF/PGM üreticisi aynı raster fonksiyonunu kullanır. Yaklaşma çemberi yalnız merkezin hücresine karşı değil, değdiği bütün hücrelere karşı sınanır. Nav2 kabulü ayrıca çalışan iki global costmap’te bütün yaklaşma merkezlerinin 0 maliyetli olmasını arar. Statik uygunluk hareketli robotlar için kaynak veya trafik rezervasyonu oluşturmaz. [Ölçümler ve doğrulama sınırları](validation/c5/warehouse-30x18-validation-2026-11-11.md)
+
 ## Fiziksel model doğrulama sınırı
 
 11 Kasım C5 Aşama 1.2’de gerçek Fortress collision modeli, etkin diff-drive açıklığı ve Nav2 güvenli yarıçapı ayrıca ölçüldü. Filo batarya model adının veya nominal Burger görselinin fiziksel geometri kanıtı olmadığı; kalan pickup/lokalizasyon ve paralel görev regresyonu [raporda](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md) açıklanır. Bu çalışma C1 şemasına yeni alan veya config Apply onayı eklemez.

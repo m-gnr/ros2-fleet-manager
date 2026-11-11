@@ -24,6 +24,22 @@
           ],
           "title": "Axis",
           "type": "string"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "enum": [
+                "main",
+                "cross",
+                "access"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Role"
         }
       },
       "required": [
@@ -384,6 +400,46 @@
         },
         "pose": {
           "$ref": "#/$defs/AnchoredPose"
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Zone Id"
+        },
+        "rack_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rack Id"
+        },
+        "roles": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "pickup",
+                  "dropoff"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Roles"
         }
       },
       "required": [
@@ -497,6 +553,41 @@
         "tolerance_radius"
       ],
       "title": "ChargingStation",
+      "type": "object"
+    },
+    "ExampleTask": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "pickup": {
+          "title": "Pickup",
+          "type": "string"
+        },
+        "dropoff": {
+          "title": "Dropoff",
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "title": "Priority",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "pickup",
+        "dropoff",
+        "priority"
+      ],
+      "title": "ExampleTask",
       "type": "object"
     },
     "Fleet": {
@@ -855,6 +946,46 @@
         },
         "pose": {
           "$ref": "#/$defs/TransferPose"
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Zone Id"
+        },
+        "rack_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rack Id"
+        },
+        "roles": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "pickup",
+                  "dropoff"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Roles"
         }
       },
       "required": [
@@ -912,6 +1043,22 @@
           ],
           "title": "Axis",
           "type": "string"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "enum": [
+                "main",
+                "cross",
+                "access"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Role"
         }
       },
       "required": [
@@ -1005,7 +1152,7 @@
           "items": {
             "$ref": "#/$defs/WarehouseZone"
           },
-          "maxItems": 4,
+          "maxItems": 32,
           "minItems": 4,
           "title": "Zones",
           "type": "array"
@@ -1014,10 +1161,30 @@
           "items": {
             "$ref": "#/$defs/TransferPoint"
           },
-          "maxItems": 8,
+          "maxItems": 64,
           "minItems": 4,
           "title": "Transfer Points",
           "type": "array"
+        },
+        "example_tasks": {
+          "items": {
+            "$ref": "#/$defs/ExampleTask"
+          },
+          "maxItems": 32,
+          "title": "Example Tasks",
+          "type": "array"
+        },
+        "approach_clearance_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Approach Clearance M"
         },
         "dock_approach_m": {
           "anyOf": [
@@ -1164,6 +1331,25 @@
           "minimum": 2,
           "title": "Dock Rack Clearance M",
           "type": "number"
+        },
+        "approach_clearance_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Approach Clearance M"
+        },
+        "example_tasks": {
+          "items": {
+            "$ref": "#/$defs/ExampleTask"
+          },
+          "title": "Example Tasks",
+          "type": "array"
         }
       },
       "required": [

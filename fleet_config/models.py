@@ -142,8 +142,8 @@ class FleetConfig(Contract):
         if self.fleet.map_path == "warehouse:generated" and self.warehouse is None:
             raise ValueError("warehouse:generated requires warehouse geometry")
         if self.warehouse is not None:
-            if not 2 <= len(self.stations.charging_stations) <= 4 or not self.stations.parking_stations:
-                raise ValueError("warehouse profile requires two to four charging stations and a parking station")
+            if not 2 <= len(self.stations.charging_stations) <= 6 or not self.stations.parking_stations:
+                raise ValueError("warehouse profile requires two to six charging stations and a parking station")
             for kind, group in (("charging", self.stations.charging_stations),
                                 ("parking", self.stations.parking_stations)):
                 for station in group:

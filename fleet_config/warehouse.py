@@ -1,6 +1,6 @@
 """Map-space warehouse geometry shared by renderers and future map generators."""
 
-from math import hypot, isclose
+from math import cos, hypot, isclose, sin
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -56,13 +56,15 @@ class WarehouseRack(Geometry):
 
 class WarehouseAisle(Area):
     axis: Literal["x", "y"]
+    role: Literal["main", "cross", "access"] | None = Field(default_factory=lambda: None)
 
     @model_validator(mode="after")
     def minimum_width(self):
         b = self.bounds
         width = b.y_max - b.y_min if self.axis == "x" else b.x_max - b.x_min
-        if width < 1:
-            raise ValueError(f"{self.id}: clear aisle width must be at least 1 m")
+        minimum = {"main": 1.75, "cross": 1.5}.get(self.role, 1)
+        if width < minimum:
+            raise ValueError(f"{self.id}: clear aisle width must be at least {minimum} m")
         return self
 
 
@@ -86,6 +88,19 @@ class TransferPoint(Geometry):
     id: str = Field(pattern=r"^[A-Za-z_][A-Za-z0-9_-]*$")
     kind: TransferKind
     pose: TransferPose
+    zone_id: str | None = Field(default_factory=lambda: None)
+    rack_id: str | None = Field(default_factory=lambda: None)
+    roles: list[TransferKind] | None = Field(default_factory=lambda: None)
+
+    def accepts(self, role):
+        return role in (self.roles if self.roles is not None else [self.kind])
+
+
+class ExampleTask(Geometry):
+    id: str = Field(pattern=r"^[A-Za-z_][A-Za-z0-9_-]*$")
+    pickup: str
+    dropoff: str
+    priority: Literal["LOW", "MEDIUM", "HIGH"]
 
 
 class WarehouseLayout(Geometry):
@@ -97,8 +112,10 @@ class WarehouseLayout(Geometry):
     door: WarehouseDoor
     racks: Annotated[list[WarehouseRack], Field(min_length=1, max_length=32)]
     aisles: Annotated[list[WarehouseAisle], Field(min_length=3, max_length=24)]
-    zones: Annotated[list[WarehouseZone], Field(min_length=4, max_length=4)]
-    transfer_points: Annotated[list[TransferPoint], Field(min_length=4, max_length=8)]
+    zones: Annotated[list[WarehouseZone], Field(min_length=4, max_length=32)]
+    transfer_points: Annotated[list[TransferPoint], Field(min_length=4, max_length=64)]
+    example_tasks: Annotated[list[ExampleTask], Field(max_length=32)] = Field(default_factory=list)
+    approach_clearance_m: Positive | None = Field(default_factory=lambda: None)
     dock_approach_m: Positive | None = Field(default_factory=lambda: None)
     dock_rack_clearance_m: Positive | None = Field(default_factory=lambda: None)
 
@@ -123,6 +140,12 @@ class WarehouseLayout(Geometry):
                 bounds = (MapRectangle(x_min=lo, x_max=hi, y_min=edge-half, y_max=edge+half) if along_x
                           else MapRectangle(x_min=edge-half, x_max=edge+half, y_min=lo, y_max=hi))
                 yield {"id": f"wall_{side}_{index}", "side": side, "edge": edge, "bounds": bounds}
+
+    def obstacles(self):
+        for wall in self.walls():
+            yield wall["id"], wall["bounds"], self.wall_height_m
+        for rack in self.racks:
+            yield rack.id, rack.bounds, rack.height
 
     def scene_payload(self):
         walls = [{**wall, "bounds": wall["bounds"].model_dump(mode="json")} for wall in self.walls()]
@@ -166,7 +189,9 @@ class WarehouseLayout(Geometry):
         if len({item.id for item in entries}) != len(entries):
             raise ValueError("warehouse IDs must be unique")
         if {zone.kind for zone in self.zones} != {"pickup", "dropoff", "charging", "parking"}:
-            raise ValueError("warehouse requires one zone of each kind")
+            raise ValueError("warehouse requires a zone of each kind")
+        if any(sum(zone.kind == kind for zone in self.zones) != 1 for kind in ("charging", "parking")):
+            raise ValueError("warehouse requires one charging and one parking zone")
 
         def on_grid(*values):
             return all(isclose(value / self.grid_m, round(value / self.grid_m), abs_tol=1e-8) for value in values)
@@ -206,9 +231,34 @@ class WarehouseLayout(Geometry):
 
         for kind in ("pickup", "dropoff"):
             points = [point for point in self.transfer_points if point.kind == kind]
-            if not 2 <= len(points) <= 4:
-                raise ValueError(f"warehouse requires two to four {kind} points")
+            if not 2 <= len(points) <= 48:
+                raise ValueError(f"warehouse requires two to 48 {kind} points")
             for point in points:
-                if not on_grid(point.pose.x, point.pose.y) or not self.zone(kind).contains(point.pose.x, point.pose.y, .4):
+                zones = [zone for zone in self.zones if zone.kind == kind and
+                         (point.zone_id is None or zone.id == point.zone_id)]
+                if not on_grid(point.pose.x, point.pose.y) or not any(
+                    zone.bounds.contains(point.pose.x, point.pose.y, .4) for zone in zones
+                ):
                     raise ValueError(f"{point.id}: transfer pose must be on the grid inside its zone")
+                if point.roles is not None and (not point.roles or len(set(point.roles)) != len(point.roles)):
+                    raise ValueError(f"{point.id}: transfer roles must be nonempty and unique")
+                if point.rack_id is not None:
+                    rack = next((rack for rack in self.racks if rack.id == point.rack_id), None)
+                    if rack is None:
+                        raise ValueError(f"{point.id}: unknown rack_id")
+                    x, y, yaw = point.pose.x, point.pose.y, point.pose.yaw
+                    face_x = min(rack.bounds.x_max, max(rack.bounds.x_min, x))
+                    face_y = min(rack.bounds.y_max, max(rack.bounds.y_min, y))
+                    dx, dy = face_x - x, face_y - y
+                    if hypot(dx, dy) < .4 or dx*cos(yaw) + dy*sin(yaw) < hypot(dx, dy) * .99:
+                        raise ValueError(f"{point.id}: approach must face its rack from free floor")
+        catalog = {point.id: point for point in self.transfer_points}
+        if len({task.id for task in self.example_tasks}) != len(self.example_tasks):
+            raise ValueError("warehouse example task IDs must be unique")
+        for task in self.example_tasks:
+            if task.pickup == task.dropoff or any(
+                id_ not in catalog or not catalog[id_].accepts(role)
+                for role, id_ in (("pickup", task.pickup), ("dropoff", task.dropoff))
+            ):
+                raise ValueError(f"{task.id}: invalid example task endpoints or roles")
         return self

@@ -218,7 +218,8 @@ def prepare_world(config, fleet_data, target=None):
       <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
         <left_joint>left_joint</left_joint>
         <right_joint>right_joint</right_joint>
-        <wheel_separation>0.4</wheel_separation>
+        <!-- Effective DART turning track measured independently; geometric wheel centers remain 0.40 m apart. -->
+        <wheel_separation>0.36</wheel_separation>
         <wheel_radius>0.1</wheel_radius>
         <topic>{namespace}/cmd_vel</topic>
         <odom_topic>{namespace}/odom</odom_topic>

@@ -74,3 +74,5 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 - [Kişisel notlar](hand_notes_1.pdf): değiştirilmeden korunur.
 
 İçerik taşımayan `setup.md` ve `requirements.md` kaldırılmıştır. Bilgi içeren tarihsel belgeler silinmemiştir. Değiştirilmeyen PDF'lerin atıf yaptığı taşınmış raporlar için eski konumlarda kısa yönlendirme kayıtları tutulur.
+
+- [C5 Git kaynak checkpoint ve push denetimi — 12 Kasım](validation/c5/git-checkpoint-2026-11-12/README.md) · [Komutlar](validation/c5/git-checkpoint-commands-2026-11-12.md): kaynak envanteri, yerel ham kanıt manifesti ve sınırlı yeniden üretim kontrolü.

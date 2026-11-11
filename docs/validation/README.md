@@ -53,3 +53,5 @@ B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ rob
 ## Depo ve dokümantasyon denetimleri
 
 - [26 Ekim 2026 düzenleme ve diyagram doğrulaması](organization/organization-validation-2026-10-26.md) · [komut eki](organization/organization-commands-2026-10-26.md)
+
+- [C5 Git checkpoint denetimi — 12 Kasım](c5/git-checkpoint-2026-11-12/README.md) · [Komut eki](c5/git-checkpoint-commands-2026-11-12.md); ürün kabulü veya Aşama 2 koşusu değildir.

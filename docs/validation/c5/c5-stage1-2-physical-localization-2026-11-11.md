@@ -10,6 +10,8 @@ Ana worktree `main / 32e23fc` yalnız okundu. Çalışma mevcut `/Users/murat/de
 
 [Proje bağlamı](../../project-context.md), [harita](../../README.md), C3.3.1–C3.3.3 kararları, Outbox sözleşmesi, C4 kabul listesi ve Compose kılavuzu okundu. Önceki Aşama 1/Aşama 1.1 raporları; localization-analysis, physical-measurements, feedback-contract; üç bağımsız deneyin ham kayıtları ve scenario-a/b/a2/b2 karşılaştırmaları incelendi. Tarihsel sonuçlar bu koşunun sonuçlarına eklenmedi.
 
+Bu çalışmanın kod/test commit’leri: `072131a` ölçüm araçları; `36e0b50` etkin track; `5ca037b` güvenli dairesel zarf; `971e586` kontrollü batarya kapanışı ve ROS test readiness. Rapor/kanıt commit SHA’sı son yanıtta verilir.
+
 ## 2. Gazebo modeli, yayıncılar ve Burger karşılaştırması
 
 [Ayrıntılı karşılaştırma](stage1-2-2026-11-11/model-comparison.md): bu dünya gerçek Burger collision/tekerlek modeli değildir. Gövde 0,50×0,30×0,10 m, ana kütle 2 kg, tekerlek r=0,10 m, genişlik 0,04 m, merkezler ±0,20 m; destekler r=0,05 m küredir. ROBOTIS Humble Burger URDF’sinde gövde collision 0,140×0,140×0,143 m ve ofsetlidir; tekerlek r=0,033 m, genişlik 0,018 m, merkez açıklığı 0,160 m. Chrome’daki nominal görsel fiziksel kabul kaynağı değildir. [ROBOTIS URDF](https://raw.githubusercontent.com/ROBOTIS-GIT/turtlebot3/humble/turtlebot3_description/urdf/turtlebot3_burger.urdf) · [özellikler](https://emanual.robotis.com/docs/en/platform/turtlebot3/features/)
@@ -100,7 +102,7 @@ Her deneme yeni dünyada, aynı beta başlangıcı `(5,25;7,75;π/2)` ve pick_A2
 | pickup-4 | SUCCEEDED | 0.419834 / 0.419834 | 0.297677 | 0.166313 | 0.095686 / 0.021027 / 0.030531 | KALDI |
 | pickup-5 | SUCCEEDED | 0.395827 / 0.395827 | 0.298664 | 0.199819 | 0.093447 / 0.018017 / 0.031075 | KALDI |
 
-Her satırın covariance stamp’i ve yaşı [pickup sonuç özetinde](stage1-2-2026-11-11/pickup-results.json) ayrıdır. Abort koşularında son covariance yaklaşık 17,5 saniyeye kadar eski olabilir; terminal covariance’ı olarak yorumlanmaz. Zararlı contact kaydı beş koşuda da yoktur; bu sürekli çarpışmasızlık garantisi değildir.
+Terminal sonrası gözlemci monotonic saatte yaklaşık 2 s bekleyip sabit fiziksel stamp’te TF okur; gerçek simülasyon stamp farkı ham kayıttadır, tam 2 s `/clock` garantisi değildir. Kabul anındaki odom hızları ayrıca kaydedilir. Her satırın covariance stamp’i ve yaşı [pickup sonuç özetinde](stage1-2-2026-11-11/pickup-results.json) ayrıdır. Abort koşularında son covariance yaklaşık 17,5 saniyeye kadar eski olabilir; terminal covariance’ı olarak yorumlanmaz. Zararlı contact kaydı beş koşuda da yoktur; bu sürekli çarpışmasızlık garantisi değildir.
 
 ## 9. Fiziksel hata dağılımı
 
@@ -116,9 +118,11 @@ Son varyantın yalnız SUCCEEDED terminalleri: 3 örnek, ortalama 0.354647 m, ö
 
 Önceki rclpy traceback’i incelendi: native `_take_subscription` / `take_message` sırasında RuntimeError. Mevcut düğüm tek thread’li spin kullanıyordu; eşzamanlı node destroy edildiğine dair kanıt yok. Python SIGINT’in native çağrı sırasında exception enjeksiyonu olası açıklamadır; tekrar üretilmediği için kanıtlanmış kök neden değildir.
 
+İlk lifecycle seçkisi timestep izolasyon dünyasında 1 ms, son seçki normal 5 ms dünyasında yapıldı; image/ROS/Python aynı, callback yükü birebir eşit değildir. SIGTERM’in handler olmadan sonlanması sinyal sözleşmesiyle ayrıca açıktır; bu iki seçki aynı yükte RuntimeError stres karşılaştırması diye sunulmaz.
+
 Önceki kodla gerçek Gazebo mesajları altında 30 deneme: **23 SIGINT → 0**, **7 SIGTERM → -15**. Son kodla aynı image ve canlı trafik altında 30 deneme: **23 SIGINT + 7 SIGTERM → tamamı 0**. Son çocuk loglarında ROS context kapalı, Python thread listesi MainThread; ebeveyn context döngü boyunca açık, sonunda kapalıdır. /proc child kaydı exit sonrası yoktur. Sonraki gerçek A/B supervisor’larında da batarya dahil bütün çocuklar 0 ile kapandı.
 
-Çocuk/ebeveyn çıkış, context, thread sayısı, traceback ve monotonik kapanış süresi [önce](stage1-2-2026-11-11/timestep/turn90/lifecycle/) ve [sonra](stage1-2-2026-11-11/footprint/pickup-5/lifecycle/) saklanır. Son 30 canlı kapanışın en uzunu yaklaşık 0,55 s. Düzeltme exception’ı yutmaz; sinyal yalnız bayrak koyar, spin_once 0,2 s sınırlıdır. Eski RuntimeError **yeniden üretilemedi / çözüldü iddiası yok**; somut SIGTERM eksikliği düzeltildi.
+Çocuk/ebeveyn çıkış, context, thread sayısı, traceback ve monotonik kapanış süresi [önce](stage1-2-2026-11-11/timestep/turn90/lifecycle/) ve [sonra](stage1-2-2026-11-11/footprint/pickup-5/lifecycle/) saklanır. Python 3.10.12, rclpy 3.3.22 ve Nav2 AMCL 1.1.20 paketleri kullanıldı; ayrı python3-pybind11 paketi bulunmadı, gömülü pybind11 derleme sürümü doğrulanmadı. Son 30 canlı kapanışın en uzunu yaklaşık 0,55 s. Düzeltme exception’ı yutmaz; sinyal yalnız bayrak koyar, spin_once 0,2 s sınırlıdır. Eski RuntimeError **yeniden üretilemedi / çözüldü iddiası yok**; somut SIGTERM eksikliği düzeltildi.
 
 ## 11. Gerçek tek/paralel görev ve Chrome/ROS regresyonu
 

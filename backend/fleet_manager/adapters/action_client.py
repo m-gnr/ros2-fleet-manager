@@ -223,24 +223,36 @@ class ExecuteTaskActionClientBridge:
 
     def _handle_feedback(self, task_id: str, goal_uuid: str, assignment_epoch: int, feedback_wrapper: Any) -> None:
         """ROS callback for action feedback."""
-        fb = feedback_wrapper.feedback
-        seq = self._feedback_seq.get(goal_uuid, 0) + 1
-        self._feedback_seq[goal_uuid] = seq
+        try:
+            fb = feedback_wrapper.feedback
+            seq = self._feedback_seq.get(goal_uuid, 0) + 1
+            self._feedback_seq[goal_uuid] = seq
+            self._submit_callback(Event(kind='ACTION_FEEDBACK', payload={
+                'robot_id': self.robot_id, 'task_id': task_id,
+                'assignment_epoch': assignment_epoch, 'goal_uuid': goal_uuid,
+                'status_seq': seq, 'current_phase': fb.current_phase,
+                'distance_to_goal': fb.distance_to_goal, 'battery_soc': fb.battery_soc,
+            }))
+        except Exception:
+            logger.exception('CALLBACK_REJECTED kind=ACTION_FEEDBACK robot=%s task=%s epoch=%s goal=%s',
+                             self.robot_id, task_id, assignment_epoch, goal_uuid)
 
-        payload = {
-            "robot_id": self.robot_id,
-            "task_id": task_id,
-            "assignment_epoch": assignment_epoch,
-            "goal_uuid": goal_uuid,
-            "status_seq": seq,
-            "current_phase": int(fb.current_phase),
-            "distance_to_goal": float(fb.distance_to_goal),
-            "battery_soc": float(fb.battery_soc),
-        }
-        asyncio.run_coroutine_threadsafe(
-            self.consumer.submit(Event(kind="ACTION_FEEDBACK", payload=payload)),
-            self.loop,
-        )
+    def _submit_callback(self, event):
+        coroutine = self.consumer.submit(event)
+        try:
+            future = asyncio.run_coroutine_threadsafe(coroutine, self.loop)
+        except Exception:
+            coroutine.close()
+            raise
+
+        def completed(done):
+            try:
+                done.result()
+            except Exception:
+                p = event.payload
+                logger.exception('CALLBACK_REJECTED kind=%s robot=%s task=%s epoch=%s goal=%s',
+                    event.kind, self.robot_id, p['task_id'], p['assignment_epoch'], p['goal_uuid'])
+        future.add_done_callback(completed)
 
     def _handle_result(self, task_id: str, goal_uuid: str, assignment_epoch: int, future: Any) -> None:
         """ROS callback for action result completion."""
@@ -260,10 +272,7 @@ class ExecuteTaskActionClientBridge:
                 "result_status": status,
                 "error_reason": error_reason,
             }
-            asyncio.run_coroutine_threadsafe(
-                self.consumer.submit(Event(kind="ACTION_RESULT", payload=payload)),
-                self.loop,
-            )
+            self._submit_callback(Event(kind='ACTION_RESULT', payload=payload))
         except Exception as exc:
             logger.error("Failed to process action result for %s:%s: %s", task_id, goal_uuid, exc)
         finally:

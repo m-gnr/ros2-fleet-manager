@@ -14,6 +14,7 @@ from uuid import uuid4
 from .domain import TaskResultStatus
 from .domain.constants import ROBOT_STATUS_STALE_TIMEOUT_SEC
 from .persistence.store import SQLiteStore
+from .feedback import ActionFeedback
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,9 @@ class FleetEventLoop:
                 try:
                     result = self._process(event)
                 except Exception as exc:
+                    logger.exception('EVENT_REJECTED kind=%s robot=%s task=%s epoch=%s goal=%s',
+                        event.kind, event.payload.get('robot_id'), event.payload.get('task_id'),
+                        event.payload.get('assignment_epoch'), event.payload.get('goal_uuid'))
                     future.set_exception(exc)
                 else:
                     future.set_result(result)
@@ -217,6 +221,7 @@ class FleetEventLoop:
         p = deepcopy(event.payload)
         kind = event.kind
         stream = seq = None
+        feedback = ActionFeedback.parse(p) if kind == 'ACTION_FEEDBACK' else None
         if kind in ("ROBOT_STATUS", "ACTION_FEEDBACK"):
             seq = p.pop("status_seq")
             if not isinstance(seq, int) or isinstance(seq, bool) or seq < 0:
@@ -282,7 +287,13 @@ class FleetEventLoop:
             ):
                 return "STALE", stream, seq
             if kind == "ACTION_FEEDBACK":
-                core.handle_action_feedback(**p)
+                accepted = core.handle_action_feedback(
+                    robot_id=feedback.robot_id, task_id=feedback.task_id,
+                    assignment_epoch=feedback.assignment_epoch, goal_uuid=feedback.goal_uuid,
+                    current_phase=feedback.current_phase,
+                )
+                if not accepted:
+                    return 'STALE', stream, seq
             elif kind == "CANCEL_RESPONSE":
                 pending = core._pending_preemption_assignments.get(p["robot_id"])
                 latest = self.store.connection.execute(

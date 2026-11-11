@@ -1,0 +1,243 @@
+{
+  "name": "fleet-c5-stage12-high",
+  "networks": {
+    "dds": {
+      "name": "fleet-c5-stage12-high_dds",
+      "driver": "bridge",
+      "ipam": {}
+    }
+  },
+  "services": {
+    "backend": {
+      "command": [
+        "bash",
+        "-c",
+        "source /opt/ros/humble/setup.bash \u0026\u0026 cd /workspace \u0026\u0026 colcon build --symlink-install --base-paths src \u0026\u0026 source install/setup.bash \u0026\u0026 export PYTHONPATH=/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH \u0026\u0026 exec python3 /opt/simulation-c3-3-3/check.py"
+      ],
+      "entrypoint": null,
+      "environment": {
+        "C333_AUTO_ROUTES": "0",
+        "C333_ENERGY_POLICY": "0",
+        "C333_HIGH_PREEMPTION": "0",
+        "DDS_PUBLISH_PERIOD_SECONDS": "1",
+        "DDS_ROLE": "subscriber",
+        "DDS_TEST_PAYLOAD": "fleet-c5-stage12-high",
+        "DDS_TEST_TIMEOUT_SECONDS": "300",
+        "DDS_TEST_TOPIC": "/dds_validation/probe",
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "ROS_DOMAIN_ID": "187",
+        "ROS_LOCALHOST_ONLY": "0",
+        "SIM_CHECK_ROLE": "backend"
+      },
+      "image": "ros2-fleet-simulation-c3-3-3-backend:humble-fortress",
+      "init": true,
+      "networks": {
+        "dds": null
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "target": "/config",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-common",
+          "target": "/opt/fleet-live-validation",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "target": "/workspace/config",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-c3-3-3",
+          "target": "/opt/simulation-c3-3-3",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/interfaces",
+          "target": "/workspace/src/interfaces",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/ros2_ws/src",
+          "target": "/workspace/src/ros2_ws",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/backend",
+          "target": "/workspace/backend",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/fleet_config",
+          "target": "/workspace/fleet_config",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/tests",
+          "target": "/workspace/tests",
+          "read_only": true,
+          "bind": {}
+        }
+      ],
+      "build": {
+        "context": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+        "dockerfile": "docker/simulation-c3-3-3/Dockerfile"
+      }
+    },
+    "simulation": {
+      "command": [
+        "bash",
+        "-c",
+        "source /opt/ros/humble/setup.bash \u0026\u0026 cd /workspace \u0026\u0026 colcon build --symlink-install --base-paths src \u0026\u0026 source install/setup.bash \u0026\u0026 export PYTHONPATH=/opt/fleet-live-validation:/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$$PYTHONPATH \u0026\u0026 exec python3 /opt/simulation-c3-3-3/check.py"
+      ],
+      "entrypoint": null,
+      "environment": {
+        "DDS_PUBLISH_PERIOD_SECONDS": "1",
+        "DDS_ROLE": "publisher",
+        "DDS_TEST_PAYLOAD": "fleet-c5-stage12-high",
+        "DDS_TEST_TIMEOUT_SECONDS": "300",
+        "DDS_TEST_TOPIC": "/dds_validation/probe",
+        "EGL_PLATFORM": "surfaceless",
+        "IGN_GAZEBO_RENDER_ENGINE_PATH": "/usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins",
+        "IGN_RENDERING_PLUGIN_PATH": "/usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins",
+        "LIBGL_ALWAYS_SOFTWARE": "1",
+        "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+        "ROS_DOMAIN_ID": "187",
+        "ROS_LOCALHOST_ONLY": "0",
+        "SIM_CHECK_ROLE": "simulation"
+      },
+      "image": "ros2-fleet-simulation-nav2-check:humble-fortress",
+      "init": true,
+      "networks": {
+        "dds": null
+      },
+      "stop_grace_period": "40s",
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "target": "/config",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-common",
+          "target": "/opt/fleet-live-validation",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "target": "/workspace/config",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-c3-3-3",
+          "target": "/opt/simulation-c3-3-3",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/interfaces",
+          "target": "/workspace/src/interfaces",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/ros2_ws/src",
+          "target": "/workspace/src/ros2_ws",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/backend",
+          "target": "/workspace/backend",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/fleet_config",
+          "target": "/workspace/fleet_config",
+          "read_only": true,
+          "bind": {}
+        },
+        {
+          "type": "bind",
+          "source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/tests",
+          "target": "/workspace/tests",
+          "read_only": true,
+          "bind": {}
+        }
+      ],
+      "build": {
+        "context": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+        "dockerfile": "docker/simulation-check/Dockerfile"
+      }
+    }
+  },
+  "x-c3-3-3": {
+    "image": "ros2-fleet-simulation-nav2-check:humble-fortress",
+    "volumes": [
+      "../../docker/simulation-common:/opt/fleet-live-validation:ro",
+      "../../config:/config:ro",
+      "../../config:/workspace/config:ro",
+      "../../docker/simulation-c3-3-3:/opt/simulation-c3-3-3:ro",
+      "../../interfaces:/workspace/src/interfaces:ro",
+      "../../ros2_ws/src:/workspace/src/ros2_ws:ro",
+      "../../backend:/workspace/backend:ro",
+      "../../fleet_config:/workspace/fleet_config:ro",
+      "../../tests:/workspace/tests:ro"
+    ]
+  },
+  "x-dds-common": {
+    "build": {
+      "context": "../../docker/dds"
+    },
+    "env_file": [
+      "../../config/dds.env"
+    ],
+    "image": "ros2-fleet-dds-check:humble-fortress",
+    "init": true,
+    "networks": [
+      "dds"
+    ]
+  },
+  "x-simulation-check": {
+    "build": {
+      "context": "../..",
+      "dockerfile": "docker/simulation-check/Dockerfile"
+    },
+    "image": "ros2-fleet-simulation-check:humble-fortress",
+    "volumes": [
+      "../../config:/config:ro"
+    ]
+  }
+}

@@ -1,0 +1,597 @@
+{
+  "containers": [
+    {
+      "name": "/fleet-c5-stage12-motion",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 1,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:23:23.422744917Z",
+        "FinishedAt": "2026-11-11T16:25:05.494220964Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; export PYTHONPATH=/workspace:${PYTHONPATH:-}; python3 docker/simulation-warehouse-grid/stage12_run.py config/fleet.warehouse-30x18.yaml /evidence/baseline-motion --motions"
+      ],
+      "environment": [
+        "ROS_DOMAIN_ID=180",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "ROS_LOCALHOST_ONLY=0",
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "PYTHONDONTWRITEBYTECODE=1"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/workspace",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-motion-rest",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:25:47.158231511Z",
+        "FinishedAt": "2026-11-11T16:29:33.830364172Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; export PYTHONPATH=/workspace:${PYTHONPATH:-}; python3 docker/simulation-warehouse-grid/stage12_run.py config/fleet.warehouse-30x18.yaml /evidence/baseline-motion-rest --only turn90 turn180 turn_forward corridor pickup-1 pickup-2 pickup-3"
+      ],
+      "environment": [
+        "ROS_DOMAIN_ID=181",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "ROS_LOCALHOST_ONLY=0",
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "PYTHONDONTWRITEBYTECODE=1"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/workspace",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-isolate",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:29:53.183025583Z",
+        "FinishedAt": "2026-11-11T16:34:25.811712876Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; source /types/setup.bash; export PYTHONPATH=/workspace:/workspace/ros2_ws/src/fleet_battery_simulator:${PYTHONPATH:-}; python3 docker/simulation-warehouse-grid/stage12_run.py config/fleet.warehouse-30x18.yaml /evidence/timestep --variant timestep --only turn90 --lifecycle 30; python3 docker/simulation-warehouse-grid/stage12_performance.py /evidence/performance-effective.jsonl & sampler=$!; python3 docker/simulation-warehouse-grid/stage12_run.py config/fleet.warehouse-30x18.yaml /evidence/effective-track --variant effective_track --only forward turn90 turn180 turn_forward pickup-1 pickup-2 pickup-3 --routes; kill -TERM \"$sampler\"; wait \"$sampler\""
+      ],
+      "environment": [
+        "ROS_DOMAIN_ID=182",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "ROS_LOCALHOST_ONLY=0",
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "PYTHONDONTWRITEBYTECODE=1"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/e2e-stage1-2026-11-11/install",
+          "Destination": "/types",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/workspace",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-footprint",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:35:14.129205093Z",
+        "FinishedAt": "2026-11-11T16:42:01.508085254Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; source /types/setup.bash; export PYTHONPATH=/workspace:/workspace/ros2_ws/src/fleet_battery_simulator:${PYTHONPATH:-}; python3 docker/simulation-warehouse-grid/stage12_performance.py /evidence/performance-footprint.jsonl & sampler=$!; python3 docker/simulation-warehouse-grid/stage12_run.py config/fleet.warehouse-30x18.yaml /evidence/footprint --variant footprint --only reverse corridor pickup-1 pickup-2 pickup-3 pickup-4 pickup-5 --routes --access --lifecycle 30; kill -TERM \"$sampler\"; wait \"$sampler\""
+      ],
+      "environment": [
+        "ROS_DOMAIN_ID=183",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "ROS_LOCALHOST_ONLY=0",
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "PYTHONDONTWRITEBYTECODE=1"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/e2e-stage1-2026-11-11/install",
+          "Destination": "/types",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/workspace",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-ros",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:44:26.596729168Z",
+        "FinishedAt": "2026-11-11T16:45:16.390866011Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; colcon build --base-paths /repo/interfaces /repo/ros2_ws/src > /evidence/ros-build.log 2>&1; source install/setup.bash; cd /repo; export PYTHONPATH=/repo:/repo/backend:/repo/ros2_ws/src/fleet_robot_executor:/repo/ros2_ws/src/fleet_battery_simulator:${PYTHONPATH:-}; python3 -m pytest -q -rs -p no:cacheprovider -p no:launch_testing -p no:launch_ros tests/ ros2_ws/src/fleet_robot_executor/test > /evidence/ros-tests.log 2>&1"
+      ],
+      "environment": [
+        "ROS_DOMAIN_ID=184",
+        "ROS_LOCALHOST_ONLY=1",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "PYTHONDONTWRITEBYTECODE=1"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "Destination": "/config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/repo",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-a",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:41:16.107114427Z",
+        "FinishedAt": "2026-11-11T16:44:01.742711462Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; source /types/setup.bash; export PYTHONPATH=/workspace:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; python3 docker/simulation-warehouse-grid/stage11_run.py config/fleet.warehouse-30x18.yaml /evidence/scenario-a --api-port 20212 --scene-port 20213 --origin http://127.0.0.1:20211"
+      ],
+      "environment": [
+        "ROS_LOCALHOST_ONLY=0",
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "STAGE11_TRANSITIONS=/evidence/scenario-a/committed-events.jsonl",
+        "ROS_DOMAIN_ID=185",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/e2e-stage1-2026-11-11/install",
+          "Destination": "/types",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/workspace",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "volume",
+          "Name": "fleet-c5-stage12-20261111",
+          "Source": "/var/lib/docker/volumes/fleet-c5-stage12-20261111/_data",
+          "Destination": "/var/lib/fleet",
+          "Driver": "local",
+          "Mode": "z",
+          "RW": true,
+          "Propagation": ""
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-b",
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:44:44.412647927Z",
+        "FinishedAt": "2026-11-11T16:47:21.445444138Z"
+      },
+      "command": [
+        "-ec",
+        "source /opt/ros/humble/setup.bash; source /types/setup.bash; export PYTHONPATH=/workspace:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; python3 docker/simulation-warehouse-grid/stage11_run.py config/fleet.warehouse-30x18.yaml /evidence/scenario-b --api-port 20212 --scene-port 20213 --origin http://127.0.0.1:20211"
+      ],
+      "environment": [
+        "ROS_DOMAIN_ID=186",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "ROS_LOCALHOST_ONLY=0",
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "STAGE11_TRANSITIONS=/evidence/scenario-b/committed-events.jsonl"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/stage1-2-2026-11-11",
+          "Destination": "/evidence",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/e2e-stage1-2026-11-11/install",
+          "Destination": "/types",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+          "Destination": "/workspace",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "volume",
+          "Name": "fleet-c5-stage12-20261111",
+          "Source": "/var/lib/docker/volumes/fleet-c5-stage12-20261111/_data",
+          "Destination": "/var/lib/fleet",
+          "Driver": "local",
+          "Mode": "z",
+          "RW": true,
+          "Propagation": ""
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-c333-simulation-1",
+      "image": "sha256:dc766635005bba89c4f7b2ea9fcaf6b5273f4421a6a03116db819f49e05f21c0",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:47:36.559135256Z",
+        "FinishedAt": "2026-11-11T16:48:36.283716464Z"
+      },
+      "command": [
+        "bash",
+        "-c",
+        "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/opt/fleet-live-validation:/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$PYTHONPATH && exec python3 /opt/simulation-c3-3-3/check.py"
+      ],
+      "environment": [
+        "LIBGL_ALWAYS_SOFTWARE=1",
+        "ROS_LOCALHOST_ONLY=0",
+        "ROS_DOMAIN_ID=188",
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "Destination": "/config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-common",
+          "Destination": "/opt/fleet-live-validation",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-c3-3-3",
+          "Destination": "/opt/simulation-c3-3-3",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/backend",
+          "Destination": "/workspace/backend",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "Destination": "/workspace/config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/fleet_config",
+          "Destination": "/workspace/fleet_config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/tests",
+          "Destination": "/workspace/tests",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/interfaces",
+          "Destination": "/workspace/src/interfaces",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/ros2_ws/src",
+          "Destination": "/workspace/src/ros2_ws",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    },
+    {
+      "name": "/fleet-c5-stage12-c333-backend-1",
+      "image": "sha256:5cebe63528351c0f451ad18349f934135a986a79d72686e391dfad8383cdcb8d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T16:47:36.464213464Z",
+        "FinishedAt": "2026-11-11T16:48:30.898380545Z"
+      },
+      "command": [
+        "bash",
+        "-c",
+        "source /opt/ros/humble/setup.bash && cd /workspace && colcon build --symlink-install --base-paths src && source install/setup.bash && export PYTHONPATH=/workspace:/workspace/backend:/workspace/fleet_config:/workspace/src/ros2_ws/fleet_robot_executor:$PYTHONPATH && exec python3 /opt/simulation-c3-3-3/check.py"
+      ],
+      "environment": [
+        "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+        "ROS_LOCALHOST_ONLY=0",
+        "ROS_DOMAIN_ID=188"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "Destination": "/config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-common",
+          "Destination": "/opt/fleet-live-validation",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docker/simulation-c3-3-3",
+          "Destination": "/opt/simulation-c3-3-3",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/backend",
+          "Destination": "/workspace/backend",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/config",
+          "Destination": "/workspace/config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/fleet_config",
+          "Destination": "/workspace/fleet_config",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/tests",
+          "Destination": "/workspace/tests",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/interfaces",
+          "Destination": "/workspace/src/interfaces",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/ros2_ws/src",
+          "Destination": "/workspace/src/ros2_ws",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ]
+    }
+  ],
+  "docker_info": {
+    "ServerVersion": "29.9.2",
+    "NCPU": 8,
+    "MemTotal": 8319770624,
+    "Architecture": "aarch64",
+    "OperatingSystem": "Docker Desktop"
+  }
+}

@@ -100,3 +100,7 @@ C4.4 mevcut `charge_power_w`, `tolerance_radius`, düşük SoC ve %80 hedef alan
 `fleet.map_path: warehouse:generated` kullanan profil için `scripts/generate_warehouse_grid.py` aynı çözülmüş veriden SDF, PGM, harita YAML’i ve iki Nav2 parametre dosyası üretir. Nav2 harita sunucusu ve yerel/küresel costmap statik katmanları üretilen haritayı kullanır. Tarayıcı da API’nin aynı çözülmüş duvar ve raf ayak izlerini kullanır. [Üretim ve canlı doğrulama](validation/c5/warehouse-grid-20x12-validation-2026-11-08.md)
 
 Bölgeye eklenen isteğe bağlı `callout` noktası map çerçevesinde etiketin tercih edilen yeridir. Nokta ızgarada, tüm bölge ve raf ayak izlerinin dışında olmalıdır. Şarj yaklaşma uzunluğu fiziksel pedin ön yüzünden ölçülür. [Açıklık denetimi](validation/c5/warehouse-grid-clearance-2026-11-08.md)
+
+## Fiziksel model doğrulama sınırı
+
+11 Kasım C5 Aşama 1.2’de gerçek Fortress collision modeli, etkin diff-drive açıklığı ve Nav2 güvenli yarıçapı ayrıca ölçüldü. Filo batarya model adının veya nominal Burger görselinin fiziksel geometri kanıtı olmadığı; kalan pickup/lokalizasyon ve paralel görev regresyonu [raporda](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md) açıklanır. Bu çalışma C1 şemasına yeni alan veya config Apply onayı eklemez.

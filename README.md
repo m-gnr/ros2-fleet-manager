@@ -1,5 +1,7 @@
 # ROS 2 Fleet Manager
 
+11 Kasım fiziksel doğrulaması: odometri/footprint ve kapanış düzeltmeleri sınandı; **F2 ve paralel görev regresyonu açık, Aşama 1.2 kabul edilmedi**. [Rapor](docs/validation/c5/c5-stage1-2-physical-localization-2026-11-11.md)
+
 Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik, rota ve enerji uygunluğuna göre yöneten; web üzerinden izleme ve kontrol hedefleyen filo yönetim projesi.
 
 ## Temel özellikler

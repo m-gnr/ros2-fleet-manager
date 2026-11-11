@@ -16,7 +16,8 @@ amcl:
     laser_likelihood_max_dist: 2.0
     laser_max_range: 10.0
     laser_min_range: 0.1
-    laser_model_type: "likelihood_field"
+    # Range-based shelf observations validated in C5 stage 1.3.
+    laser_model_type: "beam"
     max_beams: 60
     max_particles: 1000
     min_particles: 200

@@ -1,0 +1,1507 @@
+diff --git a/README.md b/README.md
+index 0bf4331..a572d97 100644
+--- a/README.md
++++ b/README.md
+@@ -11,13 +11,16 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
+ - **Mevcut:** Düşük SoC/FIFO şarj kuyruğu, fiziksel dock temasıyla şarj ve kanıtlı istasyon devri.
+ - **Mevcut:** C5 Aşama 1.6, salt okunur operasyon özetini, seçili robotu ve ROS TF/Path tabanlı açık 3D depoyu kompakt genel görünümde birleştirir.
+ 
++- **Mevcut:** 30 × 18 m ortak depo profili, dağıtılmış pick/teslim kataloğu, costmap bindirmesi ve tek consumer’a bağlı görev oluşturma. [Doğrulama kapsamı](docs/validation/c5/warehouse-30x18-validation-2026-11-11.md)
++
+ ## Mimari genel bakış
+ 
+ Üç servisli hedef **ONAYLANDI**; nihai üç servis dağıtımı **HENÜZ TEST EDİLMEDİ**.
+ 
+ ```mermaid
+ flowchart LR
+-    UI["React + TypeScript + Three.js"] <-->|"GET / WebSocket"| API["FastAPI • salt okunur"]
++    UI["React + TypeScript + Three.js"] <-->|"HTTP / WebSocket"| API["FastAPI"]
++    API -->|"Katalog görevi / yerel soket / SUBMIT_TASK"| FM
+     ROS["Salt okunur TF / Path köprüsü"] --> API
+     FM["Fleet Manager + SQLite"] -->|"Commit sonrası snapshot"| API
+     FM <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator ve fiziksel dock"]
+@@ -40,7 +43,7 @@ Kayıtlı canlı deney ortamı Apple Silicon / linux-arm64 container'lardır. Di
+ ```text
+ backend/fleet_manager/   Domain, tek consumer, SQLite ve ROS adaptörleri
+ fleet_config/           Paylaşılan filo doğrulayıcı ve CLI
+-backend/dashboard/      Salt okunur snapshot, REST ve WebSocket
++backend/dashboard/      Snapshot, REST/WebSocket ve katalog görev girişi
+ frontend/               React/TypeScript 3D operasyon paneli
+ fleet-visualizer/bridge Salt okunur ROS TF/Path köprüsü
+ ros2_ws/src/             Robot Executor ve Battery Simulator ROS 2 paketleri
+@@ -99,6 +102,7 @@ Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belg
+ | C5 Aşama 1 | Salt okunur API, WebSocket ve operasyon paneli | [Tarihsel 2D doğrulaması](docs/validation/c5/c5-stage1-validation-2026-11-06.md) |
+ | C5 Aşama 1.5 | Açık temalı 3D depo, TF/Path ve ayrı ürün güncelliği | [Gazebo ve Chrome doğrulaması](docs/validation/c5/c5-stage1-5-validation-2026-11-06.md) |
+ | C5 Aşama 1.6 | Depo öncelikli genel görünüm, kamera kadrajı ve filo kartları | [Yerleşim ve canlı kabul](docs/validation/c5/c5-stage1-6-validation-2026-11-06.md) |
++| C5 dağıtılmış depo | Ortak 30 × 18 m profil, katalog görev girişi ve costmap görünümü | [11 Kasım doğrulaması ve sınırları](docs/validation/c5/warehouse-30x18-validation-2026-11-11.md) |
+ 
+ ## Testler ve doğrulama sonuçları
+ 
+@@ -114,7 +118,7 @@ Tarihsel kanıtlar: C2.3 tek robotta 7/7 senaryo; C3.3.3 raporunda 10/10 senaryo
+ 
+ ## Yol haritası
+ 
+-C5’in sonraki aşamaları görev girişini ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
++C5’in sonraki aşamaları katalog görev girişinin Executor/Battery ile birleşik canlı kabulünü ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
+ 
+ ## Dokümantasyon bağlantıları
+ 
+diff --git a/backend/dashboard/api.py b/backend/dashboard/api.py
+index 5490c6d..51ecfb0 100644
+--- a/backend/dashboard/api.py
++++ b/backend/dashboard/api.py
+@@ -3,11 +3,13 @@ import argparse
+ import asyncio
+ from contextlib import asynccontextmanager, suppress
+ from pathlib import Path
++import json
+ import time
+ from urllib.parse import urlsplit
+ from uuid import uuid4
+ 
+-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
++from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
++from fastapi.responses import JSONResponse
+ from fastapi.middleware.cors import CORSMiddleware
+ from pydantic import ValidationError
+ from starlette.middleware.trustedhost import TrustedHostMiddleware
+@@ -96,7 +98,8 @@ async def send_latest(socket, feed, *, poll_sec=POLL_SEC):
+             await asyncio.wait_for(socket.close(close_code), SEND_TIMEOUT_SEC)
+ 
+ 
+-def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None, fleet_config=None):
++def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None, fleet_config=None,
++               task_socket=None, costmap_path=None):
+     origins = frozenset(origins)
+     for origin in origins:
+         url = urlsplit(origin)
+@@ -121,7 +124,8 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
+ 
+     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
+-    app.add_middleware(CORSMiddleware, allow_origins=list(origins), allow_methods=["GET"], allow_headers=[])
++    app.add_middleware(CORSMiddleware, allow_origins=list(origins), allow_methods=["GET", "POST"] if task_socket else ["GET"],
++                       allow_headers=["Content-Type"])
+ 
+     @app.middleware("http")
+     async def prevent_cache(request, call_next):
+@@ -172,8 +176,9 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
+         snapshot = current()
+         return envelope(snapshot, "stations", snapshot.stations)
+ 
+-    @app.get("/api/warehouse-layout")
+-    async def warehouse_layout():
++    def warehouse_payload():
++        from fleet_config.occupancy import profile_digest
++
+         if fleet_config is None or fleet_config.warehouse is None:
+             return {"layout": None}
+         snapshot = current()
+@@ -190,7 +195,69 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
+                       and len(snapshot.stations) == len(expected) and actual == expected
+                       and {robot.robot_id for robot in snapshot.robots} == {robot.id for robot in fleet_config.robots})
+         return {**envelope(snapshot, "layout", fleet_config.warehouse.scene_payload() if compatible else None),
+-                "profile_mismatch": not compatible}
++                "profile_mismatch": not compatible, "profile_digest": profile_digest(fleet_config)}
++
++    @app.get("/api/warehouse-layout")
++    async def warehouse_layout():
++        return warehouse_payload()
++
++    @app.get("/api/task-catalog")
++    async def task_catalog():
++        payload = warehouse_payload()
++        layout = payload["layout"]
++        return {**payload, "enabled": bool(layout and task_socket and Path(task_socket).is_socket())}
++
++    async def submit_task(request: Request):
++        from .task_ingress import MAX_REQUEST_BYTES, TaskRequest, endpoints, send_task
++
++        if request.headers.get("origin") not in origins or request.headers.get("content-type") != "application/json":
++            raise HTTPException(403, "Exact browser origin and JSON content type required")
++        payload = warehouse_payload()
++        if payload["layout"] is None or task_socket is None:
++            raise HTTPException(503, "Task ingress unavailable")
++        raw = bytearray()
++        async for chunk in request.stream():
++            raw.extend(chunk)
++            if len(raw) > MAX_REQUEST_BYTES:
++                raise HTTPException(413, "Task request too large")
++        try:
++            command = TaskRequest.model_validate_json(bytes(raw))
++            if (command.source_session_id != payload["source_session_id"] or
++                    command.profile_digest != payload["profile_digest"]):
++                raise HTTPException(409, "Fleet session changed")
++            endpoints(fleet_config, command)
++        except (ValueError, ValidationError) as error:
++            raise HTTPException(422, "Invalid task endpoints, roles or request") from error
++        try:
++            response = await asyncio.wait_for(send_task(task_socket, command), timeout=6)
++        except (OSError, ValueError, asyncio.TimeoutError) as error:
++            raise HTTPException(503, "Task acknowledgement unavailable. Retry with the same request ID") from error
++        if "error" in response:
++            raise HTTPException(409, response["error"])
++        return JSONResponse(response, status_code=200 if response["outcome"] == "DUPLICATE" else 201)
++
++    if task_socket is not None:
++        app.add_api_route("/api/tasks", submit_task, methods=["POST"])
++
++    @app.get("/api/warehouse-costmap")
++    async def warehouse_costmap():
++        from fleet_config.occupancy import encode_grid, profile_digest, raster
++
++        if warehouse_payload()["layout"] is None:
++            raise HTTPException(503, "Warehouse profile unavailable")
++        digest = profile_digest(fleet_config)
++        if costmap_path is not None:
++            try:
++                if Path(costmap_path).stat().st_size > 16_000_000:
++                    raise ValueError("Costmap capture exceeds size limit")
++                recorded = json.loads(Path(costmap_path).read_text())
++                if recorded["profile_digest"] != digest or recorded["source"] != "nav2_recorded":
++                    raise ValueError("Costmap profile mismatch")
++                return recorded
++            except (OSError, ValueError, KeyError) as error:
++                raise HTTPException(503, "Recorded costmap unavailable or profile mismatch") from error
++        metadata, cells = raster(fleet_config.warehouse)
++        return {**encode_grid(metadata, cells, "generated_occupancy"), "profile_digest": digest}
+ 
+     @app.websocket("/ws/fleet")
+     async def stream(socket: WebSocket):
+@@ -223,6 +290,8 @@ def main():
+     parser.add_argument("--container-bind", action="store_true")
+     parser.add_argument("--scene-port", type=int)
+     parser.add_argument("--fleet", type=Path)
++    parser.add_argument("--task-socket", type=Path)
++    parser.add_argument("--costmap", type=Path)
+     args = parser.parse_args()
+     bridge_url = None
+     topics = None
+@@ -238,7 +307,7 @@ def main():
+         bridge_url = f"ws://scene:{args.scene_port}/telemetry/fleet"
+     uvicorn.run(
+         create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics,
+-                   fleet_config=config),
++                   fleet_config=config, task_socket=args.task_socket, costmap_path=args.costmap),
+         host="0.0.0.0" if args.container_bind else "127.0.0.1", port=args.port,
+         proxy_headers=False, server_header=False, ws="websockets", ws_max_size=1024, ws_max_queue=1,
+         ws_per_message_deflate=False, limit_concurrency=64, timeout_graceful_shutdown=3,
+diff --git a/backend/dashboard/publisher.py b/backend/dashboard/publisher.py
+index 1d6f7d0..eefcb01 100644
+--- a/backend/dashboard/publisher.py
++++ b/backend/dashboard/publisher.py
+@@ -1,6 +1,6 @@
+ """Project one committed Fleet Manager generation onto a private latest-value file."""
+ import asyncio
+-from contextlib import asynccontextmanager, suppress
++from contextlib import AsyncExitStack, asynccontextmanager, suppress
+ from datetime import datetime, timezone
+ from itertools import chain, islice
+ import logging
+@@ -154,8 +154,7 @@ def _write(path, sample, session, sequence, captured_ns, utc):
+             temporary_path.unlink(missing_ok=True)
+ 
+ 
+-async def _publish(consumer, path):
+-    session = str(uuid4())
++async def _publish(consumer, path, session):
+     sequence = 0
+     failed = False
+     while True:
+@@ -174,14 +173,24 @@ async def _publish(consumer, path):
+ 
+ 
+ @asynccontextmanager
+-async def publish_fleet(consumer, path):
++async def publish_fleet(consumer, path, *, fleet_config=None):
+     """Optional producer. Its lifetime follows the consumer, never HTTP clients."""
+     consumer.enable_dashboard_sampling()
+-    task = asyncio.create_task(_publish(consumer, Path(path)))
++    session = str(uuid4())
+     try:
+-        yield
++        async with AsyncExitStack() as stack:
++            if fleet_config is not None and fleet_config.warehouse is not None:
++                from .task_ingress import task_server
++
++                await stack.enter_async_context(task_server(
++                    consumer, Path(path).with_suffix('.tasks.sock'), fleet_config, session,
++                ))
++            task = asyncio.create_task(_publish(consumer, Path(path), session))
++            try:
++                yield
++            finally:
++                task.cancel()
++                with suppress(asyncio.CancelledError):
++                    await task
+     finally:
+-        task.cancel()
+-        with suppress(asyncio.CancelledError):
+-            await task
+         consumer.disable_dashboard_sampling()
+diff --git a/config/fleet.schema.json b/config/fleet.schema.json
+index 5e323af..e10b48e 100644
+--- a/config/fleet.schema.json
++++ b/config/fleet.schema.json
+@@ -24,6 +24,22 @@
+           ],
+           "title": "Axis",
+           "type": "string"
++        },
++        "role": {
++          "anyOf": [
++            {
++              "enum": [
++                "main",
++                "cross",
++                "access"
++              ],
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Role"
+         }
+       },
+       "required": [
+@@ -384,6 +400,46 @@
+         },
+         "pose": {
+           "$ref": "#/$defs/AnchoredPose"
++        },
++        "zone_id": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Zone Id"
++        },
++        "rack_id": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Rack Id"
++        },
++        "roles": {
++          "anyOf": [
++            {
++              "items": {
++                "enum": [
++                  "pickup",
++                  "dropoff"
++                ],
++                "type": "string"
++              },
++              "type": "array"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Roles"
+         }
+       },
+       "required": [
+@@ -499,6 +555,41 @@
+       "title": "ChargingStation",
+       "type": "object"
+     },
++    "ExampleTask": {
++      "additionalProperties": false,
++      "properties": {
++        "id": {
++          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$",
++          "title": "Id",
++          "type": "string"
++        },
++        "pickup": {
++          "title": "Pickup",
++          "type": "string"
++        },
++        "dropoff": {
++          "title": "Dropoff",
++          "type": "string"
++        },
++        "priority": {
++          "enum": [
++            "LOW",
++            "MEDIUM",
++            "HIGH"
++          ],
++          "title": "Priority",
++          "type": "string"
++        }
++      },
++      "required": [
++        "id",
++        "pickup",
++        "dropoff",
++        "priority"
++      ],
++      "title": "ExampleTask",
++      "type": "object"
++    },
+     "Fleet": {
+       "additionalProperties": false,
+       "properties": {
+@@ -855,6 +946,46 @@
+         },
+         "pose": {
+           "$ref": "#/$defs/TransferPose"
++        },
++        "zone_id": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Zone Id"
++        },
++        "rack_id": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Rack Id"
++        },
++        "roles": {
++          "anyOf": [
++            {
++              "items": {
++                "enum": [
++                  "pickup",
++                  "dropoff"
++                ],
++                "type": "string"
++              },
++              "type": "array"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Roles"
+         }
+       },
+       "required": [
+@@ -912,6 +1043,22 @@
+           ],
+           "title": "Axis",
+           "type": "string"
++        },
++        "role": {
++          "anyOf": [
++            {
++              "enum": [
++                "main",
++                "cross",
++                "access"
++              ],
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Role"
+         }
+       },
+       "required": [
+@@ -1005,7 +1152,7 @@
+           "items": {
+             "$ref": "#/$defs/WarehouseZone"
+           },
+-          "maxItems": 4,
++          "maxItems": 32,
+           "minItems": 4,
+           "title": "Zones",
+           "type": "array"
+@@ -1014,11 +1161,31 @@
+           "items": {
+             "$ref": "#/$defs/TransferPoint"
+           },
+-          "maxItems": 8,
++          "maxItems": 64,
+           "minItems": 4,
+           "title": "Transfer Points",
+           "type": "array"
+         },
++        "example_tasks": {
++          "items": {
++            "$ref": "#/$defs/ExampleTask"
++          },
++          "maxItems": 32,
++          "title": "Example Tasks",
++          "type": "array"
++        },
++        "approach_clearance_m": {
++          "anyOf": [
++            {
++              "exclusiveMinimum": 0,
++              "type": "number"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Approach Clearance M"
++        },
+         "dock_approach_m": {
+           "anyOf": [
+             {
+@@ -1164,6 +1331,25 @@
+           "minimum": 2,
+           "title": "Dock Rack Clearance M",
+           "type": "number"
++        },
++        "approach_clearance_m": {
++          "anyOf": [
++            {
++              "exclusiveMinimum": 0,
++              "type": "number"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Approach Clearance M"
++        },
++        "example_tasks": {
++          "items": {
++            "$ref": "#/$defs/ExampleTask"
++          },
++          "title": "Example Tasks",
++          "type": "array"
+         }
+       },
+       "required": [
+diff --git a/docker/simulation-warehouse-grid/probe.py b/docker/simulation-warehouse-grid/probe.py
+index a41e871..aadb669 100644
+--- a/docker/simulation-warehouse-grid/probe.py
++++ b/docker/simulation-warehouse-grid/probe.py
+@@ -17,13 +17,14 @@ from ros_gz_interfaces.msg import Contacts
+ import yaml
+ 
+ from fleet_config import load_config
++from fleet_config.occupancy import encode_grid, profile_digest
+ 
+ 
+ def main():
+     cli = argparse.ArgumentParser()
+     cli.add_argument("profile", type=Path)
+     cli.add_argument("generated", type=Path)
+-    cli.add_argument("scenario", choices=("delivery", "passing"))
++    cli.add_argument("scenario", choices=("delivery", "passing", "routes"))
+     args = cli.parse_args()
+     cfg = load_config(args.profile)
+     targets = json.loads((args.generated / "goals.json").read_text())
+@@ -33,7 +34,9 @@ def main():
+         rclpy.parameter.Parameter("use_sim_time", value=True)
+     ])
+     positions, traces, maps, costmaps, paths, dock_contacts = {}, {}, {}, {}, {}, set()
++    longest_paths = {}
+     clients, lifecycles = {}, {}
++    collisions, contact_robots = set(), set()
+     alpha, beta = (robot.id for robot in cfg.robots)
+     qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+     for robot in cfg.robots:
+@@ -52,11 +55,22 @@ def main():
+         def path(message, id_=id_):
+             if message.header.frame_id == "map":
+                 paths[id_] = [[p.pose.position.x,p.pose.position.y] for p in message.poses]
++                if len(paths[id_]) > len(longest_paths.get(id_, [])):
++                    longest_paths[id_] = paths[id_]
+ 
+         node.create_subscription(PoseStamped, ns+"/physical_pose", physical, 20)
+         node.create_subscription(NavPath, ns+"/plan", path, 10)
+         node.create_subscription(OccupancyGrid, ns+"/map", lambda m, i=id_: maps.update({i:m}), qos)
+         node.create_subscription(OccupancyGrid, ns+"/global_costmap/costmap", lambda m, i=id_: costmaps.update({i:m}), 10)
++        def physical_contacts(message, id_=id_):
++            for event in message.contacts:
++                names = event.collision1.name, event.collision2.name
++                contact_robots.add(id_)
++                if any(part.startswith(('rack_', 'wall_')) or part in {alpha, beta} - {id_}
++                       for name in names for part in name.split('::')):
++                    collisions.add(tuple(sorted(names)))
++        for link in ('base_link', 'left_wheel', 'right_wheel', 'caster'):
++            node.create_subscription(Contacts, ns+'/contact_'+link, physical_contacts, 10)
+         clients[id_] = ActionClient(node, NavigateToPose, robot.nav2_action_name)
+         lifecycles[id_] = node.create_client(GetState, ns+"/bt_navigator/get_state")
+ 
+@@ -106,6 +120,73 @@ def main():
+                 assert msg.data[row*msg.info.width+col] == 100, (id_,rack.id)
+         report["map_exact_cells"] = len(image)
+         report["global_costmap_rack_centres"] = len(cfg.warehouse.racks)*len(costmaps)
++        report['approach_costs'] = {}
++        approaches = [(p.id, p.pose) for p in cfg.warehouse.transfer_points] + [
++            (s.id, s.pose) for group in (cfg.stations.charging_stations, cfg.stations.parking_stations)
++            for s in group]
++        for id_, msg in costmaps.items():
++            costs = {}
++            for name, pose in approaches:
++                col = int((pose.x-msg.info.origin.position.x)/msg.info.resolution)
++                row = int((pose.y-msg.info.origin.position.y)/msg.info.resolution)
++                costs[name] = int(msg.data[row*msg.info.width+col])
++            report['approach_costs'][id_] = costs
++            assert all(value == 0 for value in costs.values()), costs
++        msg = costmaps[alpha]
++        captured = encode_grid(dict(frame_id=msg.header.frame_id, resolution=msg.info.resolution,
++            width=msg.info.width, height=msg.info.height,
++            origin=[msg.info.origin.position.x,msg.info.origin.position.y]), msg.data, 'nav2_recorded')
++        captured.update(profile_digest=profile_digest(cfg), robot_id=alpha,
++                        stamp=dict(sec=msg.header.stamp.sec,nanosec=msg.header.stamp.nanosec))
++        (args.generated/'nav2-costmap.json').write_text(json.dumps(captured,ensure_ascii=False))
++
++        def send_goal(id_, target):
++            command = NavigateToPose.Goal()
++            command.pose.header.frame_id = 'map'
++            command.pose.header.stamp = node.get_clock().now().to_msg()
++            command.pose.pose.position.x, command.pose.pose.position.y = target['x'],target['y']
++            command.pose.pose.orientation.z = sin(target['yaw']/2)
++            command.pose.pose.orientation.w = cos(target['yaw']/2)
++            return clients[id_].send_goal_async(command)
++
++        if args.scenario == 'routes':
++            report['routes'] = []
++            catalog = {p.id: p for p in cfg.warehouse.transfer_points}
++            for task in cfg.warehouse.example_tasks:
++                route = dict(id=task.id, pickup=task.pickup, dropoff=task.dropoff, legs=[])
++                report['routes'].append(route)
++                for endpoint in (task.pickup, task.dropoff):
++                    target = catalog[endpoint].pose.model_dump()
++                    longest_paths.pop(alpha, None)
++                    future = send_goal(alpha, target)
++                    wait(future.done, 12, 'route goal response')
++                    handle = future.result()
++                    assert handle.accepted, endpoint
++                    result = handle.get_result_async()
++                    try:
++                        wait(result.done, 210, endpoint + ' NavigateToPose terminal')
++                        status = result.result().status
++                    except TimeoutError:
++                        handle.cancel_goal_async()
++                        status = None
++                    error = hypot(positions[alpha][1]-target['x'],positions[alpha][2]-target['y'])
++                    leg = dict(endpoint=endpoint, status=status, error_m=error, path=longest_paths.get(alpha, []),
++                        result='çarpıştı' if collisions else 'geçti' if status == 4 and error <= .35 else 'bekledi')
++                    route['legs'].append(leg)
++                    print(json.dumps(dict(event='ROUTE_LEG',route=task.id,endpoint=endpoint,
++                                          status=status,error_m=error,result=leg['result']),ensure_ascii=False),flush=True)
++                    if leg['result'] != 'geçti':
++                        break
++                route['result'] = 'çarpıştı' if collisions else 'geçti' if (
++                    len(route['legs']) == 2 and all(leg['result'] == 'geçti' for leg in route['legs'])
++                ) else 'bekledi'
++                if route['result'] != 'geçti':
++                    break
++            report['result'] = 'çarpıştı' if collisions else 'geçti' if (
++                len(report['routes']) == len(cfg.warehouse.example_tasks) and
++                all(route['result'] == 'geçti' for route in report['routes']) and len(contact_robots) == 2
++            ) else 'bekledi'
++            return 0 if report['result'] == 'geçti' else 1
+         pending = {}
+         for id_, goal in targets.items():
+             command = NavigateToPose.Goal()
+@@ -145,6 +226,10 @@ def main():
+             # Each physical footprint fits inside a 0.45 m radius about base_link.
+             report["result"] = "geçti" if success and crossed and closest > .9 else (
+                 "bekledi" if not crossed and isfinite(closest) and closest > .9 else "doğrulanamadı")
++            if collisions:
++                report['result'] = 'çarpıştı'
++            elif len(contact_robots) != 2:
++                report['result'] = 'doğrulanamadı'
+         else:
+             report["result"] = "geçti" if success and report["goal_error_m"][alpha] <= dock.tolerance_radius else "başarısız"
+         for id_, future in results.items():
+@@ -153,6 +238,8 @@ def main():
+     except Exception as error:
+         report["error"] = f"{type(error).__name__}: {error}"
+     finally:
++        report['physical_collisions'] = sorted(collisions)
++        report['contact_sensor_robots'] = sorted(contact_robots)
+         report["paths"] = paths
+         report["traces"] = traces
+         (args.generated/"live.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")
+diff --git a/docker/simulation-warehouse-grid/run.sh b/docker/simulation-warehouse-grid/run.sh
+index 9d046d9..5135729 100644
+--- a/docker/simulation-warehouse-grid/run.sh
++++ b/docker/simulation-warehouse-grid/run.sh
+@@ -3,19 +3,27 @@ set -e
+ source /opt/ros/humble/setup.bash
+ export PYTHONPATH=/workspace:${PYTHONPATH:-}
+ cd /workspace
+-profile=config/fleet.warehouse-grid.yaml
++profile=${2:-config/fleet.warehouse-grid.yaml}
+ scenario=$1
+ out=/evidence/$scenario
+ mkdir -p "$out"
+ world_scenario=$scenario
+ [[ "$scenario" != inspection ]] || world_scenario=delivery
+-python3 docker/simulation-warehouse-grid/serve.py "$profile" "$out" "$world_scenario" > "$out/fortress.log" 2>&1 &
++ready=$(mktemp)
++python3 docker/simulation-warehouse-grid/serve.py "$profile" "$out" "$world_scenario" --ready "$ready" > "$out/fortress.log" 2>&1 &
+ server=$!
+ cleanup() {
+   kill -TERM "$server" 2>/dev/null || true
+   wait "$server"
++  rm "$ready"
+ }
+ trap cleanup EXIT
++for attempt in $(seq 1 100); do
++  [[ -s "$ready" ]] && break
++  kill -0 "$server"
++  sleep .1
++done
++test -s "$ready"
+ if [[ "$scenario" == inspection ]]; then
+   python3 docker/simulation-warehouse-grid/inspect_route.py "$profile" "$out/inspection.json"
+ else
+diff --git a/docker/simulation-warehouse-grid/serve.py b/docker/simulation-warehouse-grid/serve.py
+index 3b1d023..69842f4 100644
+--- a/docker/simulation-warehouse-grid/serve.py
++++ b/docker/simulation-warehouse-grid/serve.py
+@@ -16,15 +16,20 @@ def main():
+     parser = argparse.ArgumentParser()
+     parser.add_argument("profile", type=Path)
+     parser.add_argument("output", type=Path)
+-    parser.add_argument("scenario", choices=("delivery", "passing"))
++    parser.add_argument("scenario", choices=("delivery", "passing", "routes"))
++    parser.add_argument("--ready", type=Path)
+     args = parser.parse_args()
+     profile = generate(args.profile, args.output, args.scenario)
++    if args.ready is not None:
++        args.ready.write_text('READY\n')
+     bridge = [bridge_executable(), "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock"]
+     for robot in profile.robots:
+         ns = robot.namespace
+         bridge += [f"{ns}/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan",
+                    f"{ns}/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
+                    f"{ns}/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist"]
++        bridge += [f"{ns}/contact_{link}@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts"
++                   for link in ('base_link', 'left_wheel', 'right_wheel', 'caster')]
+     bridge += dock_bridge_arguments(profile.stations.charging_stations, profile.robots)
+     commands = [
+         ("gazebo", gazebo_command(str(args.output / "warehouse.sdf"))),
+diff --git a/docs/README.md b/docs/README.md
+index 8d64b94..25e84aa 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -20,6 +20,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
+ 
+ - [C5 Aşama 1.2 fiziksel model, odometri, AMCL ve footprint](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md): son pickup 1/5; F2 ve paralel görev regresyonu açık, koşulsuz kabul yok.
+ - [C5 Aşama 1.1 feedback ve fiziksel pickup yeniden doğrulaması](validation/c5/stage1-1-validation-2026-11-11.md) · [Komutlar](validation/c5/stage1-1-commands-2026-11-11.md): F1 düzeltildi; F2 açık, koşulsuz kabul yok.
++- [30 × 18 m uçtan uca görev doğrulaması — Aşama 1](validation/c5/e2e-stage1-validation-2026-11-11.md) · [Komut eki](validation/c5/e2e-stage1-commands-2026-11-11.md): üç gerçek COMPLETED; feedback ve fiziksel hassasiyet bulguları nedeniyle koşulsuz kabul verilmedi. Sonraki aşamalar onay bekliyor.
++- [30 × 18 m dağıtılmış depo ve katalog görev girişi](validation/c5/warehouse-30x18-validation-2026-11-11.md) · [Komut eki](validation/c5/warehouse-30x18-commands-2026-11-11.md)
++
+ - [C5 Aşama 1 salt okunur operasyon paneli](design/c5-readonly-dashboard.md) · [API sözleşmesi](design/c5-readonly-api.md) · [Arayüz ve koordinatlar](design/c5-dashboard-ui.md) · [Doğrulama](validation/c5/c5-stage1-validation-2026-11-06.md)
+ - [C5 Aşama 1.5 3D operasyon paneli](design/c5-3d-operations.md) · [Karar](decisions/c5-stage1-5-3d-decision-2026-11-06.md) · [Doğrulama](validation/c5/c5-stage1-5-validation-2026-11-06.md)
+ - [C5 Aşama 1.6 arayüz doğrulaması](validation/c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](validation/c5/c5-stage1-6-commands-2026-11-06.md)
+diff --git a/docs/configuration-c1.md b/docs/configuration-c1.md
+index 2892511..6878723 100644
+--- a/docs/configuration-c1.md
++++ b/docs/configuration-c1.md
+@@ -101,6 +101,24 @@ C4.4 mevcut `charge_power_w`, `tolerance_radius`, düşük SoC ve %80 hedef alan
+ 
+ Bölgeye eklenen isteğe bağlı `callout` noktası map çerçevesinde etiketin tercih edilen yeridir. Nokta ızgarada, tüm bölge ve raf ayak izlerinin dışında olmalıdır. Şarj yaklaşma uzunluğu fiziksel pedin ön yüzünden ölçülür. [Açıklık denetimi](validation/c5/warehouse-grid-clearance-2026-11-08.md)
+ 
++## Dağıtılmış operasyon profili
++
++[30 × 18 m profili](../config/fleet.warehouse-30x18.yaml) aynı sözleşmenin yeni bir örneğidir. 20 × 12 m ve 12 × 8 m dosyaları ayrı profil olarak korunur. `width` ve `depth` çevre boyutlarını bir kez tanımlar. `grid_m` değişmemiştir.
++
++| Alan | Birim / anlam | Doğrulama |
++|---|---|---|
++| `aisles[].role` | `main`, `cross`, `access` | Ana koridor en az 1,75 m, enine geçit en az 1,50 m |
++| `transfer_points[].pose` | m ve rad, `map` çerçevesinde robot yaklaşma merkezi | Kendi bölgesinde, ızgarada ve serbest alanda |
++| `zone_id` | Bölge kimliği | Noktanın alım/teslim türüne uygun bölge |
++| `rack_id` | Hizmet verilen raf bloğu | Var olan rafı gösterir, yaklaşma yönü en yakın raf yüzüne bakar |
++| `roles` | İzinli `pickup` / `dropoff` işlemleri | Boş ve yinelenen rol reddedilir. Raf noktası her iki işlemde kullanılabilir |
++| `example_tasks` | Örnek görev kimliği, alım ve teslim ID’leri, öncelik | Farklı uçlar, mevcut kimlikler ve uygun roller |
++| `approach_clearance_m` | m, yaklaşma merkezinin ihtiyatlı fiziksel yarıçapı | 30 × 18 m profilinde 0,45 m. Dolu raster hücresine değen veya çevre dışına çıkan zarf reddedilir |
++
++Yeni isteğe bağlı alanlar bulunmayan eski profiller eski sözleşmeyle yüklenir. Alım/teslim bölgeleri çoğalabilir. Şarj ve park için birer bölge vardır. Şarj yuvası üst sınırı altıya çıkarılmıştır. Kaynak kimliği veya pozunu paylaşan iki kayıt reddedilir.
++
++Doğrulayıcı ve SDF/PGM üreticisi aynı raster fonksiyonunu kullanır. Yaklaşma çemberi yalnız merkezin hücresine karşı değil, değdiği bütün hücrelere karşı sınanır. Nav2 kabulü ayrıca çalışan iki global costmap’te bütün yaklaşma merkezlerinin 0 maliyetli olmasını arar. Statik uygunluk hareketli robotlar için kaynak veya trafik rezervasyonu oluşturmaz. [Ölçümler ve doğrulama sınırları](validation/c5/warehouse-30x18-validation-2026-11-11.md)
++
+ ## Fiziksel model doğrulama sınırı
+ 
+ 11 Kasım C5 Aşama 1.2’de gerçek Fortress collision modeli, etkin diff-drive açıklığı ve Nav2 güvenli yarıçapı ayrıca ölçüldü. Filo batarya model adının veya nominal Burger görselinin fiziksel geometri kanıtı olmadığı; kalan pickup/lokalizasyon ve paralel görev regresyonu [raporda](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md) açıklanır. Bu çalışma C1 şemasına yeni alan veya config Apply onayı eklemez.
+diff --git a/docs/design/c5-3d-operations.md b/docs/design/c5-3d-operations.md
+index 764b138..7b6ceaf 100644
+--- a/docs/design/c5-3d-operations.md
++++ b/docs/design/c5-3d-operations.md
+@@ -45,3 +45,17 @@ Arka duvar, yükleme kepengi, yan kesitler ve koridor boyası sunum geometrisidi
+ ## Aşama 1.7E işlevsel iç yerleşim
+ 
+ Ana koridor, kepenk önü, raf geçidi ve operasyon cepleri temsili dekor grubunda kalır. Alçak bölmeler bağımsız kesilebilir; GLB iç rafı ayrı bir statik mesh’tir. İstasyon çerçeveleri ve görev işaretleri canlı snapshot katmanındadır. Kesişen alım/teslim kareleri ayırıcı doğruyla bölünür, map pozları değişmez. Sahne etiketleri kısa durum gösterir; sahiplik kaydı robot ayrıntılarında açılır. [Yerleşim ve ölçüm kapsamı](../validation/c5/c5-stage1-7e-validation-2026-11-08.md)
++
++## 11 Kasım 2026 dağıtılmış depo ve katalogdan görev girişi
++
++Kullanıcı 30 × 18 m, raflara dağılmış alım ve birden fazla teslim bölgesi istedi. Mevcut 12 blok ile 8–10 pick sınırının çelişkisi açıklanınca 10 daha uzun blok ve 10 pick seçeneğini onayladı. Boyut, geometri, yaklaşma pozları, uç rolleri ve örnek görevler [tek profil dosyasındadır](../../config/fleet.warehouse-30x18.yaml). Bu seçim ürünün final kabulü değildir.
++
++Görev oluşturma için API içinde ikinci bir Fleet Manager kurmak, SQLite’a doğrudan HTTP callback’inden yazmak ve mevcut tek consumer’a olay göndermek seçenekleri değerlendirildi. Üçüncü yol uygulandı. `runtime.py`, mevcut builder, `FleetEventLoop`, `FleetROS2Adapter` ve `OutboxDispatcher` sınıflarını çalıştırır. `publish_fleet(..., fleet_config=config)` aynı consumer’ın yanında izinleri 0600 olan yerel görev soketini açar. API ayrı süreçte kalır. Soket yolu snapshot’ın `.tasks.sock` uzantılı karşılığıdır ve container’ın yerel dosya sisteminde bulunur.
++
++`GET /api/task-catalog` çalışan kaynak oturumunu, çözülmüş profilin SHA-256 özetini, nokta rollerini ve örnek görevleri verir. `--task-socket` ile açılan API `POST /api/tasks` yolunu etkinleştirir. Tam Origin, JSON içerik türü, sınırlı istek boyutu, UUID, kaynak oturumu, profil özeti ve uç rollerinin hepsi doğrulanır. İstemci koordinat gönderemez. Noktalar consumer tarafında yeniden katalogdan çözülür ve `SUBMIT_TASK` olayına dönüşür. Kalıcılık ve sonraki atama mevcut domain/transaction/Outbox yolundan ilerler.
++
++Aynı UUID ve aynı değişmez içerikle tekrar gönderim mevcut görevi döndürür. Aynı UUID’nin başka uç veya öncelikle kullanılması reddedilir. Ağ yanıtı kaybolduğunda arayüz kabulü belirsiz gösterir ve aynı UUID’yi korur. Görev kabulü robotun hareket ettiğinin veya görevin tamamlandığının kanıtı değildir. Oturum/profil değişimi eski isteği engeller. Var olan dolu DB ile runtime yeniden başlatması otomatik replay oluşturmaz.
++
++Katalog bulunan yeni profilde uzak görünüm bölge etiketlerini, yakın görünüm tek tek nokta ID’lerini kullanır. Rafların izdüşümü ve robot işaretleri etiket yerleştirmesinden çıkarılır. Şarj telemetrisi güncel değilse bölge sayacı `—/6` biçiminde maskelenir. Yer bulunamazsa etiket gizlenir. 30 × 18 m profilinde rota yakınlığı fiziksel rafı gizlemez. Görsel kamera kesiti ayrıca korunur. Raf yapıları mevcut `Boxes` instancing yolundan çizilir. Kamera sınırı daha büyük deponun mobil kadrajına izin verecek şekilde genişletildi.
++
++`GET /api/warehouse-costmap`, varsayılan olarak ortak YAML’den üretilen statik doluluk rasterini verir. `--costmap` ile açıldığında aynı profil özetini taşıyan Nav2 global costmap kaydını sunar ve arayüz bunu kayıt olarak işaretler. Sürekli canlı costmap akışı bu uçla uygulanmış sayılmaz. [Host, Chrome ve Fortress kanıtları](../validation/c5/warehouse-30x18-validation-2026-11-11.md)
+diff --git a/docs/diagrams/README.md b/docs/diagrams/README.md
+index a89bc89..53c2d6d 100644
+--- a/docs/diagrams/README.md
++++ b/docs/diagrams/README.md
+@@ -918,7 +918,7 @@ flowchart TD
+ 
+ ## 16. REST / WebSocket ve 3D panel
+ 
+-**Durum:** PARTIAL. C5 Aşama 1.5 salt okunur operasyon ve 3D TF/Path izlemeyi uygular. Görev girişi sonraki aşamadır.
++**Durum:** PARTIAL. C5 Aşama 1.5 salt okunur operasyon ve 3D TF/Path izlemeyi uygular. 11 Kasım 2026 güncellemesiyle katalogdan görev girişi, yerel soket ve tek consumer bağlantısı eklenmiştir. Host API/SQLite ve Chrome kanıtı ile canlı Nav2 hareket kapsamı [30 × 18 m kaydında](../validation/c5/warehouse-30x18-validation-2026-11-11.md) ayrılır. Kök üç servis kabulü bu kayıtla genişletilmez.
+ 
+ | Girdiler | Çıktılar | Koşullar |
+ |---|---|---|
+@@ -939,11 +939,16 @@ flowchart LR
+  EX["Robot Executor"]:::executor -->|"RobotStatus / terminal sonuç"| Q["FM tek consumer"]:::fm
+  Q -->|"Atomik durum ve Outbox kaydı"| DB[("SQLite")]:::db
+  Q -->|"Commit sonrası yetkili görünüm"| S["Sınırlı son snapshot"]:::fm
+- S -->|"Özel geçici dosya"| API["Salt okunur FastAPI"]:::ui
++ S -->|"Özel geçici dosya"| API["FastAPI / kaynak sınırı"]:::ui
+  ROS["Salt okunur TF / Path köprüsü"]:::executor -->|"Robot ID / map / gözlemlenen plan"| API
+  API -->|"Tek WebSocket • ayrı ürün ve TF mesajları"| U["React + Three.js 3D paneli"]:::ui
+  API -.->|"Kaynak başına süre ve oturum"| R["Yeniden eşitleme"]:::wait
+  R -.-> U
++ Y["Tek filo YAML / yaklaşma kataloğu"]:::fm -->|"SDF / harita / sahne"| API
++ U -->|"Nokta ID seçimi / istek UUID"| W{"Origin / oturum / profil özeti geçerli mi?"}:::decision
++ W -->|"Evet"| I["Yerel görev soketi"]:::ui
++ I -->|"SUBMIT_TASK / aynı UUID ile retry"| Q
++ W -->|"Hayır"| B["İstek reddi"]:::error
+ 
+  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+diff --git a/docs/diagrams/src/rest-websocket-gui.mmd b/docs/diagrams/src/rest-websocket-gui.mmd
+index fc9f331..426e9d2 100644
+--- a/docs/diagrams/src/rest-websocket-gui.mmd
++++ b/docs/diagrams/src/rest-websocket-gui.mmd
+@@ -5,11 +5,16 @@ flowchart LR
+  EX["Robot Executor"]:::executor -->|"RobotStatus / terminal sonuç"| Q["FM tek consumer"]:::fm
+  Q -->|"Atomik durum ve Outbox kaydı"| DB[("SQLite")]:::db
+  Q -->|"Commit sonrası yetkili görünüm"| S["Sınırlı son snapshot"]:::fm
+- S -->|"Özel geçici dosya"| API["Salt okunur FastAPI"]:::ui
++ S -->|"Özel geçici dosya"| API["FastAPI / kaynak sınırı"]:::ui
+  ROS["Salt okunur TF / Path köprüsü"]:::executor -->|"Robot ID / map / gözlemlenen plan"| API
+  API -->|"Tek WebSocket • ayrı ürün ve TF mesajları"| U["React + Three.js 3D paneli"]:::ui
+  API -.->|"Kaynak başına süre ve oturum"| R["Yeniden eşitleme"]:::wait
+  R -.-> U
++ Y["Tek filo YAML / yaklaşma kataloğu"]:::fm -->|"SDF / harita / sahne"| API
++ U -->|"Nokta ID seçimi / istek UUID"| W{"Origin / oturum / profil özeti geçerli mi?"}:::decision
++ W -->|"Evet"| I["Yerel görev soketi"]:::ui
++ I -->|"SUBMIT_TASK / aynı UUID ile retry"| Q
++ W -->|"Hayır"| B["İstek reddi"]:::error
+ 
+  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
+  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;
+diff --git a/docs/diagrams/svg/rest-websocket-gui.svg b/docs/diagrams/svg/rest-websocket-gui.svg
+index ababc59..36f04cf 100644
+--- a/docs/diagrams/svg/rest-websocket-gui.svg
++++ b/docs/diagrams/svg/rest-websocket-gui.svg
+@@ -1 +1 @@
+-<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 2198.68px; background-color: white;" viewBox="0 -49 2198.6796875 347.1520080566406" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:Arial,sans-serif;font-size:16px;fill:#0f172a;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:hsl(220.5882352941, 100%, 98.3333333333%);}#my-svg .error-text{fill:rgb(8.5000000002, 5.7500000001, 0);stroke:rgb(8.5000000002, 5.7500000001, 0);}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#64748b;stroke:#64748b;}#my-svg .marker.cross{stroke:#64748b;}#my-svg svg{font-family:Arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:Arial,sans-serif;color:#0f172a;}#my-svg .cluster-label text{fill:rgb(8.5000000002, 5.7500000001, 0);}#my-svg .cluster-label span{color:rgb(8.5000000002, 5.7500000001, 0);}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#0f172a;color:#0f172a;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#fff4dd;stroke:hsl(40.5882352941, 60%, 83.3333333333%);stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#64748b!important;stroke-width:0;stroke:#64748b;}#my-svg .arrowheadPath{fill:#0b0b0b;}#my-svg .edgePaths .path{stroke:#64748b;stroke-width:1px;}#my-svg .flowchart-link{stroke:#64748b;fill:none;}#my-svg .edgeLabel{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);text-align:center;}#my-svg .edgeLabel p{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);}#my-svg .edgeLabel rect{opacity:0.5;background-color:hsl(-79.4117647059, 100%, 93.3333333333%);fill:hsl(-79.4117647059, 100%, 93.3333333333%);}#my-svg .labelBkg{background-color:rgba(243.9999999999, 220.9999999998, 255, 0.5);}#my-svg .cluster rect{fill:hsl(220.5882352941, 100%, 98.3333333333%);stroke:hsl(220.5882352941, 60%, 88.3333333333%);stroke-width:1px;}#my-svg .cluster text{fill:rgb(8.5000000002, 5.7500000001, 0);}#my-svg .cluster span{color:rgb(8.5000000002, 5.7500000001, 0);}#my-svg .node .collapsed-indicator{fill:hsl(220.5882352941, 60%, 88.3333333333%);stroke:none;opacity:0.6;}#my-svg .node .collapsed-separator{stroke:hsl(220.5882352941, 60%, 88.3333333333%);stroke-width:0.75px;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:Arial,sans-serif;font-size:12px;background:hsl(220.5882352941, 100%, 98.3333333333%);border:1px solid hsl(220.5882352941, 60%, 88.3333333333%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#0f172a;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:hsl(-79.4117647059, 100%, 93.3333333333%);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:hsl(-79.4117647059, 100%, 93.3333333333%);fill:hsl(-79.4117647059, 100%, 93.3333333333%);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:hsl(40.5882352941, 60%, 83.3333333333%);}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].swimlane.cluster rect{filter:none;}#my-svg [data-look="neo"].node path{stroke:url(#my-svg-gradient);stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node .neo-line path{stroke:hsl(40.5882352941, 60%, 83.3333333333%);filter:none;}#my-svg [data-look="neo"].node circle{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .fm rect{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm polygon{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm ellipse{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm circle{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm path{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm tspan{fill:rgb(23, 37, 84)!important;}#my-svg .executor rect{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor polygon{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor ellipse{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor circle{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor path{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor tspan{fill:rgb(46, 16, 101)!important;}#my-svg .battery rect{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery polygon{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery ellipse{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery circle{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery path{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery tspan{fill:rgb(120, 53, 15)!important;}#my-svg .db rect{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db polygon{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db ellipse{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db circle{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db path{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db tspan{fill:rgb(15, 23, 42)!important;}#my-svg .ui rect{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui polygon{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui ellipse{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui circle{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui path{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui tspan{fill:rgb(131, 24, 67)!important;}#my-svg .decision rect{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision polygon{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision ellipse{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision circle{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision path{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision tspan{fill:rgb(15, 23, 42)!important;}#my-svg .error rect{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error polygon{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error ellipse{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error circle{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error path{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error tspan{fill:rgb(127, 29, 29)!important;}#my-svg .wait rect{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait polygon{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait ellipse{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait circle{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait path{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait tspan{fill:rgb(124, 45, 18)!important;}#my-svg .terminal rect{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal polygon{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal ellipse{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal circle{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal path{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal tspan{fill:rgb(20, 83, 45)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path d="M190.281,91.614L293.938,91.614L393.594,91.614" id="my-svg-L_EX_Q_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_EX_Q_0" data-points="W3sieCI6MTkwLjI4MTI1LCJ5Ijo5MS42MTQwMDAzMjA0MzQ1N30seyJ4IjoyOTMuOTM3NSwieSI6OTEuNjE0MDAwMzIwNDM0NTd9LHsieCI6Mzk3LjU5Mzc1LCJ5Ijo5MS42MTQwMDAzMjA0MzQ1N31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M593.188,68.582L705.738,42.076L916.828,42.076" id="my-svg-L_Q_DB_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Q_DB_0" data-points="W3sieCI6NTkzLjE4NzUsInkiOjY4LjU4MjMxMjI1NDI4NDE2fSx7IngiOjcwNS43MzgyODEyNSwieSI6NDIuMDc2MDAwMjEzNjIzMDV9LHsieCI6OTIwLjgyODEyNSwieSI6NDIuMDc2MDAwMjEzNjIzMDV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M593.188,114.646L705.738,141.152L843.578,141.152" id="my-svg-L_Q_S_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Q_S_0" data-points="W3sieCI6NTkzLjE4NzUsInkiOjExNC42NDU2ODgzODY1ODQ5OH0seyJ4Ijo3MDUuNzM4MjgxMjUsInkiOjE0MS4xNTIwMDA0MjcyNDYxfSx7IngiOjg0Ny41NzgxMjUsInkiOjE0MS4xNTIwMDA0MjcyNDYxfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1061,141.152L1177.508,141.152L1260.87,164.098" id="my-svg-L_S_API_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_API_0" data-points="W3sieCI6MTA2MSwieSI6MTQxLjE1MjAwMDQyNzI0NjF9LHsieCI6MTE3Ny41MDc4MTI1LCJ5IjoxNDEuMTUyMDAwNDI3MjQ2MX0seyJ4IjoxMjY0LjcyNjU2MjUsInkiOjE2NS4xNTkxNTUwNTU2NDc1NX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1090.289,248.152L1177.508,248.152L1260.87,225.206" id="my-svg-L_ROS_API_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_ROS_API_0" data-points="W3sieCI6MTA5MC4yODkwNjI1LCJ5IjoyNDguMTUyMDAwNDI3MjQ2MX0seyJ4IjoxMTc3LjUwNzgxMjUsInkiOjI0OC4xNTIwMDA0MjcyNDYxfSx7IngiOjEyNjQuNzI2NTYyNSwieSI6MjI0LjE0NDg0NTc5ODg0NDY0fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1479.023,175.292L1584.914,156.16L1787.445,156.16L1906.586,156.16L1936.526,163.678" id="my-svg-L_API_U_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_U_0" data-points="W3sieCI6MTQ3OS4wMjM0Mzc1LCJ5IjoxNzUuMjkyNDcxNjk4MzMxNjd9LHsieCI6MTU4NC45MTQwNjI1LCJ5IjoxNTYuMTYwMjAzOTMzNzE1ODJ9LHsieCI6MTc4Ny40NDUzMTI1LCJ5IjoxNTYuMTYwMjAzOTMzNzE1ODJ9LHsieCI6MTkwNi41ODU5Mzc1LCJ5IjoxNTYuMTYwMjAzOTMzNzE1ODJ9LHsieCI6MTk0MC40MDUyNDQwNTgyOTM2LCJ5IjoxNjQuNjUyMDAwNDI3MjQ2MX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1479.023,214.012L1584.914,233.144L1686.805,233.144" id="my-svg-L_API_R_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_R_0" data-points="W3sieCI6MTQ3OS4wMjM0Mzc1LCJ5IjoyMTQuMDExNTI5MTU2MTYwNTJ9LHsieCI6MTU4NC45MTQwNjI1LCJ5IjoyMzMuMTQzNzk2OTIwNzc2Mzd9LHsieCI6MTY5MC44MDQ2ODc1LCJ5IjoyMzMuMTQzNzk2OTIwNzc2Mzd9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1884.086,233.144L1906.586,233.144L1936.526,225.626" id="my-svg-L_R_U_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_R_U_0" data-points="W3sieCI6MTg4NC4wODU5Mzc1LCJ5IjoyMzMuMTQzNzk2OTIwNzc2Mzd9LHsieCI6MTkwNi41ODU5Mzc1LCJ5IjoyMzMuMTQzNzk2OTIwNzc2Mzd9LHsieCI6MTk0MC40MDUyNDQwNTgyOTM2LCJ5IjoyMjQuNjUyMDAwNDI3MjQ2MX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(293.9375, 91.61400032043457)"><g class="label" data-id="L_EX_Q_0" transform="translate(0, -19.366405487060547)"><g><rect class="background" style="" x="-81.15625" y="0" width="162.3125" height="38.732810974121094"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">RobotStatus</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> /</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> terminal</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">sonuç</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(705.73828125, 42.07600021362305)"><g class="label" data-id="L_Q_DB_0" transform="translate(0.01171875, -19.483592987060547)"><g><rect class="background" style="" x="-90.0625" y="0" width="180.1015625" height="38.967185974121094"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Atomik</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> durum</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> ve</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> Outbox</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">kaydı</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(705.73828125, 141.1520004272461)"><g class="label" data-id="L_Q_S_0" transform="translate(0, -19.483592987060547)"><g><rect class="background" style="" x="-80.2421875" y="0" width="160.484375" height="38.967185974121094"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Commit</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> sonrası</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> yetkili</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">görünüm</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1177.5078125, 141.1520004272461)"><g class="label" data-id="L_S_API_0" transform="translate(0, -10.68359375)"><g><rect class="background" style="" x="-64.703125" y="0" width="129.40625" height="21.3671875"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Özel</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> geçici</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> dosya</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1177.5078125, 248.1520004272461)"><g class="label" data-id="L_ROS_API_0" transform="translate(0, -19.483592987060547)"><g><rect class="background" style="" x="-64.71875" y="0" width="129.4375" height="38.967185974121094"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Robot</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> ID</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> /</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> map</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> /</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">gözlemlenen</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> plan</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1787.4453125, 156.16020393371582)"><g class="label" data-id="L_API_U_0" transform="translate(0, -19.483592987060547)"><g><rect class="background" style="" x="-96.2578125" y="0" width="192.515625" height="38.967185974121094"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Tek</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> WebSocket</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> •</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> ayrı</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> ürün</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">ve</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> TF</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> mesajları</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1584.9140625, 233.14379692077637)"><g class="label" data-id="L_API_R_0" transform="translate(0, -19.299999237060547)"><g><rect class="background" style="" x="-83.390625" y="0" width="166.78125" height="38.599998474121094"/><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">Kaynak</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> başına</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> süre</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> ve</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">oturum</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_R_U_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"/></text></g></g><g><rect class="background" style="stroke: none"/></g></g><g class="nodes"><g class="node default executor" id="my-svg-flowchart-EX-0" data-look="classic" transform="translate(99.140625, 91.61400032043457)"><rect class="basic label-container" style="fill:#ede9fe !important;stroke:#7c3aed !important;stroke-width:1.5px !important" x="-91.140625" y="-30" width="182.28125" height="60"/><g class="label" style="color:#2e1065 !important" transform="translate(-55.140625, -12)"><rect/><foreignObject width="110.28125" height="24"><div style="color: rgb(46, 16, 101) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2e1065 !important" class="nodeLabel"><p>Robot Executor</p></span></div></foreignObject></g></g><g class="node default fm" id="my-svg-flowchart-Q-1" data-look="classic" transform="translate(495.390625, 91.61400032043457)"><rect class="basic label-container" style="fill:#dbeafe !important;stroke:#2563eb !important;stroke-width:1.5px !important" x="-97.796875" y="-30" width="195.59375" height="60"/><g class="label" style="color:#172554 !important" transform="translate(-61.796875, -12)"><rect/><foreignObject width="123.59375" height="24"><div style="color: rgb(23, 37, 84) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#172554 !important" class="nodeLabel"><p>FM tek consumer</p></span></div></foreignObject></g></g><g class="node default db" id="my-svg-flowchart-DB-3" data-look="classic" transform="translate(954.2890625, 42.07600021362305)"><path d="M0,8.717332899128877 a33.4609375,8.717332899128877 0,0,0 66.921875,0 a33.4609375,8.717332899128877 0,0,0 -66.921875,0 l0,50.71733289912888 a33.4609375,8.717332899128877 0,0,0 66.921875,0 l0,-50.71733289912888" class="basic label-container outer-path" style="fill:#e2e8f0 !important;stroke:#475569 !important;stroke-width:1.5px !important" transform="translate(-33.4609375, -34.075999348693315)"/><g class="label" style="color:#0f172a !important" transform="translate(-24.4609375, 0)"><rect/><foreignObject width="48.921875" height="24"><div style="color: rgb(15, 23, 42) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#0f172a !important" class="nodeLabel"><p>SQLite</p></span></div></foreignObject></g></g><g class="node default fm" id="my-svg-flowchart-S-5" data-look="classic" transform="translate(954.2890625, 141.1520004272461)"><rect class="basic label-container" style="fill:#dbeafe !important;stroke:#2563eb !important;stroke-width:1.5px !important" x="-106.7109375" y="-30" width="213.421875" height="60"/><g class="label" style="color:#172554 !important" transform="translate(-70.7109375, -12)"><rect/><foreignObject width="141.421875" height="24"><div style="color: rgb(23, 37, 84) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#172554 !important" class="nodeLabel"><p>Sınırlı son snapshot</p></span></div></foreignObject></g></g><g class="node default ui" id="my-svg-flowchart-API-7" data-look="classic" transform="translate(1371.875, 194.6520004272461)"><rect class="basic label-container" style="fill:#fce7f3 !important;stroke:#be185d !important;stroke-width:1.5px !important" x="-107.1484375" y="-30" width="214.296875" height="60"/><g class="label" style="color:#831843 !important" transform="translate(-71.1484375, -12)"><rect/><foreignObject width="142.296875" height="24"><div style="color: rgb(131, 24, 67) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#831843 !important" class="nodeLabel"><p>Salt okunur FastAPI</p></span></div></foreignObject></g></g><g class="node default executor" id="my-svg-flowchart-ROS-8" data-look="classic" transform="translate(954.2890625, 248.1520004272461)"><rect class="basic label-container" style="fill:#ede9fe !important;stroke:#7c3aed !important;stroke-width:1.5px !important" x="-136" y="-42" width="272" height="84"/><g class="label" style="color:#2e1065 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(46, 16, 101) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2e1065 !important" class="nodeLabel"><p>Salt okunur TF / Path köprüsü</p></span></div></foreignObject></g></g><g class="node default ui" id="my-svg-flowchart-U-11" data-look="classic" transform="translate(2059.8828125, 194.6520004272461)"><rect class="basic label-container" style="fill:#fce7f3 !important;stroke:#be185d !important;stroke-width:1.5px !important" x="-130.796875" y="-30" width="261.59375" height="60"/><g class="label" style="color:#831843 !important" transform="translate(-94.796875, -12)"><rect/><foreignObject width="189.59375" height="24"><div style="color: rgb(131, 24, 67) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#831843 !important" class="nodeLabel"><p>React + Three.js 3D paneli</p></span></div></foreignObject></g></g><g class="node default wait" id="my-svg-flowchart-R-13" data-look="classic" transform="translate(1787.4453125, 233.14379692077637)"><rect class="basic label-container" style="fill:#fff7ed !important;stroke:#c2410c !important;stroke-dasharray:5 3 !important" x="-96.640625" y="-30" width="193.28125" height="60"/><g class="label" style="color:#7c2d12 !important" transform="translate(-60.640625, -12)"><rect/><foreignObject width="121.28125" height="24"><div style="color: rgb(124, 45, 18) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#7c2d12 !important" class="nodeLabel"><p>Yeniden eşitleme</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><linearGradient id="my-svg-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(40.5882352941, 60%, 83.3333333333%)" stop-opacity="1"/><stop offset="100%" stop-color="hsl(-79.4117647059, 60%, 83.3333333333%)" stop-opacity="1"/></linearGradient><text text-anchor="middle" x="1099.33984375" y="-25" class="flowchartTitleText">16 · REST / WebSocket ve 3D panel · PARTIAL</text></svg>
+\ No newline at end of file
++<svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 3149.11px; background-color: white;" viewBox="0 -50 3149.109375 509.65875244140625" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePaths .path{stroke:#333333;stroke-width:1px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg .node .collapsed-indicator{fill:#aaaa33;stroke:none;opacity:0.6;}#my-svg .node .collapsed-separator{stroke:#aaaa33;stroke-width:0.75px;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#9370DB;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].swimlane.cluster rect{filter:none;}#my-svg [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#my-svg [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .fm&gt;*{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm span{fill:rgb(219, 234, 254)!important;stroke:rgb(37, 99, 235)!important;color:rgb(23, 37, 84)!important;stroke-width:1.5px!important;}#my-svg .fm tspan{fill:rgb(23, 37, 84)!important;}#my-svg .executor&gt;*{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor span{fill:rgb(237, 233, 254)!important;stroke:rgb(124, 58, 237)!important;color:rgb(46, 16, 101)!important;stroke-width:1.5px!important;}#my-svg .executor tspan{fill:rgb(46, 16, 101)!important;}#my-svg .battery&gt;*{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery span{fill:rgb(254, 243, 199)!important;stroke:rgb(217, 119, 6)!important;color:rgb(120, 53, 15)!important;stroke-width:1.5px!important;}#my-svg .battery tspan{fill:rgb(120, 53, 15)!important;}#my-svg .db&gt;*{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db span{fill:rgb(226, 232, 240)!important;stroke:rgb(71, 85, 105)!important;color:rgb(15, 23, 42)!important;stroke-width:1.5px!important;}#my-svg .db tspan{fill:rgb(15, 23, 42)!important;}#my-svg .ui&gt;*{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui span{fill:rgb(252, 231, 243)!important;stroke:rgb(190, 24, 93)!important;color:rgb(131, 24, 67)!important;stroke-width:1.5px!important;}#my-svg .ui tspan{fill:rgb(131, 24, 67)!important;}#my-svg .decision&gt;*{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision span{fill:rgb(255, 255, 255)!important;stroke:rgb(51, 65, 85)!important;color:rgb(15, 23, 42)!important;stroke-width:2px!important;}#my-svg .decision tspan{fill:rgb(15, 23, 42)!important;}#my-svg .error&gt;*{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error span{fill:rgb(254, 226, 226)!important;stroke:rgb(220, 38, 38)!important;color:rgb(127, 29, 29)!important;stroke-width:2px!important;}#my-svg .error tspan{fill:rgb(127, 29, 29)!important;}#my-svg .wait&gt;*{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait span{fill:rgb(255, 247, 237)!important;stroke:rgb(194, 65, 12)!important;color:rgb(124, 45, 18)!important;stroke-dasharray:5,3!important;}#my-svg .wait tspan{fill:rgb(124, 45, 18)!important;}#my-svg .terminal&gt;*{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal span{fill:rgb(220, 252, 231)!important;stroke:rgb(21, 128, 61)!important;color:rgb(20, 83, 45)!important;stroke-width:2px!important;}#my-svg .terminal tspan{fill:rgb(20, 83, 45)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path d="M177.047,106.659L197.88,106.659C218.714,106.659,260.38,106.659,301.38,106.659C342.38,106.659,382.714,106.659,402.88,106.659L423.047,106.659" id="my-svg-L_EX_Q_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_EX_Q_0" data-points="W3sieCI6MTc3LjA0Njg3NSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjMwMi4wNDY4NzUsInkiOjEwNi42NTg3NTYyNTYxMDM1Mn0seyJ4Ijo0MjcuMDQ2ODc1LCJ5IjoxMDYuNjU4NzU2MjU2MTAzNTJ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M604.776,79.659L626.194,73.021C647.611,66.382,690.446,53.106,748.593,46.468C806.74,39.829,880.198,39.829,916.927,39.829L953.656,39.829" id="my-svg-L_Q_DB_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Q_DB_0" data-points="W3sieCI6NjA0Ljc3NjQxMDc3NTExMiwieSI6NzkuNjU4NzU2MjU2MTAzNTJ9LHsieCI6NzMzLjI4MTI1LCJ5IjozOS44MjkzNzgxMjgwNTE3Nn0seyJ4Ijo5NTcuNjU2MjUsInkiOjM5LjgyOTM3ODEyODA1MTc2fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M535.971,133.659L568.856,182.159C601.741,230.659,667.511,327.659,725.796,376.159C784.081,424.659,834.88,424.659,860.28,424.659L885.68,424.659" id="my-svg-L_Q_S_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Q_S_0" data-points="W3sieCI6NTM1Ljk3MTE4MjE5MzM5NjIsInkiOjEzMy42NTg3NTYyNTYxMDM1Mn0seyJ4Ijo3MzMuMjgxMjUsInkiOjQyNC42NTg3NTYyNTYxMDM1fSx7IngiOjg4OS42Nzk2ODc1LCJ5Ijo0MjQuNjU4NzU2MjU2MTAzNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1086.883,424.659L1112.949,424.659C1139.016,424.659,1191.148,424.659,1246.667,410.121C1302.186,395.582,1361.091,366.506,1390.544,351.968L1419.996,337.429" id="my-svg-L_S_API_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_API_0" data-points="W3sieCI6MTA4Ni44ODI4MTI1LCJ5Ijo0MjQuNjU4NzU2MjU2MTAzNX0seyJ4IjoxMjQzLjI4MTI1LCJ5Ijo0MjQuNjU4NzU2MjU2MTAzNX0seyJ4IjoxNDIzLjU4Mjk3NDEzNzkzMSwieSI6MzM1LjY1ODc1NjI1NjEwMzV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1118.281,308.659L1139.115,308.659C1159.948,308.659,1201.615,308.659,1242.615,308.659C1283.615,308.659,1323.948,308.659,1344.115,308.659L1364.281,308.659" id="my-svg-L_ROS_API_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_ROS_API_0" data-points="W3sieCI6MTExOC4yODEyNSwieSI6MzA4LjY1ODc1NjI1NjEwMzV9LHsieCI6MTI0My4yODEyNSwieSI6MzA4LjY1ODc1NjI1NjEwMzV9LHsieCI6MTM2OC4yODEyNSwieSI6MzA4LjY1ODc1NjI1NjEwMzV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1566.406,335.659L1590.885,343.159C1615.365,350.659,1664.323,365.659,1726.302,373.159C1788.281,380.659,1863.281,380.659,1921.615,380.659C1979.948,380.659,2021.615,380.659,2057.453,373.448C2093.292,366.236,2123.303,351.814,2138.308,344.603L2153.314,337.391" id="my-svg-L_API_U_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_U_0" data-points="W3sieCI6MTU2Ni40MDYyNSwieSI6MzM1LjY1ODc1NjI1NjEwMzV9LHsieCI6MTcxMy4yODEyNSwieSI6MzgwLjY1ODc1NjI1NjEwMzV9LHsieCI6MTkzOC4yODEyNSwieSI6MzgwLjY1ODc1NjI1NjEwMzV9LHsieCI6MjA2My4yODEyNSwieSI6MzgwLjY1ODc1NjI1NjEwMzV9LHsieCI6MjE1Ni45MTg5NDUzMTI1LCJ5IjozMzUuNjU4NzU2MjU2MTAzNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1566.406,281.659L1590.885,274.159C1615.365,266.659,1664.323,251.659,1710.448,244.159C1756.573,236.659,1799.865,236.659,1821.51,236.659L1843.156,236.659" id="my-svg-L_API_R_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_API_R_0" data-points="W3sieCI6MTU2Ni40MDYyNSwieSI6MjgxLjY1ODc1NjI1NjEwMzV9LHsieCI6MTcxMy4yODEyNSwieSI6MjM2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjE4NDcuMTU2MjUsInkiOjIzNi42NTg3NTYyNTYxMDM1Mn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2029.406,236.659L2035.052,236.659C2040.698,236.659,2051.99,236.659,2072.641,243.87C2093.292,251.081,2123.303,265.504,2138.308,272.715L2153.314,279.926" id="my-svg-L_R_U_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_R_U_0" data-points="W3sieCI6MjAyOS40MDYyNSwieSI6MjM2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjIwNjMuMjgxMjUsInkiOjIzNi42NTg3NTYyNTYxMDM1Mn0seyJ4IjoyMTU2LjkxODk0NTMxMjUsInkiOjI4MS42NTg3NTYyNTYxMDM1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1118.281,180.659L1139.115,180.659C1159.948,180.659,1201.615,180.659,1252.767,197.173C1303.92,213.688,1364.559,246.717,1394.879,263.231L1425.198,279.745" id="my-svg-L_Y_API_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Y_API_0" data-points="W3sieCI6MTExOC4yODEyNSwieSI6MTgwLjY1ODc1NjI1NjEwMzUyfSx7IngiOjEyNDMuMjgxMjUsInkiOjE4MC42NTg3NTYyNTYxMDM1Mn0seyJ4IjoxNDI4LjcxMDkzNzUsInkiOjI4MS42NTg3NTYyNTYxMDM1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2337.922,308.659L2358.755,308.659C2379.589,308.659,2421.255,308.659,2462.255,308.659C2503.255,308.659,2543.589,308.659,2563.755,308.659L2583.922,308.659" id="my-svg-L_U_W_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_U_W_0" data-points="W3sieCI6MjMzNy45MjE4NzUsInkiOjMwOC42NTg3NTYyNTYxMDM1fSx7IngiOjI0NjIuOTIxODc1LCJ5IjozMDguNjU4NzU2MjU2MTAzNX0seyJ4IjoyNTg3LjkyMTg3NSwieSI6MzA4LjY1ODc1NjI1NjEwMzV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2817.085,259.822L2832.52,251.461C2847.955,243.101,2878.825,226.38,2909.512,208.376C2940.199,190.371,2970.703,171.084,2985.955,161.44L3001.207,151.796" id="my-svg-L_W_I_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_W_I_0" data-points="W3sieCI6MjgxNy4wODQ3NjYyODU2NjI3LCJ5IjoyNTkuODIxNjQ3NTQxNzY2M30seyJ4IjoyOTA5LjY5NTMxMjUsInkiOjIwOS42NTg3NTYyNTYxMDM1Mn0seyJ4IjozMDA0LjU4NzU1Mzg3OTMxMDIsInkiOjE0OS42NTg3NTYyNTYxMDM1Mn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2953.469,111.749L2946.173,110.901C2938.878,110.052,2924.286,108.355,2886.529,107.507C2848.771,106.659,2787.846,106.659,2713.384,106.659C2638.922,106.659,2550.922,106.659,2465.285,106.659C2379.648,106.659,2296.375,106.659,2229.768,106.659C2163.161,106.659,2113.221,106.659,2067.418,106.659C2021.615,106.659,1979.948,106.659,1921.615,106.659C1863.281,106.659,1788.281,106.659,1711.615,106.659C1634.948,106.659,1556.615,106.659,1478.281,106.659C1399.948,106.659,1321.615,106.659,1239.948,106.659C1158.281,106.659,1073.281,106.659,988.281,106.659C903.281,106.659,818.281,106.659,755.615,106.659C692.948,106.659,652.615,106.659,632.448,106.659L612.281,106.659" id="my-svg-L_I_Q_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_I_Q_0" data-points="W3sieCI6Mjk1My40Njg3NSwieSI6MTExLjc0ODkyMjA1MjE1MTY3fSx7IngiOjI5MDkuNjk1MzEyNSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjI3MjYuOTIxODc1LCJ5IjoxMDYuNjU4NzU2MjU2MTAzNTJ9LHsieCI6MjQ2Mi45MjE4NzUsInkiOjEwNi42NTg3NTYyNTYxMDM1Mn0seyJ4IjoyMjEzLjEwMTU2MjUsInkiOjEwNi42NTg3NTYyNTYxMDM1Mn0seyJ4IjoyMDYzLjI4MTI1LCJ5IjoxMDYuNjU4NzU2MjU2MTAzNTJ9LHsieCI6MTkzOC4yODEyNSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjE3MTMuMjgxMjUsInkiOjEwNi42NTg3NTYyNTYxMDM1Mn0seyJ4IjoxNDc4LjI4MTI1LCJ5IjoxMDYuNjU4NzU2MjU2MTAzNTJ9LHsieCI6MTI0My4yODEyNSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjk4OC4yODEyNSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjczMy4yODEyNSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfSx7IngiOjYwOC4yODEyNSwieSI6MTA2LjY1ODc1NjI1NjEwMzUyfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2846.324,328.257L2856.886,329.991C2867.447,331.724,2888.571,335.192,2910.046,336.925C2931.521,338.659,2953.346,338.659,2964.259,338.659L2975.172,338.659" id="my-svg-L_W_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_W_B_0" data-points="W3sieCI6Mjg0Ni4zMjM1NjQwMDMxMjEsInkiOjMyOC4yNTcwNjcyNTI5ODI1NX0seyJ4IjoyOTA5LjY5NTMxMjUsInkiOjMzOC42NTg3NTYyNTYxMDM1fSx7IngiOjI5NzkuMTcxODc1LCJ5IjozMzguNjU4NzU2MjU2MTAzNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(302.046875, 106.65875625610352)"><g class="label" data-id="L_EX_Q_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>RobotStatus / terminal sonuç</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(733.28125, 39.82937812805176)"><g class="label" data-id="L_Q_DB_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>Atomik durum ve Outbox kaydı</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(733.28125, 424.6587562561035)"><g class="label" data-id="L_Q_S_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>Commit sonrası yetkili görünüm</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1243.28125, 424.6587562561035)"><g class="label" data-id="L_S_API_0" transform="translate(-61.734375, -12)"><foreignObject width="123.46875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Özel geçici dosya</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1243.28125, 308.6587562561035)"><g class="label" data-id="L_ROS_API_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>Robot ID / map / gözlemlenen plan</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1938.28125, 380.6587562561035)"><g class="label" data-id="L_API_U_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>Tek WebSocket • ayrı ürün ve TF mesajları</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1713.28125, 236.65875625610352)"><g class="label" data-id="L_API_R_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>Kaynak başına süre ve oturum</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_R_U_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1243.28125, 180.65875625610352)"><g class="label" data-id="L_Y_API_0" transform="translate(-72.875, -12)"><foreignObject width="145.75" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>SDF / harita / sahne</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(2462.921875, 308.6587562561035)"><g class="label" data-id="L_U_W_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>Nokta ID seçimi / istek UUID</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(2909.6953125, 209.65875625610352)"><g class="label" data-id="L_W_I_0" transform="translate(-15.7421875, -12)"><foreignObject width="31.484375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Evet</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1938.28125, 106.65875625610352)"><g class="label" data-id="L_I_Q_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>SUBMIT_TASK / aynı UUID ile retry</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(2909.6953125, 338.6587562561035)"><g class="label" data-id="L_W_B_0" transform="translate(-18.7734375, -12)"><foreignObject width="37.546875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Hayır</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default executor" id="my-svg-flowchart-EX-0" data-look="classic" transform="translate(92.5234375, 106.65875625610352)"><rect class="basic label-container" style="fill:#ede9fe !important;stroke:#7c3aed !important;stroke-width:1.5px !important" x="-84.5234375" y="-27" width="169.046875" height="54"/><g class="label" style="color:#2e1065 !important" transform="translate(-54.5234375, -12)"><rect/><foreignObject width="109.046875" height="24"><div style="color: rgb(46, 16, 101) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2e1065 !important" class="nodeLabel"><p>Robot Executor</p></span></div></foreignObject></g></g><g class="node default fm" id="my-svg-flowchart-Q-1" data-look="classic" transform="translate(517.6640625, 106.65875625610352)"><rect class="basic label-container" style="fill:#dbeafe !important;stroke:#2563eb !important;stroke-width:1.5px !important" x="-90.6171875" y="-27" width="181.234375" height="54"/><g class="label" style="color:#172554 !important" transform="translate(-60.6171875, -12)"><rect/><foreignObject width="121.234375" height="24"><div style="color: rgb(23, 37, 84) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#172554 !important" class="nodeLabel"><p>FM tek consumer</p></span></div></foreignObject></g></g><g class="node default db" id="my-svg-flowchart-DB-3" data-look="classic" transform="translate(988.28125, 39.82937812805176)"><path d="M0,8.221476510067115 a30.625,8.221476510067115 0,0,0 61.25,0 a30.625,8.221476510067115 0,0,0 -61.25,0 l0,47.22147651006711 a30.625,8.221476510067115 0,0,0 61.25,0 l0,-47.22147651006711" class="basic label-container outer-path" style="fill:#e2e8f0 !important;stroke:#475569 !important;stroke-width:1.5px !important" transform="translate(-30.625, -31.832214765100673)"/><g class="label" style="color:#0f172a !important" transform="translate(-23.125, -2)"><rect/><foreignObject width="46.25" height="24"><div style="color: rgb(15, 23, 42) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#0f172a !important" class="nodeLabel"><p>SQLite</p></span></div></foreignObject></g></g><g class="node default fm" id="my-svg-flowchart-S-5" data-look="classic" transform="translate(988.28125, 424.6587562561035)"><rect class="basic label-container" style="fill:#dbeafe !important;stroke:#2563eb !important;stroke-width:1.5px !important" x="-98.6015625" y="-27" width="197.203125" height="54"/><g class="label" style="color:#172554 !important" transform="translate(-68.6015625, -12)"><rect/><foreignObject width="137.203125" height="24"><div style="color: rgb(23, 37, 84) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#172554 !important" class="nodeLabel"><p>Sınırlı son snapshot</p></span></div></foreignObject></g></g><g class="node default ui" id="my-svg-flowchart-API-7" data-look="classic" transform="translate(1478.28125, 308.6587562561035)"><rect class="basic label-container" style="fill:#fce7f3 !important;stroke:#be185d !important;stroke-width:1.5px !important" x="-110" y="-27" width="220" height="54"/><g class="label" style="color:#831843 !important" transform="translate(-80, -12)"><rect/><foreignObject width="160" height="24"><div style="color: rgb(131, 24, 67) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#831843 !important" class="nodeLabel"><p>FastAPI / kaynak sınırı</p></span></div></foreignObject></g></g><g class="node default executor" id="my-svg-flowchart-ROS-8" data-look="classic" transform="translate(988.28125, 308.6587562561035)"><rect class="basic label-container" style="fill:#ede9fe !important;stroke:#7c3aed !important;stroke-width:1.5px !important" x="-130" y="-39" width="260" height="78"/><g class="label" style="color:#2e1065 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(46, 16, 101) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2e1065 !important" class="nodeLabel"><p>Salt okunur TF / Path köprüsü</p></span></div></foreignObject></g></g><g class="node default ui" id="my-svg-flowchart-U-11" data-look="classic" transform="translate(2213.1015625, 308.6587562561035)"><rect class="basic label-container" style="fill:#fce7f3 !important;stroke:#be185d !important;stroke-width:1.5px !important" x="-124.8203125" y="-27" width="249.640625" height="54"/><g class="label" style="color:#831843 !important" transform="translate(-94.8203125, -12)"><rect/><foreignObject width="189.640625" height="24"><div style="color: rgb(131, 24, 67) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#831843 !important" class="nodeLabel"><p>React + Three.js 3D paneli</p></span></div></foreignObject></g></g><g class="node default wait" id="my-svg-flowchart-R-13" data-look="classic" transform="translate(1938.28125, 236.65875625610352)"><rect class="basic label-container" style="fill:#fff7ed !important;stroke:#c2410c !important;stroke-dasharray:5 3 !important" x="-91.125" y="-27" width="182.25" height="54"/><g class="label" style="color:#7c2d12 !important" transform="translate(-61.125, -12)"><rect/><foreignObject width="122.25" height="24"><div style="color: rgb(124, 45, 18) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#7c2d12 !important" class="nodeLabel"><p>Yeniden eşitleme</p></span></div></foreignObject></g></g><g class="node default fm" id="my-svg-flowchart-Y-16" data-look="classic" transform="translate(988.28125, 180.65875625610352)"><rect class="basic label-container" style="fill:#dbeafe !important;stroke:#2563eb !important;stroke-width:1.5px !important" x="-130" y="-39" width="260" height="78"/><g class="label" style="color:#172554 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(23, 37, 84) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#172554 !important" class="nodeLabel"><p>Tek filo YAML / yaklaşma kataloğu</p></span></div></foreignObject></g></g><g class="node default decision" id="my-svg-flowchart-W-19" data-look="classic" transform="translate(2726.921875, 308.6587562561035)"><polygon points="139,0 278,-139 139,-278 0,-139" class="label-container" transform="translate(-138.5, 139)" style="fill:#fff !important;stroke:#334155 !important;stroke-width:2px !important"/><g class="label" style="color:#0f172a !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(15, 23, 42) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#0f172a !important" class="nodeLabel"><p>Origin / oturum / profil özeti geçerli mi?</p></span></div></foreignObject></g></g><g class="node default ui" id="my-svg-flowchart-I-21" data-look="classic" transform="translate(3047.2890625, 122.65875625610352)"><rect class="basic label-container" style="fill:#fce7f3 !important;stroke:#be185d !important;stroke-width:1.5px !important" x="-93.8203125" y="-27" width="187.640625" height="54"/><g class="label" style="color:#831843 !important" transform="translate(-63.8203125, -12)"><rect/><foreignObject width="127.640625" height="24"><div style="color: rgb(131, 24, 67) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#831843 !important" class="nodeLabel"><p>Yerel görev soketi</p></span></div></foreignObject></g></g><g class="node default error" id="my-svg-flowchart-B-25" data-look="classic" transform="translate(3047.2890625, 338.6587562561035)"><rect class="basic label-container" style="fill:#fee2e2 !important;stroke:#dc2626 !important;stroke-width:2px !important" x="-68.1171875" y="-27" width="136.234375" height="54"/><g class="label" style="color:#7f1d1d !important" transform="translate(-38.1171875, -12)"><rect/><foreignObject width="76.234375" height="24"><div style="color: rgb(127, 29, 29) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#7f1d1d !important" class="nodeLabel"><p>İstek reddi</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><text text-anchor="middle" x="1574.5546875" y="-25" class="flowchartTitleText">16 · REST / WebSocket ve 3D panel · PARTIAL</text></svg>
+\ No newline at end of file
+diff --git a/docs/validation/README.md b/docs/validation/README.md
+index 375cbfa..8adf972 100644
+--- a/docs/validation/README.md
++++ b/docs/validation/README.md
+@@ -44,6 +44,8 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
+ | C5 Izgara depo profili | [Rapor ve komutlar](c5/warehouse-grid-validation-2026-11-08.md) | YAML, backend kaynak eşleşmesi, koridor fixture’ı ve üretim Chrome |
+ | C5 20 × 12 m ortak depo | [Rapor ve komutlar](c5/warehouse-grid-20x12-validation-2026-11-08.md) | SDF, Nav2, Chrome ve iki canlı hareket senaryosu |
+ | C5 Üstten depo açıklığı | [Rapor ve komutlar](c5/warehouse-grid-clearance-2026-11-08.md) | Dock ve alım açıklığı, etiket bağlantıları, Nav2 merkez rotası |
++| C5 dağıtılmış 30 × 18 m depo | [Rapor](c5/warehouse-30x18-validation-2026-11-11.md) · [Komutlar](c5/warehouse-30x18-commands-2026-11-11.md) | Ortak raster, dağıtılmış yaklaşmalar, katalog görev girişi, Chrome ve Fortress/Nav2 |
++| C5 30 × 18 m uçtan uca Aşama 1 | [Rapor](c5/e2e-stage1-validation-2026-11-11.md) · [Komutlar](c5/e2e-stage1-commands-2026-11-11.md) | Tek görev ve iki robotlu paralel görev COMPLETED; feedback/EXECUTING ve bir fiziksel yaklaşma kontrolü başarısız. Koşulsuz kabul verilmedi; Aşama 2/3 başlatılmadı |
+ 
+ B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
+ 
+diff --git a/fleet_config/anchored.py b/fleet_config/anchored.py
+index 41ff3ec..a0322ed 100644
+--- a/fleet_config/anchored.py
++++ b/fleet_config/anchored.py
+@@ -7,7 +7,7 @@ from typing import Annotated, Literal
+ from pydantic import Field, model_validator
+ 
+ from .models import ChargingStation, Contract, Fleet, FleetConfig, Policies, Robot, Station
+-from .warehouse import Area, TransferPoint, WarehouseDoor, WarehouseRack, WarehouseZone
++from .warehouse import Area, ExampleTask, TransferPoint, WarehouseDoor, WarehouseRack, WarehouseZone
+ 
+ XAxis = float | Annotated[str, Field(pattern=r"^[WE]([+-][0-9]+(\.[0-9]+)?)?$")]
+ YAxis = float | Annotated[str, Field(pattern=r"^[SN]([+-][0-9]+(\.[0-9]+)?)?$")]
+@@ -51,6 +51,7 @@ class AnchoredRack(WarehouseRack):
+ class AnchoredAisle(Area):
+     bounds: AnchoredRect
+     axis: Literal["x", "y"]
++    role: Literal["main", "cross", "access"] | None = Field(default_factory=lambda: None)
+ 
+ 
+ class AnchoredPoint(Contract):
+@@ -81,6 +82,8 @@ class WarehouseSource(Contract):
+     transfer_points: list[AnchoredTransfer]
+     dock_approach_m: Annotated[float, Field(ge=2)]
+     dock_rack_clearance_m: Annotated[float, Field(ge=2)]
++    approach_clearance_m: Annotated[float, Field(gt=0)] | None = Field(default_factory=lambda: None)
++    example_tasks: list[ExampleTask] = Field(default_factory=list)
+ 
+ 
+ class AnchoredFleetConfig(Contract):
+diff --git a/fleet_config/loader.py b/fleet_config/loader.py
+index d0731cc..f78bff1 100644
+--- a/fleet_config/loader.py
++++ b/fleet_config/loader.py
+@@ -107,4 +107,8 @@ def load_config(path, schema_path=None):
+         raise ValueError("\n".join(f"{'.'.join(map(str, error.path)) or '$'}: {error.message}" for error in errors))
+     config = AnchoredFleetConfig.model_validate(data).resolve() if anchored else FleetConfig.model_validate(data)
+     check_assets(config, path.parent)
++    if config.warehouse is not None and config.warehouse.approach_clearance_m is not None:
++        from .occupancy import check_approaches, raster
++
++        check_approaches(config, *raster(config.warehouse))
+     return config
+diff --git a/fleet_config/models.py b/fleet_config/models.py
+index 4f31adb..f0ef4ba 100644
+--- a/fleet_config/models.py
++++ b/fleet_config/models.py
+@@ -142,8 +142,8 @@ class FleetConfig(Contract):
+         if self.fleet.map_path == "warehouse:generated" and self.warehouse is None:
+             raise ValueError("warehouse:generated requires warehouse geometry")
+         if self.warehouse is not None:
+-            if not 2 <= len(self.stations.charging_stations) <= 4 or not self.stations.parking_stations:
+-                raise ValueError("warehouse profile requires two to four charging stations and a parking station")
++            if not 2 <= len(self.stations.charging_stations) <= 6 or not self.stations.parking_stations:
++                raise ValueError("warehouse profile requires two to six charging stations and a parking station")
+             for kind, group in (("charging", self.stations.charging_stations),
+                                 ("parking", self.stations.parking_stations)):
+                 for station in group:
+diff --git a/fleet_config/warehouse.py b/fleet_config/warehouse.py
+index 3859ed6..f970821 100644
+--- a/fleet_config/warehouse.py
++++ b/fleet_config/warehouse.py
+@@ -1,6 +1,6 @@
+ """Map-space warehouse geometry shared by renderers and future map generators."""
+ 
+-from math import hypot, isclose
++from math import cos, hypot, isclose, sin
+ from typing import Annotated, Literal
+ 
+ from pydantic import BaseModel, ConfigDict, Field, model_validator
+@@ -56,13 +56,15 @@ class WarehouseRack(Geometry):
+ 
+ class WarehouseAisle(Area):
+     axis: Literal["x", "y"]
++    role: Literal["main", "cross", "access"] | None = Field(default_factory=lambda: None)
+ 
+     @model_validator(mode="after")
+     def minimum_width(self):
+         b = self.bounds
+         width = b.y_max - b.y_min if self.axis == "x" else b.x_max - b.x_min
+-        if width < 1:
+-            raise ValueError(f"{self.id}: clear aisle width must be at least 1 m")
++        minimum = {"main": 1.75, "cross": 1.5}.get(self.role, 1)
++        if width < minimum:
++            raise ValueError(f"{self.id}: clear aisle width must be at least {minimum} m")
+         return self
+ 
+ 
+@@ -86,6 +88,19 @@ class TransferPoint(Geometry):
+     id: str = Field(pattern=r"^[A-Za-z_][A-Za-z0-9_-]*$")
+     kind: TransferKind
+     pose: TransferPose
++    zone_id: str | None = Field(default_factory=lambda: None)
++    rack_id: str | None = Field(default_factory=lambda: None)
++    roles: list[TransferKind] | None = Field(default_factory=lambda: None)
++
++    def accepts(self, role):
++        return role in (self.roles if self.roles is not None else [self.kind])
++
++
++class ExampleTask(Geometry):
++    id: str = Field(pattern=r"^[A-Za-z_][A-Za-z0-9_-]*$")
++    pickup: str
++    dropoff: str
++    priority: Literal["LOW", "MEDIUM", "HIGH"]
+ 
+ 
+ class WarehouseLayout(Geometry):
+@@ -97,8 +112,10 @@ class WarehouseLayout(Geometry):
+     door: WarehouseDoor
+     racks: Annotated[list[WarehouseRack], Field(min_length=1, max_length=32)]
+     aisles: Annotated[list[WarehouseAisle], Field(min_length=3, max_length=24)]
+-    zones: Annotated[list[WarehouseZone], Field(min_length=4, max_length=4)]
+-    transfer_points: Annotated[list[TransferPoint], Field(min_length=4, max_length=8)]
++    zones: Annotated[list[WarehouseZone], Field(min_length=4, max_length=32)]
++    transfer_points: Annotated[list[TransferPoint], Field(min_length=4, max_length=64)]
++    example_tasks: Annotated[list[ExampleTask], Field(max_length=32)] = Field(default_factory=list)
++    approach_clearance_m: Positive | None = Field(default_factory=lambda: None)
+     dock_approach_m: Positive | None = Field(default_factory=lambda: None)
+     dock_rack_clearance_m: Positive | None = Field(default_factory=lambda: None)
+ 
+@@ -124,6 +141,12 @@ class WarehouseLayout(Geometry):
+                           else MapRectangle(x_min=edge-half, x_max=edge+half, y_min=lo, y_max=hi))
+                 yield {"id": f"wall_{side}_{index}", "side": side, "edge": edge, "bounds": bounds}
+ 
++    def obstacles(self):
++        for wall in self.walls():
++            yield wall["id"], wall["bounds"], self.wall_height_m
++        for rack in self.racks:
++            yield rack.id, rack.bounds, rack.height
++
+     def scene_payload(self):
+         walls = [{**wall, "bounds": wall["bounds"].model_dump(mode="json")} for wall in self.walls()]
+         return {**self.model_dump(mode="json"), "walls": walls}
+@@ -166,7 +189,9 @@ class WarehouseLayout(Geometry):
+         if len({item.id for item in entries}) != len(entries):
+             raise ValueError("warehouse IDs must be unique")
+         if {zone.kind for zone in self.zones} != {"pickup", "dropoff", "charging", "parking"}:
+-            raise ValueError("warehouse requires one zone of each kind")
++            raise ValueError("warehouse requires a zone of each kind")
++        if any(sum(zone.kind == kind for zone in self.zones) != 1 for kind in ("charging", "parking")):
++            raise ValueError("warehouse requires one charging and one parking zone")
+ 
+         def on_grid(*values):
+             return all(isclose(value / self.grid_m, round(value / self.grid_m), abs_tol=1e-8) for value in values)
+@@ -206,9 +231,34 @@ class WarehouseLayout(Geometry):
+ 
+         for kind in ("pickup", "dropoff"):
+             points = [point for point in self.transfer_points if point.kind == kind]
+-            if not 2 <= len(points) <= 4:
+-                raise ValueError(f"warehouse requires two to four {kind} points")
++            if not 2 <= len(points) <= 48:
++                raise ValueError(f"warehouse requires two to 48 {kind} points")
+             for point in points:
+-                if not on_grid(point.pose.x, point.pose.y) or not self.zone(kind).contains(point.pose.x, point.pose.y, .4):
++                zones = [zone for zone in self.zones if zone.kind == kind and
++                         (point.zone_id is None or zone.id == point.zone_id)]
++                if not on_grid(point.pose.x, point.pose.y) or not any(
++                    zone.bounds.contains(point.pose.x, point.pose.y, .4) for zone in zones
++                ):
+                     raise ValueError(f"{point.id}: transfer pose must be on the grid inside its zone")
++                if point.roles is not None and (not point.roles or len(set(point.roles)) != len(point.roles)):
++                    raise ValueError(f"{point.id}: transfer roles must be nonempty and unique")
++                if point.rack_id is not None:
++                    rack = next((rack for rack in self.racks if rack.id == point.rack_id), None)
++                    if rack is None:
++                        raise ValueError(f"{point.id}: unknown rack_id")
++                    x, y, yaw = point.pose.x, point.pose.y, point.pose.yaw
++                    face_x = min(rack.bounds.x_max, max(rack.bounds.x_min, x))
++                    face_y = min(rack.bounds.y_max, max(rack.bounds.y_min, y))
++                    dx, dy = face_x - x, face_y - y
++                    if hypot(dx, dy) < .4 or dx*cos(yaw) + dy*sin(yaw) < hypot(dx, dy) * .99:
++                        raise ValueError(f"{point.id}: approach must face its rack from free floor")
++        catalog = {point.id: point for point in self.transfer_points}
++        if len({task.id for task in self.example_tasks}) != len(self.example_tasks):
++            raise ValueError("warehouse example task IDs must be unique")
++        for task in self.example_tasks:
++            if task.pickup == task.dropoff or any(
++                id_ not in catalog or not catalog[id_].accepts(role)
++                for role, id_ in (("pickup", task.pickup), ("dropoff", task.dropoff))
++            ):
++                raise ValueError(f"{task.id}: invalid example task endpoints or roles")
+         return self
+diff --git a/fleet_config/warehouse_assets.py b/fleet_config/warehouse_assets.py
+index 14c4bcf..05f5dc6 100644
+--- a/fleet_config/warehouse_assets.py
++++ b/fleet_config/warehouse_assets.py
+@@ -2,7 +2,7 @@
+ import argparse
+ from decimal import Decimal
+ import json
+-from math import isclose, pi
++from math import pi
+ from pathlib import Path
+ import sys
+ import tempfile
+@@ -11,6 +11,7 @@ from xml.etree import ElementTree as ET
+ import yaml
+ 
+ from fleet_config import load_config
++from fleet_config.occupancy import encode_grid, raster
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+ for component in ("simulation-c3-3-3", "simulation-c4-4"):
+@@ -20,10 +21,7 @@ from dock_world import install_docks
+ 
+ 
+ def blocks(layout):
+-    for wall in layout.walls():
+-        yield wall["id"], wall["bounds"], layout.wall_height_m
+-    for rack in layout.racks:
+-        yield rack.id, rack.bounds, rack.height
++    return layout.obstacles()
+ 
+ 
+ def static_box(world, name, x, y, z, width, depth, height, color):
+@@ -40,31 +38,19 @@ def static_box(world, name, x, y, z, width, depth, height, color):
+             ET.SubElement(mat, "diffuse").text = color
+ 
+ 
+-def make_map(layout, solids, out):
+-    b = layout.bounds
+-    resolution = next((value for value in (.05, .025, .01, .005)
+-                       if all(isclose(edge / value, round(edge / value), abs_tol=1e-7)
+-                              for _, bounds, _ in solids
+-                              for edge in (bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max))), None)
+-    if resolution is None:
+-        raise ValueError("wall/rack edges must align exactly with a supported map resolution")
+-    # Exterior apron has a physical floor. Cells beyond it stay occupied to bound planning.
+-    border = 1.5
+-    x0, y0 = b.x_min-border, b.y_min-border
+-    cols, rows = round((b.x_max-b.x_min+2*border)/resolution), round((b.y_max-b.y_min+2*border)/resolution)
+-    if rows * cols > 4_000_000:
+-        raise ValueError("generated occupancy image exceeds 4 million cells")
+-    image = bytearray([254]) * (cols*rows)
+-    for _, rect, _ in solids:
+-        left, right = (round((x-x0)/resolution) for x in (rect.x_min, rect.x_max))
+-        bottom, top = (round((y-y0)/resolution) for y in (rect.y_min, rect.y_max))
+-        for row in range(rows-top, rows-bottom):
+-            image[row*cols+left:row*cols+right] = bytes(right-left)
++def make_map(layout, out):
++    metadata, cells = raster(layout)
++    resolution = metadata["resolution"]
++    x0, y0 = metadata["origin"]
++    cols, rows = metadata["width"], metadata["height"]
++    image = bytearray(0 if value else 254 for row in range(rows-1, -1, -1)
++                      for value in cells[row*cols:(row+1)*cols])
+     (out / "map.pgm").write_bytes(f"P5\n{cols} {rows}\n255\n".encode() + image)
+     (out / "map.yaml").write_text(yaml.safe_dump(dict(
+         image="map.pgm", mode="trinary", resolution=resolution, origin=[x0,y0,0.0],
+         negate=0, occupied_thresh=.65, free_thresh=.25,
+     ), sort_keys=False))
++    (out / "occupancy.json").write_text(json.dumps(encode_grid(metadata, cells, "generated_occupancy")))
+     return resolution
+ 
+ 
+@@ -90,6 +76,8 @@ def generate(path, out, scenario="delivery"):
+         for robot, (start, _) in zip(data["robots"], pairs, strict=True):
+             robot["initial_pose"] = start
+         goals = {robot["id"]: goal for robot, (_, goal) in zip(data["robots"], pairs, strict=True)}
++    elif scenario == "routes":
++        goals = {task.id: task.model_dump() for task in layout.example_tasks}
+     else:
+         dock = next(item for item in config.stations.charging_stations if item.id == "dock_1")
+         delivery = next(point for point in layout.transfer_points
+@@ -99,7 +87,7 @@ def generate(path, out, scenario="delivery"):
+             config.robots[1].id: delivery.pose.model_dump(),
+         }
+     solids = list(blocks(layout))
+-    resolution = make_map(layout, solids, out)
++    resolution = make_map(layout, out)
+     settings = json.loads((ROOT / "config/simulation-c3-3-3.json").read_text())
+     with tempfile.TemporaryDirectory() as folder:
+         original = prepare_world(settings, data, Path(folder) / "robots.sdf")
+@@ -119,6 +107,17 @@ def generate(path, out, scenario="delivery"):
+     sdf = out / "warehouse.sdf"
+     tree.write(sdf, encoding="utf-8", xml_declaration=True)
+     install_docks(sdf, config.stations.charging_stations, config.robots)
++    tree = ET.parse(sdf)
++    for robot in config.robots:
++        model = tree.getroot().find(f".//model[@name='{robot.id}']")
++        for link in model.findall("link"):
++            for collision in link.findall("collision"):
++                sensor = ET.SubElement(link, "sensor", name="acceptance_contact_" + collision.get("name"), type="contact")
++                ET.SubElement(sensor, "always_on").text = "true"
++                contact = ET.SubElement(sensor, "contact")
++                ET.SubElement(contact, "collision").text = collision.get("name")
++                ET.SubElement(contact, "topic").text = robot.namespace + '/contact_' + link.get("name")
++    tree.write(sdf, encoding="utf-8", xml_declaration=True)
+ 
+     for robot in data["robots"]:
+         name, ns, start = robot["id"], robot["namespace"], robot["initial_pose"]
+@@ -146,6 +145,6 @@ def main():
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("profile", type=Path)
+     parser.add_argument("output", type=Path)
+-    parser.add_argument("--scenario", choices=("delivery","passing"), default="delivery")
++    parser.add_argument("--scenario", choices=("delivery", "passing", "routes"), default="delivery")
+     args = parser.parse_args()
+     generate(args.profile, args.output, args.scenario)
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 650f365..b29cad7 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -5,6 +5,7 @@ import {
+ } from "lucide-react";
+ import { EmptyState, RobotDetails, RobotList, StationOverview, TaskList } from "./Operations";
+ import { ScenePanel } from "./ScenePanel";
++import { TaskComposer, useTaskCatalog } from "./TaskComposer";
+ import { useFleet, type Connection } from "./useFleet";
+ 
+ const views = [
+@@ -35,6 +36,7 @@ export default function App() {
+   const [selectedId, setSelectedId] = useState<string>();
+   const { fleet, connection, error, scene, sceneFeed, reconnect } = useFleet();
+   const connected = connection === "CONNECTED";
++  const catalog = useTaskCatalog(fleet);
+   const productIds = fleet?.robots.map((robot) => robot.robot_id).join("\0") ?? "";
+   const robotIds = useMemo(() => [...new Set([
+     ...(productIds ? productIds.split("\0") : []), ...(scene.roster ?? []),
+@@ -67,7 +69,7 @@ export default function App() {
+           <span className={`connection ${connection.toLowerCase()}`} role="status">
+             {connected ? <Signal size={14} /> : <WifiOff size={14} />}
+             <strong>{connectionLabels[connection]}</strong></span>
+-          <span className="tag readonly"><LockKeyhole size={13} /> SALT OKUNUR</span>
++          <span className="tag readonly"><LockKeyhole size={13} /> {catalog?.enabled ? 'GÖREV GİRİŞİ' : 'SALT OKUNUR'}</span>
+         </div>
+       </header>
+       <main id="workspace" tabIndex={-1} className={`workspace ${view.id === "overview" ? "overview" : ""}`}>
+@@ -99,7 +101,8 @@ export default function App() {
+         <RobotList fleet={fleet} connected={connected} selected={activeId} onSelect={setSelectedId} />
+         <RobotDetails robot={selected} robotId={activeId} tf={selectedTf} stations={fleet?.stations} connected={connected} />
+       </div>}
+-      {view.id === "tasks" && <TaskList fleet={fleet} connected={connected} />}
++      {view.id === "tasks" && <><TaskComposer key={catalog?.session} catalog={catalog} fleet={fleet} connected={connected} />
++        <TaskList fleet={fleet} connected={connected} /></>}
+       {view.id === "stations" && <StationOverview fleet={fleet} connected={connected} />}
+       {!fleet && !error && view.id !== "overview" && <div role="status" className="initial-note">
+         <EmptyState title="İlk eşitleme" detail="Fleet Manager snapshot’ı bekleniyor." /></div>}
+diff --git a/frontend/src/ScenePanel.tsx b/frontend/src/ScenePanel.tsx
+index 4355704..e5a2fca 100644
+--- a/frontend/src/ScenePanel.tsx
++++ b/frontend/src/ScenePanel.tsx
+@@ -9,6 +9,7 @@ import type { SceneFeed } from "./scene/sceneFeed";
+ 
+ import type { Fleet } from "./fleet";
+ import { useGridLayout } from "./scene/useGridLayout";
++import { useCostmap } from "./scene/Costmap";
+ import { operationLabels, operationPoints, pointStyle } from "./scene/operationPoints";
+ 
+ const Scene = lazy(() => import("./scene/Scene"));
+@@ -40,6 +41,7 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
+ }) {
+   const [command, setCommand] = useState<CameraCommand>({ mode: "free", reset: 0 });
+   const [lowQuality, setLowQuality] = useState(false);
++  const [showCostmap, setShowCostmap] = useState(false);
+   const [routes, setRoutes] = useState<RouteOptions>({ plan: true, trail: true, selectedOnly: false, highlight: false });
+   const markers = useRef(new Map<string, HTMLButtonElement>()).current;
+   const labels = useRef(new Map<string, HTMLSpanElement>()).current;
+@@ -47,6 +49,7 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
+   const leaders = useRef(new Map<string, SVGLineElement>()).current;
+   const profile = useGridLayout(fleet?.backend_session_id, fleet?.source_session_id);
+   const layout = profile?.layout;
++  const costmap = useCostmap(showCostmap && layout ? fleet?.backend_session_id + '/' + fleet?.source_session_id : undefined);
+   const points = useMemo(() => operationPoints(fleet, selected, connected, layout), [fleet, selected, connected, layout]);
+   const operationTags = useMemo(() => operationLabels(points, layout), [points, layout]);
+   const live = robotIds.filter((id) => view.robots.get(id)?.status === "LIVE").length;
+@@ -59,14 +62,14 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
+     <div className="card-heading">
+       <div className="scene-heading"><span className="scene-icon"><Box size={17} /></span>
+         <div><h2 id="scene-heading">Depo görünümü</h2><p>ROS TF · map çerçevesi</p></div></div>
+-      <div className="scene-legend"><span className="tag map-tag">TEMSİLİ 3D DEPO</span>
++      <div className="scene-legend"><span className="tag map-tag">{layout ? 'ORTAK DEPO HARİTASI' : 'TEMSİLİ 3D DEPO'}</span>
+         <small>{profile?.mismatch ? "Izgara profili filo snapshot’ıyla eşleşmedi." :
+-          "Raflar ve sınırlar görsel temsildir."}</small></div>
++          layout ? "Ortak YAML · harita ve dünya geometrisi" : "Raflar ve sınırlar görsel temsildir."}</small></div>
+     </div>
+     <div className="scene-viewport" aria-label="Etkileşimli 3D depo">
+       <SceneBoundary>
+         <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
+-          <Scene layout={layout} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
++          <Scene layout={layout} costmap={showCostmap ? costmap : undefined} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
+             robotIds={robotIds} points={points} labelPoints={operationTags} pointLabels={pointLabels} leaders={leaders} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
+         </Suspense>
+       </SceneBoundary>
+@@ -98,21 +101,23 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
+             </span>
+           </Fragment>;
+         })}
+-        {operationTags.map(({ key, id, kind, detail, owner, chargingRobot, groupText, compact }) => {
++        {operationTags.map(({ key, id, kind, detail, owner, chargingRobot, groupText, compact, titleOverride }) => {
+           const { name, color } = pointStyle[kind];
+           const Icon = pointIcons[kind];
+           const task = kind === "pickup" || kind === "dropoff";
+           return <span key={key} className={groupText ? "scene-point-label grouped" : "scene-point-label"} data-operation-point={key} data-callout={compact ? "" : undefined} title={[name, groupText ?? id, detail, owner].filter(Boolean).join(" · ")}
+             ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
+-            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{name}</strong> {groupText ? <>{compact && <small className="zone-summary">{compact}</small>}
++            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{titleOverride ?? name}</strong> {groupText ? <>{compact && <small className="zone-summary">{compact}</small>}
+               <small className={compact ? "zone-details" : undefined}>{groupText.split(" · ").map(member =>
+-                <span className="zone-member" key={member}>{member}</span>)}</small></> : task
++                <span className="zone-member" key={member}>{member}</span>)}</small></> : titleOverride ? detail && <small>{detail}</small> : task
+               ? <span>{shortTaskId(id)}</span>
+               : <small>{layout && <span>{id} · </span>}{chargingRobot ? "Aktif" : detail}</small>}
+           </span>;
+         })}
+       </div>
+       <span className="scene-indicator"><i data-live={live > 0} />{live} / {robotIds.length} TF LIVE</span>
++      {showCostmap && <span className="costmap-key">{costmap ? costmap.source === 'nav2_recorded'
++        ? 'Nav2 global costmap · kayıt' : 'Üretilen statik harita' : 'Costmap bekleniyor'} · Engel / şişirme</span>}
+       <span className="scene-hint"><Scan size={13} /> Sürükle · sağ tuşla kaydır · kaydırarak yakınlaş</span>
+     </div>
+     <div className="scene-footer">
+@@ -122,6 +127,10 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
+         <i className="trail-key" />TF hareket izi</label>
+       <label className="scene-quality"><input type="checkbox" checked={lowQuality} onChange={(e) => setLowQuality(e.target.checked)} />
+         Düşük kalite</label>
++      {layout && <label><input type="checkbox" checked={showCostmap} onChange={e => {
++        setShowCostmap(e.target.checked);
++        if (e.target.checked) chooseMode('top');
++      }} />Costmap katmanı</label>}
+       <div className="scene-controls" aria-label="Kamera kontrolleri">
+         {modes.map(([mode, Icon]) => <button type="button" key={mode} aria-pressed={command.mode === mode}
+           aria-label={cameraLabels[mode]} title={cameraLabels[mode]} onClick={() => chooseMode(mode)}><Icon size={17} /></button>)}
+diff --git a/frontend/src/scene/GridWarehouse.tsx b/frontend/src/scene/GridWarehouse.tsx
+index 57ad4c8..4aaf7fd 100644
+--- a/frontend/src/scene/GridWarehouse.tsx
++++ b/frontend/src/scene/GridWarehouse.tsx
+@@ -103,7 +103,7 @@ function warehouseGeometry(layout: GridLayout) {
+     }
+     const zoneZ = zone.kind === 'pickup' ? z + depth * .11 :
+       zone.kind === 'charging' ? z + depth * .36 : z - depth * (zone.kind === 'dropoff' ? .13 : .36)
+-    if (!zone.callout) signs.push({ text: zone.label, x, z: zoneZ, width: Math.min(width - .25, 1.65) })
++    if (!zone.callout && !layout.example_tasks?.length) signs.push({ text: zone.label, x, z: zoneZ, width: Math.min(width - .25, 1.65) })
+   }
+   const racks = layout.racks.map(rack => {
+     const { x, z, width, depth } = rectangle(rack.bounds)
+diff --git a/frontend/src/scene/Scene.tsx b/frontend/src/scene/Scene.tsx
+index 3a71cfb..fa0be74 100644
+--- a/frontend/src/scene/Scene.tsx
++++ b/frontend/src/scene/Scene.tsx
+@@ -19,11 +19,13 @@ import { crossesRack } from './gridClearance'
+ import type { GridLayout } from './gridLayout'
+ import { WarehouseEnvironment } from './Warehouse'
+ import { OperationMarkers } from './OperationMarkers'
++import { Costmap, type CostmapGrid } from './Costmap'
+ import { calloutCandidates, hitsArea, insideFloor, projectedArea, screenPoint, type ScreenRect } from './calloutPlacement'
+ import type { OperationLabel, OperationPoint } from './operationPoints'
+ 
+ type SceneProps = {
+   layout?: GridLayout
++  costmap?: CostmapGrid
+   feed: SceneFeed
+   command: CameraCommand
+   lowQuality: boolean
+@@ -267,7 +269,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
+     camera.updateMatrixWorld()
+ 
+     const hiddenRacks = new Set<string>()
+-    if (grid) {
++    if (grid && !grid.approach_clearance_m) {
+       const record = <T,>(samples: readonly T[], point: (sample: T) => readonly [number, number],
+         starts?: (sample: T) => boolean) => {
+         let hits = rackConflicts.current.get(samples)
+@@ -318,7 +320,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
+       floor: projectedArea(grid.bounds, 0, camera, size.width, size.height),
+       blocked: [
+         ...grid.racks.map(item => projectedArea(item.bounds, item.height, camera, size.width, size.height)),
+-        ...grid.zones.map(item => projectedArea(item.bounds, 0, camera, size.width, size.height)),
++        ...(grid.example_tasks?.length ? [] : grid.zones.map(item => projectedArea(item.bounds, 0, camera, size.width, size.height))),
+       ],
+     } : undefined
+     for (const line of leaders.values()) line.style.visibility = 'hidden'
+@@ -379,6 +381,10 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
+       const x = (screen.x + 1) / 2 * size.width
+       const y = (1 - screen.y) / 2 * size.height
+       const distance = camera.position.distanceTo(front.fromArray(point.position))
++      if ((point.lod === 'near' && distance >= 16) || (point.lod === 'far' && distance < 16)) {
++        label.style.visibility = 'hidden'
++        continue
++      }
+       if (point.leader) label.toggleAttribute('data-detailed', distance < 16)
+       const scale = labelScale(front)
+       const width = label.offsetWidth * scale
+@@ -512,7 +518,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, po
+   </group>)
+ }
+ 
+-const initialCamera = { position: [8, 11, 10] as [number, number, number], fov, near: 0.035, far: 90 }
++const initialCamera = { position: [8, 11, 10] as [number, number, number], fov, near: 0.035, far: 240 }
+ 
+ export default memo(function Scene(props: SceneProps) {
+   return <Canvas frameloop="demand" dpr={props.lowQuality ? 1 : [1, 1.5]} camera={initialCamera}
+@@ -524,6 +530,7 @@ export default memo(function Scene(props: SceneProps) {
+     {props.layout ? <GridWarehouse layout={props.layout} softShadows={!props.lowQuality} />
+       : <WarehouseEnvironment softShadows={!props.lowQuality} />}
+     <OperationMarkers points={props.points} grid={!!props.layout} dockApproach={props.layout?.dock_approach_m} />
++    {props.costmap && <Costmap grid={props.costmap} />}
+     {props.robotIds.map((id, index) => <RouteLayers key={id} feed={props.feed} id={id} colorIndex={index}
+       selected={id === props.selected} options={props.routes} trace={props.trace} />)}
+     <Vehicles {...props} />
+diff --git a/frontend/src/scene/camera.ts b/frontend/src/scene/camera.ts
+index 5dc9cc1..ef0bb08 100644
+--- a/frontend/src/scene/camera.ts
++++ b/frontend/src/scene/camera.ts
+@@ -16,7 +16,7 @@ export const topOffset = [0, 1, Math.tan(topAngle)] as const
+ export const followDistance = 2.55
+ export const targetHeight = 0.12
+ export const minCameraDistance = 0.85
+-export const maxCameraDistance = 48
++export const maxCameraDistance = 140
+ 
+ export function selectCamera(command: CameraCommand, mode: CameraMode): CameraCommand {
+   if (mode === 'fit') return { ...command, mode, fit: (command.fit ?? 0) + 1 }
+diff --git a/frontend/src/scene/gridLayout.ts b/frontend/src/scene/gridLayout.ts
+index 7d230ef..62b9f90 100644
+--- a/frontend/src/scene/gridLayout.ts
++++ b/frontend/src/scene/gridLayout.ts
+@@ -11,10 +11,15 @@ const layout = z.object({
+   door: z.object({ side: side, center: z.number(), width: z.number().positive() }),
+   walls: z.array(z.object({ id: z.string(), side, edge: z.number(), bounds })),
+   racks: z.array(z.object({ id: z.string(), bounds, height: z.number().positive(), bays: z.number().int().positive() })),
+-  aisles: z.array(area.extend({ axis: z.enum(['x', 'y']) })),
++  aisles: z.array(area.extend({ axis: z.enum(['x', 'y']), role: z.enum(['main', 'cross', 'access']).nullable().optional() })),
+   zones: z.array(area.extend({ kind: z.enum(['pickup', 'dropoff', 'charging', 'parking']), callout: pose.pick({ x: true, y: true }).nullable().optional() })),
+   dock_approach_m: z.number().nullable().optional(),
+-  transfer_points: z.array(z.object({ id: z.string(), kind: transferKind, pose })),
++  approach_clearance_m: z.number().positive().nullable().optional(),
++  transfer_points: z.array(z.object({ id: z.string(), kind: transferKind, pose,
++    zone_id: z.string().nullable().optional(), rack_id: z.string().nullable().optional(),
++    roles: z.array(transferKind).nullable().optional() })),
++  example_tasks: z.array(z.object({ id: z.string(), pickup: z.string(), dropoff: z.string(),
++    priority: z.enum(['LOW', 'MEDIUM', 'HIGH']) })).optional(),
+ })
+ 
+ export const layoutResponse = z.object({
+diff --git a/frontend/src/scene/operationPoints.ts b/frontend/src/scene/operationPoints.ts
+index 11dfa0c..2d66d9b 100644
+--- a/frontend/src/scene/operationPoints.ts
++++ b/frontend/src/scene/operationPoints.ts
+@@ -20,6 +20,7 @@ export type OperationPoint = {
+   detail?: string
+   owner?: string
+   chargingRobot?: string
++  chargingKnown?: boolean
+   layoutBay?: boolean
+   dockOffset?: number
+ }
+@@ -27,6 +28,8 @@ export type OperationPoint = {
+ export function operationPoints(fleet: Fleet | null, selected: string | undefined, connected: boolean, layout?: GridLayout) {
+   const points: OperationPoint[] = []
+   if (!fleet) return points
++  const chargingKnown = connected && fleet.robots.length > 0 && fleet.robots.every(robot =>
++    robot.telemetry === 'LIVE' && robot.battery_reliability === 'LIVE' && robot.charging !== 'UNAVAILABLE')
+ 
+   const active = fleet.tasks.filter(task => task.status === 'ASSIGNED' || task.status === 'EXECUTING')
+   const selectedTaskId = fleet.robots.find(robot => robot.robot_id === selected)?.active_task_id
+@@ -53,11 +56,14 @@ export function operationPoints(fleet: Fleet | null, selected: string | undefine
+       ? wallDistance(layout, x, z, yaw) - layout.wall_thickness_m / 2 - .105 : undefined
+     points.push({ key: `station:${station.station_id}`, id: station.station_id, kind: station.station_type,
+       position: [x, 0, z], yaw, owner: owner?.robot_id, chargingRobot, dockOffset,
++      chargingKnown: station.station_type === 'CHARGING' ? chargingKnown : undefined,
+       detail: connected ? [labels[station.state], chargingRobot && labels.CHARGING].filter(Boolean).join(' · ') : 'Son eşitleme' })
+   }
+   for (const bay of layout?.transfer_points ?? []) {
+     const [x, z, yaw] = toScene(bay.pose)
+-    if (points.some(point => point.kind === bay.kind && point.position[0] === x && point.position[2] === z)) continue
++    const reusable = bay.roles?.length === 2
++    if (points.some(point => (point.kind === bay.kind || (reusable && !point.layoutBay)) &&
++      point.position[0] === x && point.position[2] === z)) continue
+     points.push({ key: `bay:${bay.id}`, id: bay.id, kind: bay.kind, position: [x, 0, z], yaw, layoutBay: true })
+   }
+   return points
+@@ -67,11 +73,49 @@ export type OperationLabel = OperationPoint & {
+   groupText?: string
+   compact?: string
+   leader?: OperationPoint['position']
++  titleOverride?: string
++  lod?: 'near' | 'far'
++}
++
++function distributedLabels(points: OperationPoint[], layout: GridLayout): OperationLabel[] {
++  const tags: OperationLabel[] = []
++  const catalog = layout.transfer_points
++  const byZone = new Map<string, { name: string; points: OperationPoint[] }>()
++  for (const point of points) {
++    const bay = catalog.find(bay => bay.pose.x === point.position[0] && bay.pose.y === -point.position[2])
++    const zone = layout.zones.find(zone => zone.id === bay?.zone_id) ?? layout.zones.find(zone =>
++      zone.kind === (point.kind === 'CHARGING' ? 'charging' : point.kind === 'PARKING' ? 'parking' : point.kind) &&
++      zone.bounds.x_min <= point.position[0] && point.position[0] <= zone.bounds.x_max &&
++      zone.bounds.y_min <= -point.position[2] && -point.position[2] <= zone.bounds.y_max)
++    if (!zone) continue
++    const group = byZone.get(zone.label) ?? { name: zone.id, points: [] }
++    if (!group.points.some(item => item.position[0] === point.position[0] && item.position[2] === point.position[2])) {
++      group.points.push(point)
++      tags.push({ ...point, key: 'detail:' + point.key, titleOverride: bay?.id ?? point.id, lod: 'near',
++        leader: point.position })
++    }
++    byZone.set(zone.label, group)
++  }
++  for (const [name, group] of byZone) {
++    const members = group.points
++    const position: OperationPoint['position'] = [
++      members.reduce((sum, point) => sum + point.position[0], 0) / members.length, 0,
++      members.reduce((sum, point) => sum + point.position[2], 0) / members.length,
++    ]
++    const charging = members[0].kind === 'CHARGING'
++    const active = members.filter(point => point.chargingRobot).length
++    const activeText = members.every(point => point.chargingKnown) ? String(active) : '—'
++    tags.push({ ...members[0], key: 'zone:' + group.name, id: group.name, position, lod: 'far',
++      titleOverride: charging ? `${name} ${activeText}/${members.length}` : name,
++      groupText: members.map(point => point.id).join(' · '), compact: `${members.length} nokta`, leader: position })
++  }
++  return tags
+ }
+ 
+ export function operationLabels(points: OperationPoint[], layout?: GridLayout): OperationLabel[] {
+   const available = points.filter(point => !point.layoutBay)
+   if (!layout) return available
++  if (layout.example_tasks?.length) return distributedLabels(points, layout)
+   const zones = [['CHARGING', 'charging'], ['PARKING', 'parking'], ['pickup', 'pickup']] as const
+   const labels: OperationLabel[] = [...available]
+   for (const [kind, zoneKind] of zones) {
+diff --git a/frontend/src/styles.css b/frontend/src/styles.css
+index 43e6b98..b701f7d 100644
+--- a/frontend/src/styles.css
++++ b/frontend/src/styles.css
+@@ -284,3 +284,12 @@ td small.review { color: #805615; }
+   .scene-footer { padding-block: 5px; }
+   .scene-quality { margin-left: 0; }
+ }
++.task-composer { margin-bottom: 18px; }
++.task-composer form { padding: 16px 20px; }
++.task-composer fieldset { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; border: 0; padding: 0; margin: 0; }
++.task-composer label { display: grid; gap: 7px; font-size: 12px; color: #41586a; flex: 1 1 160px; }
++.task-composer select { padding: 10px; border: 1px solid #cad6dd; border-radius: 7px; background: white; color: #243d50; }
++.task-composer button { padding: 11px 20px; background: #176e65; color: white; border: 0; border-radius: 7px; }
++.task-composer button:disabled { opacity: .45; }
++.task-composer form p { font-size: 12px; margin: 12px 0 0; }
++.costmap-key { position: absolute; left: 12px; top: 48px; font-size: 10px; padding: 4px 7px; background: #ffffffdf; border-radius: 4px; color: #8f3529; pointer-events: none; }
+diff --git a/tests/test_c5_dashboard.py b/tests/test_c5_dashboard.py
+index d108ec3..980f377 100644
+--- a/tests/test_c5_dashboard.py
++++ b/tests/test_c5_dashboard.py
+@@ -138,6 +138,7 @@ def test_http_readonly_origin_and_restart(tmp_path):
+             (path, ("GET",)) for path in (
+                 "/api/health", "/api/fleet", "/api/robots", "/api/robots/{robot_id}", "/api/tasks", "/api/stations",
+                 "/api/warehouse-layout",
++                "/api/task-catalog", "/api/warehouse-costmap",
+             )
+         }
+         assert client.post("/api/tasks", json={}).status_code == 405
+diff --git a/tests/test_warehouse_grid.py b/tests/test_warehouse_grid.py
+index 7138a39..eb39197 100644
+--- a/tests/test_warehouse_grid.py
++++ b/tests/test_warehouse_grid.py
+@@ -78,8 +78,7 @@ def read_app(folder, config, snapshot):
+ def moved_config(folder, profile=PROFILE):
+     profile = profile.resolve()
+     raw = read_yaml(profile)
+-    large = "width" in raw["warehouse"]
+-    raw["stations"]["charging_stations"][0]["pose"]["x"] = "E-4.5" if large else 4.5
++    raw["stations"]["charging_stations"][0]["pose"]["x"] = load_config(profile).stations.charging_stations[0].pose.x + .25
+     if raw["fleet"]["map_path"] != "warehouse:generated":
+         raw["fleet"]["map_path"] = str(profile.parent / raw["fleet"]["map_path"])
+     for robot in raw["robots"]:

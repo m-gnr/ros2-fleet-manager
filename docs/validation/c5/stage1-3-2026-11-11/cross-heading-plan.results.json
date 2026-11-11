@@ -1,0 +1,34 @@
+[
+  {
+    "name": "beam-heading0",
+    "command": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage13_run.py",
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/beam-heading0",
+      "--amcl",
+      "laser_model_type=beam",
+      "--heading",
+      "0",
+      "--collect-after-shutdown-failure"
+    ],
+    "exit_code": 0,
+    "wall_s": 119.79073926299998
+  },
+  {
+    "name": "beam-headingpi",
+    "command": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage13_run.py",
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/beam-headingpi",
+      "--amcl",
+      "laser_model_type=beam",
+      "--heading",
+      "3.141592653589793",
+      "--collect-after-shutdown-failure"
+    ],
+    "exit_code": 0,
+    "wall_s": 114.69735176099971
+  }
+]

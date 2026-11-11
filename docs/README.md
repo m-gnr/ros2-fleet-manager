@@ -18,6 +18,7 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5 Aşama 1.3 AMCL ve güvenli raf yaklaşması](validation/c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komut eki](validation/c5/c5-stage1-3-commands-2026-11-11.md).
 - [C5 Aşama 1.2 fiziksel model, odometri, AMCL ve footprint](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md): son pickup 1/5; F2 ve paralel görev regresyonu açık, koşulsuz kabul yok.
 - [C5 Aşama 1.1 feedback ve fiziksel pickup yeniden doğrulaması](validation/c5/stage1-1-validation-2026-11-11.md) · [Komutlar](validation/c5/stage1-1-commands-2026-11-11.md): F1 düzeltildi; F2 açık, koşulsuz kabul yok.
 - [C5 Aşama 1 salt okunur operasyon paneli](design/c5-readonly-dashboard.md) · [API sözleşmesi](design/c5-readonly-api.md) · [Arayüz ve koordinatlar](design/c5-dashboard-ui.md) · [Doğrulama](validation/c5/c5-stage1-validation-2026-11-06.md)

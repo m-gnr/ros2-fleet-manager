@@ -4,6 +4,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
 |---|---|---|
+| C5 Aşama 1.3 | [Rapor](c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komutlar](c5/c5-stage1-3-commands-2026-11-11.md) | AMCL gözlem modeli, aynı damgalı raf yaklaşması ve bağımsız kabul kayıtları |
 | C5 Aşama 1.2 | [Rapor](c5/c5-stage1-2-physical-localization-2026-11-11.md) · [Komutlar](c5/c5-stage1-2-commands-2026-11-11.md) | Dönüş odometrisi ve collision zarfı düzeltildi; son pickup 1/5, paralel beta FAILED; kabul verilmedi |
 | C5 Aşama 1.1 | [Rapor](c5/stage1-1-validation-2026-11-11.md) · [Komutlar](c5/stage1-1-commands-2026-11-11.md) | F1 gerçek feedback/EXECUTING düzeltildi; üç izole F2 deneyinde 1 geçti / 2 kaldı. Koşulsuz kabul verilmedi |
 | DDS topic/action | [Action raporu](dds/dds-action-validation-2026-10-23.md) · [Topic raporu](dds/dds-validation-2026-10-22.md) | İlgili kapsamda geçti |

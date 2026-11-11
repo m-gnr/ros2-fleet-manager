@@ -1,0 +1,40 @@
+[
+  {
+    "name": "beam-model",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/beam-model",
+      "--amcl",
+      "laser_model_type=beam"
+    ]
+  },
+  {
+    "name": "field-prob",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/field-prob",
+      "--amcl",
+      "laser_model_type=likelihood_field_prob"
+    ]
+  },
+  {
+    "name": "a-planning-reference",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/a-planning-reference",
+      "--trials",
+      "1"
+    ]
+  },
+  {
+    "name": "sigma-010-replacement",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/sigma-010-replacement",
+      "--trials",
+      "1",
+      "--amcl",
+      "sigma_hit=0.1"
+    ]
+  }
+]

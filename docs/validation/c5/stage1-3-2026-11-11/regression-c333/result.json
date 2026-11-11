@@ -1,0 +1,74 @@
+{
+  "name": "regression-c333",
+  "project": "fleet-c5-stage13-c333",
+  "domain": 201,
+  "compose_exit": 0,
+  "error": null,
+  "shutdown_clean": true,
+  "all_container_exits_clean": true,
+  "markers": {
+    "ALL_C3_3_3_TESTS_PASSED": true
+  },
+  "database_copies": [
+    {
+      "source": "/tmp/c3_3_3_t01.db",
+      "exit_code": 0,
+      "error": ""
+    },
+    {
+      "source": "/tmp/c3_3_3_t02.db",
+      "exit_code": 0,
+      "error": ""
+    },
+    {
+      "source": "/tmp/c3_3_3_t04.db",
+      "exit_code": 0,
+      "error": ""
+    },
+    {
+      "source": "/tmp/c3_3_3_t08.db",
+      "exit_code": 0,
+      "error": ""
+    }
+  ],
+  "sqlite": [
+    {
+      "file": "c3_3_3_t08.db",
+      "integrity": [
+        [
+          "ok"
+        ]
+      ],
+      "foreign_keys": []
+    },
+    {
+      "file": "c3_3_3_t02.db",
+      "integrity": [
+        [
+          "ok"
+        ]
+      ],
+      "foreign_keys": []
+    },
+    {
+      "file": "c3_3_3_t01.db",
+      "integrity": [
+        [
+          "ok"
+        ]
+      ],
+      "foreign_keys": []
+    },
+    {
+      "file": "c3_3_3_t04.db",
+      "integrity": [
+        [
+          "ok"
+        ]
+      ],
+      "foreign_keys": []
+    }
+  ],
+  "passed": true,
+  "wall_s": 64.95266804199491
+}

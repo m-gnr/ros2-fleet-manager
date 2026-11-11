@@ -1,0 +1,24 @@
+{
+  "unscoped_cached_check_exit": 2,
+  "reason": "Immutable captured diff context spaces and verbatim ROS param dump terminal blank lines are preserved.",
+  "excluded_raw_captures": [
+    "docs/validation/c5/stage1-3-2026-11-11/baseline.diff",
+    "docs/validation/c5/stage1-3-2026-11-11/a-baseline/runtime-amcl.yaml",
+    "docs/validation/c5/stage1-3-2026-11-11/a-baseline/runtime-controller.yaml",
+    "docs/validation/c5/stage1-3-2026-11-11/acceptance-pickup/runtime-amcl.yaml"
+  ],
+  "source_docs_and_other_artifacts_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check",
+    "--",
+    ".",
+    ":(exclude)docs/validation/c5/stage1-3-2026-11-11/baseline.diff",
+    ":(exclude)docs/validation/c5/stage1-3-2026-11-11/a-baseline/runtime-amcl.yaml",
+    ":(exclude)docs/validation/c5/stage1-3-2026-11-11/a-baseline/runtime-controller.yaml",
+    ":(exclude)docs/validation/c5/stage1-3-2026-11-11/acceptance-pickup/runtime-amcl.yaml"
+  ],
+  "scoped_exit": 0,
+  "output": ""
+}

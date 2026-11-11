@@ -1,0 +1,60 @@
+[
+  {
+    "name": "beam-model",
+    "command": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage13_run.py",
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/beam-model",
+      "--amcl",
+      "laser_model_type=beam",
+      "--collect-after-shutdown-failure"
+    ],
+    "exit_code": 0,
+    "wall_s": 121.58036201299979
+  },
+  {
+    "name": "field-prob",
+    "command": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage13_run.py",
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/field-prob",
+      "--amcl",
+      "laser_model_type=likelihood_field_prob",
+      "--collect-after-shutdown-failure"
+    ],
+    "exit_code": 0,
+    "wall_s": 120.02067892900004
+  },
+  {
+    "name": "a-planning-reference",
+    "command": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage13_run.py",
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/a-planning-reference",
+      "--trials",
+      "1",
+      "--collect-after-shutdown-failure"
+    ],
+    "exit_code": 0,
+    "wall_s": 40.49509114300008
+  },
+  {
+    "name": "sigma-010-replacement",
+    "command": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage13_run.py",
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/sigma-010-replacement",
+      "--trials",
+      "1",
+      "--amcl",
+      "sigma_hit=0.1",
+      "--collect-after-shutdown-failure"
+    ],
+    "exit_code": 0,
+    "wall_s": 48.06299468799989
+  }
+]

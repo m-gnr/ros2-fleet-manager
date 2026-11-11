@@ -1,0 +1,32 @@
+{
+  "name": "regression-high",
+  "project": "fleet-c5-stage13-high",
+  "domain": 202,
+  "compose_exit": 0,
+  "error": null,
+  "shutdown_clean": true,
+  "all_container_exits_clean": true,
+  "markers": {
+    "SCENARIO_PASSED.*T04-HIGH-E2E": true
+  },
+  "database_copies": [
+    {
+      "source": "/tmp/c3_3_3_t04-high-e2e.db",
+      "exit_code": 0,
+      "error": ""
+    }
+  ],
+  "sqlite": [
+    {
+      "file": "c3_3_3_t04-high-e2e.db",
+      "integrity": [
+        [
+          "ok"
+        ]
+      ],
+      "foreign_keys": []
+    }
+  ],
+  "passed": true,
+  "wall_s": 49.18260608300625
+}

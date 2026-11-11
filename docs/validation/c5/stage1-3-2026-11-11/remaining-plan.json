@@ -1,0 +1,29 @@
+[
+  {
+    "name": "alpha3-002-repeat",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/alpha3-002-repeat",
+      "--amcl",
+      "alpha3=0.02"
+    ]
+  },
+  {
+    "name": "sigma-010",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/sigma-010",
+      "--amcl",
+      "sigma_hit=0.1"
+    ]
+  },
+  {
+    "name": "beams180",
+    "args": [
+      "config/fleet.warehouse-30x18.yaml",
+      "/evidence/beams180",
+      "--amcl",
+      "max_beams=180"
+    ]
+  }
+]

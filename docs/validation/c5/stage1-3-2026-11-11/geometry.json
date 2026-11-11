@@ -1,0 +1,719 @@
+{
+  "target": {
+    "id": "pick_A2",
+    "kind": "pickup",
+    "pose": {
+      "x": 2.25,
+      "y": 5.75,
+      "yaw": 1.5707963267948966
+    },
+    "zone_id": "pick_zone_A2",
+    "rack_id": "rack_A2",
+    "roles": [
+      "pickup",
+      "dropoff"
+    ]
+  },
+  "rack": {
+    "id": "rack_A2",
+    "bounds": {
+      "x_min": 0.25,
+      "y_min": 6.5,
+      "x_max": 4.25,
+      "y_max": 7.5
+    },
+    "height": 1.15,
+    "bays": 4
+  },
+  "safe_radius_m": 0.3,
+  "padding_m": 0.01,
+  "inflation_radius_m": 0.45,
+  "service_face_distance_m": 0.75,
+  "service_face_heading_body_residual_m": 0.5,
+  "full_turning_circle_residual_m": 0.44,
+  "approach_aisle_width_m": 2.25,
+  "approach_aisle_circle_free_width_m": 1.63,
+  "target_obstacles": [
+    {
+      "name": "rack_A2",
+      "distance_m": 0.75,
+      "safe_circle_residual_m": 0.44
+    },
+    {
+      "name": "rack_B2",
+      "distance_m": 1.5,
+      "safe_circle_residual_m": 1.19
+    },
+    {
+      "name": "wall_north_1",
+      "distance_m": 3.1999999999999993,
+      "safe_circle_residual_m": 2.8899999999999992
+    },
+    {
+      "name": "rack_A1",
+      "distance_m": 4.562071897723665,
+      "safe_circle_residual_m": 4.252071897723665
+    },
+    {
+      "name": "rack_B1",
+      "distance_m": 4.743416490252569,
+      "safe_circle_residual_m": 4.4334164902525695
+    },
+    {
+      "name": "rack_C2",
+      "distance_m": 4.808846015417836,
+      "safe_circle_residual_m": 4.498846015417836
+    },
+    {
+      "name": "rack_C1",
+      "distance_m": 6.5431261641512,
+      "safe_circle_residual_m": 6.233126164151201
+    },
+    {
+      "name": "rack_D2",
+      "distance_m": 8.0,
+      "safe_circle_residual_m": 7.69
+    },
+    {
+      "name": "rack_D1",
+      "distance_m": 9.17877987534291,
+      "safe_circle_residual_m": 8.86877987534291
+    },
+    {
+      "name": "rack_E2",
+      "distance_m": 11.25,
+      "safe_circle_residual_m": 10.94
+    },
+    {
+      "name": "rack_E1",
+      "distance_m": 12.116620816052635,
+      "safe_circle_residual_m": 11.806620816052634
+    },
+    {
+      "name": "wall_east_1",
+      "distance_m": 12.7,
+      "safe_circle_residual_m": 12.389999999999999
+    },
+    {
+      "name": "wall_south_1",
+      "distance_m": 14.7,
+      "safe_circle_residual_m": 14.389999999999999
+    },
+    {
+      "name": "wall_west_2",
+      "distance_m": 17.2,
+      "safe_circle_residual_m": 16.89
+    },
+    {
+      "name": "wall_west_1",
+      "distance_m": 18.477080397075724,
+      "safe_circle_residual_m": 18.167080397075726
+    }
+  ],
+  "global_plan_clearances": [
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 3,
+        "nanosec": 955000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 4,
+        "nanosec": 985000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 6,
+        "nanosec": 5000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 7,
+        "nanosec": 25000000
+      },
+      "min_clearance_m": 0.4885330314229989,
+      "residual_m": 0.17853303142299892
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 8,
+        "nanosec": 45000000
+      },
+      "min_clearance_m": 0.4863922843593211,
+      "residual_m": 0.17639228435932108
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 9,
+        "nanosec": 75000000
+      },
+      "min_clearance_m": 0.48423154284362036,
+      "residual_m": 0.17423154284362036
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 10,
+        "nanosec": 105000000
+      },
+      "min_clearance_m": 0.40000031515955925,
+      "residual_m": 0.09000031515955925
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 11,
+        "nanosec": 125000000
+      },
+      "min_clearance_m": 0.40000031515955925,
+      "residual_m": 0.09000031515955925
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 12,
+        "nanosec": 155000000
+      },
+      "min_clearance_m": 0.40000031515955925,
+      "residual_m": 0.09000031515955925
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 13,
+        "nanosec": 185000000
+      },
+      "min_clearance_m": 0.40000031515955925,
+      "residual_m": 0.09000031515955925
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 14,
+        "nanosec": 205000000
+      },
+      "min_clearance_m": 0.4272003941974304,
+      "residual_m": 0.11720039419743039
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 15,
+        "nanosec": 235000000
+      },
+      "min_clearance_m": 0.4301162433451198,
+      "residual_m": 0.12011624334511978
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 16,
+        "nanosec": 255000000
+      },
+      "min_clearance_m": 0.4999997541309359,
+      "residual_m": 0.1899997541309359
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 17,
+        "nanosec": 285000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 18,
+        "nanosec": 315000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 19,
+        "nanosec": 345000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 20,
+        "nanosec": 365000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 21,
+        "nanosec": 385000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 22,
+        "nanosec": 415000000
+      },
+      "min_clearance_m": 0.5999997556209564,
+      "residual_m": 0.2899997556209564
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 23,
+        "nanosec": 445000000
+      },
+      "min_clearance_m": 0.6499997563660145,
+      "residual_m": 0.3399997563660145
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 24,
+        "nanosec": 475000000
+      },
+      "min_clearance_m": 0.6499997563660145,
+      "residual_m": 0.3399997563660145
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 25,
+        "nanosec": 495000000
+      },
+      "min_clearance_m": 0.6499997563660145,
+      "residual_m": 0.3399997563660145
+    },
+    {
+      "run": "pickup-3",
+      "stamp": {
+        "sec": 26,
+        "nanosec": 525000000
+      },
+      "min_clearance_m": 0.6499997563660145,
+      "residual_m": 0.3399997563660145
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 3,
+        "nanosec": 860000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 4,
+        "nanosec": 890000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 5,
+        "nanosec": 920000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 6,
+        "nanosec": 950000000
+      },
+      "min_clearance_m": 0.48828959076320566,
+      "residual_m": 0.17828959076320566
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 7,
+        "nanosec": 980000000
+      },
+      "min_clearance_m": 0.48584914832903453,
+      "residual_m": 0.17584914832903453
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 9,
+        "nanosec": 10000000
+      },
+      "min_clearance_m": 0.48203094529310037,
+      "residual_m": 0.17203094529310037
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 10,
+        "nanosec": 40000000
+      },
+      "min_clearance_m": 0.3500003144145012,
+      "residual_m": 0.04000031441450119
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 11,
+        "nanosec": 70000000
+      },
+      "min_clearance_m": 0.30000031366944313,
+      "residual_m": -0.009999686330556867
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 12,
+        "nanosec": 580000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 13,
+        "nanosec": 610000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 19,
+        "nanosec": 310000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 20,
+        "nanosec": 330000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 20,
+        "nanosec": 580000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 21,
+        "nanosec": 610000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 27,
+        "nanosec": 310000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 28,
+        "nanosec": 340000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 29,
+        "nanosec": 580000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 30,
+        "nanosec": 580000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 35,
+        "nanosec": 865000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-2",
+      "stamp": {
+        "sec": 36,
+        "nanosec": 895000000
+      },
+      "min_clearance_m": 0.25000031292438507,
+      "residual_m": -0.05999968707561493
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 3,
+        "nanosec": 465000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 4,
+        "nanosec": 495000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 5,
+        "nanosec": 525000000
+      },
+      "min_clearance_m": 0.4905839829838407,
+      "residual_m": 0.1805839829838407
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 6,
+        "nanosec": 555000000
+      },
+      "min_clearance_m": 0.48828959076320566,
+      "residual_m": 0.17828959076320566
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 7,
+        "nanosec": 585000000
+      },
+      "min_clearance_m": 0.48584914832903453,
+      "residual_m": 0.17584914832903453
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 8,
+        "nanosec": 615000000
+      },
+      "min_clearance_m": 0.4609775897552197,
+      "residual_m": 0.1509775897552197
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 9,
+        "nanosec": 635000000
+      },
+      "min_clearance_m": 0.3500003144145012,
+      "residual_m": 0.04000031441450119
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 10,
+        "nanosec": 665000000
+      },
+      "min_clearance_m": 0.30000031366944313,
+      "residual_m": -0.009999686330556867
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 11,
+        "nanosec": 670000000
+      },
+      "min_clearance_m": 0.40000031515955925,
+      "residual_m": 0.09000031515955925
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 12,
+        "nanosec": 695000000
+      },
+      "min_clearance_m": 0.40000031515955925,
+      "residual_m": 0.09000031515955925
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 13,
+        "nanosec": 715000000
+      },
+      "min_clearance_m": 0.4123108072339183,
+      "residual_m": 0.10231080723391828
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 14,
+        "nanosec": 745000000
+      },
+      "min_clearance_m": 0.49048918893493415,
+      "residual_m": 0.18048918893493415
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 15,
+        "nanosec": 775000000
+      },
+      "min_clearance_m": 0.5153506486413859,
+      "residual_m": 0.2053506486413859
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 16,
+        "nanosec": 805000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 17,
+        "nanosec": 825000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 18,
+        "nanosec": 855000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 19,
+        "nanosec": 855000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 20,
+        "nanosec": 875000000
+      },
+      "min_clearance_m": 0.5499997548758984,
+      "residual_m": 0.23999975487589836
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 21,
+        "nanosec": 885000000
+      },
+      "min_clearance_m": 0.5999997556209564,
+      "residual_m": 0.2899997556209564
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 22,
+        "nanosec": 915000000
+      },
+      "min_clearance_m": 0.5999997556209564,
+      "residual_m": 0.2899997556209564
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 23,
+        "nanosec": 935000000
+      },
+      "min_clearance_m": 0.6499997563660145,
+      "residual_m": 0.3399997563660145
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 24,
+        "nanosec": 970000000
+      },
+      "min_clearance_m": 0.6999997571110725,
+      "residual_m": 0.38999975711107254
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 25,
+        "nanosec": 990000000
+      },
+      "min_clearance_m": 0.6499997563660145,
+      "residual_m": 0.3399997563660145
+    },
+    {
+      "run": "pickup-1",
+      "stamp": {
+        "sec": 27,
+        "nanosec": 15000000
+      },
+      "min_clearance_m": 0.6999997571110725,
+      "residual_m": 0.38999975711107254
+    }
+  ],
+  "note": "Global Path sample clearance only; continuous swept trajectory and localization uncertainty remain separate."
+}

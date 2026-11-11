@@ -1,0 +1,6290 @@
+{
+  "folder": "docs/validation/c5/stage1-3-2026-11-11/a-planning-reference/pickup-1",
+  "measurement_valid": true,
+  "nav2_terminal": 4,
+  "physical_error_m": 0.3167184260809134,
+  "yaw_error_rad": 0.2782369588178877,
+  "map_physical_m": 0.09005887958007125,
+  "physical_criteria_passed": true,
+  "passed": true,
+  "physical_post_terminal_displacement_m": 4.34914094994735e-08,
+  "physical_last_second_span_m": 0.0,
+  "safe_stop": true,
+  "terminal_to_stopped_sim_s": 2.1,
+  "contacts": [],
+  "stopped_linear_m_s": 0.0,
+  "stopped_angular_rad_s": 0.0,
+  "covariance_stamp_ns": 27600000000,
+  "covariance_age_s": 2.36,
+  "covariance": [
+    0.06160473586009953,
+    0.01617285352267043,
+    0.02803786639124385
+  ],
+  "max_recoveries": 0,
+  "diagnostics_counts": {
+    "FOOTPRINT": 148,
+    "LOCAL_COSTMAP": 49,
+    "GLOBAL_COSTMAP": 14,
+    "NAV_FEEDBACK": 2101,
+    "GLOBAL_PLAN": 24,
+    "LOCAL_PLAN": 240,
+    "CANDIDATES": 44
+  },
+  "candidate_samples": 18436,
+  "candidate_rejected": 3671,
+  "reasons": {
+    "BaseObstacle": 689,
+    "RotateToGoal": 2982
+  },
+  "synchronized_map_error": {
+    "count": 728,
+    "min": 1.4231029510374207e-07,
+    "median": 0.11197022088683184,
+    "max": 0.17710686655304955,
+    "mean": 0.10465148469041805
+  },
+  "amcl_measurement_error": {
+    "count": 49,
+    "min": 5.693400417794322e-08,
+    "median": 0.1073339750150352,
+    "max": 0.17628673894504918,
+    "mean": 0.1016110943805723
+  },
+  "beta_amcl_cpu_percent": {
+    "count": 52,
+    "min": 0.0,
+    "median": 1.9951959832354418,
+    "max": 3.9935181845304424,
+    "mean": 2.569673427862148
+  },
+  "observed_rtf": 1.0000255465860872,
+  "goal_window_sim_s": 23.93,
+  "frequencies_hz": {
+    "SCAN": 5.001678415575697,
+    "ODOMETRY": 28.03675856307435,
+    "ODOM_TF": 28.57142857142857
+  },
+  "odom_tf_receipt_lag_s": {
+    "count": 856,
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.25,
+    "mean": 0.02701518691588785
+  },
+  "aligned_odom_endpoint_error_m": 0.09053240720519713,
+  "convergence_10cm_final_suffix_s": 2.03,
+  "particle_summaries": [
+    {
+      "stamp_ns": 245000000,
+      "count": 1000,
+      "x_range": [
+        5.25,
+        5.25
+      ],
+      "y_range": [
+        7.75,
+        7.75
+      ],
+      "weighted_true_center_error_m": 6.973751442984621e-08,
+      "weight_within_10cm": 1.0,
+      "weight_within_35cm": 1.0,
+      "effective_sample_size": 1000.0
+    },
+    {
+      "stamp_ns": 4410000000,
+      "count": 201,
+      "x_range": [
+        5.249999999999999,
+        5.250000000000001
+      ],
+      "y_range": [
+        7.590539263559551,
+        7.902800048059571
+      ],
+      "weighted_true_center_error_m": 0.003822570444825884,
+      "weight_within_10cm": 0.9104477611940298,
+      "weight_within_35cm": 1.0,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 4830000000,
+      "count": 201,
+      "x_range": [
+        5.212123833149694,
+        5.296474132881282
+      ],
+      "y_range": [
+        7.565919013037024,
+        8.045782372845375
+      ],
+      "weighted_true_center_error_m": 0.006089214707769671,
+      "weight_within_10cm": 0.7462686567164178,
+      "weight_within_35cm": 1.0,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 5215000000,
+      "count": 201,
+      "x_range": [
+        5.164330513427612,
+        5.371704879572852
+      ],
+      "y_range": [
+        7.34324581322678,
+        8.042776855033674
+      ],
+      "weighted_true_center_error_m": 0.004717008533955067,
+      "weight_within_10cm": 0.6169154228855721,
+      "weight_within_35cm": 0.990049751243781,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 5605000000,
+      "count": 201,
+      "x_range": [
+        5.148225297563431,
+        5.369308360469544
+      ],
+      "y_range": [
+        7.316943087721409,
+        8.015506284827918
+      ],
+      "weighted_true_center_error_m": 0.006968062777985294,
+      "weight_within_10cm": 0.5174129353233831,
+      "weight_within_35cm": 0.9950248756218906,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 6020000000,
+      "count": 201,
+      "x_range": [
+        5.067817000303864,
+        5.425797142139745
+      ],
+      "y_range": [
+        7.461727875634038,
+        8.057120831773286
+      ],
+      "weighted_true_center_error_m": 0.023628201505567967,
+      "weight_within_10cm": 0.43781094527363185,
+      "weight_within_35cm": 1.0,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 6405000000,
+      "count": 201,
+      "x_range": [
+        5.035554770633836,
+        5.475007688480547
+      ],
+      "y_range": [
+        7.4148281470895805,
+        7.9807299799347895
+      ],
+      "weighted_true_center_error_m": 0.0247643880691241,
+      "weight_within_10cm": 0.43283582089552236,
+      "weight_within_35cm": 0.9800995024875622,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 6825000000,
+      "count": 201,
+      "x_range": [
+        4.983116428867906,
+        5.529319554896025
+      ],
+      "y_range": [
+        7.379528670057384,
+        8.033502819338944
+      ],
+      "weighted_true_center_error_m": 0.03199300816834907,
+      "weight_within_10cm": 0.3283582089552239,
+      "weight_within_35cm": 0.990049751243781,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 7210000000,
+      "count": 201,
+      "x_range": [
+        4.893665137532229,
+        5.384288012675089
+      ],
+      "y_range": [
+        7.514061424408647,
+        8.008550940563744
+      ],
+      "weighted_true_center_error_m": 0.042260865833031326,
+      "weight_within_10cm": 0.3283582089552239,
+      "weight_within_35cm": 1.0,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 7630000000,
+      "count": 201,
+      "x_range": [
+        4.779971845892905,
+        5.410889894089579
+      ],
+      "y_range": [
+        7.533819017136583,
+        7.931479769431189
+      ],
+      "weighted_true_center_error_m": 0.05284159570136356,
+      "weight_within_10cm": 0.2736318407960199,
+      "weight_within_35cm": 0.9950248756218906,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 8015000000,
+      "count": 201,
+      "x_range": [
+        4.588847068964859,
+        5.303106346687
+      ],
+      "y_range": [
+        7.481372815774239,
+        7.932920961815994
+      ],
+      "weighted_true_center_error_m": 0.0484030478626491,
+      "weight_within_10cm": 0.3333333333333333,
+      "weight_within_35cm": 0.9402985074626865,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 8405000000,
+      "count": 201,
+      "x_range": [
+        4.507867705234667,
+        5.300743285853706
+      ],
+      "y_range": [
+        7.4028761046659755,
+        7.86939655311452
+      ],
+      "weighted_true_center_error_m": 0.04910479960252395,
+      "weight_within_10cm": 0.30845771144278605,
+      "weight_within_35cm": 0.9651741293532338,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 8820000000,
+      "count": 204,
+      "x_range": [
+        4.425109294698704,
+        5.153063902899486
+      ],
+      "y_range": [
+        7.290168997789588,
+        7.805323829501292
+      ],
+      "weighted_true_center_error_m": 0.04189029606764655,
+      "weight_within_10cm": 0.31862745098039214,
+      "weight_within_35cm": 0.9607843137254902,
+      "effective_sample_size": 204.0
+    },
+    {
+      "stamp_ns": 9205000000,
+      "count": 216,
+      "x_range": [
+        4.358696602945219,
+        5.131301129374983
+      ],
+      "y_range": [
+        7.145590567082521,
+        7.77875446706177
+      ],
+      "weighted_true_center_error_m": 0.04852682207014542,
+      "weight_within_10cm": 0.27314814814814814,
+      "weight_within_35cm": 0.9444444444444444,
+      "effective_sample_size": 216.0
+    },
+    {
+      "stamp_ns": 9625000000,
+      "count": 204,
+      "x_range": [
+        4.334680141308347,
+        5.055143765495091
+      ],
+      "y_range": [
+        7.060237776132259,
+        7.767401087883409
+      ],
+      "weighted_true_center_error_m": 0.07343554033226601,
+      "weight_within_10cm": 0.24509803921568626,
+      "weight_within_35cm": 0.9607843137254902,
+      "effective_sample_size": 204.0
+    },
+    {
+      "stamp_ns": 10010000000,
+      "count": 204,
+      "x_range": [
+        4.285994962376306,
+        5.02809296556497
+      ],
+      "y_range": [
+        6.887372210970943,
+        7.629662997797748
+      ],
+      "weighted_true_center_error_m": 0.07417877354701206,
+      "weight_within_10cm": 0.18627450980392157,
+      "weight_within_35cm": 0.9509803921568627,
+      "effective_sample_size": 204.0
+    },
+    {
+      "stamp_ns": 10430000000,
+      "count": 201,
+      "x_range": [
+        4.241519242408308,
+        4.9247749256192375
+      ],
+      "y_range": [
+        6.790148679240543,
+        7.587432426525461
+      ],
+      "weighted_true_center_error_m": 0.08442418981143159,
+      "weight_within_10cm": 0.21393034825870647,
+      "weight_within_35cm": 0.9054726368159204,
+      "effective_sample_size": 201.0
+    },
+    {
+      "stamp_ns": 10815000000,
+      "count": 216,
+      "x_range": [
+        4.228526459753453,
+        4.949448532830809
+      ],
+      "y_range": [
+        6.634050981114907,
+        7.531900725533868
+      ],
+      "weighted_true_center_error_m": 0.0944578117147315,
+      "weight_within_10cm": 0.2685185185185185,
+      "weight_within_35cm": 0.8935185185185185,
+      "effective_sample_size": 216.0
+    },
+    {
+      "stamp_ns": 11410000000,
+      "count": 251,
+      "x_range": [
+        4.2339223701122455,
+        4.983126940966964
+      ],
+      "y_range": [
+        6.443595712029182,
+        7.3176952516596385
+      ],
+      "weighted_true_center_error_m": 0.10239273039330228,
+      "weight_within_10cm": 0.21912350597609562,
+      "weight_within_35cm": 0.9123505976095617,
+      "effective_sample_size": 251.0
+    },
+    {
+      "stamp_ns": 12005000000,
+      "count": 263,
+      "x_range": [
+        4.259809672888402,
+        5.0505689063419705
+      ],
+      "y_range": [
+        6.2685996939307636,
+        7.280948743706254
+      ],
+      "weighted_true_center_error_m": 0.12567508006734526,
+      "weight_within_10cm": 0.17490494296577946,
+      "weight_within_35cm": 0.8783269961977186,
+      "effective_sample_size": 263.0
+    },
+    {
+      "stamp_ns": 12605000000,
+      "count": 263,
+      "x_range": [
+        4.258180875794443,
+        4.904547377608045
+      ],
+      "y_range": [
+        5.929468437549708,
+        7.060951221461623
+      ],
+      "weighted_true_center_error_m": 0.13457010798337873,
+      "weight_within_10cm": 0.1520912547528517,
+      "weight_within_35cm": 0.8859315589353612,
+      "effective_sample_size": 263.0
+    },
+    {
+      "stamp_ns": 13230000000,
+      "count": 274,
+      "x_range": [
+        4.195890900087732,
+        4.978606282636517
+      ],
+      "y_range": [
+        6.045115567976545,
+        7.049934160438287
+      ],
+      "weighted_true_center_error_m": 0.12923561478092832,
+      "weight_within_10cm": 0.1897810218978102,
+      "weight_within_35cm": 0.8868613138686131,
+      "effective_sample_size": 274.0
+    },
+    {
+      "stamp_ns": 13615000000,
+      "count": 274,
+      "x_range": [
+        4.257048687002925,
+        4.9849797123529545
+      ],
+      "y_range": [
+        5.959869821819524,
+        7.0237212556728315
+      ],
+      "weighted_true_center_error_m": 0.1283977693263365,
+      "weight_within_10cm": 0.1678832116788321,
+      "weight_within_35cm": 0.9051094890510949,
+      "effective_sample_size": 274.0
+    },
+    {
+      "stamp_ns": 14005000000,
+      "count": 286,
+      "x_range": [
+        4.105367049401682,
+        4.9246620256409495
+      ],
+      "y_range": [
+        5.92009900663436,
+        6.995545854668155
+      ],
+      "weighted_true_center_error_m": 0.139159116535292,
+      "weight_within_10cm": 0.1048951048951049,
+      "weight_within_35cm": 0.8531468531468531,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 14420000000,
+      "count": 286,
+      "x_range": [
+        4.097061300911381,
+        4.909343935295644
+      ],
+      "y_range": [
+        5.883311504813485,
+        6.943168711796798
+      ],
+      "weighted_true_center_error_m": 0.1423123051419034,
+      "weight_within_10cm": 0.06643356643356643,
+      "weight_within_35cm": 0.8811188811188811,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 14805000000,
+      "count": 309,
+      "x_range": [
+        3.954122392518311,
+        4.9111311885678886
+      ],
+      "y_range": [
+        5.713076296194997,
+        6.599994775115503
+      ],
+      "weighted_true_center_error_m": 0.15868344034251938,
+      "weight_within_10cm": 0.11650485436893204,
+      "weight_within_35cm": 0.8220064724919094,
+      "effective_sample_size": 309.0
+    },
+    {
+      "stamp_ns": 15225000000,
+      "count": 320,
+      "x_range": [
+        3.86883588995031,
+        4.9032843610073344
+      ],
+      "y_range": [
+        5.509065495613134,
+        6.571088954084638
+      ],
+      "weighted_true_center_error_m": 0.15647058869933123,
+      "weight_within_10cm": 0.096875,
+      "weight_within_35cm": 0.796875,
+      "effective_sample_size": 319.99999999999994
+    },
+    {
+      "stamp_ns": 15610000000,
+      "count": 320,
+      "x_range": [
+        3.8768361566729523,
+        4.787165358907262
+      ],
+      "y_range": [
+        5.430465409001333,
+        6.499967587659204
+      ],
+      "weighted_true_center_error_m": 0.16372665347603607,
+      "weight_within_10cm": 0.10625000000000001,
+      "weight_within_35cm": 0.7937500000000001,
+      "effective_sample_size": 319.99999999999994
+    },
+    {
+      "stamp_ns": 16030000000,
+      "count": 286,
+      "x_range": [
+        3.7947636450416855,
+        4.720069725663218
+      ],
+      "y_range": [
+        5.377402303237493,
+        6.4759747973792035
+      ],
+      "weighted_true_center_error_m": 0.1406623014942321,
+      "weight_within_10cm": 0.11888111888111888,
+      "weight_within_35cm": 0.8111888111888111,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 16415000000,
+      "count": 309,
+      "x_range": [
+        3.7154593211459703,
+        4.685791149720074
+      ],
+      "y_range": [
+        5.3171323123217755,
+        6.454409822383221
+      ],
+      "weighted_true_center_error_m": 0.15604294142126002,
+      "weight_within_10cm": 0.11650485436893204,
+      "weight_within_35cm": 0.8058252427184467,
+      "effective_sample_size": 309.0
+    },
+    {
+      "stamp_ns": 16805000000,
+      "count": 286,
+      "x_range": [
+        3.526148827384072,
+        4.47341320683199
+      ],
+      "y_range": [
+        5.257126258497161,
+        6.450486847829321
+      ],
+      "weighted_true_center_error_m": 0.1751305590957923,
+      "weight_within_10cm": 0.13986013986013987,
+      "weight_within_35cm": 0.8251748251748252,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 17430000000,
+      "count": 320,
+      "x_range": [
+        3.355701347321167,
+        4.344931900433187
+      ],
+      "y_range": [
+        5.132942859656541,
+        6.473134881980818
+      ],
+      "weighted_true_center_error_m": 0.15025261874016338,
+      "weight_within_10cm": 0.153125,
+      "weight_within_35cm": 0.828125,
+      "effective_sample_size": 319.99999999999994
+    },
+    {
+      "stamp_ns": 18025000000,
+      "count": 422,
+      "x_range": [
+        3.1879531688218194,
+        4.243976683230806
+      ],
+      "y_range": [
+        5.074841505780709,
+        6.503866768721878
+      ],
+      "weighted_true_center_error_m": 0.1620577041591433,
+      "weight_within_10cm": 0.15165876777251186,
+      "weight_within_35cm": 0.7582938388625593,
+      "effective_sample_size": 421.9999999999999
+    },
+    {
+      "stamp_ns": 18620000000,
+      "count": 354,
+      "x_range": [
+        3.1094372677247097,
+        4.131789728714118
+      ],
+      "y_range": [
+        5.051178744157187,
+        6.509948650186731
+      ],
+      "weighted_true_center_error_m": 0.15291121566291027,
+      "weight_within_10cm": 0.11581920903954802,
+      "weight_within_35cm": 0.7853107344632768,
+      "effective_sample_size": 354.0
+    },
+    {
+      "stamp_ns": 19215000000,
+      "count": 286,
+      "x_range": [
+        2.990872447111413,
+        4.082281176814483
+      ],
+      "y_range": [
+        4.9841381450452475,
+        6.3319405228474475
+      ],
+      "weighted_true_center_error_m": 0.1537590033604854,
+      "weight_within_10cm": 0.10839160839160839,
+      "weight_within_35cm": 0.7832167832167832,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 19810000000,
+      "count": 354,
+      "x_range": [
+        2.859576653618522,
+        3.863238821376036
+      ],
+      "y_range": [
+        4.861909832424335,
+        6.365821303705568
+      ],
+      "weighted_true_center_error_m": 0.16994429865303803,
+      "weight_within_10cm": 0.14124293785310735,
+      "weight_within_35cm": 0.7627118644067796,
+      "effective_sample_size": 354.0
+    },
+    {
+      "stamp_ns": 20405000000,
+      "count": 320,
+      "x_range": [
+        2.6394456212793207,
+        3.73032313157914
+      ],
+      "y_range": [
+        5.587165891513523,
+        6.441322517326271
+      ],
+      "weighted_true_center_error_m": 0.16648597203339766,
+      "weight_within_10cm": 0.17500000000000002,
+      "weight_within_35cm": 0.775,
+      "effective_sample_size": 319.99999999999994
+    },
+    {
+      "stamp_ns": 21005000000,
+      "count": 366,
+      "x_range": [
+        2.470503759761077,
+        3.586995896327856
+      ],
+      "y_range": [
+        5.539963822621195,
+        6.468463271572174
+      ],
+      "weighted_true_center_error_m": 0.17018343685256318,
+      "weight_within_10cm": 0.1912568306010929,
+      "weight_within_35cm": 0.7295081967213115,
+      "effective_sample_size": 366.0
+    },
+    {
+      "stamp_ns": 21630000000,
+      "count": 332,
+      "x_range": [
+        2.30415182526154,
+        3.467394580887591
+      ],
+      "y_range": [
+        5.485515781315507,
+        6.509179155158249
+      ],
+      "weighted_true_center_error_m": 0.1502048783717143,
+      "weight_within_10cm": 0.1536144578313253,
+      "weight_within_35cm": 0.710843373493976,
+      "effective_sample_size": 332.0
+    },
+    {
+      "stamp_ns": 22225000000,
+      "count": 332,
+      "x_range": [
+        2.1332547224891054,
+        3.338590352333134
+      ],
+      "y_range": [
+        5.417948133140023,
+        6.508642221118039
+      ],
+      "weighted_true_center_error_m": 0.14567256072134094,
+      "weight_within_10cm": 0.12349397590361447,
+      "weight_within_35cm": 0.746987951807229,
+      "effective_sample_size": 332.0
+    },
+    {
+      "stamp_ns": 23415000000,
+      "count": 309,
+      "x_range": [
+        1.8664527850113466,
+        3.2069080118314224
+      ],
+      "y_range": [
+        5.5703098873268315,
+        6.340385900907204
+      ],
+      "weighted_true_center_error_m": 0.10258068423953547,
+      "weight_within_10cm": 0.16828478964401294,
+      "weight_within_35cm": 0.7766990291262136,
+      "effective_sample_size": 309.0
+    },
+    {
+      "stamp_ns": 24010000000,
+      "count": 240,
+      "x_range": [
+        1.7610983505568256,
+        3.0944675256403498
+      ],
+      "y_range": [
+        5.522761187857042,
+        6.379407754102863
+      ],
+      "weighted_true_center_error_m": 0.11657313854832836,
+      "weight_within_10cm": 0.16666666666666666,
+      "weight_within_35cm": 0.7708333333333334,
+      "effective_sample_size": 240.0
+    },
+    {
+      "stamp_ns": 25025000000,
+      "count": 240,
+      "x_range": [
+        1.9415330625982656,
+        2.9408931536841507
+      ],
+      "y_range": [
+        5.51713436609772,
+        6.371882848580443
+      ],
+      "weighted_true_center_error_m": 0.07659945288526739,
+      "weight_within_10cm": 0.23333333333333334,
+      "weight_within_35cm": 0.8208333333333333,
+      "effective_sample_size": 240.0
+    },
+    {
+      "stamp_ns": 25410000000,
+      "count": 286,
+      "x_range": [
+        1.9776001398187597,
+        2.9940474097774707
+      ],
+      "y_range": [
+        5.619950871067819,
+        6.461755213319463
+      ],
+      "weighted_true_center_error_m": 0.08833434127331921,
+      "weight_within_10cm": 0.2202797202797203,
+      "weight_within_35cm": 0.7762237762237763,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 25830000000,
+      "count": 263,
+      "x_range": [
+        1.9746481921258374,
+        3.073005342108687
+      ],
+      "y_range": [
+        5.591941128226288,
+        6.403625511821065
+      ],
+      "weighted_true_center_error_m": 0.1073343375289613,
+      "weight_within_10cm": 0.17870722433460076,
+      "weight_within_35cm": 0.7376425855513308,
+      "effective_sample_size": 263.0
+    },
+    {
+      "stamp_ns": 26215000000,
+      "count": 286,
+      "x_range": [
+        1.7448560780030562,
+        3.1748617822610607
+      ],
+      "y_range": [
+        5.622564314025416,
+        6.459510088502785
+      ],
+      "weighted_true_center_error_m": 0.11546922250790802,
+      "weight_within_10cm": 0.17482517482517482,
+      "weight_within_35cm": 0.7202797202797203,
+      "effective_sample_size": 286.0
+    },
+    {
+      "stamp_ns": 26605000000,
+      "count": 297,
+      "x_range": [
+        1.7865715147934667,
+        3.134115667671292
+      ],
+      "y_range": [
+        5.54672274187535,
+        6.484682250573321
+      ],
+      "weighted_true_center_error_m": 0.11176308594492985,
+      "weight_within_10cm": 0.16835016835016833,
+      "weight_within_35cm": 0.7508417508417508,
+      "effective_sample_size": 297.0
+    },
+    {
+      "stamp_ns": 27020000000,
+      "count": 320,
+      "x_range": [
+        1.8184409021037111,
+        3.163918585255309
+      ],
+      "y_range": [
+        5.5492329674314105,
+        6.459007174252605
+      ],
+      "weighted_true_center_error_m": 0.08984228407813395,
+      "weight_within_10cm": 0.171875,
+      "weight_within_35cm": 0.74375,
+      "effective_sample_size": 319.99999999999994
+    },
+    {
+      "stamp_ns": 27615000000,
+      "count": 309,
+      "x_range": [
+        1.7649819851576105,
+        3.1805761877444385
+      ],
+      "y_range": [
+        5.525939120719436,
+        6.2999050183743455
+      ],
+      "weighted_true_center_error_m": 0.09005870475485009,
+      "weight_within_10cm": 0.19093851132686085,
+      "weight_within_35cm": 0.7346278317152104,
+      "effective_sample_size": 309.0
+    }
+  ],
+  "shutdown": {
+    "simulation_exit": 0,
+    "probe_exit": 0,
+    "wall_duration_s": 40.141541809000046
+  },
+  "costmap_samples": [
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 1260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.25,
+        7.750000147645084,
+        1.570796326794908
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 1860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.25,
+        7.750000143890378,
+        1.5707963267949114
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 2460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.25,
+        7.750000142753278,
+        1.5707963267949154
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 2675000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.25,
+        7.750000142596137,
+        1.5707963267949148
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 3060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.25,
+        7.750000142440207,
+        1.5707963267949152
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 3660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.25,
+        7.750000142310175,
+        1.5707963267949157
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 4260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.249993660625673,
+        7.749998653969238,
+        1.6254698532398975
+      ],
+      "map_pose": [
+        5.250000000000112,
+        7.7499999999998765,
+        1.6291534695576593
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 4670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.249981954931342,
+        7.749994939499603,
+        1.8260141122600206
+      ],
+      "map_pose": [
+        5.250000000000116,
+        7.749999999999852,
+        1.833296326542133
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 4860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.249982017444847,
+        7.749994937863798,
+        1.921010688303539
+      ],
+      "map_pose": [
+        5.25000000000012,
+        7.74999999999984,
+        1.928296326465279
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 5460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.249430016087799,
+        7.7510994748798705,
+        2.2198246091925395
+      ],
+      "map_pose": [
+        5.249443465308934,
+        7.747364558638505,
+        2.2300613902828403
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 6060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.249591398163271,
+        7.750991238006962,
+        2.5189218616031566
+      ],
+      "map_pose": [
+        5.249996769528176,
+        7.745603334876424,
+        2.5177186399650187
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 6660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.242646316260473,
+        7.754547403504762,
+        2.815823814579463
+      ],
+      "map_pose": [
+        5.243218505178992,
+        7.748161292480966,
+        2.801258458585015
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 6670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.24210521299525,
+        7.754853462768853,
+        2.820380060572896
+      ],
+      "map_pose": [
+        5.24228421133347,
+        7.748484794943579,
+        2.806258458585118
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 7260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        5.133168908293936,
+        7.774112636411188,
+        3.103744721296831
+      ],
+      "map_pose": [
+        5.136358298209375,
+        7.754643144156853,
+        3.0734098781932166
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 7860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.999418244396168,
+        7.759330305768197,
+        -2.8869895019288627
+      ],
+      "map_pose": [
+        4.996988713289667,
+        7.730372515264216,
+        -2.8896532455208743
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 8460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.873036878351428,
+        7.705631532798645,
+        -2.5931325292220735
+      ],
+      "map_pose": [
+        4.889071499163622,
+        7.656509604733332,
+        -2.5613224096672202
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 8670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.83330341440536,
+        7.678452050571386,
+        -2.4890527166268943
+      ],
+      "map_pose": [
+        4.852560690747238,
+        7.626400982619602,
+        -2.468591379529349
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 9060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.766960523195132,
+        7.616594900679932,
+        -2.2953859705444426
+      ],
+      "map_pose": [
+        4.777863823926654,
+        7.569560722329905,
+        -2.296473155177788
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 9660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 73,
+      "true_center_projected_cost": 72,
+      "physical": [
+        4.686184992742236,
+        7.492418296833649,
+        -1.9973546830703859
+      ],
+      "map_pose": [
+        4.689786951651889,
+        7.44583870113148,
+        -2.004617037529585
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 10260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 73,
+      "true_center_projected_cost": 73,
+      "physical": [
+        4.645839295340368,
+        7.351222767310893,
+        -1.6980613776986904
+      ],
+      "map_pose": [
+        4.6321367029247025,
+        7.304186837297821,
+        -1.7162725748780316
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 10670000000,
+      "frame": "map",
+      "estimated_center_cost": 85,
+      "true_center_projected_cost": 73,
+      "physical": [
+        4.643085304375716,
+        7.250351994573936,
+        -1.4983254396936843
+      ],
+      "map_pose": [
+        4.591762373452658,
+        7.187161584837208,
+        -1.5144028037926196
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 10860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 85,
+      "true_center_projected_cost": 73,
+      "physical": [
+        4.648085318537612,
+        7.203167244957283,
+        -1.4341650108490933
+      ],
+      "map_pose": [
+        4.5958160713272,
+        7.141084720297607,
+        -1.4520466049014424
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 11460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 73,
+      "true_center_projected_cost": 63,
+      "physical": [
+        4.6757732003422285,
+        7.065597563756483,
+        -1.3251951994851854
+      ],
+      "map_pose": [
+        4.612157394839678,
+        6.9955022258456,
+        -1.3485594713203573
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 12060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 85,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.715885448729639,
+        6.923690689535414,
+        -1.2864060037654268
+      ],
+      "map_pose": [
+        4.637034814429244,
+        6.85185241022637,
+        -1.324494396515546
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 12660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 73,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.750402767195149,
+        6.782012441005991,
+        -1.3927829888124221
+      ],
+      "map_pose": [
+        4.663251906204683,
+        6.709624833335776,
+        -1.4292790552011772
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 12670000000,
+      "frame": "map",
+      "estimated_center_cost": 63,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.750849702908298,
+        6.779558388088737,
+        -1.3948651202034184
+      ],
+      "map_pose": [
+        4.663605804471435,
+        6.707169004190765,
+        -1.4313843183556658
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 13260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 63,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.766561191481299,
+        6.636819171340119,
+        -1.5415294071064154
+      ],
+      "map_pose": [
+        4.664413908399063,
+        6.551684573059248,
+        -1.569021278333105
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 13860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.75829000990452,
+        6.4876037939184545,
+        -1.7301215150548708
+      ],
+      "map_pose": [
+        4.641810263962245,
+        6.41155833195463,
+        -1.748370898044117
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 14460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.7183097646992875,
+        6.3458638357105634,
+        -1.9783026732859768
+      ],
+      "map_pose": [
+        4.599172032592045,
+        6.281088325395632,
+        -2.0007532547061015
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 14670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.695282514423216,
+        6.298738660011139,
+        -2.0757162489262284
+      ],
+      "map_pose": [
+        4.570839952293903,
+        6.244974131393317,
+        -2.104808941623958
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 15060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.642866223463812,
+        6.221341373057828,
+        -2.2682839660041028
+      ],
+      "map_pose": [
+        4.514321257963321,
+        6.1546222101973544,
+        -2.303565317409929
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 15660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.535807079673054,
+        6.1255021529254705,
+        -2.5374068477130796
+      ],
+      "map_pose": [
+        4.405256896846574,
+        6.045473162788547,
+        -2.5679414553137216
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 16260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.41078991778059,
+        6.058001076212902,
+        -2.7543669124196963
+      ],
+      "map_pose": [
+        4.271672040619567,
+        5.973715149803665,
+        -2.7954916374410668
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 16670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        4.316568983097012,
+        6.025536266105823,
+        -2.8643343771740253
+      ],
+      "map_pose": [
+        4.170118692540293,
+        5.949217136376702,
+        -2.9087991679925738
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 16860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 67,
+      "physical": [
+        4.271829998912604,
+        6.014041244429979,
+        -2.9188181615334146
+      ],
+      "map_pose": [
+        4.127489275771971,
+        5.946678124425725,
+        -2.965534979084651
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 17460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 63,
+      "physical": [
+        4.1279415222986,
+        5.989563895462836,
+        -3.035169779095978
+      ],
+      "map_pose": [
+        3.981334056125256,
+        5.932164968138599,
+        -3.078640254435433
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 18060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 63,
+      "physical": [
+        3.9823913977691925,
+        5.978113398715021,
+        -3.077448573830832
+      ],
+      "map_pose": [
+        3.824260009969734,
+        5.907213643205864,
+        -3.108638184983795
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 18660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.836555269051606,
+        5.970183149004399,
+        -3.086245461255287
+      ],
+      "map_pose": [
+        3.691654890168431,
+        5.9227323218625925,
+        -3.1351374147584887
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 18670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.8342408469642355,
+        5.970053919257492,
+        -3.0858305929147076
+      ],
+      "map_pose": [
+        3.689286527050836,
+        5.9227157867374824,
+        -3.1347163621301957
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 19260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.6912087398477116,
+        5.959461000101955,
+        -3.037533460396709
+      ],
+      "map_pose": [
+        3.534322223317334,
+        5.91342941176277,
+        -3.087011487714539
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 19860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.546355273475282,
+        5.940850330234159,
+        -2.9991419114482025
+      ],
+      "map_pose": [
+        3.3938794325695976,
+        5.915505311606901,
+        -3.062931677009433
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 20460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.401611077027606,
+        5.921243106543948,
+        -3.0118899946311037
+      ],
+      "map_pose": [
+        3.243456032580739,
+        5.922156052368162,
+        -3.086026031725044
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 20670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.350853669162053,
+        5.914395543919799,
+        -3.0031110558794665
+      ],
+      "map_pose": [
+        3.1870997506304377,
+        5.917673164333152,
+        -3.074954407633316
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 21060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.256755604855226,
+        5.900704941604677,
+        -2.994933636491565
+      ],
+      "map_pose": [
+        3.0828345112241724,
+        5.907799918385724,
+        -3.062603346277214
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 21660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        3.1120875514716544,
+        5.880585767823293,
+        -3.015635462761539
+      ],
+      "map_pose": [
+        2.942405380016174,
+        5.907375427947309,
+        -3.085250810893761
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 22260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.967386407754293,
+        5.86075798647727,
+        -2.995277113811417
+      ],
+      "map_pose": [
+        2.794509554806185,
+        5.895065953383828,
+        -3.060695361903373
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 22670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.86637274019455,
+        5.84474314610748,
+        -2.9655257428971824
+      ],
+      "map_pose": [
+        2.7079142036224013,
+        5.8839129784449815,
+        -3.045676843984562
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 22860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.820756382348695,
+        5.83608644509719,
+        -2.94172216012055
+      ],
+      "map_pose": [
+        2.6619337659520608,
+        5.878938234407634,
+        -3.021676844056998
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 23460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.6946463764619373,
+        5.808942413108298,
+        -2.93620597024219
+      ],
+      "map_pose": [
+        2.5421857873247213,
+        5.847499926482379,
+        -2.9927994997203897
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 24060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5938358577267255,
+        5.78841750511841,
+        -2.949625127430869
+      ],
+      "map_pose": [
+        2.4534610944549784,
+        5.815828697483975,
+        -3.0026208431164165
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 25260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649226173955824,
+        5.783515921678763,
+        2.8235941361309376
+      ],
+      "map_pose": [
+        2.4477126593515837,
+        5.798994606577201,
+        2.778641569129493
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 25860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649352553478315,
+        5.78351463074732,
+        2.523604266909704
+      ],
+      "map_pose": [
+        2.4778352881215073,
+        5.79822466784535,
+        2.4956325306238796
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 26460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649387826001337,
+        5.783513170190552,
+        2.2424815326531946
+      ],
+      "map_pose": [
+        2.4819784322065277,
+        5.813887443954345,
+        2.2091638397653024
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 26670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.564939284380485,
+        5.783512846605518,
+        2.16290583656567
+      ],
+      "map_pose": [
+        2.47515581642237,
+        5.8144611569549856,
+        2.129398093691278
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 27060000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.564939855138398,
+        5.783512459546194,
+        2.039964825969945
+      ],
+      "map_pose": [
+        2.459873730806264,
+        5.815433802607437,
+        2.002231246689164
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 27660000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649403226592202,
+        5.7835121957153435,
+        1.9048173268790325
+      ],
+      "map_pose": [
+        2.4551119788301303,
+        5.805308057793763,
+        1.853817574395167
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 28260000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649404672997447,
+        5.783512139236245,
+        1.8490332856127842
+      ],
+      "map_pose": [
+        2.475699242738787,
+        5.793893100298924,
+        1.800961877928177
+      ]
+    },
+    {
+      "kind": "GLOBAL_COSTMAP",
+      "stamp_ns": 28670000000,
+      "frame": "map",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649404672997447,
+        5.783512139236245,
+        1.8490332856127842
+      ],
+      "map_pose": [
+        2.4750698189858213,
+        5.789331792391958,
+        1.8098351899060543
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 28860000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649404672997447,
+        5.783512139236245,
+        1.8490332856127842
+      ],
+      "map_pose": [
+        2.4750698189858213,
+        5.789331792391958,
+        1.8098351899060543
+      ]
+    },
+    {
+      "kind": "LOCAL_COSTMAP",
+      "stamp_ns": 29460000000,
+      "frame": "robot_beta/odom",
+      "estimated_center_cost": 0,
+      "true_center_projected_cost": 0,
+      "physical": [
+        2.5649404672997447,
+        5.783512139236245,
+        1.8490332856127842
+      ],
+      "map_pose": [
+        2.4750698189858213,
+        5.789331792391958,
+        1.8098351899060543
+      ]
+    }
+  ],
+  "plans": [
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 3960000000,
+      "frame": "map",
+      "length_m": 4.183473092076686,
+      "points": 167
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 3955000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4060000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4165000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4270000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4375000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4480000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4550000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4655000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4760000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4865000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.022368421052631576,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 4970000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 4990000000,
+      "frame": "map",
+      "length_m": 4.183473092076686,
+      "points": 167
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5075000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5180000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5250000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5355000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5460000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5565000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5670000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5775000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5880000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 5950000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 6020000000,
+      "frame": "map",
+      "length_m": 4.183473092076686,
+      "points": 167
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6055000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.04473684210526316,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6160000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.022368421052631576,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6265000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.02236842105263158,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6370000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.022368421052631576,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6475000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.022368421052631576,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6580000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.41736885602437096,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6650000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.37441409308395945,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6755000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.20131578947368414,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6860000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.313157894736842,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 6965000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40135972161839367,
+      "points": 57
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 7050000000,
+      "frame": "map",
+      "length_m": 4.158788043618082,
+      "points": 166
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7070000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473664,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7175000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3355263157894736,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7280000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736823,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7350000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473647,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7455000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3578947368421051,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7560000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7665000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473684,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7770000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.35789473684210504,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7875000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473683,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 7980000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473686,
+      "points": 57
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 8080000000,
+      "frame": "map",
+      "length_m": 4.063835528151342,
+      "points": 160
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8050000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3802631578947367,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8155000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8260000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473682,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8365000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473664,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8470000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736806,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8575000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473686,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8680000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473664,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8750000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473683,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8855000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999966,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 8960000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9065000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736784,
+      "points": 57
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 9110000000,
+      "frame": "map",
+      "length_m": 3.8698119392566475,
+      "points": 154
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9170000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9275000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9380000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42500000000000004,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9450000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9555000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9660000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4250000000000001,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9765000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473684,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9870000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 9975000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473683,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10080000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 45
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 10140000000,
+      "frame": "map",
+      "length_m": 3.7157261427417256,
+      "points": 148
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10150000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10255000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10360000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473682,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10465000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10570000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.425,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10675000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10780000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10850000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 10955000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11060000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736834,
+      "points": 11
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 11170000000,
+      "frame": "map",
+      "length_m": 3.4844117760479474,
+      "points": 137
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11165000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3578947368421052,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11270000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3355263157894737,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11375000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11480000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11550000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11655000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473681,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11760000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11865000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999966,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 11970000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473681,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12075000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4250000000000002,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12180000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736795,
+      "points": 17
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 12200000000,
+      "frame": "map",
+      "length_m": 3.189217003384159,
+      "points": 125
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12250000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999995,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12355000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736834,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12460000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12565000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473682,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12670000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12775000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736806,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12880000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 12950000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13055000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736834,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13160000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999954,
+      "points": 23
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 13230000000,
+      "frame": "map",
+      "length_m": 2.9114700955709365,
+      "points": 116
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13265000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13370000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13475000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999954,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13580000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13650000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4250000000000002,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13755000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999991,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13860000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42500000000000054,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 13965000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999994,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14070000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14175000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473664,
+      "points": 34
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 14260000000,
+      "frame": "map",
+      "length_m": 2.5887789110048813,
+      "points": 103
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14280000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.425,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14350000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14455000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14560000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999993,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14665000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736873,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14770000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736795,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14875000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736806,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 14980000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3802631578947364,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15050000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15155000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736823,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15260000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.425,
+      "points": 34
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 15290000000,
+      "frame": "map",
+      "length_m": 2.3498355653420937,
+      "points": 92
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15365000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736856,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15470000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42500000000000004,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15575000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736845,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15680000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4250000000000002,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15750000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15855000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3802631578947365,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 15960000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736845,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16065000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.38026315789473647,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16170000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16275000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.402631578947368,
+      "points": 23
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 16310000000,
+      "frame": "map",
+      "length_m": 2.0353431209589057,
+      "points": 81
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16380000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16450000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473685,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16555000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999995,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16660000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736845,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16765000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16870000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473683,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 16975000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17080000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473681,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17150000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42500000000000027,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17255000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736806,
+      "points": 17
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 17330000000,
+      "frame": "map",
+      "length_m": 1.7856853156345012,
+      "points": 71
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17360000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17465000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736784,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17570000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999966,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17675000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473684,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17780000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17850000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736845,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 17955000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18060000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473681,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18165000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18270000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.402631578947368,
+      "points": 11
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 18350000000,
+      "frame": "map",
+      "length_m": 1.5277549908144596,
+      "points": 61
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18375000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18480000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473684,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18550000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736845,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18655000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999999,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18760000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736806,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18865000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 18970000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.402631578947368,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19075000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19180000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473682,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19250000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42500000000000004,
+      "points": 11
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 19380000000,
+      "frame": "map",
+      "length_m": 1.2930861302122543,
+      "points": 50
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19355000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736823,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19460000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999993,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19565000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473681,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19670000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999905,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19775000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736784,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19880000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999916,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 19950000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473679,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20055000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.425,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20160000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736856,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20265000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42500000000000016,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20370000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736795,
+      "points": 11
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 20410000000,
+      "frame": "map",
+      "length_m": 1.0435442938535717,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20475000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999927,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20580000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999954,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20650000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736834,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20755000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20860000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736873,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 20965000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473676,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21070000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21175000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736823,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21280000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21350000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 11
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 21430000000,
+      "frame": "map",
+      "length_m": 0.7943204298076944,
+      "points": 30
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21455000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473681,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21560000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999997,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21665000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473687,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21770000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999996,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21875000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473675,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 21980000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999966,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22050000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736806,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22155000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999988,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22260000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22365000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4249999999999998,
+      "points": 11
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 22460000000,
+      "frame": "map",
+      "length_m": 0.545847609748155,
+      "points": 20
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22470000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999954,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22575000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.42499999999999977,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22680000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736823,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22750000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.40263157894736884,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22855000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.4026315789473682,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 22960000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3802631578947373,
+      "points": 10
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23065000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.35789473684210454,
+      "points": 10
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23170000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3355263157894736,
+      "points": 9
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23275000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3131578947368421,
+      "points": 9
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23380000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.2907894736842107,
+      "points": 8
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23450000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.3355263157894737,
+      "points": 9
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 23490000000,
+      "frame": "map",
+      "length_m": 0.32706048016236916,
+      "points": 13
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23555000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.31315789473684225,
+      "points": 9
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23660000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.29078947368421026,
+      "points": 8
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23765000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.26842105263157906,
+      "points": 8
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23870000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.2460526315789477,
+      "points": 7
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 23975000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.2460526315789473,
+      "points": 7
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24080000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.08993214441042822,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24150000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.06797042192257628,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24255000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.06710526315789359,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24360000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24465000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 24520000000,
+      "frame": "map",
+      "length_m": 0.22071105113200556,
+      "points": 8
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24570000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24675000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24780000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24850000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 24955000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25060000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25165000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 57
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25270000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25375000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 51
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25480000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 25540000000,
+      "frame": "map",
+      "length_m": 0.22071105113200556,
+      "points": 8
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25550000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25655000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 45
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25760000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25865000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 25970000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 40
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26075000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26180000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 34
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26250000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26355000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26460000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 28
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 26560000000,
+      "frame": "map",
+      "length_m": 0.2707110518770636,
+      "points": 10
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26565000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 28
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26670000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26775000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26880000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 26950000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 23
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27055000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27160000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27265000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27370000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27475000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27580000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "GLOBAL_PLAN",
+      "stamp_ns": 27590000000,
+      "frame": "map",
+      "length_m": 0.22071105113200556,
+      "points": 8
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27650000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 17
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27755000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 11
+    },
+    {
+      "kind": "LOCAL_PLAN",
+      "stamp_ns": 27860000000,
+      "frame": "robot_beta/odom",
+      "length_m": 0.0,
+      "points": 11
+    }
+  ],
+  "amcl_measurements": [
+    {
+      "stamp_ns": 200000000,
+      "pose": [
+        5.250000000000112,
+        7.74999999999988,
+        1.5707963267948963
+      ],
+      "covariance": [
+        -1.7967849430533659e-12,
+        -5.149214388211342e-13,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -5.149214388211342e-13,
+        2.4908963780489867e-12,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.3322676295501875e-15
+      ],
+      "physical": [
+        5.25,
+        7.750000056933884,
+        1.5707963267948988
+      ],
+      "error_m": 5.693400417794322e-08
+    },
+    {
+      "stamp_ns": 4400000000,
+      "pose": [
+        5.249999999999999,
+        7.746172413337491,
+        1.7000613906423447
+      ],
+      "covariance": [
+        1.9406698470447736e-13,
+        2.2170464693771405e-15,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.2170464693771405e-15,
+        0.0032431489978812134,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.001829791764588334
+      ],
+      "physical": [
+        5.2499819122670495,
+        7.74999494102584,
+        1.6910191173193707
+      ],
+      "error_m": 0.0038225704825786367
+    },
+    {
+      "stamp_ns": 4800000000,
+      "pose": [
+        5.250040995323019,
+        7.743906009179672,
+        1.8903822176110943
+      ],
+      "covariance": [
+        0.00015487151569895427,
+        -0.0007385320169501687,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0007385320169501687,
+        0.006704054717397174,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.00850935806847681
+      ],
+      "physical": [
+        5.249981995809228,
+        7.7499949384330105,
+        1.8910117584285466
+      ],
+      "error_m": 0.006089215088563331
+    },
+    {
+      "stamp_ns": 5200000000,
+      "pose": [
+        5.251165187164709,
+        7.746769617345105,
+        2.081503626441955
+      ],
+      "covariance": [
+        0.0008520155255964901,
+        -0.002730244593392216,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.002730244593392216,
+        0.012645551023906581,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.012668968338176302
+      ],
+      "physical": [
+        5.2493690076890465,
+        7.751135080968996,
+        2.0900163124661133
+      ],
+      "error_m": 0.004720543756846332
+    },
+    {
+      "stamp_ns": 5600000000,
+      "pose": [
+        5.250951004533632,
+        7.744272127756231,
+        2.2712584588230635
+      ],
+      "covariance": [
+        0.0022121747596559427,
+        -0.004971451681290074,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.004971451681290074,
+        0.015661079795431212,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.014310636115048415
+      ],
+      "physical": [
+        5.249460416920314,
+        7.751079880102066,
+        2.2896898377243735
+      ],
+      "error_m": 0.0069690274382581
+    },
+    {
+      "stamp_ns": 6000000000,
+      "pose": [
+        5.253058525605566,
+        7.727631075470948,
+        2.4383349811961534
+      ],
+      "covariance": [
+        0.005300552772415534,
+        -0.008385142420500483,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.008385142420493378,
+        0.01904235805199468,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0173956139882428
+      ],
+      "physical": [
+        5.249568688228555,
+        7.751005938677225,
+        2.4890635494497872
+      ],
+      "error_m": 0.02363394158472372
+    },
+    {
+      "stamp_ns": 6400000000,
+      "pose": [
+        5.252673071226618,
+        7.729180688730428,
+        2.6552513056117717
+      ],
+      "covariance": [
+        0.007094767734080188,
+        -0.007898895783893103,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.007898895783885997,
+        0.015325990737660307,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.017828381166225968
+      ],
+      "physical": [
+        5.246085299914145,
+        7.753032834176441,
+        2.686994615285815
+      ],
+      "error_m": 0.024745172726073524
+    },
+    {
+      "stamp_ns": 6800000000,
+      "pose": [
+        5.219487338989071,
+        7.730767274004025,
+        2.863532062035159
+      ],
+      "covariance": [
+        0.009657636082859043,
+        -0.006221418669695678,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.006221418669688572,
+        0.013154721127700424,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.018344347003657502
+      ],
+      "physical": [
+        5.221236392852479,
+        7.761178106645266,
+        2.8836084927537473
+      ],
+      "error_m": 0.030461088807701524
+    },
+    {
+      "stamp_ns": 7200000000,
+      "pose": [
+        5.159528616874116,
+        7.734176257885614,
+        3.0971210278988544
+      ],
+      "covariance": [
+        0.010540228875724578,
+        -0.0027167381702125457,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0027167381702125457,
+        0.009819576240602838,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.014616024233515377
+      ],
+      "physical": [
+        5.146485394163756,
+        7.7733971959474575,
+        3.0740075737632733
+      ],
+      "error_m": 0.04133288812946686
+    },
+    {
+      "stamp_ns": 7600000000,
+      "pose": [
+        5.077295102162968,
+        7.723138424609611,
+        -3.0035913790843582
+      ],
+      "covariance": [
+        0.012380083962234424,
+        -0.0013829921860671799,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0013829921860671799,
+        0.008043837345901056,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.017355671840451253
+      ],
+      "physical": [
+        5.05921996025051,
+        7.770874634556062,
+        -3.0145167235497423
+      ],
+      "error_m": 0.05104367243064652
+    },
+    {
+      "stamp_ns": 8000000000,
+      "pose": [
+        4.9818689015021445,
+        7.703645744892325,
+        -2.826473154705132
+      ],
+      "covariance": [
+        0.01720384275301388,
+        0.0013783401749186256,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.001378340174925731,
+        0.008016032057297302,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.018911367817363033
+      ],
+      "physical": [
+        4.970046335105258,
+        7.750716891116159,
+        -2.81954815948743
+      ],
+      "error_m": 0.04853314210963896
+    },
+    {
+      "stamp_ns": 8400000000,
+      "pose": [
+        4.8930380860260785,
+        7.663924793496736,
+        -2.632378681961136
+      ],
+      "covariance": [
+        0.019907273838725488,
+        0.0026335184236836963,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0026335184236908017,
+        0.008184008445059588,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01690629713855243
+      ],
+      "physical": [
+        4.885215431993457,
+        7.712822631246489,
+        -2.6230775454100637
+      ],
+      "error_m": 0.04951961684742012
+    },
+    {
+      "stamp_ns": 8800000000,
+      "pose": [
+        4.810312379231594,
+        7.615366933956138,
+        -2.43983986549656
+      ],
+      "covariance": [
+        0.02694341415783519,
+        0.005678300125506682,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.005678300125506682,
+        0.009830978772794846,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01844839353888329
+      ],
+      "physical": [
+        4.810759980070159,
+        7.660088124841744,
+        -2.4241872408900944
+      ],
+      "error_m": 0.04472343078004519
+    },
+    {
+      "stamp_ns": 9200000000,
+      "pose": [
+        4.735428513259194,
+        7.5411250255797935,
+        -2.246272574512316
+      ],
+      "covariance": [
+        0.027623414752221645,
+        0.005146802611340211,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0051468026113331055,
+        0.010777700683998874,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.017623299435511313
+      ],
+      "physical": [
+        4.744821324721583,
+        7.589829474902391,
+        -2.2255822281996727
+      ],
+      "error_m": 0.04960189805829478
+    },
+    {
+      "stamp_ns": 9600000000,
+      "pose": [
+        4.645279430058049,
+        7.442012970071057,
+        -2.0447524276019564
+      ],
+      "covariance": [
+        0.024508644483649856,
+        0.004686675244151196,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.004686675244151196,
+        0.013002739573315377,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.017003962944308983
+      ],
+      "physical": [
+        4.692627463440492,
+        7.505966526931036,
+        -2.0273536468135687
+      ],
+      "error_m": 0.07957319712206748
+    },
+    {
+      "stamp_ns": 10000000000,
+      "pose": [
+        4.6098312770031535,
+        7.354312161974607,
+        -1.851434772208079
+      ],
+      "covariance": [
+        0.023009956988995914,
+        0.005005189043640141,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.005005189043633036,
+        0.015181995198201662,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.019437598444870287
+      ],
+      "physical": [
+        4.658087952819335,
+        7.413609595139513,
+        -1.8277588916023138
+      ],
+      "error_m": 0.07645189559961513
+    },
+    {
+      "stamp_ns": 10400000000,
+      "pose": [
+        4.584967789150909,
+        7.246834426758664,
+        -1.6535857869359645
+      ],
+      "covariance": [
+        0.021224336498945888,
+        0.007445433520854124,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.007445433520847019,
+        0.020006974811633976,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01829898365104363
+      ],
+      "physical": [
+        4.642561512189644,
+        7.316411668042961,
+        -1.628172719633363
+      ],
+      "error_m": 0.09032181042359518
+    },
+    {
+      "stamp_ns": 10800000000,
+      "pose": [
+        4.578539250661391,
+        7.148843058187097,
+        -1.4912312383942294
+      ],
+      "covariance": [
+        0.017901512035396274,
+        0.007255361725500194,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.007255361725500194,
+        0.023151353547117604,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01884524795836441
+      ],
+      "physical": [
+        4.646189415386179,
+        7.218032734371488,
+        -1.4517814593374967
+      ],
+      "error_m": 0.09676650287052756
+    },
+    {
+      "stamp_ns": 11400000000,
+      "pose": [
+        4.595917840076022,
+        7.00824010751087,
+        -1.3669632658551873
+      ],
+      "covariance": [
+        0.0168081894483075,
+        0.004552344746312383,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.004552344746312383,
+        0.024153850290025307,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.025643521025671426
+      ],
+      "physical": [
+        4.67292868959701,
+        7.077127307985055,
+        -1.3325300421568442
+      ],
+      "error_m": 0.10332529861130256
+    },
+    {
+      "stamp_ns": 12000000000,
+      "pose": [
+        4.617287615978939,
+        6.854267071507229,
+        -1.3067054893518524
+      ],
+      "covariance": [
+        0.014524390807441206,
+        0.0020490193516894306,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.002049019351685878,
+        0.026480501075583918,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03142794770677866
+      ],
+      "physical": [
+        4.711664407981198,
+        6.938049886356931,
+        -1.2838971784968989
+      ],
+      "error_m": 0.12620039196760519
+    },
+    {
+      "stamp_ns": 12600000000,
+      "pose": [
+        4.63587705972458,
+        6.720928410339371,
+        -1.3913182669207607
+      ],
+      "covariance": [
+        0.012616669975285414,
+        -0.0017240313064804764,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0017240313064769237,
+        0.026248586257740673,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03202883289560266
+      ],
+      "physical": [
+        4.74765289002638,
+        6.796742336054376,
+        -1.380236440342076
+      ],
+      "error_m": 0.13506142147918185
+    },
+    {
+      "stamp_ns": 13200000000,
+      "pose": [
+        4.653438982457039,
+        6.580917226627495,
+        -1.5347632239025857
+      ],
+      "covariance": [
+        0.016184765327204316,
+        -0.003262229200122842,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.003262229200122842,
+        0.022329926117634527,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03601354119410617
+      ],
+      "physical": [
+        4.766010982274134,
+        6.650983851326919,
+        -1.5238639090082715
+      ],
+      "error_m": 0.13259633116941807
+    },
+    {
+      "stamp_ns": 13600000000,
+      "pose": [
+        4.647911521560551,
+        6.496057195154703,
+        -1.6566247314553706
+      ],
+      "covariance": [
+        0.015297062731491314,
+        -0.0026531147582290002,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0026531147582290002,
+        0.022884374298300293,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03199042123924503
+      ],
+      "physical": [
+        4.765348235235882,
+        6.5522051666842644,
+        -1.6322429339633369
+      ],
+      "error_m": 0.13016903020974746
+    },
+    {
+      "stamp_ns": 14000000000,
+      "pose": [
+        4.631245037691212,
+        6.382099526831635,
+        -1.8119600545882097
+      ],
+      "covariance": [
+        0.016211709043262308,
+        -0.003243463808373113,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0032434638083695603,
+        0.024785164514015648,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03484726632681811
+      ],
+      "physical": [
+        4.751855914369488,
+        6.453201576979976,
+        -1.7831715410123252
+      ],
+      "error_m": 0.14000887510582813
+    },
+    {
+      "stamp_ns": 14400000000,
+      "pose": [
+        4.604444614208611,
+        6.2751296182003955,
+        -1.9748094669050993
+      ],
+      "covariance": [
+        0.01605563948124411,
+        -0.003036149495510473,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.003036149495510473,
+        0.02657009080777418,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03774957219189902
+      ],
+      "physical": [
+        4.723918315057996,
+        6.359446025858817,
+        -1.950532915730676
+      ],
+      "error_m": 0.14623003041464966
+    },
+    {
+      "stamp_ns": 14800000000,
+      "pose": [
+        4.544160673822298,
+        6.185085701918957,
+        -2.165661710369299
+      ],
+      "covariance": [
+        0.018662232761634576,
+        -0.00029161109494885504,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.00029161109494885504,
+        0.029955421452954958,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03175373246261036
+      ],
+      "physical": [
+        4.67884543483701,
+        6.271039570959518,
+        -2.1405775784150243
+      ],
+      "error_m": 0.15977500571939268
+    },
+    {
+      "stamp_ns": 15200000000,
+      "pose": [
+        4.487977081248124,
+        6.104812454944755,
+        -2.373412690530812
+      ],
+      "covariance": [
+        0.02493256466125053,
+        -0.0003816074495251011,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0003816074495251011,
+        0.036309368000204234,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03869771649157766
+      ],
+      "physical": [
+        4.621451874569895,
+        6.197477968366819,
+        -2.336940760823106
+      ],
+      "error_m": 0.16248820828006066
+    },
+    {
+      "stamp_ns": 15600000000,
+      "pose": [
+        4.405936822172227,
+        6.047883003338199,
+        -2.5542728526559464
+      ],
+      "covariance": [
+        0.021333153733186425,
+        0.003865595408712968,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.003865595408712968,
+        0.03478259965564061,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03267314253296786
+      ],
+      "physical": [
+        4.547988036034052,
+        6.134127929031554,
+        -2.5149516875995093
+      ],
+      "error_m": 0.1661828347557909
+    },
+    {
+      "stamp_ns": 16000000000,
+      "pose": [
+        4.329831905402103,
+        6.022156906966518,
+        -2.7103095162353616
+      ],
+      "covariance": [
+        0.023518486463868553,
+        0.006116229901391049,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.006116229901391049,
+        0.034143203691278,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.035075197864421315
+      ],
+      "physical": [
+        4.464534824541996,
+        6.082675408012063,
+        -2.664547210352792
+      ],
+      "error_m": 0.14767317086596415
+    },
+    {
+      "stamp_ns": 16400000000,
+      "pose": [
+        4.234262925787041,
+        5.977721727747188,
+        -2.8331665706270455
+      ],
+      "covariance": [
+        0.02447690509925187,
+        0.0006289426855780741,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0006289426855780741,
+        0.02449850884056129,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.029430215701019308
+      ],
+      "physical": [
+        4.378727607349869,
+        6.045645246953369,
+        -2.794921025663696
+      ],
+      "error_m": 0.15963598804906654
+    },
+    {
+      "stamp_ns": 16800000000,
+      "pose": [
+        4.128624014331373,
+        5.937128198564811,
+        -2.9296908169975984
+      ],
+      "covariance": [
+        0.027187036047620603,
+        -0.002227142951733083,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0022271429517259776,
+        0.02748123112998543,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.027073951212147455
+      ],
+      "physical": [
+        4.285631362470107,
+        6.01728870603777,
+        -2.9017365047419887
+      ],
+      "error_m": 0.17628673894504918
+    },
+    {
+      "stamp_ns": 17400000000,
+      "pose": [
+        3.9978655420093436,
+        5.928751803802499,
+        -3.0707163624093727
+      ],
+      "covariance": [
+        0.03311452475574804,
+        -0.002070304700917452,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0020703047009210046,
+        0.030691949634785762,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.035086924169899725
+      ],
+      "physical": [
+        4.142028228100024,
+        5.991166025552919,
+        -3.022545826114738
+      ],
+      "error_m": 0.1570936508506648
+    },
+    {
+      "stamp_ns": 18000000000,
+      "pose": [
+        3.8404350654384785,
+        5.917680650090606,
+        -3.125267126687655
+      ],
+      "covariance": [
+        0.03548561018442347,
+        -0.0042407697961988405,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0042407697961988405,
+        0.030709667755687703,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03363310841489469
+      ],
+      "physical": [
+        3.9965550792838838,
+        5.97904376112079,
+        -3.074923438313494
+      ],
+      "error_m": 0.16774650553258108
+    },
+    {
+      "stamp_ns": 18600000000,
+      "pose": [
+        3.699709616939313,
+        5.9259785518338095,
+        3.1290957358395732
+      ],
+      "covariance": [
+        0.042040008631211066,
+        -0.006074855070171198,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.006074855070171198,
+        0.021654145460806136,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.031233691878278385
+      ],
+      "physical": [
+        3.850726897242322,
+        5.970948228011451,
+        -3.0887675987911782
+      ],
+      "error_m": 0.1575705896594908
+    },
+    {
+      "stamp_ns": 19200000000,
+      "pose": [
+        3.5499876081607318,
+        5.939209279126451,
+        -3.1192891895348285
+      ],
+      "covariance": [
+        0.043446587143239006,
+        -0.004001590404551312,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.004001590404551312,
+        0.019523683234421243,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03149227150030282
+      ],
+      "physical": [
+        3.7060918721239746,
+        5.960958979835659,
+        -3.044589963894164
+      ],
+      "error_m": 0.15761215279427507
+    },
+    {
+      "stamp_ns": 19800000000,
+      "pose": [
+        3.3892415120488524,
+        5.929358801654765,
+        -3.0668138725566556
+      ],
+      "covariance": [
+        0.04588749240054344,
+        -0.004139197374637089,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.004139197374637089,
+        0.018715524055719843,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.030773829967073202
+      ],
+      "physical": [
+        3.5611676209728134,
+        5.942974748905723,
+        -2.9991419114440223
+      ],
+      "error_m": 0.17246443386760804
+    },
+    {
+      "stamp_ns": 20400000000,
+      "pose": [
+        3.2488290852761654,
+        5.928691340824034,
+        -3.0839876530158317
+      ],
+      "covariance": [
+        0.05048859104686954,
+        -0.0040036700092963015,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.004003670009299854,
+        0.015681346194563274,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03129695772265333
+      ],
+      "physical": [
+        3.4164474215975216,
+        5.923158635123368,
+        -3.014392345647682
+      ],
+      "error_m": 0.16770962257279526
+    },
+    {
+      "stamp_ns": 21000000000,
+      "pose": [
+        3.100024378301952,
+        5.917115519512094,
+        -3.0604848355877077
+      ],
+      "covariance": [
+        0.054852167258211466,
+        -0.005772123307406674,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.005772123307406674,
+        0.01618832884341964,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.032869606960201074
+      ],
+      "physical": [
+        3.2707644405120453,
+        5.902774321630417,
+        -2.9949336364846832
+      ],
+      "error_m": 0.17134129333055698
+    },
+    {
+      "stamp_ns": 21600000000,
+      "pose": [
+        2.9700617921720602,
+        5.900539674882979,
+        -3.0940978963347012
+      ],
+      "covariance": [
+        0.05612910169951662,
+        -0.006589779357080645,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.006589779357084198,
+        0.019807885474791714,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03942703767442526
+      ],
+      "physical": [
+        3.1261489152651363,
+        5.8823857454962205,
+        -3.013110295203968
+      ],
+      "error_m": 0.15713928581883171
+    },
+    {
+      "stamp_ns": 22200000000,
+      "pose": [
+        2.831683698423775,
+        5.885051150102657,
+        -3.0551754393976904
+      ],
+      "covariance": [
+        0.05636605914507517,
+        -0.0064832251646987785,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.0064832251646987785,
+        0.018685954570734138,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03523891191221332
+      ],
+      "physical": [
+        2.981430533423706,
+        5.862806898281017,
+        -2.9978022850547967
+      ],
+      "error_m": 0.15138996443490266
+    },
+    {
+      "stamp_ns": 23400000000,
+      "pose": [
+        2.600235602918496,
+        5.817313415533887,
+        -2.9696303699564535
+      ],
+      "covariance": [
+        0.05673405277004275,
+        -0.005755607492237511,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.005755607492237511,
+        0.015934674981263285,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.034679907105768217
+      ],
+      "physical": [
+        2.7052837673846977,
+        5.8111690442838535,
+        -2.934171168820681
+      ],
+      "error_m": 0.10522770621740442
+    },
+    {
+      "stamp_ns": 24000000000,
+      "pose": [
+        2.4843800462445564,
+        5.804096780942686,
+        -2.9844121595476425
+      ],
+      "covariance": [
+        0.047598811157776276,
+        -0.0036239188372311224,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.003623918837229346,
+        0.018527862207069742,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03348310380739141
+      ],
+      "physical": [
+        2.602216693264015,
+        5.790048424011518,
+        -2.949374064605317
+      ],
+      "error_m": 0.11867110732294511
+    },
+    {
+      "stamp_ns": 25000000000,
+      "pose": [
+        2.4878343481169645,
+        5.795662303672462,
+        2.937330028590549
+      ],
+      "covariance": [
+        0.05042485471607476,
+        -3.656963093787846e-05,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -3.656963093787846e-05,
+        0.014574292860540706,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.04012315452702204
+      ],
+      "physical": [
+        2.5649102332044067,
+        5.783514670247617,
+        2.953589383931162
+      ],
+      "error_m": 0.0780272840731819
+    },
+    {
+      "stamp_ns": 25400000000,
+      "pose": [
+        2.481978432206477,
+        5.813887443954392,
+        2.7202954182476633
+      ],
+      "covariance": [
+        0.0562223576723265,
+        -0.004983110594908807,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.004983110594908807,
+        0.01307814738502868,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03454264827839533
+      ],
+      "physical": [
+        2.564927071005557,
+        5.783515877747236,
+        2.7535966185107243
+      ],
+      "error_m": 0.0883340744701378
+    },
+    {
+      "stamp_ns": 25800000000,
+      "pose": [
+        2.4624854941852155,
+        5.815526800881091,
+        2.5197617075636076
+      ],
+      "covariance": [
+        0.06807293604806262,
+        -0.005219386172834589,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.005219386172834589,
+        0.011508586275776667,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.029334239297780333
+      ],
+      "physical": [
+        2.5649345796241745,
+        5.783514817417878,
+        2.5536033201322343
+      ],
+      "error_m": 0.1073339750150352
+    },
+    {
+      "stamp_ns": 26200000000,
+      "pose": [
+        2.453937722644935,
+        5.815327336753453,
+        2.3081426257985136
+      ],
+      "covariance": [
+        0.06998965355478386,
+        -0.006791651414470243,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.006791651414464914,
+        0.017057210000452596,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.030670035448714147
+      ],
+      "physical": [
+        2.5649377922876426,
+        5.783513709371837,
+        2.354898797777594
+      ],
+      "error_m": 0.11546914024042211
+    },
+    {
+      "stamp_ns": 26600000000,
+      "pose": [
+        2.4551119788301223,
+        5.805308057793786,
+        2.138449152898561
+      ],
+      "covariance": [
+        0.06140183685270261,
+        -0.0063266574230708824,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.006326657423069106,
+        0.017196905096355422,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03145819898052201
+      ],
+      "physical": [
+        2.5649391372800654,
+        5.783512943439933,
+        2.1894310508751023
+      ],
+      "error_m": 0.11196888738790974
+    },
+    {
+      "stamp_ns": 27000000000,
+      "pose": [
+        2.475699242738787,
+        5.793893100298936,
+        2.0095934564951152
+      ],
+      "covariance": [
+        0.06251301437048783,
+        -0.005746225370210441,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.005746225370212217,
+        0.01517300387223123,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02739203205125616
+      ],
+      "physical": [
+        2.5649397867929085,
+        5.783512504301966,
+        2.057648026645103
+      ],
+      "error_m": 0.08984225885588533
+    },
+    {
+      "stamp_ns": 27600000000,
+      "pose": [
+        2.4750698189858205,
+        5.7893317923919625,
+        1.8782562424055982
+      ],
+      "covariance": [
+        0.06160473586009953,
+        -0.00839853922220319,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.00839853922220319,
+        0.01617285352267043,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02803786639124385
+      ],
+      "physical": [
+        2.5649402874248106,
+        5.783512211052777,
+        1.917447838256406
+      ],
+      "error_m": 0.09005869544029006
+    }
+  ]
+}

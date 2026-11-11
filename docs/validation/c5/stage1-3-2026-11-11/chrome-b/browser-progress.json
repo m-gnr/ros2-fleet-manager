@@ -1,0 +1,48 @@
+{
+  "scenario": "b",
+  "started": "2026-11-11T18:10:58.775Z",
+  "chrome": "157.0.8103.40",
+  "responses": [
+    {
+      "utc": "2026-11-11T18:11:10.216Z",
+      "status": 201,
+      "request": {
+        "request_id": "ddfff201-d708-4d5c-8d41-6004fe739677",
+        "source_session_id": "8ba59a38-58c8-423a-9eeb-cd3b74888e00",
+        "profile_digest": "8e8396b60c306e795ea84275ac56aa41a47fc8cf090fe14ad9627988bc91fda2",
+        "pickup_id": "pick_A1",
+        "dropoff_id": "packing_1",
+        "priority": "LOW"
+      },
+      "body": {
+        "task_id": "web-ddfff201-d708-4d5c-8d41-6004fe739677",
+        "outcome": "APPLIED"
+      },
+      "retry": {
+        "status": 200,
+        "body": {
+          "task_id": "web-ddfff201-d708-4d5c-8d41-6004fe739677",
+          "outcome": "DUPLICATE"
+        }
+      }
+    },
+    {
+      "utc": "2026-11-11T18:11:10.301Z",
+      "status": 201,
+      "request": {
+        "request_id": "6f6abf14-c58f-4254-ab9a-3e91afaec1cc",
+        "source_session_id": "8ba59a38-58c8-423a-9eeb-cd3b74888e00",
+        "profile_digest": "8e8396b60c306e795ea84275ac56aa41a47fc8cf090fe14ad9627988bc91fda2",
+        "pickup_id": "pick_A2",
+        "dropoff_id": "quality_1",
+        "priority": "LOW"
+      },
+      "body": {
+        "task_id": "web-6f6abf14-c58f-4254-ab9a-3e91afaec1cc",
+        "outcome": "APPLIED"
+      }
+    }
+  ],
+  "errors": [],
+  "transitions": []
+}

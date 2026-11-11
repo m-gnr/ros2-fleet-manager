@@ -1,0 +1,115 @@
+status: DERIVED_EVIDENCE_ONLY
+world_sha256: f714910eecf4c557fb8ed62db9373d70c34cd0155a0054ee28b6b3c09cc15693
+robots:
+  robot_alpha:
+    body_length_m: 0.5
+    body_width_m: 0.3
+    wheels:
+    - center_y_m: 0.2
+      radius_m: 0.1
+      width_m: 0.04
+    - center_y_m: -0.2
+      radius_m: 0.1
+      width_m: 0.04
+    supports:
+    - name: caster
+      radius_m: 0.05
+      link_pose:
+      - -0.2
+      - 0.0
+      - -0.15
+      - 0.0
+      - 0.0
+      - 0.0
+      collision_pose:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+    - name: front_support
+      radius_m: 0.05
+      link_pose:
+      - -0.2
+      - 0.0
+      - -0.15
+      - 0.0
+      - 0.0
+      - 0.0
+      collision_pose:
+      - 0.4
+      - 0.0
+      - 0.001
+      - 0.0
+      - 0.0
+      - 0.0
+    nav2:
+      local_costmap:
+        robot_radius: 0.25
+        inflation_layer:
+          plugin: nav2_costmap_2d::InflationLayer
+          cost_scaling_factor: 3.0
+          inflation_radius: 0.45
+      global_costmap:
+        robot_radius: 0.25
+        inflation_layer:
+          plugin: nav2_costmap_2d::InflationLayer
+          cost_scaling_factor: 3.0
+          inflation_radius: 0.45
+  robot_beta:
+    body_length_m: 0.5
+    body_width_m: 0.3
+    wheels:
+    - center_y_m: 0.2
+      radius_m: 0.1
+      width_m: 0.04
+    - center_y_m: -0.2
+      radius_m: 0.1
+      width_m: 0.04
+    supports:
+    - name: caster
+      radius_m: 0.05
+      link_pose:
+      - -0.2
+      - 0.0
+      - -0.15
+      - 0.0
+      - 0.0
+      - 0.0
+      collision_pose:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 0.0
+    - name: front_support
+      radius_m: 0.05
+      link_pose:
+      - -0.2
+      - 0.0
+      - -0.15
+      - 0.0
+      - 0.0
+      - 0.0
+      collision_pose:
+      - 0.4
+      - 0.0
+      - 0.001
+      - 0.0
+      - 0.0
+      - 0.0
+    nav2:
+      local_costmap:
+        robot_radius: 0.25
+        inflation_layer:
+          plugin: nav2_costmap_2d::InflationLayer
+          cost_scaling_factor: 3.0
+          inflation_radius: 0.45
+      global_costmap:
+        robot_radius: 0.25
+        inflation_layer:
+          plugin: nav2_costmap_2d::InflationLayer
+          cost_scaling_factor: 3.0
+          inflation_radius: 0.45

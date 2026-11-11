@@ -4,6 +4,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
 |---|---|---|
+| C5 Aşama 1.1 | [Rapor](c5/stage1-1-validation-2026-11-11.md) · [Komutlar](c5/stage1-1-commands-2026-11-11.md) | F1 gerçek feedback/EXECUTING düzeltildi; üç izole F2 deneyinde 1 geçti / 2 kaldı. Koşulsuz kabul verilmedi |
 | DDS topic/action | [Action raporu](dds/dds-action-validation-2026-10-23.md) · [Topic raporu](dds/dds-validation-2026-10-22.md) | İlgili kapsamda geçti |
 | A | [Rapor](simulation/a/simulation-validation-2026-10-23.md) | Temel fizik geçti |
 | B1 | [Rapor](simulation/b1/simulation-stage-b-2026-10-23.md) · [Komut eki](simulation/b1/simulation-stage-b-commands-2026-10-23.md) | İki temiz başarılı koşu; ilk hatalar korundu |

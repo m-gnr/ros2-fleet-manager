@@ -1,0 +1,329 @@
+{
+  "scenario": "a",
+  "started": "2026-11-11T15:54:38.689Z",
+  "chrome": "157.0.8103.40",
+  "responses": [
+    {
+      "utc": "2026-11-11T15:54:46.033Z",
+      "status": 201,
+      "request": {
+        "request_id": "52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+        "source_session_id": "2ebe20e8-87d6-4f1a-9b97-ced32b528fab",
+        "profile_digest": "8e8396b60c306e795ea84275ac56aa41a47fc8cf090fe14ad9627988bc91fda2",
+        "pickup_id": "pick_A1",
+        "dropoff_id": "packing_1",
+        "priority": "LOW"
+      },
+      "body": {
+        "task_id": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+        "outcome": "APPLIED"
+      },
+      "retry": {
+        "status": 200,
+        "body": {
+          "task_id": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+          "outcome": "DUPLICATE"
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "transitions": [
+    {
+      "utc": "2026-11-11T15:54:46.161Z",
+      "sequence": 10,
+      "task": {
+        "task_id": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+        "status": "QUEUED",
+        "priority": "LOW",
+        "pickup": {
+          "x": -7,
+          "y": 5.75,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "dropoff": {
+          "x": -2.75,
+          "y": -7.75,
+          "yaw": -1.5707963267948966,
+          "frame_id": "map"
+        },
+        "assigned_robot_id": null,
+        "created_at_source_seconds": 829.80621888,
+        "review_hold": false
+      }
+    },
+    {
+      "utc": "2026-11-11T15:54:46.345Z",
+      "sequence": 11,
+      "task": {
+        "task_id": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+        "status": "EXECUTING",
+        "priority": "LOW",
+        "pickup": {
+          "x": -7,
+          "y": 5.75,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "dropoff": {
+          "x": -2.75,
+          "y": -7.75,
+          "yaw": -1.5707963267948966,
+          "frame_id": "map"
+        },
+        "assigned_robot_id": "robot_alpha",
+        "created_at_source_seconds": 829.80621888,
+        "review_hold": false
+      }
+    },
+    {
+      "utc": "2026-11-11T15:56:31.498Z",
+      "sequence": 421,
+      "task": {
+        "task_id": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+        "status": "COMPLETED",
+        "priority": "LOW",
+        "pickup": {
+          "x": -7,
+          "y": 5.75,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "dropoff": {
+          "x": -2.75,
+          "y": -7.75,
+          "yaw": -1.5707963267948966,
+          "frame_id": "map"
+        },
+        "assigned_robot_id": "robot_alpha",
+        "created_at_source_seconds": 829.80621888,
+        "review_hold": false
+      }
+    }
+  ],
+  "visibleExecuting": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc\tYürütülüyor\tDüşük\t-7, 5,75 m · map\t-2,75, -7,75 m · map\trobot_alpha\t829,81 sn",
+  "visibleCompleted": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc\tTamamlandı\tDüşük\t-7, 5,75 m · map\t-2,75, -7,75 m · map\trobot_alpha\t829,81 sn",
+  "final": {
+    "schema_version": 1,
+    "source_session_id": "2ebe20e8-87d6-4f1a-9b97-ced32b528fab",
+    "sequence": 422,
+    "generated_at_utc": "2026-11-11T15:56:31.697298Z",
+    "map_frame": "map",
+    "robots": [
+      {
+        "robot_id": "robot_alpha",
+        "state": "IDLE",
+        "telemetry": "LIVE",
+        "initial_status_verified": true,
+        "status_sim_ns": "107420000000",
+        "status_age_sec": 0.08571354200000769,
+        "pose": {
+          "x": -2.5747058021571,
+          "y": -7.61395243977416,
+          "yaw": -1.7902137251702763,
+          "frame_id": "map"
+        },
+        "pose_sim_ns": "107415000000",
+        "pose_reliability": "LIVE",
+        "battery_reliability": "LIVE",
+        "battery_soc_percent": 95.72080993652344,
+        "battery_energy_wh": 95.72081066068769,
+        "battery_sim_ns": "107345000000",
+        "charging": "NOT_CHARGING",
+        "charging_station_id": null,
+        "active_task_id": null
+      },
+      {
+        "robot_id": "robot_beta",
+        "state": "IDLE",
+        "telemetry": "LIVE",
+        "initial_status_verified": true,
+        "status_sim_ns": "107375000000",
+        "status_age_sec": 0.12348695800005771,
+        "pose": {
+          "x": 5.250000000000112,
+          "y": 7.74999999999988,
+          "yaw": 1.5707963267948963,
+          "frame_id": "map"
+        },
+        "pose_sim_ns": "107345000000",
+        "pose_reliability": "LIVE",
+        "battery_reliability": "LIVE",
+        "battery_soc_percent": 99.9425277709961,
+        "battery_energy_wh": 99.94252777772762,
+        "battery_sim_ns": "107345000000",
+        "charging": "NOT_CHARGING",
+        "charging_station_id": null,
+        "active_task_id": null
+      }
+    ],
+    "tasks": [
+      {
+        "task_id": "web-52bfd837-ebe5-4a9b-86a7-b96ef34c3afc",
+        "status": "COMPLETED",
+        "priority": "LOW",
+        "pickup": {
+          "x": -7,
+          "y": 5.75,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "dropoff": {
+          "x": -2.75,
+          "y": -7.75,
+          "yaw": -1.5707963267948966,
+          "frame_id": "map"
+        },
+        "assigned_robot_id": "robot_alpha",
+        "created_at_source_seconds": 829.80621888,
+        "review_hold": false
+      }
+    ],
+    "task_counts": {
+      "total": 1,
+      "queued": 0,
+      "active": 0
+    },
+    "stations": [
+      {
+        "station_id": "dock_1",
+        "station_type": "CHARGING",
+        "pose": {
+          "x": 7,
+          "y": 8.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "UNAVAILABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "dock_2",
+        "station_type": "CHARGING",
+        "pose": {
+          "x": 8.25,
+          "y": 8.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "UNAVAILABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "dock_3",
+        "station_type": "CHARGING",
+        "pose": {
+          "x": 9.5,
+          "y": 8.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "UNAVAILABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "dock_4",
+        "station_type": "CHARGING",
+        "pose": {
+          "x": 10.75,
+          "y": 8.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "UNAVAILABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "dock_5",
+        "station_type": "CHARGING",
+        "pose": {
+          "x": 12,
+          "y": 8.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "UNAVAILABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "dock_6",
+        "station_type": "CHARGING",
+        "pose": {
+          "x": 13.25,
+          "y": 8.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "UNAVAILABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "park_1",
+        "station_type": "PARKING",
+        "pose": {
+          "x": 5.25,
+          "y": 5.25,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "NOT_APPLICABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "park_2",
+        "station_type": "PARKING",
+        "pose": {
+          "x": 5.25,
+          "y": 6.5,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "NOT_APPLICABLE",
+        "charging_robot_id": null
+      },
+      {
+        "station_id": "park_3",
+        "station_type": "PARKING",
+        "pose": {
+          "x": 5.25,
+          "y": 7.75,
+          "yaw": 1.5707963267948966,
+          "frame_id": "map"
+        },
+        "state": "FREE",
+        "reserved_by_robot_id": null,
+        "occupied_by_robot_id": null,
+        "charging": "NOT_APPLICABLE",
+        "charging_robot_id": null
+      }
+    ],
+    "backend_session_id": "8e87e529-3731-4ea8-8d5f-70931161e50f"
+  },
+  "result": "geçti",
+  "finished": "2026-11-11T15:56:31.889Z"
+}

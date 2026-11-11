@@ -1,0 +1,105 @@
+{
+  "integrity": "ok",
+  "foreign_keys": [],
+  "tasks": [
+    {
+      "task_id": "parallel",
+      "status": "COMPLETED",
+      "robot_id": "robot_2",
+      "assignment_epoch": 1,
+      "goal_uuid": "3aeeb5e2-5129-4b52-8751-c329511492a5",
+      "snapshot": "{\"assigned_robot_id\": \"robot_2\", \"assignment_epoch\": 1, \"created_at\": 526.269577408, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": -3.5, \"y\": 2.5, \"yaw\": 3.141592653589793}, \"goal_uuid\": \"3aeeb5e2-5129-4b52-8751-c329511492a5\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": -1.5, \"y\": 2.5, \"yaw\": 3.141592653589793}, \"preemption_count\": 0, \"priority\": 1, \"status\": \"COMPLETED\", \"task_id\": \"parallel\"}"
+    },
+    {
+      "task_id": "victim",
+      "status": "ASSIGNED",
+      "robot_id": "robot_1",
+      "assignment_epoch": 3,
+      "goal_uuid": "d1064265-b329-4e55-96b9-20f658339b75",
+      "snapshot": "{\"assigned_robot_id\": \"robot_1\", \"assignment_epoch\": 3, \"created_at\": 526.449988491, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 1.5, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": \"d1064265-b329-4e55-96b9-20f658339b75\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 1.0, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 1, \"priority\": 3, \"status\": \"ASSIGNED\", \"task_id\": \"victim\"}"
+    },
+    {
+      "task_id": "urgent",
+      "status": "COMPLETED",
+      "robot_id": "robot_1",
+      "assignment_epoch": 2,
+      "goal_uuid": "efd1cde4-328b-4c9f-a38a-948b8f9a8a40",
+      "snapshot": "{\"assigned_robot_id\": \"robot_1\", \"assignment_epoch\": 2, \"created_at\": 526.684017825, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 0.2, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": \"efd1cde4-328b-4c9f-a38a-948b8f9a8a40\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": -0.8, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 0, \"priority\": 1, \"status\": \"COMPLETED\", \"task_id\": \"urgent\"}"
+    },
+    {
+      "task_id": "younger",
+      "status": "QUEUED",
+      "robot_id": null,
+      "assignment_epoch": null,
+      "goal_uuid": null,
+      "snapshot": "{\"assigned_robot_id\": null, \"assignment_epoch\": null, \"created_at\": 526.841902742, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 1.6, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": null, \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 1.1, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 0, \"priority\": 3, \"status\": \"QUEUED\", \"task_id\": \"younger\"}"
+    }
+  ],
+  "outbox": [
+    {
+      "sequence": 1,
+      "command_id": "EXECUTE_TASK:3aeeb5e2-5129-4b52-8751-c329511492a5",
+      "kind": "EXECUTE_TASK",
+      "task_id": "parallel",
+      "assignment_epoch": 1,
+      "goal_uuid": "3aeeb5e2-5129-4b52-8751-c329511492a5",
+      "payload": "{\"assigned_robot_id\": \"robot_2\", \"assignment_epoch\": 1, \"created_at\": 526.269577408, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": -3.5, \"y\": 2.5, \"yaw\": 3.141592653589793}, \"goal_uuid\": \"3aeeb5e2-5129-4b52-8751-c329511492a5\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": -1.5, \"y\": 2.5, \"yaw\": 3.141592653589793}, \"preemption_count\": 0, \"priority\": 1, \"status\": \"ASSIGNED\", \"task_id\": \"parallel\"}",
+      "state": "SENT",
+      "attempts": 1,
+      "next_attempt_at": 0.0,
+      "last_error": null
+    },
+    {
+      "sequence": 2,
+      "command_id": "EXECUTE_TASK:0d5d7199-d359-44e3-960c-32800dc881a8",
+      "kind": "EXECUTE_TASK",
+      "task_id": "victim",
+      "assignment_epoch": 1,
+      "goal_uuid": "0d5d7199-d359-44e3-960c-32800dc881a8",
+      "payload": "{\"assigned_robot_id\": \"robot_1\", \"assignment_epoch\": 1, \"created_at\": 526.449988491, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 1.5, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": \"0d5d7199-d359-44e3-960c-32800dc881a8\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 1.0, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 0, \"priority\": 3, \"status\": \"ASSIGNED\", \"task_id\": \"victim\"}",
+      "state": "SENT",
+      "attempts": 1,
+      "next_attempt_at": 0.0,
+      "last_error": null
+    },
+    {
+      "sequence": 3,
+      "command_id": "CANCEL_TASK:0d5d7199-d359-44e3-960c-32800dc881a8:81be7d9d-aa6e-4f35-9fd6-3b89ecdc7abe",
+      "kind": "CANCEL_TASK",
+      "task_id": "victim",
+      "assignment_epoch": 1,
+      "goal_uuid": "0d5d7199-d359-44e3-960c-32800dc881a8",
+      "payload": "{\"assigned_robot_id\": \"robot_1\", \"assignment_epoch\": 1, \"created_at\": 526.449988491, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 1.5, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": \"0d5d7199-d359-44e3-960c-32800dc881a8\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 1.0, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 0, \"priority\": 3, \"status\": \"EXECUTING\", \"task_id\": \"victim\"}",
+      "state": "SENT",
+      "attempts": 1,
+      "next_attempt_at": 0.0,
+      "last_error": null
+    },
+    {
+      "sequence": 4,
+      "command_id": "EXECUTE_TASK:efd1cde4-328b-4c9f-a38a-948b8f9a8a40",
+      "kind": "EXECUTE_TASK",
+      "task_id": "urgent",
+      "assignment_epoch": 2,
+      "goal_uuid": "efd1cde4-328b-4c9f-a38a-948b8f9a8a40",
+      "payload": "{\"assigned_robot_id\": \"robot_1\", \"assignment_epoch\": 2, \"created_at\": 526.684017825, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 0.2, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": \"efd1cde4-328b-4c9f-a38a-948b8f9a8a40\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": -0.8, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 0, \"priority\": 1, \"status\": \"ASSIGNED\", \"task_id\": \"urgent\"}",
+      "state": "SENT",
+      "attempts": 1,
+      "next_attempt_at": 0.0,
+      "last_error": null
+    },
+    {
+      "sequence": 5,
+      "command_id": "EXECUTE_TASK:d1064265-b329-4e55-96b9-20f658339b75",
+      "kind": "EXECUTE_TASK",
+      "task_id": "victim",
+      "assignment_epoch": 3,
+      "goal_uuid": "d1064265-b329-4e55-96b9-20f658339b75",
+      "payload": "{\"assigned_robot_id\": \"robot_1\", \"assignment_epoch\": 3, \"created_at\": 526.449988491, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 1.5, \"y\": -0.5, \"yaw\": 0}, \"goal_uuid\": \"d1064265-b329-4e55-96b9-20f658339b75\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 1.0, \"y\": -0.5, \"yaw\": 0}, \"preemption_count\": 1, \"priority\": 3, \"status\": \"ASSIGNED\", \"task_id\": \"victim\"}",
+      "state": "PENDING",
+      "attempts": 0,
+      "next_attempt_at": 0.0,
+      "last_error": null
+    }
+  ]
+}

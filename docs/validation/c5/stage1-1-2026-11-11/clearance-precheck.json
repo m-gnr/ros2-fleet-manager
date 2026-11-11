@@ -1,0 +1,284 @@
+{
+  "status": "STATIC_PRECHECK_NOT_TRAFFIC_ACCEPTANCE",
+  "corridor_width_m": 2.25,
+  "rack_approach_distance_m": 0.75,
+  "remaining_pickup_lane_m": 1.05,
+  "robots": {
+    "robot_alpha": {
+      "physical_width_m": 0.44,
+      "physical_length_m": 0.5,
+      "conservative_aabb_rotation_diameter_m": 0.6660330322138686,
+      "body_corner_radius_m": 0.29154759474226505,
+      "configured_approach_envelope_diameter_m": 0.9,
+      "remaining_straight_tolerance_m": 0.6100000000000001,
+      "remaining_configured_envelope_tolerance_m": 0.15000000000000002,
+      "nav2_circle_covers_body_corners": false,
+      "center_band_outside_inflation_m": 0.15000000000000002
+    },
+    "robot_beta": {
+      "physical_width_m": 0.44,
+      "physical_length_m": 0.5,
+      "conservative_aabb_rotation_diameter_m": 0.6660330322138686,
+      "body_corner_radius_m": 0.29154759474226505,
+      "configured_approach_envelope_diameter_m": 0.9,
+      "remaining_straight_tolerance_m": 0.6100000000000001,
+      "remaining_configured_envelope_tolerance_m": 0.15000000000000002,
+      "nav2_circle_covers_body_corners": false,
+      "center_band_outside_inflation_m": 0.15000000000000002
+    }
+  },
+  "station_count": 27,
+  "inventory": [
+    {
+      "id": "pick_A1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -7.0,
+        "y": 5.75,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_A2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 2.25,
+        "y": 5.75,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_B1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -7.0,
+        "y": 2.5,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_B2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 6.0,
+        "y": 2.5,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_C1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -7.0,
+        "y": -0.75,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_C2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 6.0,
+        "y": -0.75,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_D1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -8.0,
+        "y": -4.0,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_D2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 7.0,
+        "y": -4.0,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_E1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -5.0,
+        "y": -4.75,
+        "yaw": -1.5707963267948966
+      }
+    },
+    {
+      "id": "pick_E2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 3.0,
+        "y": -4.75,
+        "yaw": -1.5707963267948966
+      }
+    },
+    {
+      "id": "inbound_1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -13.75,
+        "y": -1.25,
+        "yaw": 3.141592653589793
+      }
+    },
+    {
+      "id": "inbound_2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -13.75,
+        "y": 1.25,
+        "yaw": 3.141592653589793
+      }
+    },
+    {
+      "id": "packing_1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": -2.75,
+        "y": -7.75,
+        "yaw": -1.5707963267948966
+      }
+    },
+    {
+      "id": "packing_2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 0.75,
+        "y": -7.75,
+        "yaw": -1.5707963267948966
+      }
+    },
+    {
+      "id": "delivery-01",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 13.75,
+        "y": -6.75,
+        "yaw": 0.0
+      }
+    },
+    {
+      "id": "shipping_2",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 13.75,
+        "y": -5.25,
+        "yaw": 0.0
+      }
+    },
+    {
+      "id": "shipping_3",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 13.75,
+        "y": -3.75,
+        "yaw": 0.0
+      }
+    },
+    {
+      "id": "quality_1",
+      "type": "TRANSFER",
+      "pose": {
+        "x": 1.5,
+        "y": 0.5,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "dock_1",
+      "type": "DOCK",
+      "pose": {
+        "x": 7.0,
+        "y": 8.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "dock_2",
+      "type": "DOCK",
+      "pose": {
+        "x": 8.25,
+        "y": 8.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "dock_3",
+      "type": "DOCK",
+      "pose": {
+        "x": 9.5,
+        "y": 8.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "dock_4",
+      "type": "DOCK",
+      "pose": {
+        "x": 10.75,
+        "y": 8.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "dock_5",
+      "type": "DOCK",
+      "pose": {
+        "x": 12.0,
+        "y": 8.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "dock_6",
+      "type": "DOCK",
+      "pose": {
+        "x": 13.25,
+        "y": 8.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "park_1",
+      "type": "PARK",
+      "pose": {
+        "x": 5.25,
+        "y": 5.25,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "park_2",
+      "type": "PARK",
+      "pose": {
+        "x": 5.25,
+        "y": 6.5,
+        "yaw": 1.5707963267948966
+      }
+    },
+    {
+      "id": "park_3",
+      "type": "PARK",
+      "pose": {
+        "x": 5.25,
+        "y": 7.75,
+        "yaw": 1.5707963267948966
+      }
+    }
+  ],
+  "nominal_burger_source": "https://emanual.robotis.com/docs/en/platform/turtlebot3/features/",
+  "nominal_burger_width_m": 0.178,
+  "formulas": [
+    "C = aisle_width - rack_approach_distance - configured_approach_radius",
+    "W = max(body_width, outer_wheel_extent)",
+    "D_rotation_bound = sqrt(body_length**2 + W**2)",
+    "T = C - E; E is the selected documented envelope diameter"
+  ]
+}

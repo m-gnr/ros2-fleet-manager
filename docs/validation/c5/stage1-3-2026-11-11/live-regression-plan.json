@@ -1,0 +1,84 @@
+[
+  {
+    "name": "regression-c333",
+    "project": "fleet-c5-stage13-c333",
+    "domain": 201,
+    "layers": [
+      "docker/compose/docker-compose.dds.yml",
+      "docker/compose/docker-compose.simulation-check.yml",
+      "docker/compose/docker-compose.simulation-c3-3-3.yml"
+    ],
+    "markers": [
+      "ALL_C3_3_3_TESTS_PASSED"
+    ],
+    "databases": [
+      "/tmp/c3_3_3_t01.db",
+      "/tmp/c3_3_3_t02.db",
+      "/tmp/c3_3_3_t04.db",
+      "/tmp/c3_3_3_t08.db"
+    ]
+  },
+  {
+    "name": "regression-high",
+    "project": "fleet-c5-stage13-high",
+    "domain": 202,
+    "layers": [
+      "docker/compose/docker-compose.dds.yml",
+      "docker/compose/docker-compose.simulation-check.yml",
+      "docker/compose/docker-compose.simulation-c3-3-3.yml"
+    ],
+    "high": true,
+    "markers": [
+      "SCENARIO_PASSED.*T04-HIGH-E2E"
+    ],
+    "databases": [
+      "/tmp/c3_3_3_t04-high-e2e.db"
+    ]
+  },
+  {
+    "name": "regression-c41",
+    "project": "fleet-c5-stage13-c41",
+    "domain": 203,
+    "layers": [
+      "docker/compose/docker-compose.dds.yml",
+      "docker/compose/docker-compose.simulation-check.yml",
+      "docker/compose/docker-compose.simulation-c3-3-3.yml",
+      "docker/compose/docker-compose.simulation-c4-1.yml"
+    ],
+    "markers": [
+      "ALL_C4_1_TESTS_PASSED"
+    ]
+  },
+  {
+    "name": "regression-c42",
+    "project": "fleet-c5-stage13-c42",
+    "domain": 204,
+    "layers": [
+      "docker/compose/docker-compose.dds.yml",
+      "docker/compose/docker-compose.simulation-check.yml",
+      "docker/compose/docker-compose.simulation-c3-3-3.yml",
+      "docker/compose/docker-compose.simulation-c4-1.yml",
+      "docker/compose/docker-compose.simulation-c4-2.yml"
+    ],
+    "markers": [
+      "ALL_C4_2_TESTS_PASSED"
+    ]
+  },
+  {
+    "name": "regression-c44",
+    "project": "fleet-c5-stage13-c44",
+    "domain": 205,
+    "layers": [
+      "docker/compose/docker-compose.dds.yml",
+      "docker/compose/docker-compose.simulation-check.yml",
+      "docker/compose/docker-compose.simulation-c3-3-3.yml",
+      "docker/compose/docker-compose.simulation-c4-1.yml",
+      "docker/compose/docker-compose.simulation-c4-2.yml",
+      "docker/compose/docker-compose.simulation-c4-3.yml",
+      "docker/compose/docker-compose.simulation-c4-4.yml"
+    ],
+    "markers": [
+      "ALL_C4_4_TESTS_PASSED"
+    ]
+  }
+]

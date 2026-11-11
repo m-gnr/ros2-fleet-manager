@@ -48,7 +48,7 @@ def main():
     names=subprocess.check_output(['docker','ps','-a','--filter','name=fleet-c5-stage13-','--format','{{.Names}}'],text=True).splitlines()
     for name in names:
         data=json.loads(subprocess.check_output(['docker','inspect',name],text=True))[0]
-        containers.append(dict(name=name,image=data['Image'],state=data['State'],command=data['Config']['Cmd'],env=data['Config']['Env'],mounts=data['Mounts']))
+        containers.append(dict(name=name,image=data['Image'],state=data['State'],command=data['Config']['Cmd'],env=data['Config']['Env'],mounts=data['Mounts'],extra_hosts=data['HostConfig'].get('ExtraHosts'),port_bindings=data['HostConfig'].get('PortBindings')))
     result=dict(changed_initial_files=changes,unexpected_initial_changes=unexpected,worlds=worlds,
         contract_violations=sum(bool(w['issues']) for w in worlds),containers=containers,image_id=image[0]['Id'])
     (root/'preservation-and-contract-audit.json').write_text(json.dumps(result,indent=2))

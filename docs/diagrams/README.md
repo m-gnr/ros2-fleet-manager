@@ -918,7 +918,7 @@ flowchart TD
 
 ## 16. REST / WebSocket ve 3D panel
 
-**Durum:** PARTIAL. C5 Aşama 1.5 salt okunur operasyon ve 3D TF/Path izlemeyi uygular. Görev girişi sonraki aşamadır.
+**Durum:** PARTIAL. C5 Aşama 1.5 salt okunur operasyon ve 3D TF/Path izlemeyi uygular. 11 Kasım 2026 güncellemesiyle katalogdan görev girişi, yerel soket ve tek consumer bağlantısı eklenmiştir. Host API/SQLite ve Chrome kanıtı ile canlı Nav2 hareket kapsamı [30 × 18 m kaydında](../validation/c5/warehouse-30x18-validation-2026-11-11.md) ayrılır. Kök üç servis kabulü bu kayıtla genişletilmez.
 
 | Girdiler | Çıktılar | Koşullar |
 |---|---|---|
@@ -939,11 +939,16 @@ flowchart LR
  EX["Robot Executor"]:::executor -->|"RobotStatus / terminal sonuç"| Q["FM tek consumer"]:::fm
  Q -->|"Atomik durum ve Outbox kaydı"| DB[("SQLite")]:::db
  Q -->|"Commit sonrası yetkili görünüm"| S["Sınırlı son snapshot"]:::fm
- S -->|"Özel geçici dosya"| API["Salt okunur FastAPI"]:::ui
+ S -->|"Özel geçici dosya"| API["FastAPI / kaynak sınırı"]:::ui
  ROS["Salt okunur TF / Path köprüsü"]:::executor -->|"Robot ID / map / gözlemlenen plan"| API
  API -->|"Tek WebSocket • ayrı ürün ve TF mesajları"| U["React + Three.js 3D paneli"]:::ui
  API -.->|"Kaynak başına süre ve oturum"| R["Yeniden eşitleme"]:::wait
  R -.-> U
+ Y["Tek filo YAML / yaklaşma kataloğu"]:::fm -->|"SDF / harita / sahne"| API
+ U -->|"Nokta ID seçimi / istek UUID"| W{"Origin / oturum / profil özeti geçerli mi?"}:::decision
+ W -->|"Evet"| I["Yerel görev soketi"]:::ui
+ I -->|"SUBMIT_TASK / aynı UUID ile retry"| Q
+ W -->|"Hayır"| B["İstek reddi"]:::error
 
  classDef fm fill:#dbeafe,stroke:#2563eb,color:#172554,stroke-width:1.5px;
  classDef executor fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:1.5px;

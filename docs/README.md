@@ -21,6 +21,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [C5 Aşama 1.3 AMCL ve güvenli raf yaklaşması](validation/c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komut eki](validation/c5/c5-stage1-3-commands-2026-11-11.md).
 - [C5 Aşama 1.2 fiziksel model, odometri, AMCL ve footprint](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md): son pickup 1/5; F2 ve paralel görev regresyonu açık, koşulsuz kabul yok.
 - [C5 Aşama 1.1 feedback ve fiziksel pickup yeniden doğrulaması](validation/c5/stage1-1-validation-2026-11-11.md) · [Komutlar](validation/c5/stage1-1-commands-2026-11-11.md): F1 düzeltildi; F2 açık, koşulsuz kabul yok.
+- [30 × 18 m uçtan uca görev doğrulaması — Aşama 1](validation/c5/e2e-stage1-validation-2026-11-11.md) · [Komut eki](validation/c5/e2e-stage1-commands-2026-11-11.md): üç gerçek COMPLETED; feedback ve fiziksel hassasiyet bulguları nedeniyle koşulsuz kabul verilmedi. Sonraki aşamalar onay bekliyor.
+- [30 × 18 m dağıtılmış depo ve katalog görev girişi](validation/c5/warehouse-30x18-validation-2026-11-11.md) · [Komut eki](validation/c5/warehouse-30x18-commands-2026-11-11.md)
+
 - [C5 Aşama 1 salt okunur operasyon paneli](design/c5-readonly-dashboard.md) · [API sözleşmesi](design/c5-readonly-api.md) · [Arayüz ve koordinatlar](design/c5-dashboard-ui.md) · [Doğrulama](validation/c5/c5-stage1-validation-2026-11-06.md)
 - [C5 Aşama 1.5 3D operasyon paneli](design/c5-3d-operations.md) · [Karar](decisions/c5-stage1-5-3d-decision-2026-11-06.md) · [Doğrulama](validation/c5/c5-stage1-5-validation-2026-11-06.md)
 - [C5 Aşama 1.6 arayüz doğrulaması](validation/c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](validation/c5/c5-stage1-6-commands-2026-11-06.md)

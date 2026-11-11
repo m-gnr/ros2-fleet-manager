@@ -1,0 +1,67 @@
+{
+  "profile_digest": "8e8396b60c306e795ea84275ac56aa41a47fc8cf090fe14ad9627988bc91fda2",
+  "reproduced": {
+    "warehouse.sdf": "f714910eecf4c557fb8ed62db9373d70c34cd0155a0054ee28b6b3c09cc15693",
+    "map.pgm": "20e8d8e7231db87adb5008fda3b1ccde8263118cc21d392ec0f791e8c8eb3c87",
+    "scene.json": "44c25d2d5b890b900e72c042679835be2de8f36cb28d1d127843e08a9ffda9f1"
+  },
+  "routes": [
+    {
+      "id": "rack_to_packing",
+      "legs": [
+        {
+          "endpoint": "pick_A1",
+          "points": 122,
+          "length_m": 3.083321694978746,
+          "max_cost": 0,
+          "goal_error_m": 0.21080041960196974
+        },
+        {
+          "endpoint": "packing_1",
+          "points": 729,
+          "length_m": 18.22263619965286,
+          "max_cost": 55,
+          "goal_error_m": 0.344335796587026
+        }
+      ]
+    },
+    {
+      "id": "rack_to_shipping",
+      "legs": [
+        {
+          "endpoint": "pick_C2",
+          "points": 508,
+          "length_m": 12.733743842049346,
+          "max_cost": 0,
+          "goal_error_m": 0.10962808453384833
+        },
+        {
+          "endpoint": "delivery-01",
+          "points": 427,
+          "length_m": 10.710133099348386,
+          "max_cost": 0,
+          "goal_error_m": 0.29019263940132944
+        }
+      ]
+    },
+    {
+      "id": "inbound_to_rack",
+      "legs": [
+        {
+          "endpoint": "inbound_1",
+          "points": 1159,
+          "length_m": 29.008359144231935,
+          "max_cost": 58,
+          "goal_error_m": 0.22414746186203013
+        },
+        {
+          "endpoint": "pick_B1",
+          "points": 326,
+          "length_m": 8.226481903164998,
+          "max_cost": 55,
+          "goal_error_m": 0.1981002597179589
+        }
+      ]
+    }
+  ]
+}

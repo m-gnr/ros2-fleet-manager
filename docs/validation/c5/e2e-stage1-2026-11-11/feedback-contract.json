@@ -1,0 +1,28 @@
+{
+  "scope": "ISOLATED_CONTRACT_PROBE_NOT_PHYSICAL_EVIDENCE",
+  "errors": [
+    {
+      "type": "TypeError",
+      "message": "FleetManagerCore.handle_action_feedback() got an unexpected keyword argument 'distance_to_goal'"
+    }
+  ],
+  "events": [
+    {
+      "kind": "ACTION_FEEDBACK",
+      "payload": {
+        "robot_id": "probe_robot",
+        "task_id": "probe_task",
+        "assignment_epoch": 1,
+        "goal_uuid": "3a784a26-74d8-4289-8938-524178a469ce",
+        "status_seq": 1,
+        "current_phase": 1,
+        "distance_to_goal": 1.0,
+        "battery_soc": 100.0
+      }
+    }
+  ],
+  "before": "ASSIGNED",
+  "after": "ASSIGNED",
+  "committed_feedback_events": 0,
+  "result": "ba\u015far\u0131s\u0131z"
+}

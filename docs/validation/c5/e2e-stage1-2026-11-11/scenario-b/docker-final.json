@@ -1,0 +1,254 @@
+[
+    {
+        "Id": "06c6bc34ce8e195aec5d80be32d47c365acbc59cf0ed656d25815789c561a74d",
+        "Created": "2026-11-11T15:14:05.152199793Z",
+        "Path": "bash",
+        "Args": [
+            "-ec",
+            "source /opt/ros/humble/setup.bash\nsource /evidence/install/setup.bash\nexport PYTHONPATH=/workspace:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}\npython3 docker/simulation-warehouse-grid/stage1_run.py config/fleet.warehouse-30x18.yaml /evidence/scenario-b --api-port 20082 --scene-port 20083 --origin http://127.0.0.1:20081"
+        ],
+        "State": {
+            "Status": "exited",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-11T15:14:05.198745126Z",
+            "FinishedAt": "2026-11-11T15:16:16.77815509Z"
+        },
+        "Image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+        "ResolvConfPath": "/var/lib/docker/containers/06c6bc34ce8e195aec5d80be32d47c365acbc59cf0ed656d25815789c561a74d/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/06c6bc34ce8e195aec5d80be32d47c365acbc59cf0ed656d25815789c561a74d/hostname",
+        "HostsPath": "/var/lib/docker/containers/06c6bc34ce8e195aec5d80be32d47c365acbc59cf0ed656d25815789c561a74d/hosts",
+        "LogPath": "",
+        "Name": "/fleet-c5-e2e-stage1-b",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/e2e-stage1-2026-11-11:/evidence",
+                "fleet-c5-stage1-20261111:/var/lib/fleet",
+                "/host_mnt/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid:/workspace:ro"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "local",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "20082/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "20082"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [
+                "scene:127.0.0.1"
+            ],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ],
+            "Init": true
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid/docs/validation/c5/e2e-stage1-2026-11-11",
+                "Destination": "/evidence",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/host_mnt/Users/murat/develop/ros2-fleet-manager-c5-warehouse-grid",
+                "Destination": "/workspace",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "volume",
+                "Name": "fleet-c5-stage1-20261111",
+                "Source": "/var/lib/docker/volumes/fleet-c5-stage1-20261111/_data",
+                "Destination": "/var/lib/fleet",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "06c6bc34ce8e",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "20082/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PYTHONDONTWRITEBYTECODE=1",
+                "ROS_DOMAIN_ID=164",
+                "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+                "ROS_LOCALHOST_ONLY=0",
+                "LIBGL_ALWAYS_SOFTWARE=1",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "LC_ALL=C.UTF-8",
+                "ROS_DISTRO=humble",
+                "PYTHONUNBUFFERED=1"
+            ],
+            "Cmd": [
+                "-ec",
+                "source /opt/ros/humble/setup.bash\nsource /evidence/install/setup.bash\nexport PYTHONPATH=/workspace:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}\npython3 docker/simulation-warehouse-grid/stage1_run.py config/fleet.warehouse-30x18.yaml /evidence/scenario-b --api-port 20082 --scene-port 20083 --origin http://127.0.0.1:20081"
+            ],
+            "Image": "ros2-fleet-c5-validation:humble-fortress",
+            "Volumes": null,
+            "WorkingDir": "/workspace",
+            "Entrypoint": [
+                "bash"
+            ],
+            "Labels": {
+                "com.docker.compose.project": "ros2-fleet-simulation-c3-3-3",
+                "com.docker.compose.service": "backend",
+                "com.docker.compose.version": "5.6.1",
+                "org.opencontainers.image.version": "22.04"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "f874dd081d975599f743af797f50c983eb7b779cb58bcb7ce54356376cdf868f",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:86fc671f91794fd0ebc8aef61fba5eca5fdd9440482e34a7fdb9a05554526b6a",
+            "size": 4306,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]

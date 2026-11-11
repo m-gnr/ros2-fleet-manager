@@ -11,13 +11,16 @@ Headless ROS 2 simülasyonunda çok robotlu pickup/dropoff görevlerini öncelik
 - **Mevcut:** Düşük SoC/FIFO şarj kuyruğu, fiziksel dock temasıyla şarj ve kanıtlı istasyon devri.
 - **Mevcut:** C5 Aşama 1.6, salt okunur operasyon özetini, seçili robotu ve ROS TF/Path tabanlı açık 3D depoyu kompakt genel görünümde birleştirir.
 
+- **Mevcut:** 30 × 18 m ortak depo profili, dağıtılmış pick/teslim kataloğu, costmap bindirmesi ve tek consumer’a bağlı görev oluşturma. [Doğrulama kapsamı](docs/validation/c5/warehouse-30x18-validation-2026-11-11.md)
+
 ## Mimari genel bakış
 
 Üç servisli hedef **ONAYLANDI**; nihai üç servis dağıtımı **HENÜZ TEST EDİLMEDİ**.
 
 ```mermaid
 flowchart LR
-    UI["React + TypeScript + Three.js"] <-->|"GET / WebSocket"| API["FastAPI • salt okunur"]
+    UI["React + TypeScript + Three.js"] <-->|"HTTP / WebSocket"| API["FastAPI"]
+    API -->|"Katalog görevi / yerel soket / SUBMIT_TASK"| FM
     ROS["Salt okunur TF / Path köprüsü"] --> API
     FM["Fleet Manager + SQLite"] -->|"Commit sonrası snapshot"| API
     FM <-->|"ROS 2 / DDS"| SIM["simulation: Gazebo + Nav2 / AMCL + Executor<br/>Battery Simulator ve fiziksel dock"]
@@ -40,7 +43,7 @@ Kayıtlı canlı deney ortamı Apple Silicon / linux-arm64 container'lardır. Di
 ```text
 backend/fleet_manager/   Domain, tek consumer, SQLite ve ROS adaptörleri
 fleet_config/           Paylaşılan filo doğrulayıcı ve CLI
-backend/dashboard/      Salt okunur snapshot, REST ve WebSocket
+backend/dashboard/      Snapshot, REST/WebSocket ve katalog görev girişi
 frontend/               React/TypeScript 3D operasyon paneli
 fleet-visualizer/bridge Salt okunur ROS TF/Path köprüsü
 ros2_ws/src/             Robot Executor ve Battery Simulator ROS 2 paketleri
@@ -99,6 +102,7 @@ Tek filo kaynağı [fleet.yaml](config/fleet.yaml); alanlar ve birimler [C1 belg
 | C5 Aşama 1 | Salt okunur API, WebSocket ve operasyon paneli | [Tarihsel 2D doğrulaması](docs/validation/c5/c5-stage1-validation-2026-11-06.md) |
 | C5 Aşama 1.5 | Açık temalı 3D depo, TF/Path ve ayrı ürün güncelliği | [Gazebo ve Chrome doğrulaması](docs/validation/c5/c5-stage1-5-validation-2026-11-06.md) |
 | C5 Aşama 1.6 | Depo öncelikli genel görünüm, kamera kadrajı ve filo kartları | [Yerleşim ve canlı kabul](docs/validation/c5/c5-stage1-6-validation-2026-11-06.md) |
+| C5 dağıtılmış depo | Ortak 30 × 18 m profil, katalog görev girişi ve costmap görünümü | [11 Kasım doğrulaması ve sınırları](docs/validation/c5/warehouse-30x18-validation-2026-11-11.md) |
 
 ## Testler ve doğrulama sonuçları
 
@@ -114,7 +118,7 @@ Tarihsel kanıtlar: C2.3 tek robotta 7/7 senaryo; C3.3.3 raporunda 10/10 senaryo
 
 ## Yol haritası
 
-C5’in sonraki aşamaları görev girişini ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
+C5’in sonraki aşamaları katalog görev girişinin Executor/Battery ile birleşik canlı kabulünü ve nihai üç servis doğrulamasını kapsar. Üçüncü robotun dinamik eklenmesi ve iki robotlu takas genişletilmiş kapsamdır.
 
 ## Dokümantasyon bağlantıları
 

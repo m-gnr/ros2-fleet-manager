@@ -16,15 +16,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("profile", type=Path)
     parser.add_argument("output", type=Path)
-    parser.add_argument("scenario", choices=("delivery", "passing"))
+    parser.add_argument("scenario", choices=("delivery", "passing", "routes"))
+    parser.add_argument("--ready", type=Path)
     args = parser.parse_args()
     profile = generate(args.profile, args.output, args.scenario)
+    if args.ready is not None:
+        args.ready.write_text('READY\n')
     bridge = [bridge_executable(), "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock"]
     for robot in profile.robots:
         ns = robot.namespace
         bridge += [f"{ns}/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan",
                    f"{ns}/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
                    f"{ns}/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist"]
+        bridge += [f"{ns}/contact_{link}@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts"
+                   for link in ('base_link', 'left_wheel', 'right_wheel', 'caster')]
     bridge += dock_bridge_arguments(profile.stations.charging_stations, profile.robots)
     commands = [
         ("gazebo", gazebo_command(str(args.output / "warehouse.sdf"))),

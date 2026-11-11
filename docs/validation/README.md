@@ -45,6 +45,8 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C5 Izgara depo profili | [Rapor ve komutlar](c5/warehouse-grid-validation-2026-11-08.md) | YAML, backend kaynak eşleşmesi, koridor fixture’ı ve üretim Chrome |
 | C5 20 × 12 m ortak depo | [Rapor ve komutlar](c5/warehouse-grid-20x12-validation-2026-11-08.md) | SDF, Nav2, Chrome ve iki canlı hareket senaryosu |
 | C5 Üstten depo açıklığı | [Rapor ve komutlar](c5/warehouse-grid-clearance-2026-11-08.md) | Dock ve alım açıklığı, etiket bağlantıları, Nav2 merkez rotası |
+| C5 dağıtılmış 30 × 18 m depo | [Rapor](c5/warehouse-30x18-validation-2026-11-11.md) · [Komutlar](c5/warehouse-30x18-commands-2026-11-11.md) | Ortak raster, dağıtılmış yaklaşmalar, katalog görev girişi, Chrome ve Fortress/Nav2 |
+| C5 30 × 18 m uçtan uca Aşama 1 | [Rapor](c5/e2e-stage1-validation-2026-11-11.md) · [Komutlar](c5/e2e-stage1-commands-2026-11-11.md) | Tek görev ve iki robotlu paralel görev COMPLETED; feedback/EXECUTING ve bir fiziksel yaklaşma kontrolü başarısız. Koşulsuz kabul verilmedi; Aşama 2/3 başlatılmadı |
 
 B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
 

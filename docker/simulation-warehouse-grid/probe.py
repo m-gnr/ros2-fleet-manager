@@ -17,13 +17,14 @@ from ros_gz_interfaces.msg import Contacts
 import yaml
 
 from fleet_config import load_config
+from fleet_config.occupancy import encode_grid, profile_digest
 
 
 def main():
     cli = argparse.ArgumentParser()
     cli.add_argument("profile", type=Path)
     cli.add_argument("generated", type=Path)
-    cli.add_argument("scenario", choices=("delivery", "passing"))
+    cli.add_argument("scenario", choices=("delivery", "passing", "routes"))
     args = cli.parse_args()
     cfg = load_config(args.profile)
     targets = json.loads((args.generated / "goals.json").read_text())
@@ -33,7 +34,9 @@ def main():
         rclpy.parameter.Parameter("use_sim_time", value=True)
     ])
     positions, traces, maps, costmaps, paths, dock_contacts = {}, {}, {}, {}, {}, set()
+    longest_paths = {}
     clients, lifecycles = {}, {}
+    collisions, contact_robots = set(), set()
     alpha, beta = (robot.id for robot in cfg.robots)
     qos = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
     for robot in cfg.robots:
@@ -52,11 +55,22 @@ def main():
         def path(message, id_=id_):
             if message.header.frame_id == "map":
                 paths[id_] = [[p.pose.position.x,p.pose.position.y] for p in message.poses]
+                if len(paths[id_]) > len(longest_paths.get(id_, [])):
+                    longest_paths[id_] = paths[id_]
 
         node.create_subscription(PoseStamped, ns+"/physical_pose", physical, 20)
         node.create_subscription(NavPath, ns+"/plan", path, 10)
         node.create_subscription(OccupancyGrid, ns+"/map", lambda m, i=id_: maps.update({i:m}), qos)
         node.create_subscription(OccupancyGrid, ns+"/global_costmap/costmap", lambda m, i=id_: costmaps.update({i:m}), 10)
+        def physical_contacts(message, id_=id_):
+            for event in message.contacts:
+                names = event.collision1.name, event.collision2.name
+                contact_robots.add(id_)
+                if any(part.startswith(('rack_', 'wall_')) or part in {alpha, beta} - {id_}
+                       for name in names for part in name.split('::')):
+                    collisions.add(tuple(sorted(names)))
+        for link in ('base_link', 'left_wheel', 'right_wheel', 'caster'):
+            node.create_subscription(Contacts, ns+'/contact_'+link, physical_contacts, 10)
         clients[id_] = ActionClient(node, NavigateToPose, robot.nav2_action_name)
         lifecycles[id_] = node.create_client(GetState, ns+"/bt_navigator/get_state")
 
@@ -106,6 +120,73 @@ def main():
                 assert msg.data[row*msg.info.width+col] == 100, (id_,rack.id)
         report["map_exact_cells"] = len(image)
         report["global_costmap_rack_centres"] = len(cfg.warehouse.racks)*len(costmaps)
+        report['approach_costs'] = {}
+        approaches = [(p.id, p.pose) for p in cfg.warehouse.transfer_points] + [
+            (s.id, s.pose) for group in (cfg.stations.charging_stations, cfg.stations.parking_stations)
+            for s in group]
+        for id_, msg in costmaps.items():
+            costs = {}
+            for name, pose in approaches:
+                col = int((pose.x-msg.info.origin.position.x)/msg.info.resolution)
+                row = int((pose.y-msg.info.origin.position.y)/msg.info.resolution)
+                costs[name] = int(msg.data[row*msg.info.width+col])
+            report['approach_costs'][id_] = costs
+            assert all(value == 0 for value in costs.values()), costs
+        msg = costmaps[alpha]
+        captured = encode_grid(dict(frame_id=msg.header.frame_id, resolution=msg.info.resolution,
+            width=msg.info.width, height=msg.info.height,
+            origin=[msg.info.origin.position.x,msg.info.origin.position.y]), msg.data, 'nav2_recorded')
+        captured.update(profile_digest=profile_digest(cfg), robot_id=alpha,
+                        stamp=dict(sec=msg.header.stamp.sec,nanosec=msg.header.stamp.nanosec))
+        (args.generated/'nav2-costmap.json').write_text(json.dumps(captured,ensure_ascii=False))
+
+        def send_goal(id_, target):
+            command = NavigateToPose.Goal()
+            command.pose.header.frame_id = 'map'
+            command.pose.header.stamp = node.get_clock().now().to_msg()
+            command.pose.pose.position.x, command.pose.pose.position.y = target['x'],target['y']
+            command.pose.pose.orientation.z = sin(target['yaw']/2)
+            command.pose.pose.orientation.w = cos(target['yaw']/2)
+            return clients[id_].send_goal_async(command)
+
+        if args.scenario == 'routes':
+            report['routes'] = []
+            catalog = {p.id: p for p in cfg.warehouse.transfer_points}
+            for task in cfg.warehouse.example_tasks:
+                route = dict(id=task.id, pickup=task.pickup, dropoff=task.dropoff, legs=[])
+                report['routes'].append(route)
+                for endpoint in (task.pickup, task.dropoff):
+                    target = catalog[endpoint].pose.model_dump()
+                    longest_paths.pop(alpha, None)
+                    future = send_goal(alpha, target)
+                    wait(future.done, 12, 'route goal response')
+                    handle = future.result()
+                    assert handle.accepted, endpoint
+                    result = handle.get_result_async()
+                    try:
+                        wait(result.done, 210, endpoint + ' NavigateToPose terminal')
+                        status = result.result().status
+                    except TimeoutError:
+                        handle.cancel_goal_async()
+                        status = None
+                    error = hypot(positions[alpha][1]-target['x'],positions[alpha][2]-target['y'])
+                    leg = dict(endpoint=endpoint, status=status, error_m=error, path=longest_paths.get(alpha, []),
+                        result='çarpıştı' if collisions else 'geçti' if status == 4 and error <= .35 else 'bekledi')
+                    route['legs'].append(leg)
+                    print(json.dumps(dict(event='ROUTE_LEG',route=task.id,endpoint=endpoint,
+                                          status=status,error_m=error,result=leg['result']),ensure_ascii=False),flush=True)
+                    if leg['result'] != 'geçti':
+                        break
+                route['result'] = 'çarpıştı' if collisions else 'geçti' if (
+                    len(route['legs']) == 2 and all(leg['result'] == 'geçti' for leg in route['legs'])
+                ) else 'bekledi'
+                if route['result'] != 'geçti':
+                    break
+            report['result'] = 'çarpıştı' if collisions else 'geçti' if (
+                len(report['routes']) == len(cfg.warehouse.example_tasks) and
+                all(route['result'] == 'geçti' for route in report['routes']) and len(contact_robots) == 2
+            ) else 'bekledi'
+            return 0 if report['result'] == 'geçti' else 1
         pending = {}
         for id_, goal in targets.items():
             command = NavigateToPose.Goal()
@@ -145,6 +226,10 @@ def main():
             # Each physical footprint fits inside a 0.45 m radius about base_link.
             report["result"] = "geçti" if success and crossed and closest > .9 else (
                 "bekledi" if not crossed and isfinite(closest) and closest > .9 else "doğrulanamadı")
+            if collisions:
+                report['result'] = 'çarpıştı'
+            elif len(contact_robots) != 2:
+                report['result'] = 'doğrulanamadı'
         else:
             report["result"] = "geçti" if success and report["goal_error_m"][alpha] <= dock.tolerance_radius else "başarısız"
         for id_, future in results.items():
@@ -153,6 +238,8 @@ def main():
     except Exception as error:
         report["error"] = f"{type(error).__name__}: {error}"
     finally:
+        report['physical_collisions'] = sorted(collisions)
+        report['contact_sensor_robots'] = sorted(contact_robots)
         report["paths"] = paths
         report["traces"] = traces
         (args.generated/"live.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")

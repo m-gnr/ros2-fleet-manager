@@ -78,8 +78,7 @@ def read_app(folder, config, snapshot):
 def moved_config(folder, profile=PROFILE):
     profile = profile.resolve()
     raw = read_yaml(profile)
-    large = "width" in raw["warehouse"]
-    raw["stations"]["charging_stations"][0]["pose"]["x"] = "E-4.5" if large else 4.5
+    raw["stations"]["charging_stations"][0]["pose"]["x"] = load_config(profile).stations.charging_stations[0].pose.x + .25
     if raw["fleet"]["map_path"] != "warehouse:generated":
         raw["fleet"]["map_path"] = str(profile.parent / raw["fleet"]["map_path"])
     for robot in raw["robots"]:

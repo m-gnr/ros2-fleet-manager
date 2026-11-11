@@ -1,0 +1,120 @@
+{
+  "utc": "2026-11-11T15:27:53.351115+00:00",
+  "commit": "30373ff6ec6661130e0b2e78b382fdc768eda58c",
+  "syntax_checked": [
+    "docker/simulation-warehouse-grid/stage1_clearance.py",
+    "docker/simulation-warehouse-grid/stage1_feedback_probe.py",
+    "docker/simulation-warehouse-grid/stage1_observer.py",
+    "docker/simulation-warehouse-grid/stage1_run.py",
+    "docker/simulation-warehouse-grid/stage1_summarize.py",
+    "frontend/tests/stage1-e2e.mjs"
+  ],
+  "local_link_count": 41,
+  "missing_links": [],
+  "user_tracked_patch_preserved_except_documentation_links": true,
+  "unexpected_changed_paths": [],
+  "source_manifest_sha256": "ff0a8a037290983fd1245dc6be4fd10b5e646c3f72e58de1d4cea3cd2cefa6d7",
+  "source_archive_sha256": "0e6d8562c609cc579157151e29cc3f881a27fe29ae6e7aefa337d4b9b6b5acb7",
+  "source_file_count": 263,
+  "outcomes": {
+    "host_pytest": {
+      "passed": 87,
+      "skipped": 0
+    },
+    "chrome_regression": {
+      "passed": 23,
+      "skipped": 0
+    },
+    "chrome_live_a": 0,
+    "chrome_live_b": 0,
+    "feedback_contract_exit": 1,
+    "comparison_a_exit": 1,
+    "comparison_b_exit": 1,
+    "stage_1_unconditional_acceptance": false,
+    "stage_2_started": false,
+    "stage_3_started": false
+  },
+  "containers": {
+    "fleet-c5-e2e-stage1-a": {
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 1,
+        "Error": "",
+        "StartedAt": "2026-11-11T15:07:02.980066667Z",
+        "FinishedAt": "2026-11-11T15:07:22.930003135Z"
+      }
+    },
+    "fleet-c5-e2e-stage1-a2": {
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 1,
+        "Error": "",
+        "StartedAt": "2026-11-11T15:08:32.387162166Z",
+        "FinishedAt": "2026-11-11T15:08:48.476304632Z"
+      }
+    },
+    "fleet-c5-e2e-stage1-a3": {
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 1,
+        "Error": "",
+        "StartedAt": "2026-11-11T15:09:20.288663133Z",
+        "FinishedAt": "2026-11-11T15:09:49.968533966Z"
+      }
+    },
+    "fleet-c5-e2e-stage1-a4": {
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T15:10:52.014687926Z",
+        "FinishedAt": "2026-11-11T15:13:53.654341718Z"
+      }
+    },
+    "fleet-c5-e2e-stage1-b": {
+      "image": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+      "state": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-11-11T15:14:05.198745126Z",
+        "FinishedAt": "2026-11-11T15:16:16.77815509Z"
+      }
+    }
+  },
+  "final_status": " M README.md\n M backend/dashboard/api.py\n M backend/dashboard/publisher.py\n M config/fleet.schema.json\n M docker/simulation-warehouse-grid/probe.py\n M docker/simulation-warehouse-grid/run.sh\n M docker/simulation-warehouse-grid/serve.py\n M docs/README.md\n M docs/configuration-c1.md\n M docs/design/c5-3d-operations.md\n M docs/diagrams/README.md\n M docs/diagrams/src/rest-websocket-gui.mmd\n M docs/diagrams/svg/rest-websocket-gui.svg\n M docs/validation/README.md\n M fleet_config/anchored.py\n M fleet_config/loader.py\n M fleet_config/models.py\n M fleet_config/warehouse.py\n M fleet_config/warehouse_assets.py\n M frontend/src/App.tsx\n M frontend/src/ScenePanel.tsx\n M frontend/src/scene/GridWarehouse.tsx\n M frontend/src/scene/Scene.tsx\n M frontend/src/scene/camera.ts\n M frontend/src/scene/gridLayout.ts\n M frontend/src/scene/operationPoints.ts\n M frontend/src/styles.css\n M tests/test_c5_dashboard.py\n M tests/test_warehouse_grid.py\n?? backend/dashboard/runtime.py\n?? backend/dashboard/task_ingress.py\n?? config/fleet.warehouse-30x18.yaml\n?? docker/simulation-warehouse-grid/stage1_clearance.py\n?? docker/simulation-warehouse-grid/stage1_feedback_probe.py\n?? docker/simulation-warehouse-grid/stage1_observer.py\n?? docker/simulation-warehouse-grid/stage1_run.py\n?? docker/simulation-warehouse-grid/stage1_summarize.py\n?? docs/validation/c5/e2e-stage1-2026-11-11/\n?? docs/validation/c5/e2e-stage1-commands-2026-11-11.md\n?? docs/validation/c5/e2e-stage1-validation-2026-11-11.md\n?? docs/validation/c5/warehouse-30x18-commands-2026-11-11.md\n?? docs/validation/c5/warehouse-30x18-validation-2026-11-11.md\n?? docs/validation/c5/warehouse-30x18/\n?? fleet_config/occupancy.py\n?? frontend/src/TaskComposer.tsx\n?? frontend/src/scene/Costmap.tsx\n?? frontend/tests/stage1-e2e.mjs\n?? frontend/tests/warehouse-operations.mjs\n?? tests/test_warehouse_operations.py\n"
+}

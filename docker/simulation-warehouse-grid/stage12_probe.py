@@ -161,7 +161,9 @@ def probe(profile, out, motion=None, access=False, target_id='pick_A2'):
         assert hypot(odoms[-1].twist.twist.linear.x,odoms[-1].twist.twist.linear.y)<=.01
         assert abs(odoms[-1].twist.twist.angular.z)<=.01
         report['reset']=reset
-        report['initial']=sample('initial',physical[robot.id][-1][0])
+        initial_ns=physical[robot.id][-1][0]
+        spin_until(lambda:map_pose(initial_ns) is not None,5,'initial timestamped TF availability')
+        report['initial']=sample('initial',initial_ns)
         (out/'reset.json').write_text(json.dumps(report['reset'],indent=2))
         if motion:
             sequences={'forward':[(.1,0.,8.)], 'reverse':[(-.1,0.,8.)],

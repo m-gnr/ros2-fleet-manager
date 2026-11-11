@@ -295,6 +295,8 @@ def test_discovery_waits_for_ros_node_identity(rig, monkeypatch):
     robot = "robot_1"
     pub = rig.add_source(robot)
     node = rig.nodes[robot]
+    # Subscription matching and the receiving node graph are asynchronous DDS observations.
+    rig.spin_until(lambda: len(node.get_publishers_info_by_topic(f"/{robot}/battery_state")) == 1)
     endpoint, = node.get_publishers_info_by_topic(f"/{robot}/battery_state")
     unknown = SimpleNamespace(
         endpoint_gid=endpoint.endpoint_gid, topic_type=endpoint.topic_type,

@@ -1,6 +1,7 @@
 """ROS 2 adapter for the per-robot battery consumption core."""
 
 import argparse
+import signal
 from math import hypot
 from uuid import uuid4
 
@@ -8,7 +9,7 @@ import rclpy
 from fleet_interfaces.msg import BatteryState, DockLease, RobotStatus
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
-from rclpy.executors import ExternalShutdownException
+from rclpy.executors import ExternalShutdownException, SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
@@ -143,14 +144,29 @@ def main():
 
     rclpy.init(args=[], signal_handler_options=SignalHandlerOptions.NO)
     node = None
+    executor = SingleThreadedExecutor()
+    stopping = False
+
+    def request_stop(*_):
+        nonlocal stopping
+        stopping = True
+
+    # Do not inject KeyboardInterrupt while a native subscription take is active.
+    # Finish the current callback before destroying entities or the ROS context.
+    previous_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGINT, signal.SIGTERM)}
     try:
         node = BatterySimulatorNode.from_config(args.fleet_config, args.robot_id)
-        rclpy.spin(node)
+        executor.add_node(node)
+        while rclpy.ok() and not stopping:
+            executor.spin_once(timeout_sec=0.2)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     except (OSError, ValueError) as exc:
         parser.exit(1, f"Battery Simulator configuration error: {exc}\n")
     finally:
+        executor.shutdown()
         if node is not None:
             node.destroy_node()
         rclpy.try_shutdown()
+        for sig, handler in previous_handlers.items():
+            signal.signal(sig, handler)

@@ -23,6 +23,7 @@ from ros_gz_interfaces.msg import Contacts
 from rosidl_runtime_py.convert import message_to_ordereddict
 
 from fleet_config import load_config
+from fleet_config.obstacle_sensors import contact_links
 
 
 def main():
@@ -75,7 +76,7 @@ def main():
         node.create_subscription(Odometry, ns+'/odom', odom, qos_profile_sensor_data)
         node.create_subscription(RobotStatus, ns+'/robot_status', lambda m,r=rid: record('ROBOT_STATUS',r,m), 30)
         node.create_subscription(BatteryState, ns+'/battery_state', lambda m,r=rid: record('BATTERY',r,m), 30)
-        for link in ('base_link', 'left_wheel', 'right_wheel', 'caster'):
+        for link in contact_links(cfg, robot):
             node.create_subscription(Contacts, ns+'/contact_'+link, contacts, 10)
         for name, action in [('execute_task', ExecuteTask), ('navigate_to_pose', NavigateToPose)]:
             service = action.Impl.GetResultService

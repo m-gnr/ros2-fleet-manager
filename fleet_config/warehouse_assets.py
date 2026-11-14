@@ -2,6 +2,7 @@
 import argparse
 from decimal import Decimal
 import json
+import re
 from math import pi
 from pathlib import Path
 import sys
@@ -11,6 +12,7 @@ from xml.etree import ElementTree as ET
 import yaml
 
 from fleet_config import load_config
+from fleet_config.obstacle_sensors import install_sensors, configure_observations, validate_clear_fov
 from fleet_config.occupancy import encode_grid, raster
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -108,6 +110,17 @@ def generate(path, out, scenario="delivery"):
     tree.write(sdf, encoding="utf-8", xml_declaration=True)
     install_docks(sdf, config.stations.charging_stations, config.robots)
     tree = ET.parse(sdf)
+    envelope_evidence = []
+    for robot in config.robots:
+        raw = yaml.safe_load(re.sub(r'@[A-Z_]+@', '0', (path.parent/robot.nav2_params_path).read_text()))
+        radius = raw['local_costmap']['local_costmap']['ros__parameters'].get('robot_radius')
+        global_radius = raw['global_costmap']['global_costmap']['ros__parameters'].get('robot_radius')
+        if robot.obstacle_sensor_model is not None:
+            if radius != global_radius or radius is None:
+                raise ValueError('obstacle assembly requires matching explicit Nav2 robot_radius')
+            envelope_evidence += install_sensors(tree, config, robot, radius)
+            validate_clear_fov(tree, config, robot)
+    (out/'sensor-envelope.json').write_text(json.dumps(envelope_evidence,indent=2)+'\n')
     for robot in config.robots:
         model = tree.getroot().find(f".//model[@name='{robot.id}']")
         for link in model.findall("link"):
@@ -135,6 +148,7 @@ def generate(path, out, scenario="delivery"):
                 cost["plugins"].insert(0, "static_layer")
                 cost["static_layer"] = {"plugin":"nav2_costmap_2d::StaticLayer",
                                         "map_subscribe_transient_local":True}
+        configure_observations(params, config, next(r for r in config.robots if r.id == name))
         (out / f"nav2-{name}.yaml").write_text(yaml.safe_dump(params, sort_keys=False))
     (out / "scene.json").write_text(json.dumps(layout.scene_payload(), ensure_ascii=False, indent=2)+"\n")
     (out / "goals.json").write_text(json.dumps(goals, indent=2)+"\n")

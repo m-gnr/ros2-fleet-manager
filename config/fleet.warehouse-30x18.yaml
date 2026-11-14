@@ -3,6 +3,45 @@ fleet:
   name: warehouse_distributed_30x18
   map_path: warehouse:generated
   use_sim_time: true
+  # Defined for stage-2.8 validation; robots remain unbound pending loss-policy acceptance.
+  obstacle_sensor_models:
+    compact_dual_obstacle_v1:
+      case_size_m: [0.02, 0.03, 0.015]
+      case_mass_kg: 0.015
+      head_mass_kg: 0.002
+      head_radius_m: 0.004
+      head_height_m: 0.01
+      head_center_m: [0.0, 0.0, 0.0125]
+      beam_origin_m: [0.0, 0.0, 0.0185]
+      horizontal_min_rad: -1.5882496193148399
+      horizontal_max_rad: 1.7453292519943295
+      samples: 97
+      update_rate_hz: 5.0
+      min_range_m: 0.1
+      max_range_m: 10.0
+      range_resolution_m: 0.01
+      mounts:
+      - id: front_left
+        position_m: [0.15, 0.23, 0.0125]
+        yaw_rad: 1.5707963267948966
+      - id: rear_right
+        position_m: [-0.15, -0.23, 0.0125]
+        yaw_rad: 4.71238898038469
+  # Diagnostic bounds; no qualified physical envelope: sensor motion stays closed.
+  perception_safety:
+    scan_age_sec: 0.5
+    transport_sec: 0.65
+    clock_pause_sec: 0.5
+    clock_step_sec: 0.5
+    watchdog_gap_sec: 0.35
+    timer_period_sec: 0.05
+    observation_age_sec: 0.8
+    tf_wait_sec: 0.15
+    linear_stop_threshold_m_s: 0.01
+    angular_stop_threshold_rad_s: 0.01
+    odometry_freshness_sec: 1.0
+    cancel_stop_timeout_sec: 3.0
+    motion_envelope: null
   battery_models:
     turtlebot3_burger:
       usable_capacity_wh: 100.0
@@ -20,6 +59,7 @@ robots:
   battery_model: turtlebot3_burger
   nav2_action_name: /robot_alpha/navigate_to_pose
   nav2_params_path: simulation-c2-3-params.template.yaml
+  obstacle_sensor_model: compact_dual_obstacle_v1
 - id: robot_beta
   name: robot_beta
   namespace: /robot_beta
@@ -30,6 +70,7 @@ robots:
   battery_model: turtlebot3_burger
   nav2_action_name: /robot_beta/navigate_to_pose
   nav2_params_path: simulation-c2-3-params.template.yaml
+  obstacle_sensor_model: compact_dual_obstacle_v1
 stations:
   charging_stations:
   - id: dock_1

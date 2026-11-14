@@ -31,11 +31,98 @@ class BatteryModel(Contract):
     charge_power_w: Positive
 
 
+Vector3 = Annotated[list[float], Field(min_length=3, max_length=3)]
+Size3 = Annotated[list[Positive], Field(min_length=3, max_length=3)]
+
+
+class ObstacleMount(Contract):
+    id: Identifier
+    position_m: Vector3
+    yaw_rad: float
+
+
+class ObstacleSensorAssembly(Contract):
+    case_size_m: Size3
+    case_mass_kg: Positive
+    head_mass_kg: Positive
+    head_radius_m: Positive
+    head_height_m: Positive
+    head_center_m: Vector3
+    beam_origin_m: Vector3
+    horizontal_min_rad: float
+    horizontal_max_rad: float
+    samples: Annotated[int, Field(ge=2)]
+    update_rate_hz: Positive
+    min_range_m: NonNegative
+    max_range_m: Positive
+    range_resolution_m: Positive
+    mounts: Annotated[list[ObstacleMount], Field(min_length=2, max_length=2)]
+
+    @model_validator(mode="after")
+    def ordered_sensor_contract(self):
+        from math import pi
+        if not -pi <= self.horizontal_min_rad < self.horizontal_max_rad <= pi:
+            raise ValueError("obstacle sensor: require -pi <= min angle < max angle <= pi")
+        if self.min_range_m >= self.max_range_m:
+            raise ValueError("obstacle sensor: min range must be below max range")
+        if len({m.id for m in self.mounts}) != len(self.mounts):
+            raise ValueError("obstacle sensor: duplicate mount id")
+        if self.beam_origin_m[2] <= max(self.case_size_m[2]/2, self.head_center_m[2]+self.head_height_m/2):
+            raise ValueError("obstacle sensor: beam plane must be above finite opaque housing")
+        return self
+
+
+class PerceptionMotionEnvelope(Contract):
+    evidence_sha256: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    max_linear_speed_m_s: Positive
+    max_angular_speed_rad_s: Positive
+    minimum_detection_distance_m: Positive
+    maximum_stop_distance_m: Positive
+    maximum_stop_angle_rad: Positive
+    cancel_terminal_sec: Positive
+    footprint_radius_m: Positive
+    margin_m: Positive
+
+
+class PerceptionSafety(Contract):
+    scan_age_sec: Positive
+    transport_sec: Positive
+    clock_pause_sec: Positive
+    clock_step_sec: Positive
+    watchdog_gap_sec: Positive
+    timer_period_sec: Positive
+    observation_age_sec: Positive
+    tf_wait_sec: Positive
+    linear_stop_threshold_m_s: Positive
+    angular_stop_threshold_rad_s: Positive
+    odometry_freshness_sec: Positive
+    cancel_stop_timeout_sec: Positive
+    motion_envelope: PerceptionMotionEnvelope | None = Field(default_factory=lambda: None)
+
+    @model_validator(mode="after")
+    def bounded_timer(self):
+        if self.timer_period_sec >= self.watchdog_gap_sec:
+            raise ValueError("perception timer period must be below scheduling gap limit")
+        if self.tf_wait_sec > min(self.scan_age_sec, self.transport_sec):
+            raise ValueError("measurement TF wait must fit scan and transport budgets")
+        if self.motion_envelope:
+            e = self.motion_envelope
+            # This arithmetic is necessary, never sufficient qualification.
+            travel = e.max_linear_speed_m_s * (max(self.scan_age_sec, self.observation_age_sec,
+                       self.transport_sec) + self.watchdog_gap_sec + e.cancel_terminal_sec)
+            required = travel + e.maximum_stop_distance_m + e.footprint_radius_m * e.maximum_stop_angle_rad + e.margin_m
+            if required >= e.minimum_detection_distance_m:
+                raise ValueError("perception stop envelope does not fit minimum detection distance")
+        return self
+
+
 class Fleet(Contract):
     name: Text
     map_path: Text = Field(description="Map YAML relative to this file, or 'warehouse:generated'.")
     use_sim_time: Literal[True]
     battery_models: Annotated[dict[Identifier, BatteryModel], Field(min_length=1)]
+    obstacle_sensor_models: dict[Identifier, ObstacleSensorAssembly] = Field(default_factory=dict)
+    perception_safety: PerceptionSafety | None = Field(default_factory=lambda: None)
 
     @field_validator("use_sim_time", mode="before")
     @classmethod
@@ -53,6 +140,7 @@ class Robot(Contract):
     battery_model: Identifier
     nav2_action_name: RosName
     nav2_params_path: Text = Field(description="Nav2 template path relative to fleet YAML.")
+    obstacle_sensor_model: Identifier | None = Field(default_factory=lambda: None)
 
     @model_validator(mode="after")
     def isolated_action(self):
@@ -125,6 +213,8 @@ class FleetConfig(Contract):
         if len(set(starts)) != len(starts):
             raise ValueError("robots: duplicate initial position")
         for robot in self.robots:
+            if robot.obstacle_sensor_model is not None and robot.obstacle_sensor_model not in self.fleet.obstacle_sensor_models:
+                raise ValueError(f"robots.{robot.id}.obstacle_sensor_model: unknown model")
             if robot.battery_model not in self.fleet.battery_models:
                 raise ValueError(f"robots.{robot.id}.battery_model: unknown model {robot.battery_model}")
         for name, battery in self.fleet.battery_models.items():

@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 from fleet_config.warehouse_assets import generate
+from fleet_config.obstacle_sensors import sensor_contracts, contact_links
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "docker/simulation-common"))
@@ -29,12 +30,13 @@ def main():
                    f"{ns}/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
                    f"{ns}/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist"]
         bridge += [f"{ns}/contact_{link}@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts"
-                   for link in ('base_link', 'left_wheel', 'right_wheel', 'caster')]
+                   for link in contact_links(profile,robot)]
+        bridge += [s['topic']+'@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan' for s in sensor_contracts(profile,robot)]
     bridge += dock_bridge_arguments(profile.stations.charging_stations, profile.robots)
     commands = [
         ("gazebo", gazebo_command(str(args.output / "warehouse.sdf"))),
         ("bridge", bridge),
-        ("tf_helper", [sys.executable, str(Path(__file__).with_name("tf.py")), str(args.profile)]),
+        ("tf_helper", [sys.executable, str(Path(__file__).with_name("tf.py")), str(args.profile), str(args.output / "warehouse.sdf")]),
     ]
     namespaces = []
     for robot in profile.robots:

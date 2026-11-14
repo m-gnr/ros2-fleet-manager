@@ -316,6 +316,18 @@
           "pattern": "\\S",
           "title": "Nav2 Params Path",
           "type": "string"
+        },
+        "obstacle_sensor_model": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Obstacle Sensor Model"
         }
       },
       "required": [
@@ -620,6 +632,25 @@
           },
           "title": "Battery Models",
           "type": "object"
+        },
+        "obstacle_sensor_models": {
+          "patternProperties": {
+            "^[A-Za-z_][A-Za-z0-9_]*$": {
+              "$ref": "#/$defs/ObstacleSensorAssembly"
+            }
+          },
+          "title": "Obstacle Sensor Models",
+          "type": "object"
+        },
+        "perception_safety": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PerceptionSafety"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -717,6 +748,304 @@
         "y_max"
       ],
       "title": "MapRectangle",
+      "type": "object"
+    },
+    "ObstacleMount": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "position_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Position M",
+          "type": "array"
+        },
+        "yaw_rad": {
+          "title": "Yaw Rad",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "position_m",
+        "yaw_rad"
+      ],
+      "title": "ObstacleMount",
+      "type": "object"
+    },
+    "ObstacleSensorAssembly": {
+      "additionalProperties": false,
+      "properties": {
+        "case_size_m": {
+          "items": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Case Size M",
+          "type": "array"
+        },
+        "case_mass_kg": {
+          "exclusiveMinimum": 0,
+          "title": "Case Mass Kg",
+          "type": "number"
+        },
+        "head_mass_kg": {
+          "exclusiveMinimum": 0,
+          "title": "Head Mass Kg",
+          "type": "number"
+        },
+        "head_radius_m": {
+          "exclusiveMinimum": 0,
+          "title": "Head Radius M",
+          "type": "number"
+        },
+        "head_height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Head Height M",
+          "type": "number"
+        },
+        "head_center_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Head Center M",
+          "type": "array"
+        },
+        "beam_origin_m": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Beam Origin M",
+          "type": "array"
+        },
+        "horizontal_min_rad": {
+          "title": "Horizontal Min Rad",
+          "type": "number"
+        },
+        "horizontal_max_rad": {
+          "title": "Horizontal Max Rad",
+          "type": "number"
+        },
+        "samples": {
+          "minimum": 2,
+          "title": "Samples",
+          "type": "integer"
+        },
+        "update_rate_hz": {
+          "exclusiveMinimum": 0,
+          "title": "Update Rate Hz",
+          "type": "number"
+        },
+        "min_range_m": {
+          "minimum": 0,
+          "title": "Min Range M",
+          "type": "number"
+        },
+        "max_range_m": {
+          "exclusiveMinimum": 0,
+          "title": "Max Range M",
+          "type": "number"
+        },
+        "range_resolution_m": {
+          "exclusiveMinimum": 0,
+          "title": "Range Resolution M",
+          "type": "number"
+        },
+        "mounts": {
+          "items": {
+            "$ref": "#/$defs/ObstacleMount"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Mounts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "case_size_m",
+        "case_mass_kg",
+        "head_mass_kg",
+        "head_radius_m",
+        "head_height_m",
+        "head_center_m",
+        "beam_origin_m",
+        "horizontal_min_rad",
+        "horizontal_max_rad",
+        "samples",
+        "update_rate_hz",
+        "min_range_m",
+        "max_range_m",
+        "range_resolution_m",
+        "mounts"
+      ],
+      "title": "ObstacleSensorAssembly",
+      "type": "object"
+    },
+    "PerceptionMotionEnvelope": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Evidence Sha256",
+          "type": "string"
+        },
+        "max_linear_speed_m_s": {
+          "exclusiveMinimum": 0,
+          "title": "Max Linear Speed M S",
+          "type": "number"
+        },
+        "max_angular_speed_rad_s": {
+          "exclusiveMinimum": 0,
+          "title": "Max Angular Speed Rad S",
+          "type": "number"
+        },
+        "minimum_detection_distance_m": {
+          "exclusiveMinimum": 0,
+          "title": "Minimum Detection Distance M",
+          "type": "number"
+        },
+        "maximum_stop_distance_m": {
+          "exclusiveMinimum": 0,
+          "title": "Maximum Stop Distance M",
+          "type": "number"
+        },
+        "maximum_stop_angle_rad": {
+          "exclusiveMinimum": 0,
+          "title": "Maximum Stop Angle Rad",
+          "type": "number"
+        },
+        "cancel_terminal_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Cancel Terminal Sec",
+          "type": "number"
+        },
+        "footprint_radius_m": {
+          "exclusiveMinimum": 0,
+          "title": "Footprint Radius M",
+          "type": "number"
+        },
+        "margin_m": {
+          "exclusiveMinimum": 0,
+          "title": "Margin M",
+          "type": "number"
+        }
+      },
+      "required": [
+        "evidence_sha256",
+        "max_linear_speed_m_s",
+        "max_angular_speed_rad_s",
+        "minimum_detection_distance_m",
+        "maximum_stop_distance_m",
+        "maximum_stop_angle_rad",
+        "cancel_terminal_sec",
+        "footprint_radius_m",
+        "margin_m"
+      ],
+      "title": "PerceptionMotionEnvelope",
+      "type": "object"
+    },
+    "PerceptionSafety": {
+      "additionalProperties": false,
+      "properties": {
+        "scan_age_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Scan Age Sec",
+          "type": "number"
+        },
+        "transport_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Transport Sec",
+          "type": "number"
+        },
+        "clock_pause_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Clock Pause Sec",
+          "type": "number"
+        },
+        "clock_step_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Clock Step Sec",
+          "type": "number"
+        },
+        "watchdog_gap_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Watchdog Gap Sec",
+          "type": "number"
+        },
+        "timer_period_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Timer Period Sec",
+          "type": "number"
+        },
+        "observation_age_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Observation Age Sec",
+          "type": "number"
+        },
+        "tf_wait_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Tf Wait Sec",
+          "type": "number"
+        },
+        "linear_stop_threshold_m_s": {
+          "exclusiveMinimum": 0,
+          "title": "Linear Stop Threshold M S",
+          "type": "number"
+        },
+        "angular_stop_threshold_rad_s": {
+          "exclusiveMinimum": 0,
+          "title": "Angular Stop Threshold Rad S",
+          "type": "number"
+        },
+        "odometry_freshness_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Odometry Freshness Sec",
+          "type": "number"
+        },
+        "cancel_stop_timeout_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Cancel Stop Timeout Sec",
+          "type": "number"
+        },
+        "motion_envelope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PerceptionMotionEnvelope"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "scan_age_sec",
+        "transport_sec",
+        "clock_pause_sec",
+        "clock_step_sec",
+        "watchdog_gap_sec",
+        "timer_period_sec",
+        "observation_age_sec",
+        "tf_wait_sec",
+        "linear_stop_threshold_m_s",
+        "angular_stop_threshold_rad_s",
+        "odometry_freshness_sec",
+        "cancel_stop_timeout_sec"
+      ],
+      "title": "PerceptionSafety",
       "type": "object"
     },
     "Policies": {
@@ -861,6 +1190,18 @@
           "pattern": "\\S",
           "title": "Nav2 Params Path",
           "type": "string"
+        },
+        "obstacle_sensor_model": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Obstacle Sensor Model"
         }
       },
       "required": [

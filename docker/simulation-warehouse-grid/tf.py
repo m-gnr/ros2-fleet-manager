@@ -1,6 +1,7 @@
 """Relay Gazebo odometry and namespace-local AMCL transforms."""
 import signal
 import sys
+import math
 
 from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
@@ -10,15 +11,19 @@ from rclpy.signals import SignalHandlerOptions
 from tf2_msgs.msg import TFMessage
 
 from fleet_config import load_config
+from fleet_config.obstacle_sensors import sensor_contracts
+from fleet_config.physical_pose import generated_world_transform
 
 
 def main():
     profile = load_config(sys.argv[1])
+    world_transform = generated_world_transform(sys.argv[2])
     rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     node = rclpy.create_node("warehouse_tf")
     qos = QoSProfile(depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL)
     shared = node.create_publisher(TFMessage, "/tf", 30)
     static = node.create_publisher(TFMessage, "/tf_static", qos)
+    static.publish(TFMessage(transforms=[world_transform]))
     for robot in profile.robots:
         ns = robot.namespace
         tf = node.create_publisher(TFMessage, ns + "/tf", 10)
@@ -44,7 +49,17 @@ def main():
         link.child_frame_id = f"{robot.id}/base_link/lidar"
         link.transform.translation.z = .15
         link.transform.rotation.w = 1.
-        packet = TFMessage(transforms=[link])
+        transforms = [link, world_transform]
+        for sensor in sensor_contracts(profile,robot):
+            extra = TransformStamped()
+            extra.header.frame_id = f"{robot.id}/base_link"
+            extra.child_frame_id = sensor['frame']
+            values = sensor['base_pose']
+            extra.transform.translation.x, extra.transform.translation.y, extra.transform.translation.z = values[:3]
+            extra.transform.rotation.z = math.sin(values[5]/2)
+            extra.transform.rotation.w = math.cos(values[5]/2)
+            transforms.append(extra)
+        packet = TFMessage(transforms=transforms)
 
         def publish_static(publisher=local_static, transform=packet):
             publisher.publish(transform)

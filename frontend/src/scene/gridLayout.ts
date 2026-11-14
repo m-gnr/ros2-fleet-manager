@@ -27,7 +27,9 @@ export const layoutResponse = z.object({
   backend_session_id: z.string().optional(),
   source_session_id: z.string().optional(),
   profile_mismatch: z.boolean().optional(),
+  profile_digest: z.string().regex(/^[0-9a-f]{64}$/).optional(),
 })
+export const warehouseLayoutSchema = layout
 export type GridLayout = z.infer<typeof layout>
 export type MapBounds = z.infer<typeof bounds>
 

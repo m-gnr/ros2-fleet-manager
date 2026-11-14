@@ -62,17 +62,18 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
     <div className="card-heading">
       <div className="scene-heading"><span className="scene-icon"><Box size={17} /></span>
         <div><h2 id="scene-heading">Depo görünümü</h2><p>ROS TF · map çerçevesi</p></div></div>
-      <div className="scene-legend"><span className="tag map-tag">{layout ? 'ORTAK DEPO HARİTASI' : 'TEMSİLİ 3D DEPO'}</span>
+      <div className="scene-legend"><span className="tag map-tag">{layout ? 'DOĞRULANMIŞ DEPO HARİTASI' : 'HARİTA BEKLENİYOR'}</span>
         <small>{profile?.mismatch ? "Izgara profili filo snapshot’ıyla eşleşmedi." :
-          layout ? "Ortak YAML · harita ve dünya geometrisi" : "Raflar ve sınırlar görsel temsildir."}</small></div>
+          layout ? `Ortak YAML · ${profile.profileId} · ${profile.profileDigest.slice(0, 12)}` : "Seçili profil için doğrulanmış harita yok."}</small></div>
     </div>
     <div className="scene-viewport" aria-label="Etkileşimli 3D depo">
-      <SceneBoundary>
-        <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
-          <Scene layout={layout} costmap={showCostmap ? costmap : undefined} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
-            robotIds={robotIds} points={points} labelPoints={operationTags} pointLabels={pointLabels} leaders={leaders} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
-        </Suspense>
-      </SceneBoundary>
+      {layout ? <>
+        <SceneBoundary>
+          <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
+            <Scene layout={layout} costmap={showCostmap ? costmap : undefined} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
+              robotIds={robotIds} points={points} labelPoints={operationTags} pointLabels={pointLabels} leaders={leaders} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
+          </Suspense>
+        </SceneBoundary>
       <div className="scene-labels">
         <svg className="scene-leaders" aria-hidden="true">
           {operationTags.filter(tag => tag.leader).map(({ key, kind }) => <line key={key}
@@ -116,6 +117,7 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
         })}
       </div>
       <span className="scene-indicator"><i data-live={live > 0} />{live} / {robotIds.length} TF LIVE</span>
+      </> : <p className="scene-message" role="status">Seçili depo profili için harita doğrulanamadı.</p>}
       {showCostmap && <span className="costmap-key">{costmap ? costmap.source === 'nav2_recorded'
         ? 'Nav2 global costmap · kayıt' : 'Üretilen statik harita' : 'Costmap bekleniyor'} · Engel / şişirme</span>}
       <span className="scene-hint"><Scan size={13} /> Sürükle · sağ tuşla kaydır · kaydırarak yakınlaş</span>

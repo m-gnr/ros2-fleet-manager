@@ -83,3 +83,4 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 - [C5 Git kaynak checkpoint ve push denetimi — 12 Kasım](validation/c5/git-checkpoint-2026-11-12/README.md) · [Komutlar](validation/c5/git-checkpoint-commands-2026-11-12.md): kaynak envanteri, yerel ham kanıt manifesti ve sınırlı yeniden üretim kontrolü.
 
 - [C5 Aşama 2.0 dinamik batarya simülasyon kontrolü](design/c5-battery-simulation-control.md) · [Doğrulama](validation/c5/battery-control-validation-2026-11-12.md) · [Komutlar](validation/c5/battery-control-commands-2026-11-12.md).
+- [C5 Battery Control / C4 süreklilik uyumu](validation/c5/battery-control-continuity-validation-2026-11-14.md) · [Komutlar](validation/c5/battery-control-continuity-commands-2026-11-14.md).

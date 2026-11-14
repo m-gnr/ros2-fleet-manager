@@ -213,6 +213,11 @@ class FleetManagerCore:
         battery_valid_until: float = 0.0,
         dock_station_id: str = "",
         charging_station_id: str = "",
+        battery_control_session_id: str = "",
+        battery_control_request_id: str = "",
+        battery_control_soc_percent: float = 0.0,
+        battery_control_energy_wh: float = 0.0,
+        battery_control_stamp_ns: int = 0,
         physical_pose: Optional[Pose2D] = None,
         physical_sample_ns: int = 0,
         physical_valid_until: float = 0.0,
@@ -251,6 +256,11 @@ class FleetManagerCore:
             battery_sample_ns=battery_sample_ns,
             battery_valid_until=battery_valid_until,
             charging_station_id=charging_station_id,
+            battery_control_session_id=battery_control_session_id,
+            battery_control_request_id=battery_control_request_id,
+            battery_control_soc_percent=battery_control_soc_percent,
+            battery_control_energy_wh=battery_control_energy_wh,
+            battery_control_stamp_ns=battery_control_stamp_ns,
         )
         if robot.session_id is None:
             robot.session_id = publisher_session_id

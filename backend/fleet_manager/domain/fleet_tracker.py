@@ -73,6 +73,11 @@ class FleetTracker:
         battery_sample_ns: int = 0,
         battery_valid_until: float = 0.0,
         charging_station_id: str = "",
+        battery_control_session_id: str = "",
+        battery_control_request_id: str = "",
+        battery_control_soc_percent: float = 0.0,
+        battery_control_energy_wh: float = 0.0,
+        battery_control_stamp_ns: int = 0,
     ) -> Optional[RobotRecord]:
         """Update robot record from incoming RobotStatus message (5 Hz).
         
@@ -95,7 +100,9 @@ class FleetTracker:
         if pose is not None:
             robot.pose = pose
         self._update_battery(robot, battery_soc_percent, battery_energy_wh,
-                             battery_sample_ns, battery_valid_until, timestamp_sec, charging_station_id)
+                             battery_sample_ns, battery_valid_until, timestamp_sec, charging_station_id,
+                             battery_control_session_id, battery_control_request_id,
+                             battery_control_soc_percent, battery_control_energy_wh, battery_control_stamp_ns)
         robot.current_epoch = current_epoch
         robot.current_task_id = current_task_id
         robot.last_status_received_at = timestamp_sec
@@ -107,19 +114,32 @@ class FleetTracker:
         return robot
 
     @staticmethod
-    def _update_battery(robot, soc, energy, sample_ns, valid_until, received_at, charging_station_id):
+    def _update_battery(robot, soc, energy, sample_ns, valid_until, received_at, charging_station_id,
+                        control_session_id="", control_request_id="", control_soc=0.0,
+                        control_energy=0.0, control_stamp_ns=0):
         if not robot.requires_battery_telemetry:
             robot.battery_soc_percent = soc
             robot.battery_energy_wh = energy
             return
 
         capacity = robot.specs.usable_capacity_wh
+        control_matches = bool(
+            control_session_id and control_request_id and len(robot.battery_control_requests) < 10000
+            and control_request_id not in robot.battery_control_requests
+            and control_session_id == (robot.battery_control_session_id or control_session_id)
+            and robot.battery_sample_ns <= control_stamp_ns <= sample_ns
+            and sample_ns - control_stamp_ns <= 2 * 10**9
+            and 0 <= control_energy <= capacity and 0 <= control_soc <= 100
+            and isfinite(control_energy) and isfinite(control_soc)
+            and isclose(control_soc, 100.0 * control_energy / capacity, rel_tol=0.0, abs_tol=5e-6)
+            and energy <= control_energy
+        )
         if (not 0 < sample_ns or sample_ns < robot.battery_sample_ns
                 or not isfinite(valid_until) or not received_at <= valid_until <= received_at + BATTERY_TELEMETRY_TIMEOUT_SEC
                 or not 0 <= energy <= capacity or not 0 <= soc <= 100
                 or not isclose(soc, 100.0 * (energy / capacity), rel_tol=0.0, abs_tol=5e-6)
                 or (robot.battery_sample_ns and energy > robot.battery_energy_wh
-                    and not (charging_station_id or robot.charging_station_id))):
+                    and not (charging_station_id or robot.charging_station_id or control_matches))):
             robot.battery_valid_until = 0.0
         elif sample_ns == robot.battery_sample_ns:
             if (energy, soc, charging_station_id) != (
@@ -134,6 +154,9 @@ class FleetTracker:
             robot.battery_sample_ns = sample_ns
             robot.battery_valid_until = valid_until
             robot.charging_station_id = charging_station_id
+            if control_matches:
+                robot.battery_control_requests.append(control_request_id)
+                robot.battery_control_session_id = control_session_id
 
     def is_stale(
         self,

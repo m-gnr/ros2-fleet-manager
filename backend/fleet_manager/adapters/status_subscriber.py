@@ -66,6 +66,15 @@ def ros_robot_status_to_dict(msg: Any, receipt_time_sec: Optional[float] = None)
         "timestamp_sec": timestamp_sec,
         "dock_station_id": getattr(msg, "dock_station_id", ""),
         "charging_station_id": getattr(msg, "charging_station_id", ""),
+        "battery_control_session_id": getattr(msg, "battery_control_session_id", ""),
+        "battery_control_request_id": getattr(msg, "battery_control_request_id", ""),
+        "battery_control_soc_percent": float(getattr(msg, "battery_control_soc_percent", 0.0)),
+        "battery_control_energy_wh": float(getattr(msg, "battery_control_energy_wh", 0.0)),
+        "battery_control_stamp_ns": (
+            getattr(msg, "battery_control_stamp", None).sec * 10**9
+            + getattr(msg, "battery_control_stamp", None).nanosec
+            if getattr(msg, "battery_control_stamp", None) is not None else 0
+        ),
     }
 
 

@@ -11,7 +11,7 @@ from math import hypot
 from uuid import UUID as PythonUUID, uuid4
 
 import rclpy
-from fleet_interfaces.msg import BatteryState, DockLease, RobotStatus
+from fleet_interfaces.msg import BatteryControlApplied, BatteryState, DockLease, RobotStatus
 from fleet_interfaces.srv import ControlBattery
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
@@ -55,6 +55,8 @@ class BatterySimulatorNode(Node):
         self._control_session = str(uuid4())
         self._session_id = UUID(uuid=list(PythonUUID(self._control_session).bytes))
         self._control_requests = OrderedDict()
+        self._pending_control_request = ""
+        self._control_revision = 0
         self._battery = BatteryConsumption(model)
         self._dock = DockGate(robot.id, {dock.id: (dock.pose.x, dock.pose.y, dock.tolerance_radius) for dock in docks})
         self._charging_station = ""
@@ -63,6 +65,7 @@ class BatterySimulatorNode(Node):
         if os.environ.get("FLEET_SIM_BATTERY_CONTROL") == "1":
             self.create_service(ControlBattery, "sim/control_battery", self._on_control)
         self._publisher = self.create_publisher(BatteryState, "battery_state", 10)
+        self._control_applied_pub = self.create_publisher(BatteryControlApplied, "battery_control_applied", 10)
         self.create_subscription(Clock, "/clock", self._on_clock, CLOCK_QOS)
         self.create_subscription(Odometry, "odom", self._on_odometry, qos_profile_sensor_data)
         if docks:
@@ -96,6 +99,8 @@ class BatterySimulatorNode(Node):
                 if (self._dock.session_blocked or self._last_clock_wall is None
                         or time.monotonic() - self._last_clock_wall > 2):
                     raise ValueError("Simulation clock unavailable or session blocked")
+                if request.set_soc and self._pending_control_request:
+                    raise ValueError("Previous SoC control sample is not yet published")
                 if not request.request_id or len(request.request_id) > 128:
                     raise ValueError("Bounded request ID required")
                 previous = self._control_requests.get(request.request_id)
@@ -117,6 +122,9 @@ class BatterySimulatorNode(Node):
             )
             if mutation:
                 self._control_requests[request.request_id] = fingerprint
+                if request.set_soc:
+                    self._pending_control_request = request.request_id
+                    self._control_revision += 1
                 self.get_logger().info("BATTERY_CONTROL " + json.dumps(dict(
                     robot_id=self._robot_id, session_id=self._control_session, request_id=request.request_id,
                     sim_ns=self._battery.clock_ns, before=before, applied=state), allow_nan=False))
@@ -189,7 +197,7 @@ class BatterySimulatorNode(Node):
                 and not changed and now_ns - self._last_published_ns < PUBLISH_PERIOD_NS):
             return
 
-        self._publisher.publish(BatteryState(
+        state = BatteryState(
             robot_id=self._robot_id,
             publisher_session_id=self._session_id,
             battery_energy_wh=self._battery.remaining_wh,
@@ -197,8 +205,21 @@ class BatterySimulatorNode(Node):
             battery_capacity_wh=self._battery.capacity_wh,
             is_charging=bool(station),
             charging_station_id=station,
+            control_request_id=self._pending_control_request,
             battery_stamp=msg.clock,
-        ))
+        )
+        if self._pending_control_request:
+            proof = BatteryControlApplied(
+                robot_id=self._robot_id, control_session_id=self._control_session,
+                request_id=self._pending_control_request,
+                applied_soc_percent=state.battery_soc_percent,
+                applied_energy_wh=state.battery_energy_wh,
+                capacity_wh=state.battery_capacity_wh, revision=self._control_revision,
+                applied_stamp=msg.clock,
+            )
+            self._control_applied_pub.publish(proof)
+            self._pending_control_request = ""
+        self._publisher.publish(state)
         self._last_published_ns = now_ns
 
 

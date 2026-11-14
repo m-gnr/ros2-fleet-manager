@@ -15,6 +15,12 @@ builtin_interfaces/Time battery_stamp
 string current_task_id
 string dock_station_id
 string charging_station_id
+# Short-lived proof of a validated manual Battery Control sample, repeated until consumed by FM.
+string battery_control_session_id
+string battery_control_request_id
+float32 battery_control_soc_percent
+float64 battery_control_energy_wh
+builtin_interfaces/Time battery_control_stamp
 # Stamped Gazebo model pose for physical dock departure. Zero stamp means unavailable.
 geometry_msgs/PoseStamped physical_pose
 

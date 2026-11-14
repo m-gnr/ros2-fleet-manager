@@ -100,6 +100,39 @@ def test_remaining_wh_controls_threshold_and_session_change_blocks():
     asyncio.run(scenario())
 
 
+def test_fleet_tracker_accepts_only_matching_one_shot_control_proof():
+    from backend.fleet_manager.domain.fleet_tracker import FleetTracker
+
+    core, _ = build_fleet_manager_from_config(route_provider=Routes())
+    robot = core.tracker.get_robot("robot_1")
+    assert robot.requires_battery_telemetry
+    capacity = robot.specs.usable_capacity_wh
+    FleetTracker._update_battery(robot, 20.0, capacity * .2, 10**9, 3.0, 1.0, "")
+    assert robot.battery_valid_until == 3.0
+    # Plain RobotStatus battery rise remains fenced.
+    FleetTracker._update_battery(robot, 100.0, capacity, 2 * 10**9, 4.0, 2.0, "")
+    assert robot.battery_valid_until == 0.0
+
+    # A fresh controlled scenario baseline accepts its exact one-shot proof.
+    FleetTracker._update_battery(robot, 20.0, capacity * .2, 3 * 10**9, 5.0, 3.0, "")
+    request_id = str(uuid4())
+    FleetTracker._update_battery(
+        robot, 100.0, capacity, 4 * 10**9, 6.0, 4.0, "",
+        "battery-session", request_id, 100.0, capacity, 4 * 10**9,
+    )
+    assert robot.battery_energy_wh == capacity
+    assert robot.battery_valid_until == 6.0
+    # After a normal decrease, replay cannot authorize another upward jump.
+    FleetTracker._update_battery(robot, 20.0, capacity * .2, 5 * 10**9, 7.0, 5.0, "")
+    FleetTracker._update_battery(
+        robot, 100.0, capacity, 6 * 10**9, 8.0, 6.0, "",
+        "battery-session", request_id, 100.0, capacity, 4 * 10**9,
+    )
+    assert robot.battery_valid_until == 0.0
+    FleetTracker._update_battery(robot, 20.0, capacity * .2, 7 * 10**9, 9.0, 7.0, "")
+    assert robot.battery_energy_wh == capacity * .2
+
+
 def test_active_transport_and_post_preemption_require_fresh_battery():
     from backend.fleet_manager.domain import TaskResultStatus
 

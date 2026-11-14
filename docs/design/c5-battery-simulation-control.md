@@ -42,6 +42,10 @@ Yanıt `atomic=false` ve robot başına `VERIFIED`, `REJECTED` veya `UNVERIFIED`
 
 Simülatör, mutasyonları robot/oturum/istek/simülasyon zamanı/önceki ve uygulanan parametreler ile `BATTERY_CONTROL` olarak loglar; retleri ayrıca kaydeder. Denetim loglarının saklanması çalıştırıcının sorumluluğudur. Senaryo boyunca en fazla 10.000 değişiklik isteğinin fingerprint'i bellekte saklanır; kapasite dolunca yeni yazımlar reddedilir. Aynı istek ID'si ve aynı payload SoC'yi yeniden sıfırlamaz; farklı payload reddedilir. Restart önceki kontrol isteklerini replay etmez.
 
+## C4 süreklilik kanıtı
+
+Yetkili `set_soc` sonrasında sıradan `BatteryState` enerji artışı tek başına süreklilik istisnası vermez. Simülatör sonraki yayın örneği için ayrı `BatteryControlApplied` kanıtı ve yalnız o örneğe ait `control_request_id` üretir. Executor kanıt yayıncısının kendi namespace'indeki tek `battery_simulator` olduğunu, robot/oturum/istek/SoC/Wh/kapasite/revision ve simülasyon damgasını doğrular; eşleşen örneği bir kez tüketir. Doğrulanmış kısa ömürlü kanıt `RobotStatus` ile Fleet Manager'a ulaşır; FM aynı SoC/Wh uygulama kanıtı için gelen güncel batarya ölçümünü iki saniyelik simülasyon damgası penceresinde bir kez kabul edip yeni SoC'yi süreklilik başlangıcı yapar. Tekrar, yanlış robot/oturum, eski veya eşleşmeyen kanıt normal fail-closed C4 doğrulamasını geçemez. İstek geçmişi robot başına 10.000 kayıtla sınırlıdır; dolunca senaryo reseti gerekir. Kontrol API'si ve ROS servisi ürün ortamında varsayılan kapalı kalır; bu kanıt C4 eşiklerini veya dock politikasını değiştirmez. Uygulama/test durumu [2026-11-14 doğrulama kaydındadır](../validation/c5/battery-control-continuity-validation-2026-11-14.md).
+
 ## Arayüz ve sınır
 
 İstasyonlar / Şarj görünümündeki panel robot seçimi, canlı Wh/SoC ve tazelik, istenen SoC slider/hazır değerler, normal/hızlı profil, süreler, onaylar ve tekli/toplu uygulama içerir. Erişim anahtarı olmadan envanter açılmaz. Seçili robotun servisi veya telemetrisi kullanılamıyorsa tekli kontrol kapanır. Toplu deneme kullanılabilir robotları uygulayıp kapalı robotları ayrı raporlayabilir.

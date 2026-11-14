@@ -114,6 +114,8 @@ class RobotRecord:
     initial_status_verified: bool = False
     requires_battery_telemetry: bool = False
     battery_sample_ns: int = 0
+    battery_control_requests: list = field(default_factory=list)
+    battery_control_session_id: str = ""
     battery_valid_until: float = 0.0
     dock_station_id: str = ""
     charging_station_id: str = ""

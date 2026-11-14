@@ -37,7 +37,7 @@ from geometry_msgs.msg import PoseStamped as RosPoseStamped, Twist
 from nav_msgs.msg import Odometry
 
 from fleet_interfaces.action import ExecuteTask, NavigateToStation
-from fleet_interfaces.msg import BatteryState, RobotStatus
+from fleet_interfaces.msg import BatteryControlApplied, BatteryState, RobotStatus
 from fleet_interfaces.srv import ClearRobotError
 from nav2_msgs.action import NavigateToPose
 from tf2_ros import Buffer, TransformException, TransformListener
@@ -179,6 +179,8 @@ class RobotExecutorNode(Node):
         self._map_tf = None
         self._physical_pose = None
         self._battery_endpoint_gid = None
+        self._battery_control_endpoint_gid = None
+        self._battery_control_proof = None
         self._battery_clock_changed = threading.Event()
         if not _legacy_test_battery:
             if (not robot_cfg.use_sim_time or not self.get_parameter("use_sim_time").value
@@ -277,6 +279,11 @@ class RobotExecutorNode(Node):
         if self._battery is not None:
             self._battery_sub = self.create_subscription(
                 BatteryState, self._battery_topic, self._battery_callback, 10,
+                callback_group=self.cb_group,
+            )
+            self._battery_control_topic = f"{robot_cfg.namespace}/battery_control_applied"
+            self._battery_control_sub = self.create_subscription(
+                BatteryControlApplied, self._battery_control_topic, self._battery_control_callback, 10,
                 callback_group=self.cb_group,
             )
         else:
@@ -968,8 +975,28 @@ class RobotExecutorNode(Node):
                     self.state_machine.start_charging()
                 else:
                     self.state_machine.stop_charging()
+                proof = self._battery.control_proof
+                if proof:
+                    self._battery_control_proof = (proof, time.monotonic())
             elif self._battery.blocked_reason:
                 self.get_logger().error(f"{self._battery.blocked_reason}. Scenario reset required.")
+
+    def _battery_control_callback(self, msg: BatteryControlApplied) -> None:
+        with self._lock:
+            endpoints = self.get_publishers_info_by_topic(self._battery_control_topic)
+            if (len(endpoints) != 1 or endpoints[0].topic_type != "fleet_interfaces/msg/BatteryControlApplied"
+                    or endpoints[0].node_name != "battery_simulator"
+                    or endpoints[0].node_namespace != self.robot_namespace):
+                self._battery.blocked_reason = "Conflicting Battery Control attestation publisher"
+                return
+            gid = bytes(endpoints[0].endpoint_gid)
+            if not any(gid) or self._battery_control_endpoint_gid not in (None, gid):
+                self._battery.blocked_reason = "Battery Control attestation source changed"
+                return
+            self._battery_control_endpoint_gid = gid
+            if self._battery.authorize_control(msg, self.get_clock().now().nanoseconds, time.monotonic()):
+                # Kept for at most the two-second freshness window so FM's 5 Hz stream observes it.
+                self._pending_battery_control_session = msg.control_session_id
 
     def _legacy_battery_callback(self, msg: RobotStatus) -> None:
         if msg.robot_id != self.robot_id:
@@ -1037,6 +1064,14 @@ class RobotExecutorNode(Node):
         msg.current_task_id = snap.current_task_id
         msg.dock_station_id = dock_station_id
         msg.charging_station_id = charging_station_id
+        proof = getattr(self, "_battery_control_proof", None)
+        if proof and time.monotonic() - proof[1] <= 2.0:
+            values = proof[0]
+            msg.battery_control_session_id = values[0]
+            msg.battery_control_request_id = values[1]
+            msg.battery_control_soc_percent = values[2]
+            msg.battery_control_energy_wh = values[3]
+            msg.battery_control_stamp.sec, msg.battery_control_stamp.nanosec = divmod(values[4], 10**9)
         if physical_pose is not None and 0 <= now_stamp.nanoseconds - physical_pose[0] <= 300_000_000:
             msg.physical_pose = physical_pose[1]
 

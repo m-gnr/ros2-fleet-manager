@@ -996,7 +996,18 @@ class RobotExecutorNode(Node):
             self._battery_control_endpoint_gid = gid
             if self._battery.authorize_control(msg, self.get_clock().now().nanoseconds, time.monotonic()):
                 # Kept for at most the two-second freshness window so FM's 5 Hz stream observes it.
+                if self._battery.blocked_reason:
+                    self.get_logger().error(f"{self._battery.blocked_reason}. Scenario reset required.")
+                    return
                 self._pending_battery_control_session = msg.control_session_id
+                proof = self._battery.take_resolved_control_proof()
+                if proof:
+                    self.state_machine.update_battery(self._battery.soc_percent, self._battery.energy_wh)
+                    if self._battery.charging_station_id:
+                        self.state_machine.start_charging()
+                    else:
+                        self.state_machine.stop_charging()
+                    self._battery_control_proof = (proof, time.monotonic())
 
     def _legacy_battery_callback(self, msg: RobotStatus) -> None:
         if msg.robot_id != self.robot_id:

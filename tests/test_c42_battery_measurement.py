@@ -110,16 +110,70 @@ def test_authorized_control_sample_is_one_shot_and_resets_continuity_baseline():
     assert battery.observe(down, 12 * NS, 1.3)
 
 
+def test_control_proof_and_battery_samples_can_arrive_out_of_order():
+    from uuid import uuid4
+
+    battery = BatteryTelemetry("robot", 100.0)
+    session = uuid4()
+    baseline = measurement(publisher_session_id=SimpleNamespace(uuid=session.bytes))
+    assert battery.observe(baseline, 10 * NS, 1.0)
+    request_id = str(uuid4())
+    controlled = measurement(
+        publisher_session_id=SimpleNamespace(uuid=session.bytes),
+        battery_stamp=SimpleNamespace(sec=11, nanosec=0),
+        battery_energy_wh=100.0,
+        battery_soc_percent=100.0,
+        control_request_id=request_id,
+    )
+    after_control = measurement(
+        publisher_session_id=SimpleNamespace(uuid=session.bytes),
+        battery_stamp=SimpleNamespace(sec=12, nanosec=0),
+        battery_energy_wh=99.9,
+        battery_soc_percent=99.9,
+    )
+    assert not battery.observe(controlled, 11 * NS, 1.1)
+    assert not battery.blocked_reason
+    assert not battery.observe(after_control, 12 * NS, 1.2)
+    assert battery.energy_wh == 75.0
+
+    proof = SimpleNamespace(
+        robot_id="robot", control_session_id=str(session), request_id=request_id,
+        applied_soc_percent=100.0, applied_energy_wh=100.0, capacity_wh=100.0,
+        revision=1, applied_stamp=SimpleNamespace(sec=11, nanosec=0),
+    )
+    assert battery.authorize_control(proof, 12 * NS, 1.25)
+    assert battery.take_resolved_control_proof() == (
+        str(session), request_id, 100.0, 100.0, 11 * NS,
+    )
+    assert battery.energy_wh == 99.9
+    assert battery.soc_percent == 99.9
+    assert not battery.blocked_reason
+
+    later = measurement(
+        publisher_session_id=SimpleNamespace(uuid=session.bytes),
+        battery_stamp=SimpleNamespace(sec=13, nanosec=0),
+        battery_energy_wh=99.8,
+        battery_soc_percent=99.8,
+    )
+    assert battery.observe(later, 13 * NS, 1.3)
+    assert battery.energy_wh == 99.8
+
+
 def test_control_marker_without_explicit_attestation_is_rejected():
     battery = BatteryTelemetry("robot", 100.0)
-    first = measurement()
+    session = uuid4()
+    first = measurement(publisher_session_id=SimpleNamespace(uuid=session.bytes))
     assert battery.observe(first, 10 * NS, 1.0)
     controlled = measurement(
+        publisher_session_id=SimpleNamespace(uuid=session.bytes),
         battery_stamp=SimpleNamespace(sec=11, nanosec=0),
         battery_energy_wh=100.0, battery_soc_percent=100.0,
         control_request_id="forged",
     )
     assert not battery.observe(controlled, 11 * NS, 1.1)
+    assert battery.energy_wh == 75.0
+    assert not battery.blocked_reason  # Held briefly for a possible reordered DDS attestation.
+    assert battery.fresh_stamp(13 * NS, 3.2) == 0
     assert battery.blocked_reason
 
 

@@ -67,6 +67,13 @@ class Rig:
         self.sources[robot] = source
         publisher = source.create_publisher(BatteryState, "battery_state", 10)
         self.spin_until(lambda: publisher.get_subscription_count() == 1)
+        # Matching alone does not establish publisher identity in the receiver graph.
+        # One-shot samples are intentionally rejected until that independent discovery completes.
+        def receiver_identified():
+            endpoints = self.nodes[robot].get_publishers_info_by_topic(f"/{robot}/battery_state")
+            return (len(endpoints) == 1 and endpoints[0].node_name == "battery_simulator"
+                    and endpoints[0].node_namespace == f"/{robot}")
+        self.spin_until(receiver_identified)
         return publisher
 
     def spin_until(self, condition, seconds=3.0):

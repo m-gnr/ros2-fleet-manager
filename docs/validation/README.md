@@ -4,6 +4,8 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
 |---|---|---|
+| C5-A main entegrasyon checkpoint'i | [Rapor](c5/c5-a-main-integration-2026-11-14.md) · [Komutlar](c5/c5-a-main-integration-commands-2026-11-14.md) | Main kullanıcı değişiklikleri korundu; 26 host testi ve 23 Chrome testi geçti. Target canlı görev `EXECUTING` durumunda durduruldu, COMPLETED doğrulanmadı |
+| C5-A ilk entegrasyon | [Rapor](c5/c5-a-first-integration-2026-11-14.md) · [Komut eki](c5/c5-a-first-integration-commands-2026-11-14.md) | Tek gerçek Chrome → FM → Nav2 pickup/dropoff COMPLETED; iki robot ve batarya görünürlüğü. Sensör qualification kabulü değildir |
 | C5 Aşama 1.3 | [Rapor](c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komutlar](c5/c5-stage1-3-commands-2026-11-11.md) | AMCL gözlem modeli, aynı damgalı raf yaklaşması ve bağımsız kabul kayıtları |
 | C5 Aşama 1.2 | [Rapor](c5/c5-stage1-2-physical-localization-2026-11-11.md) · [Komutlar](c5/c5-stage1-2-commands-2026-11-11.md) | Dönüş odometrisi ve collision zarfı düzeltildi; son pickup 1/5, paralel beta FAILED; kabul verilmedi |
 | C5 Aşama 1.1 | [Rapor](c5/stage1-1-validation-2026-11-11.md) · [Komutlar](c5/stage1-1-commands-2026-11-11.md) | F1 gerçek feedback/EXECUTING düzeltildi; üç izole F2 deneyinde 1 geçti / 2 kaldı. Koşulsuz kabul verilmedi |
@@ -55,3 +57,5 @@ B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ rob
 - [26 Ekim 2026 düzenleme ve diyagram doğrulaması](organization/organization-validation-2026-10-26.md) · [komut eki](organization/organization-commands-2026-10-26.md)
 
 - [C5 Git checkpoint denetimi — 12 Kasım](c5/git-checkpoint-2026-11-12/README.md) · [Komut eki](c5/git-checkpoint-commands-2026-11-12.md); ürün kabulü veya Aşama 2 koşusu değildir.
+
+- [C5 Aşama 2.0 dinamik batarya kontrolleri](c5/battery-control-validation-2026-11-12.md) · [Komutlar](c5/battery-control-commands-2026-11-12.md): host, gerçek ROS servisi ve izole canlı Chrome; Gazebo şarj kabulü değildir.

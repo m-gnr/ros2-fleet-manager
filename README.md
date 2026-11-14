@@ -127,3 +127,5 @@ C5’in sonraki aşamaları katalog görev girişinin Executor/Battery ile birle
 - [Kalıcı proje bağlamı](docs/project-context.md), [AGENTS.md](AGENTS.md) ve [doğrulama kayıtları](docs/validation/README.md)
 
 Lisans: [Apache-2.0](LICENSE).
+
+C5 Aşama 2.0: [dinamik batarya simülasyon kontrolü](docs/design/c5-battery-simulation-control.md) varsayılan kapalıdır. [Doğrulama kapsamı ve sınırları](docs/validation/c5/battery-control-validation-2026-11-12.md) izole ROS/Chrome kontrolünü ve sentetik üçüncü robot testini ayırır.

@@ -4,6 +4,7 @@ import {
   ListTodo, LockKeyhole, Network, RotateCw, Signal, WifiOff,
 } from "lucide-react";
 import { EmptyState, RobotDetails, RobotList, StationOverview, TaskList } from "./Operations";
+import { BatterySimulation } from "./BatterySimulation";
 import { ScenePanel } from "./ScenePanel";
 import { TaskComposer, useTaskCatalog } from "./TaskComposer";
 import { useFleet, type Connection } from "./useFleet";
@@ -69,7 +70,7 @@ export default function App() {
           <span className={`connection ${connection.toLowerCase()}`} role="status">
             {connected ? <Signal size={14} /> : <WifiOff size={14} />}
             <strong>{connectionLabels[connection]}</strong></span>
-          <span className="tag readonly"><LockKeyhole size={13} /> {catalog?.enabled ? 'GÖREV GİRİŞİ' : 'SALT OKUNUR'}</span>
+          <span className="tag readonly"><LockKeyhole size={13} /> {view.id === 'stations' ? 'SİMÜLASYON TESTİ' : catalog?.enabled ? 'GÖREV GİRİŞİ' : 'SALT OKUNUR'}</span>
         </div>
       </header>
       <main id="workspace" tabIndex={-1} className={`workspace ${view.id === "overview" ? "overview" : ""}`}>
@@ -103,7 +104,7 @@ export default function App() {
       </div>}
       {view.id === "tasks" && <><TaskComposer key={catalog?.session} catalog={catalog} fleet={fleet} connected={connected} />
         <TaskList fleet={fleet} connected={connected} /></>}
-      {view.id === "stations" && <StationOverview fleet={fleet} connected={connected} />}
+      {view.id === "stations" && <><StationOverview fleet={fleet} connected={connected} /><BatterySimulation fleet={fleet} connected={connected} /></>}
       {!fleet && !error && view.id !== "overview" && <div role="status" className="initial-note">
         <EmptyState title="İlk eşitleme" detail="Fleet Manager snapshot’ı bekleniyor." /></div>}
       {view.id !== "overview" && <footer className="workspace-footer"><span>ROS 2 FLEET MANAGER</span>

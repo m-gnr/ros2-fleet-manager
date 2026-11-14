@@ -25,6 +25,11 @@ class OdometrySample:
 
 class BatteryConsumption:
     def __init__(self, model: BatteryModel):
+        self._normal_model = model.model_copy(deep=True)
+        self.mode = "NORMAL"
+        self.discharge_minutes = 0.0
+        self.charge_minutes = 0.0
+        self.revision = 0
         self.capacity_wh = model.usable_capacity_wh
         self.remaining_wh = self.capacity_wh
         self._consumption_wh_per_meter = model.consumption_wh_per_meter
@@ -35,6 +40,41 @@ class BatteryConsumption:
         self._last_odom_ns: int | None = None
         self._previous_odom: OdometrySample | None = None
         self._pending: deque[OdometrySample] = deque()
+
+    def control(self, *, soc=None, mode=None, discharge_minutes=10.0, charge_minutes=10.0):
+        """Validate everything before mutating; units are minutes of simulation time."""
+        if soc is not None and (not isfinite(soc) or not 0 <= soc <= 100):
+            raise ValueError("SoC must be finite and in [0, 100]")
+        if mode is not None:
+            if mode not in ("NORMAL", "FAST"):
+                raise ValueError("Unknown battery mode")
+            if not all(isfinite(v) and 1 <= v <= 1440 for v in (discharge_minutes, charge_minutes)):
+                raise ValueError("Durations must be finite and in [1, 1440] minutes")
+            normal = self._normal_model
+            idle = normal.idle_power_w
+            charge = normal.charge_power_w
+            if mode == "FAST":
+                idle = self.capacity_wh * .75 * 60 / discharge_minutes
+                # Charging integration subtracts idle consumption, so compensate it.
+                charge = idle + self.capacity_wh * .55 * 60 / charge_minutes
+            if not all(isfinite(v) and 0 <= v <= 1_000_000 for v in (idle, charge)):
+                raise ValueError("Effective power exceeds simulation bound (1 MW)")
+        if soc is not None:
+            self.remaining_wh = self.capacity_wh * soc / 100
+        if mode is not None:
+            self.mode = mode
+            self._idle_power_w, self._charge_power_w = idle, charge
+            self.discharge_minutes = discharge_minutes if mode == "FAST" else 0.0
+            self.charge_minutes = charge_minutes if mode == "FAST" else 0.0
+        if soc is not None or mode is not None:
+            self.revision += 1
+        return self.control_state()
+
+    def control_state(self):
+        return dict(revision=self.revision, soc_percent=self.soc_percent, energy_wh=self.remaining_wh,
+                    capacity_wh=self.capacity_wh, mode=self.mode, discharge_minutes=self.discharge_minutes,
+                    charge_minutes=self.charge_minutes, idle_power_w=self._idle_power_w,
+                    charge_power_w=self._charge_power_w, consumption_wh_per_meter=self._consumption_wh_per_meter)
 
     @property
     def soc_percent(self) -> float:

@@ -1,5 +1,6 @@
 """Read-only ASGI surface for the private latest-value feed."""
 import argparse
+import os
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -99,7 +100,7 @@ async def send_latest(socket, feed, *, poll_sec=POLL_SEC):
 
 
 def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene_topics=None, fleet_config=None,
-               task_socket=None, costmap_path=None):
+               task_socket=None, costmap_path=None, battery_gateway=None, battery_token=None):
     origins = frozenset(origins)
     for origin in origins:
         url = urlsplit(origin)
@@ -111,6 +112,12 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
         raise ValueError("C5 requires at least one browser origin")
     feed = Feed(path)
     clients = 0
+    battery_controls = None
+    if battery_gateway is not None:
+        from .battery_control import BatteryControls
+        if fleet_config is None or not battery_token:
+            raise ValueError("Battery controls require authoritative fleet config and authentication")
+        battery_controls = BatteryControls(fleet_config, battery_gateway)
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -124,8 +131,12 @@ def create_app(path, *, origins, max_clients=MAX_CLIENTS, bridge_url=None, scene
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
-    app.add_middleware(CORSMiddleware, allow_origins=list(origins), allow_methods=["GET", "POST"] if task_socket else ["GET"],
-                       allow_headers=["Content-Type"])
+    app.add_middleware(CORSMiddleware, allow_origins=list(origins), allow_methods=["GET", "POST"] if task_socket or battery_controls else ["GET"],
+                       allow_headers=["Content-Type", "Authorization"])
+
+    if battery_controls:
+        from .battery_control import install_routes
+        install_routes(app, battery_controls, battery_token, origins)
 
     @app.middleware("http")
     async def prevent_cache(request, call_next):
@@ -305,13 +316,25 @@ def main():
             parser.error("--scene-port requires a valid port and --fleet")
         topics = {robot.id: robot.namespace + "/plan" for robot in config.robots}
         bridge_url = f"ws://scene:{args.scene_port}/telemetry/fleet"
-    uvicorn.run(
-        create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics,
-                   fleet_config=config, task_socket=args.task_socket, costmap_path=args.costmap),
-        host="0.0.0.0" if args.container_bind else "127.0.0.1", port=args.port,
-        proxy_headers=False, server_header=False, ws="websockets", ws_max_size=1024, ws_max_queue=1,
-        ws_per_message_deflate=False, limit_concurrency=64, timeout_graceful_shutdown=3,
-    )
+    gateway = None
+    token = os.environ.get("FLEET_SIM_BATTERY_TOKEN")
+    if os.environ.get("FLEET_SIM_BATTERY_CONTROL") == "1":
+        if config is None or not token or len(token) < 32:
+            parser.error("Simulation battery controls require --fleet and FLEET_SIM_BATTERY_TOKEN (32+ chars)")
+        from .battery_ros import BatteryROSGateway
+        gateway = BatteryROSGateway(config)
+    try:
+        uvicorn.run(
+            create_app(args.snapshot, origins=frozenset(args.origin), bridge_url=bridge_url, scene_topics=topics,
+                       fleet_config=config, task_socket=args.task_socket, costmap_path=args.costmap,
+                       battery_gateway=gateway, battery_token=token),
+            host="0.0.0.0" if args.container_bind else "127.0.0.1", port=args.port,
+            proxy_headers=False, server_header=False, ws="websockets", ws_max_size=1024, ws_max_queue=1,
+            ws_per_message_deflate=False, limit_concurrency=64, timeout_graceful_shutdown=3,
+        )
+    finally:
+        if gateway:
+            gateway.close()
 
 
 if __name__ == "__main__":

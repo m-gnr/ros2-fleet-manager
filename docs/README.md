@@ -18,6 +18,11 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5-A main entegrasyon checkpoint'i](validation/c5/c5-a-main-integration-2026-11-14.md) · [Üç taraflı karşılaştırma, komutlar ve canlı koşu sonucu](validation/c5/c5-a-main-integration-commands-2026-11-14.md).
+- [C5-A gerçek Chrome / Gazebo ilk entegrasyonu](validation/c5/c5-a-first-integration-2026-11-14.md) · [Gerçek komutlar](validation/c5/c5-a-first-integration-commands-2026-11-14.md): tek gerçek Chrome görevi COMPLETED; iki robot, TF ve batarya görünürlüğü. Sensör qualification kabulü değildir.
+- [C5 Aşama 1.7A depo modeli araştırması](research/c5-stage1-7-warehouse-model-research.md) — Sunum için üç hazır aday, lisans ve WebGL incelemesi, tek model önerisi.
+- [Gereksinim analizi, literatür taraması ve özgünlük değerlendirmesi](reports/gereksinim-literatur-ozgunluk-2026-10-27.md): 27 Ekim 2026; [PDF](reports/gereksinim-literatur-ozgunluk-2026-10-27.pdf), [tarama ve doğrulama eki](reports/gereksinim-literatur-ozgunluk-tarama-eki-2026-10-27.md). Kaynak temelli sınırlı araştırma, 24 gereksinim ve güncel host testi; yeni mimari karar veya ürün kabulü değildir.
+- [C4 öncesi kapsamlı teknik rapor](reports/c4-oncesi-teknik-rapor-2026-10-25.md): 25 Ekim 2026 tarihli 38 sayfalık PDF; güncel uygulama, tarihsel test kanıtları, SQL şeması ve statik teknik bulgular. Yeni mimari karar veya yeniden çalıştırılmış ürün testi değildir.
 - [C5 Aşama 1.3 AMCL ve güvenli raf yaklaşması](validation/c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komut eki](validation/c5/c5-stage1-3-commands-2026-11-11.md).
 - [C5 Aşama 1.2 fiziksel model, odometri, AMCL ve footprint](validation/c5/c5-stage1-2-physical-localization-2026-11-11.md): son pickup 1/5; F2 ve paralel görev regresyonu açık, koşulsuz kabul yok.
 - [C5 Aşama 1.1 feedback ve fiziksel pickup yeniden doğrulaması](validation/c5/stage1-1-validation-2026-11-11.md) · [Komutlar](validation/c5/stage1-1-commands-2026-11-11.md): F1 düzeltildi; F2 açık, koşulsuz kabul yok.
@@ -76,3 +81,5 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 İçerik taşımayan `setup.md` ve `requirements.md` kaldırılmıştır. Bilgi içeren tarihsel belgeler silinmemiştir. Değiştirilmeyen PDF'lerin atıf yaptığı taşınmış raporlar için eski konumlarda kısa yönlendirme kayıtları tutulur.
 
 - [C5 Git kaynak checkpoint ve push denetimi — 12 Kasım](validation/c5/git-checkpoint-2026-11-12/README.md) · [Komutlar](validation/c5/git-checkpoint-commands-2026-11-12.md): kaynak envanteri, yerel ham kanıt manifesti ve sınırlı yeniden üretim kontrolü.
+
+- [C5 Aşama 2.0 dinamik batarya simülasyon kontrolü](design/c5-battery-simulation-control.md) · [Doğrulama](validation/c5/battery-control-validation-2026-11-12.md) · [Komutlar](validation/c5/battery-control-commands-2026-11-12.md).

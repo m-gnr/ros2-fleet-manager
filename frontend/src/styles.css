@@ -293,3 +293,22 @@ td small.review { color: #805615; }
 .task-composer button:disabled { opacity: .45; }
 .task-composer form p { font-size: 12px; margin: 12px 0 0; }
 .costmap-key { position: absolute; left: 12px; top: 48px; font-size: 10px; padding: 4px 7px; background: #ffffffdf; border-radius: 4px; color: #8f3529; pointer-events: none; }
+
+.battery-simulation { margin-top: 20px; padding: 0 20px 18px; font-size: 12px; }
+.battery-simulation .card-heading { margin: 0 -20px 16px; padding: 14px 20px; }
+.battery-simulation fieldset { border: 0; padding: 16px 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; min-width: 0; }
+.battery-simulation label { display: grid; gap: 8px; color: var(--muted); }
+.battery-simulation > label { max-width: 420px; }
+.battery-simulation label:has(input[type=checkbox]) { display: flex; align-items: center; gap: 8px; }
+.battery-simulation fieldset > p, .battery-simulation label:has(input[type=checkbox]), .battery-simulation label:has(input[type=range]), .battery-presets { grid-column: 1 / -1; }
+.battery-simulation input, .battery-simulation select { accent-color: var(--accent); font: inherit; min-width: 0; }
+.battery-simulation input:not([type=checkbox]):not([type=range]), .battery-simulation select { width: 100%; padding: 10px; border: 1px solid #cad6dd; border-radius: 7px; background: white; color: var(--ink); }
+.battery-simulation input[type=range] { width: 100%; max-width: 560px; }
+.battery-simulation fieldset > p { line-height: 1.6; color: var(--muted); }
+.battery-simulation fieldset > p strong { color: var(--accent); }
+.battery-presets { display: flex; flex-wrap: wrap; gap: 10px; }
+.battery-presets button { padding: 9px 14px; border: 1px solid #cfeae1; border-radius: 7px; background: var(--soft); color: var(--accent); font-weight: 650; }
+.battery-presets:last-child button { background: var(--accent); color: white; }
+.battery-simulation button:disabled { opacity: .45; cursor: default; }
+.battery-result { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.8; padding: 12px; border: 1px solid var(--line); background: #f7faf9; border-radius: 7px; max-height: 360px; overflow: auto; }
+@media (max-width: 600px) { .battery-simulation fieldset { grid-template-columns: minmax(0, 1fr); } }

@@ -1,0 +1,55 @@
+{
+  "individual": "robot_1: doğrulandı · geri okunan %25.00 · 25.000 Wh · FAST · bekleme 450.00 W · şarj 780.00 W · 10/10 dk",
+  "bulk": "robot_1: doğrulandı · geri okunan %24.91 · 24.913 Wh · FAST · bekleme 900.00 W · şarj 1120.00 W · 5/15 dk\nrobot_2: doğrulandı · geri okunan %100.00 · 99.999 Wh · FAST · bekleme 900.00 W · şarj 1120.00 W · 5/15 dk",
+  "inventory": {
+    "enabled": true,
+    "robots": [
+      {
+        "robot_id": "robot_1",
+        "namespace": "/robot_1",
+        "available": true,
+        "state": {
+          "success": true,
+          "message": "READ",
+          "robot_id": "robot_1",
+          "session_id": "576879b4-49c9-4a26-a60d-8c5cf15c6be8",
+          "request_id": "",
+          "revision": 2,
+          "soc_percent": 24.862500000000004,
+          "energy_wh": 24.862500000000004,
+          "capacity_wh": 100,
+          "mode": "FAST",
+          "discharge_minutes": 5,
+          "charge_minutes": 15,
+          "idle_power_w": 900,
+          "charge_power_w": 1120,
+          "consumption_wh_per_meter": 0.2
+        }
+      },
+      {
+        "robot_id": "robot_2",
+        "namespace": "/robot_2",
+        "available": true,
+        "state": {
+          "success": true,
+          "message": "READ",
+          "robot_id": "robot_2",
+          "session_id": "2e760dba-a0ca-4d06-91b7-3faf4d76af28",
+          "request_id": "",
+          "revision": 1,
+          "soc_percent": 99.9488333333332,
+          "energy_wh": 99.9488333333332,
+          "capacity_wh": 100,
+          "mode": "FAST",
+          "discharge_minutes": 5,
+          "charge_minutes": 15,
+          "idle_power_w": 900,
+          "charge_power_w": 1120,
+          "consumption_wh_per_meter": 0.2
+        }
+      }
+    ]
+  },
+  "errors": [],
+  "scope": "Two real BatterySimulator nodes, controlled ROS clock, real API and Chrome; no Gazebo, FM or physical charging acceptance"
+}

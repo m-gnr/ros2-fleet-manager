@@ -1082,3 +1082,31 @@ Mermaid CLI 11.12.0 ile kaynaklar SVG'ye çevrilir; bu araç ürün bağımlıl�
 ## Eksik akışlar
 
 C4 şarj kuyruğu, erken ayrılma ve otomatik park orkestrasyonu; C5 REST/WS/panel; kontrollü Apply ve ürün reset prosedürü tamamlanmamıştır. Genişletilmiş iki robotlu takas MVP'de kapalıdır; onaysız yürütme algoritması çizilmedi. Küresel trafik/deadlock çözücüsü kapsam dışıdır.
+
+## 19. Dinamik batarya simülasyon kontrolü
+
+**Durum:** IMPLEMENTED. C5 Aşama 2.0 kontrol yolu; tam Gazebo şarj kabulü değildir.
+
+[Tasarım](../design/c5-battery-simulation-control.md) · [Doğrulama](../validation/c5/battery-control-validation-2026-11-12.md) · [Mermaid](src/battery-simulation-control.mmd) · [SVG](svg/battery-simulation-control.svg)
+
+![Dinamik batarya kontrolü](svg/battery-simulation-control.svg)
+
+```mermaid
+---
+title: "19 · Dinamik batarya simülasyon kontrolü · IMPLEMENTED"
+---
+flowchart TD
+ C["Yetkili filo config'i<br/>ID, namespace, kapasite"] --> I["Dinamik kontrol envanteri"]
+ G["GUI · yerel erişim anahtarı<br/>güvenli test ve toplu SoC onayı"] --> A{"API kimlik ve Origin doğrulaması"}
+ A -->|"Geçerli"| I
+ A -->|"Geçersiz"| X["Açık ret"]
+ I --> R{"Her robot için bağımsız denetim<br/>tek yayıncı, tek servis, güncel telemetri"}
+ R -->|"Uygun değil"| F["Robot bazlı ret<br/>Diğer robotlar devam eder"]
+ R -->|"Uygun"| S["Namespace kontrol servisi<br/>Anahtar, ID, oturum ve sınır doğrulaması"]
+ S --> B["Battery Simulator<br/>SoC ve Wh birlikte; kapasiteden profil<br/>Denetim kaydı ve duplicate koruması"]
+ B --> V["Bağımsız servis geri okuması<br/>Robot bazlı doğrulandı veya belirsiz sonuç"]
+ V --> G
+ B --> T["Sonraki simülasyon saatinde BatteryState<br/>Canlı gösterim yalnız telemetriden"]
+ T --> G
+ D["Fiziksel dock kanıtı ve sahiplik<br/>Mevcut C4 kapısı"] --> B
+```

@@ -1,0 +1,49 @@
+....................F..............................                      [100%]
+=================================== FAILURES ===================================
+____________ test_clock_rewind_latches_even_after_clock_catches_up _____________
+
+rig = <test_c42_battery_ros2.Rig object at 0xffffb9443250>
+
+    def test_clock_rewind_latches_even_after_clock_catches_up(rig):
+        robot = "robot_1"
+        pub = rig.add_source(robot)
+        session = uuid4()
+        pub.publish(sample(robot, 10 * NS, session))
+>       rig.spin_until(lambda: rig.status.get(robot) and rig.status[robot].battery_stamp.sec == 10)
+
+tests/test_c42_battery_ros2.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_c42_battery_ros2.Rig object at 0xffffb9443250>
+condition = <function test_clock_rewind_latches_even_after_clock_catches_up.<locals>.<lambda> at 0xffffb8ab1b40>
+seconds = 3.0
+
+    def spin_until(self, condition, seconds=3.0):
+        deadline = time.monotonic() + seconds
+        while not condition():
+>           assert time.monotonic() < deadline, "DDS condition timed out"
+E           AssertionError: DDS condition timed out
+E           assert 3789.554421269 < 3789.535609643
+E            +  where 3789.554421269 = <built-in function monotonic>()
+E            +    where <built-in function monotonic> = time.monotonic
+
+tests/test_c42_battery_ros2.py:75: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+[INFO] [1794438543.370490502] [c42_executor_robot_1]: Successfully loaded configuration from config/fleet.yaml for robot 'robot_1'
+[INFO] [1794438543.371363502] [c42_executor_robot_1]: ExecuteTask ActionServer listening on '/robot_1/execute_task'
+[INFO] [1794438543.372238752] [c42_executor_robot_1]: Nav2 NavigateToPose ActionClient targeting '/robot_1/navigate_to_pose'
+[INFO] [1794438543.372525085] [c42_executor_robot_1]: Publishing RobotStatus at 5.0 Hz on '/robot_1/robot_status'
+[INFO] [1794438543.372723544] [c42_executor_robot_1]: ClearRobotError service available on '/robot_1/clear_robot_error'
+[INFO] [1794438543.372925210] [c42_executor_robot_1]: Subscribed to Odometry on '/robot_1/odom'
+[INFO] [1794438543.457879044] [c42_executor_robot_2]: Successfully loaded configuration from config/fleet.yaml for robot 'robot_2'
+[INFO] [1794438543.458718794] [c42_executor_robot_2]: ExecuteTask ActionServer listening on '/robot_2/execute_task'
+[INFO] [1794438543.459365919] [c42_executor_robot_2]: Nav2 NavigateToPose ActionClient targeting '/robot_2/navigate_to_pose'
+[INFO] [1794438543.459617502] [c42_executor_robot_2]: Publishing RobotStatus at 5.0 Hz on '/robot_2/robot_status'
+[INFO] [1794438543.459784794] [c42_executor_robot_2]: ClearRobotError service available on '/robot_2/clear_robot_error'
+[INFO] [1794438543.459972919] [c42_executor_robot_2]: Subscribed to Odometry on '/robot_2/odom'
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/fastapi/testclient.py:1
+  Warning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 failed, 50 passed, 1 warning in 16.06s

@@ -1,12 +1,18 @@
 """ROS 2 adapter for the per-robot battery consumption core."""
 
 import argparse
+import json
+import os
+import secrets
+from collections import OrderedDict
 import signal
+import time
 from math import hypot
-from uuid import uuid4
+from uuid import UUID as PythonUUID, uuid4
 
 import rclpy
 from fleet_interfaces.msg import BatteryState, DockLease, RobotStatus
+from fleet_interfaces.srv import ControlBattery
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 from rclpy.executors import ExternalShutdownException, SingleThreadedExecutor
@@ -36,6 +42,9 @@ def stamp_ns(stamp):
 
 class BatterySimulatorNode(Node):
     def __init__(self, robot: Robot, model: BatteryModel, *, docks=()):
+        self._control_token = os.environ.get("FLEET_SIM_BATTERY_TOKEN", "")
+        if os.environ.get("FLEET_SIM_BATTERY_CONTROL") == "1" and len(self._control_token) < 32:
+            raise ValueError("Simulation battery controls require FLEET_SIM_BATTERY_TOKEN (32+ characters)")
         super().__init__(
             "battery_simulator",
             namespace=robot.namespace,
@@ -43,11 +52,16 @@ class BatterySimulatorNode(Node):
             use_global_arguments=False,
         )
         self._robot_id = robot.id
-        self._session_id = UUID(uuid=list(uuid4().bytes))
+        self._control_session = str(uuid4())
+        self._session_id = UUID(uuid=list(PythonUUID(self._control_session).bytes))
+        self._control_requests = OrderedDict()
         self._battery = BatteryConsumption(model)
         self._dock = DockGate(robot.id, {dock.id: (dock.pose.x, dock.pose.y, dock.tolerance_radius) for dock in docks})
         self._charging_station = ""
         self._last_published_ns = None
+        self._last_clock_wall = None
+        if os.environ.get("FLEET_SIM_BATTERY_CONTROL") == "1":
+            self.create_service(ControlBattery, "sim/control_battery", self._on_control)
         self._publisher = self.create_publisher(BatteryState, "battery_state", 10)
         self.create_subscription(Clock, "/clock", self._on_clock, CLOCK_QOS)
         self.create_subscription(Odometry, "odom", self._on_odometry, qos_profile_sensor_data)
@@ -63,6 +77,57 @@ class BatterySimulatorNode(Node):
                         ((c.collision1.name, c.collision2.name) for c in msg.contacts),
                     ), qos_profile_sensor_data,
                 )
+
+    def _on_control(self, request, response):
+        response.robot_id = self._robot_id
+        response.session_id = self._control_session
+        response.request_id = request.request_id
+        mutation = request.set_soc or request.set_profile
+        fingerprint = (request.set_soc, request.soc_percent, request.set_profile, request.mode,
+                       request.discharge_minutes, request.charge_minutes)
+        try:
+            if not secrets.compare_digest(request.access_token.encode("utf-8"), self._control_token.encode("utf-8")):
+                raise ValueError("Simulation control authentication required")
+            if request.robot_id != self._robot_id:
+                raise ValueError("Robot ownership mismatch")
+            if mutation:
+                if request.expected_session_id != self._control_session:
+                    raise ValueError("Battery publisher session changed")
+                if (self._dock.session_blocked or self._last_clock_wall is None
+                        or time.monotonic() - self._last_clock_wall > 2):
+                    raise ValueError("Simulation clock unavailable or session blocked")
+                if not request.request_id or len(request.request_id) > 128:
+                    raise ValueError("Bounded request ID required")
+                previous = self._control_requests.get(request.request_id)
+                if previous is not None:
+                    if previous != fingerprint:
+                        raise ValueError("Request ID reused with different parameters")
+                    response.success = True
+                    response.message = "DUPLICATE; current simulator state returned"
+                    for key, value in self._battery.control_state().items():
+                        setattr(response, key, value)
+                    return response
+                if len(self._control_requests) >= 10000:
+                    raise ValueError("Control audit capacity reached; scenario reset required")
+            before = self._battery.control_state()
+            state = self._battery.control(
+                soc=request.soc_percent if request.set_soc else None,
+                mode=request.mode if request.set_profile else None,
+                discharge_minutes=request.discharge_minutes, charge_minutes=request.charge_minutes,
+            )
+            if mutation:
+                self._control_requests[request.request_id] = fingerprint
+                self.get_logger().info("BATTERY_CONTROL " + json.dumps(dict(
+                    robot_id=self._robot_id, session_id=self._control_session, request_id=request.request_id,
+                    sim_ns=self._battery.clock_ns, before=before, applied=state), allow_nan=False))
+            response.success, response.message = True, "APPLIED" if mutation else "READ"
+            for key, value in state.items():
+                setattr(response, key, value)
+        except ValueError as error:
+            response.success, response.message = False, str(error)
+            self.get_logger().warning("BATTERY_CONTROL_REJECTED " + json.dumps(dict(
+                robot_id=self._robot_id, request_id=request.request_id[:128], reason=str(error))))
+        return response
 
     @classmethod
     def from_config(cls, fleet_config_path, robot_id):
@@ -111,6 +176,7 @@ class BatterySimulatorNode(Node):
         previous_clock_ns = self._battery.clock_ns
         if now_ns < 0 or now_ns == previous_clock_ns:
             return
+        self._last_clock_wall = time.monotonic()
         if previous_clock_ns is not None and now_ns < previous_clock_ns:
             self._dock.session_blocked = True
         station = self._dock.station(now_ns)

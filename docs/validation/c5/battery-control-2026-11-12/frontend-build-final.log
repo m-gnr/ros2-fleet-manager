@@ -1,0 +1,8 @@
+
+> fleet-operations-dashboard@0.1.0 build
+> tsc --noEmit && vite build
+
+tests/battery-control.spec.ts(25,79): error TS2339: Property 'state' does not exist on type '{ state: { robot_id: string; session_id: string; revision: number; soc_percent: number; energy_wh: number; capacity_wh: number; mode: string; discharge_minutes: number; charge_minutes: number; idle_power_w: number; charge_power_w: number; consumption_wh_per_meter: number; }; robot_id: string; namespace: string; avai...'.
+  Property 'state' does not exist on type '{ error: string; robot_id: string; namespace: string; available: boolean; }'.
+tests/battery-control.spec.ts(27,79): error TS2339: Property 'state' does not exist on type '{ state: { robot_id: string; session_id: string; revision: number; soc_percent: number; energy_wh: number; capacity_wh: number; mode: string; discharge_minutes: number; charge_minutes: number; idle_power_w: number; charge_power_w: number; consumption_wh_per_meter: number; }; robot_id: string; namespace: string; avai...'.
+  Property 'state' does not exist on type '{ error: string; robot_id: string; namespace: string; available: boolean; }'.

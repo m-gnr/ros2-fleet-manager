@@ -19,6 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BatteryState.msg"
   "msg/DockLease.msg"
   "srv/ClearRobotError.srv"
+  "srv/ControlBattery.srv"
   DEPENDENCIES
     geometry_msgs
     std_msgs

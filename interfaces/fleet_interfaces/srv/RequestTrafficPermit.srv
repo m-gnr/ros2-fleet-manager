@@ -1,0 +1,19 @@
+unique_identifier_msgs/UUID request_id
+string robot_id
+# Real ExecuteTask.task_id or NavigateToStation.move_id.
+string task_id
+uint64 assignment_epoch
+unique_identifier_msgs/UUID parent_goal_uuid
+unique_identifier_msgs/UUID child_goal_uuid
+unique_identifier_msgs/UUID executor_session_id
+string movement_kind
+string station_id
+nav_msgs/Path path
+string path_digest
+# Flattened segment AABBs: x0,y0,x1,y1, derived from path and test profile radius.
+float64[] geometry
+string geometry_digest
+string map_revision
+string geometry_revision
+---
+fleet_interfaces/TrafficPermitDecision decision

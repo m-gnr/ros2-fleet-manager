@@ -85,7 +85,8 @@ class RobotExecutorNode(Node):
     """ROS 2 node wrapping the pure Python RobotExecutorStateMachine."""
 
     def __init__(self, node_name: str = "robot_executor", *, parameter_overrides=None,
-                 _test_reset_verified: bool = False, _legacy_test_battery: bool = False) -> None:
+                 _test_reset_verified: bool = False, _legacy_test_battery: bool = False,
+                 _traffic_protocol_test_profile=None) -> None:
         super().__init__(node_name, parameter_overrides=parameter_overrides)
         self.declare_parameter("duplicate_record_capacity", Parameter.Type.INTEGER)
         self.safety = ExecutorSafety(self.get_parameter("duplicate_record_capacity").value)
@@ -295,6 +296,20 @@ class RobotExecutorNode(Node):
 
         self._active_nav2_goal_handle = None
 
+        self._traffic_movement = None
+        if _traffic_protocol_test_profile is not None:
+            from .traffic import ROSTrafficMovementClient
+            self._traffic_movement = ROSTrafficMovementClient(self, _traffic_protocol_test_profile)
+
+    def prepare_and_authorize_movement(self, handle, target, movement_kind):
+        """Shared admission for both transport legs and park/charge navigation."""
+        if self._traffic_movement is None:
+            return True  # Preserve the existing C5-A demo mode.
+        if self._traffic_movement.prepare_and_authorize_movement(handle, target, movement_kind):
+            # B6B.2 is closed even if an adapter incorrectly returns True.
+            self._traffic_movement.gate.revoke("MOTION_DISABLED")
+        return self._hold_uncertain("Traffic test mode holds ownership; nonzero movement disabled")
+
     def _qualify(self, name: str) -> str:
         """Qualify topic or service name with robot namespace if not running under one."""
         node_ns = self.get_namespace()
@@ -474,6 +489,8 @@ class RobotExecutorNode(Node):
             return self._hold_uncertain(f"Station movement evidence unavailable: {exc}")
 
     def _navigate_to_station(self, handle):
+        self.prepare_and_authorize_movement(
+            handle, handle.request.target_pose, "CHARGE" if handle.request.charging_station else "PARK")
         while not self._nav2_client.wait_for_server(timeout_sec=0.1):
             if self._stopping.is_set():
                 raise RuntimeError("Stopped while awaiting station navigation server")
@@ -692,6 +709,8 @@ class RobotExecutorNode(Node):
         phase: TaskPhase,
     ) -> Tuple[bool, Optional[ExecuteTask.Result]]:
         """Run Nav2 navigation, publish feedback, and handle preemption requests."""
+        self.prepare_and_authorize_movement(
+            goal_handle, target_pose, "PICKUP" if phase == TaskPhase.PHASE_MOVING_TO_PICKUP else "DROPOFF")
         goal_uuid = self._uuid_to_str(goal_handle.goal_id.uuid)
 
         self.get_logger().info(f"Awaiting Nav2 server on '{self.nav2_action_name}'...")

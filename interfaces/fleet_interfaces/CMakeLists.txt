@@ -8,6 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
@@ -21,11 +22,16 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BatteryState.msg"
   "msg/BatteryControlApplied.msg"
   "msg/DockLease.msg"
+  "msg/TrafficPermitIdentity.msg"
+  "msg/TrafficPermitDecision.msg"
+  "msg/TrafficPermitAck.msg"
+  "srv/RequestTrafficPermit.srv"
   "srv/ClearRobotError.srv"
   "srv/ControlBattery.srv"
   DEPENDENCIES
     sensor_msgs
     geometry_msgs
+    nav_msgs
     std_msgs
     builtin_interfaces
     unique_identifier_msgs

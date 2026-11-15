@@ -28,6 +28,7 @@ class FleetROS2Adapter:
         *,
         robot_namespaces: Optional[Dict[str, str]] = None,
         enable_live_routing: bool = True,
+        traffic_protocol_test: bool = False,
     ) -> None:
         self.node = node
         self.consumer = consumer
@@ -83,6 +84,12 @@ class FleetROS2Adapter:
             self.consumer.bind_battery_clock(battery_clock_ns)
 
         self._setup_robot_interfaces()
+        self.traffic_protocol = None
+        if traffic_protocol_test:
+            from .traffic_protocol import TrafficProtocolROSBridge
+            self.traffic_protocol = TrafficProtocolROSBridge(
+                node, consumer, loop, self.robot_namespaces)
+
         if enable_live_routing and node is not None and isinstance(provider, CachedRouteDistanceProvider):
             self.consumer.enable_live_routing(self.route_resolver.compute_route)
 

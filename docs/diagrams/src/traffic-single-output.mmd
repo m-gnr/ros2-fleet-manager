@@ -1,0 +1,15 @@
+flowchart TD
+    C[Sahte denetleyici] --> S[Sahte hız yumuşatıcı]
+    S --> G[ROS hareket kapısı IMPLEMENTED]
+    B[Sahte davranış sunucusu] --> G
+    E[Sahte Executor sıfır yayını] --> G
+    A[Alternatif upstream yayıncı] --> G
+    G -->|Daima sıfır| T[actuator_cmd_vel tek normal yayıncı]
+    T --> R[Gerçek ROS IGN köprüsü]
+    R --> F[Sahte actuator gözlemi]
+    L[Eski cmd_vel] --> X[Tüketici yok DOĞRULANDI]
+    U[Yetkisiz doğrudan ROS yayını] -.->|Açık BLOCKER| T
+    I[Doğrudan IGN yayını] -.->|Açık BLOCKER| F
+    K[Gate veya köprü kaybı] --> Q[Fiziksel duruş UNKNOWN]
+    H[Gerçek kaynak damgası kalifikasyonu PLANNED] -.-> G
+    W[Bağımsız actuator frenleme UNVERIFIED] -.-> Q

@@ -1,0 +1,14 @@
+flowchart TD
+    A[Fake hız üreticisi] --> G[TrafficMotionGate - IMPLEMENTED]
+    P[Permit ve tam hareket kimliği] --> G
+    L[Yerel geometri uygulama ve ACK] --> G
+    H[Fake pose TF sağlık ve duruş tüpü] --> G
+    G --> C{Koşullar biliniyor mu?}
+    C -->|Hayır| Z[Sıfır ve duruş talebi]
+    C -->|Evet| D[Fiziksel kalifikasyon eksik - nonzero kapalı]
+    D --> Z
+    Z --> F[Fake actuator hedefi sıfır]
+    F --> U[Fiziksel duruş UNKNOWN - sahiplik korunur]
+    K[Gate veya bridge kaybı] --> R[Önceki komut tutulabilir]
+    B[Doğrudan alternatif yayıncı] --> R
+    R --> I[Bağımsız actuator fail-safe - UNVERIFIED]

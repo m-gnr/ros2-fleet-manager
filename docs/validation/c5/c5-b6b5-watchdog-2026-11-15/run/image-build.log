@@ -1,0 +1,31 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 220B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ros2-fleet-c5-validation:humble-fortress
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/library/ros2-fleet-c5-validation:humble-fortress@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d
+#4 resolve docker.io/library/ros2-fleet-c5-validation:humble-fortress@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d done
+#4 DONE 0.0s
+
+#5 [2/2] RUN apt-get update && apt-get install -y --no-install-recommends libignition-gazebo6-dev=6.18.0-1~jammy && rm -rf /var/lib/apt/lists/*
+#5 CACHED
+
+#6 exporting to image
+#6 exporting layers done
+#6 exporting manifest sha256:a3a417869e5c3f99960b630e80d0b96eacde1e3657ddcc18a85244c161a4af55 done
+#6 exporting config sha256:6072bbd377ecf2a855b5386f0c7d8338438697219a230190cf2d2dc02249aac4 done
+#6 exporting attestation manifest sha256:ee638f227b45252a0c527946c1c5cfc219f671f2d4db03b181440375d88ba687 0.0s done
+#6 exporting manifest list sha256:e7cbdd59db8f8cd161cd92b266c8f333693bb65e8c383b624158ab7719f8d09c done
+#6 naming to docker.io/library/c5-b6b5-build:local done
+#6 unpacking to docker.io/library/c5-b6b5-build:local done
+#6 DONE 0.1s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/jqezfn75sbh4i6ol7djmv35nq

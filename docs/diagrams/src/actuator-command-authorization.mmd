@@ -1,0 +1,11 @@
+flowchart LR
+  P["Test kaynağı: imzalı sıfır zarf"] --> R["ROS String bridge"]
+  X["Yetkisiz ROS yazıcı: erişim açık"] --> R
+  R --> I["IGN StringMsg: erişim açık"]
+  Y["Doğrudan IGN yazıcı"] --> I
+  I --> V["PARTIAL: test readback doğrulayıcı"]
+  V -->|"MAC, oturum, sıra, permit, bilet geçerli"| L["B6B.5 native lease: yalnız sıfır"]
+  V -->|"Geçersiz: refresh yok"| D["Mesaj reddi"]
+  L -->|"Steady timeout"| T["TIMED_OUT"]
+  T -->|"Geçerli receipt"| B["BLOCKED_REARM: otomatik açılmaz"]
+  U["UNVERIFIED: ürün transport ACL, native tek giriş, fiziksel duruş"]

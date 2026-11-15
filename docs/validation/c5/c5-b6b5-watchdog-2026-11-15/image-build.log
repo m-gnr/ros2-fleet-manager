@@ -1,0 +1,20 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 276B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ros2-fleet-c5-validation@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d
+#2 ERROR: pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed
+------
+ > [internal] load metadata for docker.io/library/ros2-fleet-c5-validation@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d:
+------
+Dockerfile:1
+--------------------
+   1 | >>> FROM ros2-fleet-c5-validation@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d
+   2 |     RUN apt-get update && apt-get install -y --no-install-recommends libignition-gazebo6-dev=6.18.0-1~jammy && rm -rf /var/lib/apt/lists/*
+   3 |     
+--------------------
+ERROR: failed to build: failed to solve: ros2-fleet-c5-validation@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d: failed to resolve source metadata for docker.io/library/ros2-fleet-c5-validation@sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d: pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/yxwwa5wqs1euj0m8mch6dsbsf

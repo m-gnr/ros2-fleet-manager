@@ -84,3 +84,15 @@ C1 aşamasında `config/fleet.yaml`, şeması ve Pydantic doğrulayıcısı olu�
 
 - [C5 Aşama 2.0 dinamik batarya simülasyon kontrolü](design/c5-battery-simulation-control.md) · [Doğrulama](validation/c5/battery-control-validation-2026-11-12.md) · [Komutlar](validation/c5/battery-control-commands-2026-11-12.md).
 - [C5 Battery Control / C4 süreklilik uyumu](validation/c5/battery-control-continuity-validation-2026-11-14.md) · [Komutlar](validation/c5/battery-control-continuity-commands-2026-11-14.md).
+
+- [C5-B6B.1 birleşik trafik rezervasyon çekirdeği](validation/c5/c5-b6b1-traffic-core-2026-11-15.md) — Domain/SQLite hedefli doğrulama; hareket yetkisi kapalı.
+
+- [C5-B6B.2 FM ↔ Executor trafik izin protokolü](design/c5-b6b2-traffic-permit-protocol.md) · [Hedefli doğrulama](validation/c5/c5-b6b2-traffic-protocol-2026-11-15.md): ayrı test modu, hareket yetkisi kapalı.
+
+- [C5-B6B.3 yerel hareket kapısı ve actuator sınırı](design/c5-b6b3-traffic-motion-gate.md) · [Doğrulama](validation/c5/c5-b6b3-motion-gate-2026-11-15.md): yalnız fake üretici/actuator; nonzero kapalı, fiziksel fail-safe açık engel.
+
+- [C5-B6B.4 tek son ROS hız çıkışı ve bypass izolasyonu](design/c5-b6b4-single-velocity-output.md) · [Hedefli doğrulama](validation/c5/c5-b6b4-topology-2026-11-15.md): fake actuator ile gerçek ROS/IGN; nonzero kapalı, doğrudan ROS/IGN yazma BLOCKER.
+
+- [C5-B6B.5 izole watchdog build ve timeout](validation/c5/c5-b6b5-watchdog-2026-11-15.md): iki temiz native build, sıfır hedefli timeout/rearm; ham Twist freshness ve bypass BLOCKER.
+
+- [C5-B6B.6 actuator komut yetkilendirmesi](design/c5-b6b6-actuator-authorization.md) · [Hedefli doğrulama](validation/c5/c5-b6b6-authorization-2026-11-15.md): test-only; transport ACL ve fiziksel duruş açık.

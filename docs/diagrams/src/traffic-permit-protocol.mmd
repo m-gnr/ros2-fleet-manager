@@ -1,0 +1,14 @@
+flowchart TD
+    A["Pickup / dropoff / park / şarj"] --> B{"Trafik test modu?"}
+    B -->|Hayır| C["Mevcut C5-A NavigateToPose akışı — IMPLEMENTED"]
+    B -->|Evet| D["Ortak hazırlık: path, digest, child UUID"]
+    D --> E["ROS permit isteği → tek consumer"]
+    E --> F["Gerçek görev / istasyon sahipliği ve oturum kontrolü"]
+    F --> G["B6B.1 rezervasyon + karar + Outbox tek COMMIT"]
+    G --> H["ROS cevabı / karar yayını — IMPLEMENTED"]
+    H --> I["Yerel gate: değişmez kimlik ve monotonik deadline"]
+    I --> J["APPLIED ACK kalifiye değil: hareket kapalı"]
+    J --> K["Nav2 hareket goal sayısı = 0 — IMPLEMENTED"]
+    I --> L["Timeout / revoke / geç cevap: eski yetki kapalı"]
+    L --> M["Sahiplik tutulur; RETIRED ACK kaynak bırakmaz"]
+    N["Yerel sınır interlock ve actuator fail-safe — PLANNED / UNVERIFIED"] -.-> J

@@ -1,0 +1,9 @@
+flowchart LR
+  N["NO_COMMAND: sıfır hedef"] -->|"Sıfır receipt"| A["ACTIVE: yalnız sıfır akışı"]
+  A -->|"Sıfır refresh: deadline yenile"| A
+  A -->|"Steady deadline doldu"| T["TIMED_OUT: sıfır hedef"]
+  T -->|"Her receipt"| B["BLOCKED_REARM: sıfır hedef"]
+  A -->|"Saat geri dönüşü veya geçersiz komut"| B
+  N -->|"Geçersiz komut"| B
+  B -->|"Receipt: kilit korunur"| B
+  S["PARTIAL: test-only; ham Twist freshness BLOCKER; ürün ve fiziksel fren UNVERIFIED"]

@@ -1110,3 +1110,13 @@ flowchart TD
  T --> G
  D["Fiziksel dock kanıtı ve sahiplik<br/>Mevcut C4 kapısı"] --> B
 ```
+
+- [C5-B6B.2 trafik permit protokolü](src/traffic-permit-protocol.mmd) · [SVG](svg/traffic-permit-protocol.svg): test protokolü IMPLEMENTED; fiziksel interlock PLANNED / UNVERIFIED; hareket kapalı.
+
+- C5-B6B.3 yerel hareket kapısı: [Mermaid kaynak](src/traffic-motion-gate.mmd), [SVG](svg/traffic-motion-gate.svg), [kapsam](../design/c5-b6b3-traffic-motion-gate.md). IMPLEMENTED: fake kapı; UNVERIFIED: ROS interlock ve fiziksel fail-safe.
+
+- C5-B6B.4 tek son hız çıkışı: [Mermaid](src/traffic-single-output.mmd) · [SVG](svg/traffic-single-output.svg) · [Tasarım](../design/c5-b6b4-single-velocity-output.md); IMPLEMENTED fake ROS yolları, PLANNED kaynak kalifikasyonu ve açık BLOCKER bypasslar.
+
+- [Test-only actuator watchdog](src/actuator-watchdog-test.mmd) · [SVG](svg/actuator-watchdog-test.svg): PARTIAL; yalnız sıfır akışı, rearm kilitli, ürün/fiziksel fren UNVERIFIED.
+
+- C5-B6B.6 komut sınırı — [Mermaid](src/actuator-command-authorization.mmd) · [SVG](svg/actuator-command-authorization.svg): PARTIAL test-only; ürün ACL/fiziksel stop UNVERIFIED.

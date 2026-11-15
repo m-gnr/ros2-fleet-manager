@@ -1,0 +1,21 @@
+config/fleet.warehouse-30x18.yaml:44:    motion_envelope: null
+docker/simulation-warehouse-grid/serve.py:31:                   f"{ns}/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist"]
+docker/simulation-warehouse-grid/serve.py:46:            "ros2", "launch", "nav2_bringup", "bringup_launch.py",
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:118:        self.declare_parameter("cmd_vel_topic_name", "cmd_vel")
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:276:        # Active Braking cmd_vel Publisher
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:277:        cmd_vel_topic = self._qualify(str(self.get_parameter("cmd_vel_topic_name").value))
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:278:        self._cmd_vel_pub = self.create_publisher(Twist, cmd_vel_topic, 10)
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:413:                self._cmd_vel_pub.publish(Twist())
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:548:            self._cmd_vel_pub.publish(Twist())
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:643:                self._cmd_vel_pub.publish(stop_cmd)
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:679:                self._cmd_vel_pub.publish(stop_cmd)
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:811:            self._cmd_vel_pub.publish(Twist())
+ros2_ws/src/fleet_robot_executor/fleet_robot_executor/node.py:850:                self._cmd_vel_pub.publish(Twist())
+docker/simulation-c3-3-3/check.py:218:      <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
+docker/simulation-c3-3-3/check.py:224:        <topic>{namespace}/cmd_vel</topic>
+docker/simulation-c3-3-3/check.py:351:            "/robot_1/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist",
+docker/simulation-c3-3-3/check.py:354:            "/robot_2/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist",
+docker/simulation-c3-3-3/check.py:361:            "ros2", "launch", "nav2_bringup", "bringup_launch.py",
+docker/simulation-c3-3-3/check.py:373:            "ros2", "launch", "nav2_bringup", "bringup_launch.py",
+docker/simulation-c3-3-3/check.py:1281:        assert f"/{r_id}/cmd_vel" in topic_names, f"Missing /{r_id}/cmd_vel"
+docker/simulation-c3-3-3/check.py:1286:    forbidden_root = ["/execute_task", "/robot_status", "/cmd_vel"]

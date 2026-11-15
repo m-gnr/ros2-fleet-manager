@@ -59,3 +59,15 @@ B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ rob
 - [C5 Git checkpoint denetimi — 12 Kasım](c5/git-checkpoint-2026-11-12/README.md) · [Komut eki](c5/git-checkpoint-commands-2026-11-12.md); ürün kabulü veya Aşama 2 koşusu değildir.
 
 - [C5 Aşama 2.0 dinamik batarya kontrolleri](c5/battery-control-validation-2026-11-12.md) · [Komutlar](c5/battery-control-commands-2026-11-12.md): host, gerçek ROS servisi ve izole canlı Chrome; Gazebo şarj kabulü değildir.
+
+- [C5-B6B.1 birleşik trafik rezervasyon çekirdeği](c5/c5-b6b1-traffic-core-2026-11-15.md): 13 hedefli domain/SQLite testi geçti; hareket yetkisi kapalı.
+
+- [C5-B6B.2 trafik protokolü](c5/c5-b6b2-traffic-protocol-2026-11-15.md) · [Komutlar](c5/c5-b6b2-traffic-protocol-commands-2026-11-15.md): 46 hedefli test geçti; hareket kapalı.
+
+- [C5-B6B.3 yerel hareket kapısı](c5/c5-b6b3-motion-gate-2026-11-15.md) · [Komutlar](c5/c5-b6b3-motion-gate-commands-2026-11-15.md): 69 hedefli test, gerçek nonzero kapalı.
+
+- [C5-B6B.4 hareketsiz ROS/IGN topoloji doğrulaması](c5/c5-b6b4-topology-2026-11-15.md) · [Komutlar](c5/c5-b6b4-topology-commands-2026-11-15.md): yalnız fake producer/actuator; fiziksel duruş kabulü yok.
+
+- [C5-B6B.5 test-only actuator watchdog](c5/c5-b6b5-watchdog-2026-11-15.md) · [Komutlar](c5/c5-b6b5-watchdog-commands-2026-11-15.md): native build/ABI ve sıfır hedef; ürün/fiziksel fren kabulü yok.
+
+- [C5-B6B.6 actuator yetkilendirme testleri](c5/c5-b6b6-authorization-2026-11-15.md) · [Komutlar](c5/c5-b6b6-authorization-commands-2026-11-15.md): hareketsiz fake actuator; ürün kabulü yok.

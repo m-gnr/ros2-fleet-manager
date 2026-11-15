@@ -1,0 +1,115 @@
+..............F350 tracked non-document files unchanged; includes C5-A/config/launcher
+..
+=================================== FAILURES ===================================
+_________________ test_real_ros_ign_transport_and_process_loss _________________
+
+    def test_real_ros_ign_transport_and_process_loss():
+        import rclpy
+        from std_msgs.msg import String
+        rclpy.init()
+        n = rclpy.create_node('b6b6_fake_actuator')
+        s = sink()
+        processes = []
+        results = []
+        received_wires = []
+        topic = '/b6b6_' + secrets.token_hex(6)
+        observed = topic + '_observed'
+        timer = n.create_timer(.01, lambda: s.lease.tick())
+        def receive(m):
+            received_wires.append(m.data)
+            results.append(s.receive(m.data))
+        sub = n.create_subscription(String, observed, receive, 1)
+        rogue = n.create_publisher(String, topic, 1)
+    
+        def start(args, stdin=None, stdout=subprocess.DEVNULL):
+            p = subprocess.Popen(args, stdin=stdin, stdout=stdout,
+                                 stderr=subprocess.DEVNULL, start_new_session=True, text=True)
+            processes.append(p)
+            return p
+    
+        def stop(p):
+            os.killpg(p.pid, signal.SIGKILL)
+            p.wait(timeout=5)
+    
+        def pump(predicate, seconds=8):
+            end = time.monotonic() + seconds
+            while time.monotonic() < end:
+                rclpy.spin_once(n, timeout_sec=.01)
+                if predicate(): return
+            raise AssertionError('transport condition timed out: '+str(results))
+    
+        def gate():
+            p = start([sys.executable, str(HERE/'producer.py'), topic], subprocess.PIPE, subprocess.PIPE)
+            assert select.select([p.stdout], [], [], 8)[0], 'gate discovery timeout'
+            assert p.stdout.readline().strip() == 'READY'
+            return p
+    
+        def bridge():
+            return start(['ros2','run','ros_gz_bridge','parameter_bridge',
+                          topic+'@std_msgs/msg/String]ignition.msgs.StringMsg'])
+    
+        def send(p, body, expected):
+            at = len(results)
+            p.stdin.write(sign(body, KEY)+'\n'); p.stdin.flush()
+            pump(lambda: expected in results[at:])
+            assert expected in results[at:]
+    
+        try:
+            b = bridge()
+            readback = start(['ros2','run','ros_gz_bridge','parameter_bridge',
+                             topic+'@std_msgs/msg/String[ignition.msgs.StringMsg',
+                             '--ros-args','-r',topic+':='+observed])
+            g = gate()
+            pump(lambda: rogue.get_subscription_count() >= 1 and n.count_publishers(topic) >= 2
+                 and n.count_publishers(observed) >= 1)
+            # Establish IGN discovery without refreshing the native lease.
+            rogue.publish(String(data='{}'))
+            pump(lambda: bool(results))
+            old = command(s)
+            send(g, old, 'ACCEPTED_ZERO')
+            send(g, old, 'REPLAY')
+            changed = dict(old, velocity=[.1,0,0,0,0,0])
+            send(g, changed, 'CHANGED_PAYLOAD')
+            # ROS access succeeds; MAC rejection is at the receiving adapter.
+            at = len(results)
+            rogue.publish(String(data=sign(command(s, 2), b'rogue')))
+            pump(lambda: len(results) > at)
+            assert results[-1] == 'UNAUTHENTICATED'
+            # IGN access also succeeds. No claim of transport ACL enforcement.
+            at = len(results)
+            wire = sign(command(s, 2), b'rogue')
+            start(['ign','topic','-t',topic,'-m','ignition.msgs.StringMsg','-p','data: '+json.dumps(wire)])
+            pump(lambda: len(results) > at)
+            assert results[-1] == 'UNAUTHENTICATED'
+            stop(g)
+            pump(lambda: s.lease.tick() == 'TIMED_OUT')
+            g2 = gate()
+            pump(lambda: n.count_publishers(topic) >= 2)
+            send(g2, command(s, 3), 'BLOCKED_REARM')
+            stop(b)
+            # New actuator fixture for independent bridge-loss timeout evidence.
+            s.lease.close(); s = sink()
+            b = bridge()
+            # Discovery probe is invalid and cannot activate the watchdog.
+            probe = json.dumps({'probe': secrets.token_hex(8)})
+            g2.stdin.write(probe+'\n'); g2.stdin.flush()
+>           pump(lambda: probe in received_wires)
+
+docker/experiments/c5-b6b6/test_authorization.py:164: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+predicate = <function test_real_ros_ign_transport_and_process_loss.<locals>.<lambda> at 0xffff77769090>
+seconds = 8
+
+    def pump(predicate, seconds=8):
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            rclpy.spin_once(n, timeout_sec=.01)
+            if predicate(): return
+>       raise AssertionError('transport condition timed out: '+str(results))
+E       AssertionError: transport condition timed out: ['MALFORMED', 'ACCEPTED_ZERO', 'REPLAY', 'CHANGED_PAYLOAD', 'UNAUTHENTICATED', 'UNAUTHENTICATED', 'BLOCKED_REARM']
+
+docker/experiments/c5-b6b6/test_authorization.py:107: AssertionError
+=========================== short test summary info ============================
+FAILED docker/experiments/c5-b6b6/test_authorization.py::test_real_ros_ign_transport_and_process_loss
+1 failed, 16 passed in 10.56s

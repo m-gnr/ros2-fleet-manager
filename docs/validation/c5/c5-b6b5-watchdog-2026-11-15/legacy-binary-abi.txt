@@ -1,0 +1,121 @@
+fb0722ac45e8a7f6a89937b4a9bf7fff22268bce2a71180c7317050876d9c45a  /legacy/libc5-actuator-diff-drive.so
+ELF Header:
+  Magic:   7f 45 4c 46 02 01 01 03 00 00 00 00 00 00 00 00 
+  Class:                             ELF64
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - GNU
+  ABI Version:                       0
+  Type:                              DYN (Shared object file)
+  Machine:                           AArch64
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          64 (bytes into file)
+  Start of section headers:          469016 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         7
+  Size of section headers:           64 (bytes)
+  Number of section headers:         29
+  Section header string table index: 28
+
+Dynamic section at offset 0x52740 contains 36 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [libignition-gazebo6.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libignition-common4.so.4]
+ 0x0000000000000001 (NEEDED)             Shared library: [libignition-transport11.so.11]
+ 0x0000000000000001 (NEEDED)             Shared library: [libignition-msgs8.so.8]
+ 0x0000000000000001 (NEEDED)             Shared library: [libsdformat12.so.12]
+ 0x0000000000000001 (NEEDED)             Shared library: [libignition-math6.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libprotobuf.so.23]
+ 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
+ 0x000000000000000e (SONAME)             Library soname: [libc5-actuator-diff-drive.so]
+ 0x000000000000000c (INIT)               0x208b0
+ 0x000000000000000d (FINI)               0x47850
+ 0x0000000000000019 (INIT_ARRAY)         0x61cc8
+ 0x000000000000001b (INIT_ARRAYSZ)       24 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x61ce0
+ 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x1f0
+ 0x0000000000000005 (STRTAB)             0x60f8
+ 0x0000000000000006 (SYMTAB)             0x14c0
+ 0x000000000000000a (STRSZ)              82715 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000003 (PLTGOT)             0x62fe8
+ 0x0000000000000002 (PLTRELSZ)           9000 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x1e588
+ 0x0000000000000007 (RELA)               0x1abe0
+ 0x0000000000000008 (RELASZ)             14760 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000006ffffffe (VERNEED)            0x1aa70
+ 0x000000006fffffff (VERNEEDNUM)         5
+ 0x000000006ffffff0 (VERSYM)             0x1a414
+ 0x000000006ffffff9 (RELACOUNT)          148
+ 0x0000000000000000 (NULL)               0x0
+	linux-vdso.so.1 (0x0000ffffb1689000)
+	libignition-gazebo6.so.6 => /lib/aarch64-linux-gnu/libignition-gazebo6.so.6 (0x0000ffffb12b0000)
+	libignition-common4.so.4 => /lib/aarch64-linux-gnu/libignition-common4.so.4 (0x0000ffffb1240000)
+	libignition-transport11.so.11 => /lib/aarch64-linux-gnu/libignition-transport11.so.11 (0x0000ffffb11c0000)
+	libignition-msgs8.so.8 => /lib/aarch64-linux-gnu/libignition-msgs8.so.8 (0x0000ffffb0e40000)
+	libsdformat12.so.12 => /lib/aarch64-linux-gnu/libsdformat12.so.12 (0x0000ffffb0c10000)
+	libignition-math6.so.6 => /lib/aarch64-linux-gnu/libignition-math6.so.6 (0x0000ffffb0bb0000)
+	libprotobuf.so.23 => /lib/aarch64-linux-gnu/libprotobuf.so.23 (0x0000ffffb0900000)
+	libstdc++.so.6 => /lib/aarch64-linux-gnu/libstdc++.so.6 (0x0000ffffb06d0000)
+	libm.so.6 => /lib/aarch64-linux-gnu/libm.so.6 (0x0000ffffb0630000)
+	libgcc_s.so.1 => /lib/aarch64-linux-gnu/libgcc_s.so.1 (0x0000ffffb0600000)
+	libc.so.6 => /lib/aarch64-linux-gnu/libc.so.6 (0x0000ffffb0450000)
+	/lib/ld-linux-aarch64.so.1 (0x0000ffffb1640000)
+	libignition-fuel_tools7.so.7 => /lib/aarch64-linux-gnu/libignition-fuel_tools7.so.7 (0x0000ffffb03c0000)
+	libignition-plugin1-loader.so.1 => /lib/aarch64-linux-gnu/libignition-plugin1-loader.so.1 (0x0000ffffb03a0000)
+	libignition-transport11-parameters.so.11 => /lib/aarch64-linux-gnu/libignition-transport11-parameters.so.11 (0x0000ffffb0350000)
+	libtinyxml2.so.9 => /lib/aarch64-linux-gnu/libtinyxml2.so.9 (0x0000ffffb0320000)
+	libignition-plugin1.so.1 => /lib/aarch64-linux-gnu/libignition-plugin1.so.1 (0x0000ffffb0300000)
+	libignition-common4-events.so.4 => /lib/aarch64-linux-gnu/libignition-common4-events.so.4 (0x0000ffffb02d0000)
+	libuuid.so.1 => /lib/aarch64-linux-gnu/libuuid.so.1 (0x0000ffffb02b0000)
+	libzmq.so.5 => /lib/aarch64-linux-gnu/libzmq.so.5 (0x0000ffffb0210000)
+	libz.so.1 => /lib/aarch64-linux-gnu/libz.so.1 (0x0000ffffb01e0000)
+	libjsoncpp.so.25 => /lib/aarch64-linux-gnu/libjsoncpp.so.25 (0x0000ffffb01a0000)
+	libyaml-0.so.2 => /lib/aarch64-linux-gnu/libyaml-0.so.2 (0x0000ffffb0170000)
+	libzip.so.4 => /lib/aarch64-linux-gnu/libzip.so.4 (0x0000ffffb0140000)
+	libcurl.so.4 => /lib/aarch64-linux-gnu/libcurl.so.4 (0x0000ffffb0090000)
+	libbsd.so.0 => /lib/aarch64-linux-gnu/libbsd.so.0 (0x0000ffffb0060000)
+	libsodium.so.23 => /lib/aarch64-linux-gnu/libsodium.so.23 (0x0000ffffb0010000)
+	libpgm-5.3.so.0 => /lib/aarch64-linux-gnu/libpgm-5.3.so.0 (0x0000ffffaffb0000)
+	libnorm.so.1 => /lib/aarch64-linux-gnu/libnorm.so.1 (0x0000ffffafe70000)
+	libgssapi_krb5.so.2 => /lib/aarch64-linux-gnu/libgssapi_krb5.so.2 (0x0000ffffafe10000)
+	libbz2.so.1.0 => /lib/aarch64-linux-gnu/libbz2.so.1.0 (0x0000ffffafde0000)
+	libcrypto.so.3 => /lib/aarch64-linux-gnu/libcrypto.so.3 (0x0000ffffaf9d0000)
+	libnghttp2.so.14 => /lib/aarch64-linux-gnu/libnghttp2.so.14 (0x0000ffffaf990000)
+	libidn2.so.0 => /lib/aarch64-linux-gnu/libidn2.so.0 (0x0000ffffaf960000)
+	librtmp.so.1 => /lib/aarch64-linux-gnu/librtmp.so.1 (0x0000ffffaf930000)
+	libssh.so.4 => /lib/aarch64-linux-gnu/libssh.so.4 (0x0000ffffaf8b0000)
+	libpsl.so.5 => /lib/aarch64-linux-gnu/libpsl.so.5 (0x0000ffffaf880000)
+	libssl.so.3 => /lib/aarch64-linux-gnu/libssl.so.3 (0x0000ffffaf7d0000)
+	libldap-2.5.so.0 => /lib/aarch64-linux-gnu/libldap-2.5.so.0 (0x0000ffffaf760000)
+	liblber-2.5.so.0 => /lib/aarch64-linux-gnu/liblber-2.5.so.0 (0x0000ffffaf730000)
+	libzstd.so.1 => /lib/aarch64-linux-gnu/libzstd.so.1 (0x0000ffffaf660000)
+	libbrotlidec.so.1 => /lib/aarch64-linux-gnu/libbrotlidec.so.1 (0x0000ffffaf640000)
+	libmd.so.0 => /lib/aarch64-linux-gnu/libmd.so.0 (0x0000ffffaf620000)
+	libpthread.so.0 => /lib/aarch64-linux-gnu/libpthread.so.0 (0x0000ffffaf600000)
+	libkrb5.so.3 => /lib/aarch64-linux-gnu/libkrb5.so.3 (0x0000ffffaf520000)
+	libk5crypto.so.3 => /lib/aarch64-linux-gnu/libk5crypto.so.3 (0x0000ffffaf4e0000)
+	libcom_err.so.2 => /lib/aarch64-linux-gnu/libcom_err.so.2 (0x0000ffffaf4c0000)
+	libkrb5support.so.0 => /lib/aarch64-linux-gnu/libkrb5support.so.0 (0x0000ffffaf4a0000)
+	libunistring.so.2 => /lib/aarch64-linux-gnu/libunistring.so.2 (0x0000ffffaf2e0000)
+	libgnutls.so.30 => /lib/aarch64-linux-gnu/libgnutls.so.30 (0x0000ffffaf0d0000)
+	libhogweed.so.6 => /lib/aarch64-linux-gnu/libhogweed.so.6 (0x0000ffffaf070000)
+	libnettle.so.8 => /lib/aarch64-linux-gnu/libnettle.so.8 (0x0000ffffaf010000)
+	libgmp.so.10 => /lib/aarch64-linux-gnu/libgmp.so.10 (0x0000ffffaef80000)
+	libsasl2.so.2 => /lib/aarch64-linux-gnu/libsasl2.so.2 (0x0000ffffaef50000)
+	libbrotlicommon.so.1 => /lib/aarch64-linux-gnu/libbrotlicommon.so.1 (0x0000ffffaef10000)
+	libkeyutils.so.1 => /lib/aarch64-linux-gnu/libkeyutils.so.1 (0x0000ffffaeef0000)
+	libresolv.so.2 => /lib/aarch64-linux-gnu/libresolv.so.2 (0x0000ffffaeec0000)
+	libp11-kit.so.0 => /lib/aarch64-linux-gnu/libp11-kit.so.0 (0x0000ffffaed70000)
+	libtasn1.so.6 => /lib/aarch64-linux-gnu/libtasn1.so.6 (0x0000ffffaed40000)
+	libffi.so.8 => /lib/aarch64-linux-gnu/libffi.so.8 (0x0000ffffaed20000)

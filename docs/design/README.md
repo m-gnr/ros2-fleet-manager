@@ -10,3 +10,11 @@
 Eski PDF tasarımları yalnız [güncel onaylı kaynaklarla](../architecture/README.md) çelişmeyen ayrıntılar için kullanılır. Dosyalar değiştirilmemiştir; bir tasarımın bulunması uygulandığı anlamına gelmez. Görsel algoritma anlatımı [diyagram kataloğundadır](../diagrams/README.md).
 
 - [C5 Aşama 2.0 dinamik batarya simülasyon kontrolü](c5-battery-simulation-control.md): config envanteri, erişim sınırı, robot bazlı servis ve atomik olmayan toplu uygulama.
+
+- [C5-B6B.2 trafik izin protokolü](c5-b6b2-traffic-permit-protocol.md): COMMIT, gerçek kimlik, ACK ve ortak kapalı Executor gate.
+
+- [C5-B6B.3 yerel hareket kapısı](c5-b6b3-traffic-motion-gate.md): son cmd_vel topolojisi, bypass, offline yerel uygulama ve fiziksel fail-safe eksikleri.
+
+- [C5-B6B.4 tek son ROS hız çıkışı](c5-b6b4-single-velocity-output.md): test-only adapter/topoloji, kaynak damgası sözleşmesi ve açık bypass engelleri.
+
+- [C5-B6B.6 actuator komut yetkilendirmesi](c5-b6b6-actuator-authorization.md): imzalı sıfır zarfı, oturum/sıra/bilet ve açık transport sınırları.

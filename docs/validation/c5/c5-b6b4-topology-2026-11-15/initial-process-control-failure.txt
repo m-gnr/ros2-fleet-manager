@@ -1,0 +1,162 @@
+F............................................
+=================================== FAILURES ===================================
+_________________ test_zero_only_topology_and_bypass_inventory _________________
+
+    def test_zero_only_topology_and_bypass_inventory():
+        rclpy.init(args=[])
+        ns = '/b6b4_test/r' + uuid4().hex
+        t = topology(ns)
+        nodes, processes = [], []
+        executor = SingleThreadedExecutor()
+        report = {}
+    
+        def node(name, mappings=()):
+            n = Node(name, namespace=ns, cli_args=['--ros-args', *[v for a, b in mappings for v in ('-r', a+':='+b)]])
+            nodes.append(n); executor.add_node(n)
+            return n
+    
+        def start(command):
+            p = subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            processes.append(p)
+            return p
+    
+        def stop(p):
+            p.kill(); p.wait(timeout=5)
+    
+        def until(predicate, timeout=8.):
+            end = time.monotonic() + timeout
+            while time.monotonic() < end:
+                executor.spin_once(timeout_sec=.02)
+                if predicate():
+                    return
+            raise AssertionError('DDS/transport condition timed out')
+    
+        def pump(seconds=.3):
+            end = time.monotonic()+seconds
+            while time.monotonic() < end:
+                executor.spin_once(timeout_sec=.02)
+    
+        try:
+            maps = remappings(ns)
+            observer = node('fake_actuator_observer')
+            final, downstream, diagnostics = [], [], []
+            observer.create_subscription(Twist, t['actuator'], lambda m: final.append(axes(m)), QOS)
+            observer.create_subscription(Twist, t['observed'], lambda m: downstream.append(axes(m)), QOS)
+            observer.create_subscription(String, t['diagnostics'], lambda m: diagnostics.append(json.loads(m.data)), QOS)
+            controller = node('fake_controller', maps['controller'])
+            smoother = node('fake_smoother', maps['smoother'])
+            behavior = node('fake_behavior', maps['behavior'])
+            direct = node('fake_executor', maps['executor'])
+            alternate = node('fake_alternative')
+            cp = controller.create_publisher(Twist, 'cmd_vel', QOS)
+            sp = smoother.create_publisher(Twist, 'cmd_vel_smoothed', QOS)
+            smoother.create_subscription(Twist, 'cmd_vel', lambda m: sp.publish(m), QOS)
+            bp = behavior.create_publisher(Twist, 'cmd_vel', QOS)
+            ep = direct.create_publisher(Twist, 'cmd_vel', QOS)
+            ap = alternate.create_publisher(Twist, t['alternative'], QOS)
+            legacy = alternate.create_publisher(Twist, t['legacy'], QOS)
+            envelopes = alternate.create_publisher(String, t['envelope'], QOS)
+            gate_cmd = [sys.executable, str(HERE/'gate_adapter.py'), '--namespace', ns]
+            gate = start(gate_cmd)
+            bridge = start(bridge_arguments(ns))
+            # Independent fake actuator readback. Only transport is running, no physics.
+            readback = start(['ros2','run','ros_gz_bridge','parameter_bridge',
+                             t['ignition']+'@geometry_msgs/msg/Twist[ignition.msgs.Twist',
+                             '--ros-args','-r',t['ignition']+':='+t['observed'],
+                             '-r','__node:=b6b4_fake_actuator_readback'])
+            until(lambda: diagnostics and downstream and cp.get_subscription_count() == 1
+                  and all(p.get_subscription_count() == 1 for p in (sp,bp,ep,ap,envelopes)))
+            assert all(v == (0.,)*6 for v in final+downstream)
+            assert 'STARTUP_DENY_ALL' in diagnostics[0]['reasons']
+            pubs = observer.get_publishers_info_by_topic(t['actuator'])
+            assert len(pubs) == 1 and pubs[0].node_name == 'traffic_motion_gate'
+            subs = observer.get_subscriptions_info_by_topic(t['actuator'])
+            assert any(s.node_name == 'b6b4_velocity_bridge' for s in subs)
+            assert not observer.get_subscriptions_info_by_topic(t['legacy'])
+            for source, expected in [('controller','fake_controller'),('smoother','fake_smoother'),
+                                      ('behavior','fake_behavior'),('executor','fake_executor')]:
+                assert [p.node_name for p in observer.get_publishers_info_by_topic(t[source])] == [expected]
+            report['single_final_publisher_and_upstream_graph'] = 'PASS (observed graph, not authorization)'
+    
+            nonzero = Twist(); nonzero.linear.x = .7; nonzero.angular.z = .3
+            for name, publisher, msg in [('controller_smoother',cp,nonzero),('behavior',bp,nonzero),
+                                          ('executor_zero',ep,Twist()),('alternative',ap,nonzero)]:
+                at = len(diagnostics)
+                publisher.publish(msg)
+                source = 'smoother' if name == 'controller_smoother' else ('executor' if name == 'executor_zero' else name)
+                until(lambda: any(source in d['reasons'] and 'UNBOUND_TWIST' in d['reasons'] for d in diagnostics[at:]))
+                assert all(v == (0.,)*6 for v in final+downstream)
+                report[name] = 'PASS: gate output zero'
+    
+            def envelope(sequence, **changes):
+                data = dict(gate_session=diagnostics[-1]['session'], source='smoother', sequence=sequence,
+                            context=None, velocity=[.7,0.,0.,0.,0.,.3])
+                data.update(changes)
+                at = len(diagnostics)
+                envelopes.publish(String(data=json.dumps(data)))
+                until(lambda: len(diagnostics) > at and 'STARTUP_DENY_ALL' not in diagnostics[-1]['reasons'])
+                pump(.1)
+    
+            envelope(1)
+            assert 'NO_LIVE_PERMIT' in diagnostics[-1]['reasons']
+            envelope(1)
+            until(lambda: 'OLD_OR_DUPLICATE_COMMAND' in diagnostics[-1]['reasons'])
+            envelope(0)
+            until(lambda: 'MALFORMED_ENVELOPE' in diagnostics[-1]['reasons'])
+            envelope(2,gate_session=str(uuid4()))
+            until(lambda: 'OLD_GATE_SESSION' in diagnostics[-1]['reasons'])
+            report['missing_context_duplicate_old_session'] = 'PASS: rejected, all outputs zero'
+            assert all(v == (0.,)*6 for v in final+downstream)
+    
+            legacy.publish(nonzero); pump()
+            assert all(v == (0.,)*6 for v in final+downstream)
+            report['legacy_ros_cmd_vel'] = 'PASS: no bridge subscription, isolated'
+    
+            # Deliberate negative authorization test against a FAKE actuator only.
+            rogue = alternate.create_publisher(Twist, t['actuator'], QOS)
+            until(lambda: rogue.get_subscription_count() >= 2)
+            rogue.publish(nonzero)
+            until(lambda: axes(nonzero) in downstream)
+            assert len(observer.get_publishers_info_by_topic(t['actuator'])) == 2
+            report['direct_ros_actuator_bypass'] = 'BLOCKER: unauthenticated publisher reached fake actuator'
+            alternate.destroy_publisher(rogue)
+            until(lambda: len(observer.get_publishers_info_by_topic(t['actuator'])) == 1)
+    
+            # Kill gate before transport injection so periodic gate zero cannot mask it.
+            old_session = diagnostics[-1]['session']
+            stop(gate); pump(.3)
+            downstream.clear()
+            injection = subprocess.run(['ign','topic','-t',t['ignition'],'-m','ignition.msgs.Twist',
+                                        '-p','linear: {x: 0.9}'], capture_output=True, timeout=8)
+            assert injection.returncode == 0, injection.stderr.decode()
+            until(lambda: any(v[0] == .9 for v in downstream))
+            report['direct_ignition_bypass'] = 'BLOCKER: direct IGN write reached fake actuator with gate absent'
+            report['gate_process_loss'] = 'UNKNOWN physical stop; zero publisher absent'
+    
+            # One volatile queued envelope from the old instance cannot revive a new gate.
+            envelopes.publish(String(data=json.dumps(dict(gate_session=old_session,source='smoother',sequence=99,
+                                                           velocity=[.7,0.,0.,0.,0.,0.]))))
+            gate = start(gate_cmd)
+            until(lambda: diagnostics[-1]['session'] != old_session)
+            assert 'STARTUP_DENY_ALL' in diagnostics[-1]['reasons']
+            pump(.2)
+            envelope(99,gate_session=old_session)
+            until(lambda: 'OLD_GATE_SESSION' in diagnostics[-1]['reasons'])
+            before = len(final); cp.publish(nonzero); pump(.3)
+            assert final[before:] and all(v == (0.,)*6 for v in final[before:])
+            report['queued_twist_and_restart'] = 'PASS: new session deny-all; old envelope rejected; raw Twist unbound'
+    
+            stop(bridge); pump(.3)
+            # Fake last-command latch models the missing physical guarantee.
+            last_target = [.4,0.,0.,0.,0.,0.]
+            before = len(downstream); before_final = len(final)
+            cp.publish(nonzero); pump(.4)
+            assert len(final) > before_final and all(v == (0.,)*6 for v in final[before_final:])
+>           assert len(downstream) == before
+E           assert 38 == 29
+E            +  where 38 = len([(0.9, 0.0, 0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), ...])
+
+docker/experiments/c5-b6b4/test_ros_topology.py:173: AssertionError
+=========================== short test summary info ============================
+FAILED docker/experiments/c5-b6b4/test_ros_topology.py::test_zero_only_topology_and_bypass_inventory
+1 failed, 44 passed in 4.92s

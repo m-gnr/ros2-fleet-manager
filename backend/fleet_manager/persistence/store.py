@@ -38,7 +38,7 @@ class SQLiteStore:
 
     def require_empty(self):
         for table in ("tasks", "robots", "reservations", "station_moves", "outbox_events",
-                      "processed_events", "task_review_holds"):
+                      "processed_events", "task_review_holds", "traffic_state", "traffic_decisions", "traffic_outbox"):
             if self.connection.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone():
                 raise ScenarioResetRequired(
                     "Scenario reset required; preserve this database and use a new database after reset"

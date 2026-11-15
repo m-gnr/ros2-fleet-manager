@@ -36,6 +36,8 @@ class FleetEventLoop:
         self._closed = False
         self._route_planning = None
         self._dashboard_telemetry = None
+        self._traffic_protocol_session = None
+        self._traffic_test_radius = None
         with store.transaction():
             store.require_empty()
             store.persist_core(self._core)
@@ -85,6 +87,14 @@ class FleetEventLoop:
         if not isinstance(provider, CachedRouteDistanceProvider):
             raise ValueError("Live routing requires a robot-specific cache provider")
         self._route_planning = LiveRoutePlanning(self, provider.cache, query, self._clock)
+
+    def enable_traffic_protocol_test(self, *, enclosing_radius):
+        """Explicit in-process test seam. No YAML, ROS parameter or product mode."""
+        if (self._worker is not None or self._traffic_protocol_session is not None
+                or not math.isfinite(enclosing_radius) or enclosing_radius <= 0):
+            raise ValueError("Traffic test profile must be configured once before start")
+        self._traffic_protocol_session = str(uuid4())
+        self._traffic_test_radius = enclosing_radius
 
     async def start(self):
         if self._closed:
@@ -138,6 +148,15 @@ class FleetEventLoop:
         plan = resolved_route = None
         previous_dispatch = self._core.station_dispatch
         with self.store.transaction():
+            if event.kind.startswith("TRAFFIC_PROTOCOL_"):
+                from .persistence.traffic_protocol import process_protocol
+                return process_protocol(self.store, event, self._core, self._clock(),
+                                        self._traffic_protocol_session, self._traffic_test_radius)
+            if event.kind.startswith("TRAFFIC_"):
+                if not event.event_id:
+                    raise ValueError("event_id is required")
+                from .persistence.traffic import process_traffic
+                return process_traffic(self.store, event)
             if event.kind == "OUTBOX_CLAIM":
                 command = self.store.claim(**event.payload)
                 if command is not None and command["kind"] in ("NAVIGATE_TO_STATION", "CANCEL_STATION_MOVE"):
@@ -178,6 +197,20 @@ class FleetEventLoop:
                     candidate.scheduler.pending_route_tasks = plan.pending
                     candidate.schedule_tick(current_time=now, station_lookup=plan.lookup_station)
                     candidate.scheduler = scheduler
+            if outcome in ("APPLIED", "SESSION_BLOCKED") and db.execute(
+                "SELECT 1 FROM traffic_state WHERE singleton=1"
+            ).fetchone():
+                from .persistence.traffic import process_traffic
+                from .domain.constants import RobotState
+                for robot in candidate.tracker.list_robots():
+                    reason = ("SESSION_BLOCKED" if robot.session_blocked else
+                              "ERROR" if robot.state == RobotState.STATE_ERROR else
+                              "STALE" if robot.is_stale(self._clock()) else None)
+                    if reason:
+                        process_traffic(self.store, Event(
+                            "TRAFFIC_BLOCK", {"robot_id": robot.robot_id, "reason": reason},
+                            event_id=f"{event.event_id}:traffic:{robot.robot_id}",
+                        ))
             if outcome in ("APPLIED", "SESSION_BLOCKED"):
                 self.store.persist_core(candidate)
                 if outcome == "APPLIED":

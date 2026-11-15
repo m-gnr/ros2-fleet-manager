@@ -64,3 +64,14 @@ CREATE TABLE IF NOT EXISTS task_review_holds (
     reason TEXT NOT NULL,
     held_at REAL NOT NULL
 );
+-- Reservation-only traffic decisions. No actuator command sender consumes these.
+CREATE TABLE IF NOT EXISTS traffic_state (
+    singleton INTEGER PRIMARY KEY CHECK(singleton=1), snapshot TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS traffic_decisions (
+    event_id TEXT PRIMARY KEY, payload TEXT NOT NULL, decision TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS traffic_outbox (
+    event_id TEXT PRIMARY KEY REFERENCES traffic_decisions(event_id),
+    payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'PENDING' CHECK(state='PENDING')
+);

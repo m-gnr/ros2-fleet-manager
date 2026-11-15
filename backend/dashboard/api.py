@@ -301,6 +301,7 @@ def main():
     parser.add_argument("--container-bind", action="store_true")
     parser.add_argument("--scene-port", type=int)
     parser.add_argument("--fleet", type=Path)
+    parser.add_argument("--schema", type=Path, help="Existing fleet JSON schema path")
     parser.add_argument("--task-socket", type=Path)
     parser.add_argument("--costmap", type=Path)
     args = parser.parse_args()
@@ -310,7 +311,7 @@ def main():
     if args.fleet is not None:
         from fleet_config import load_config
 
-        config = load_config(args.fleet, schema_path=args.fleet.with_name("fleet.schema.json"))
+        config = load_config(args.fleet, schema_path=args.schema)
     if args.scene_port is not None:
         if config is None or not 1 <= args.scene_port <= 65535:
             parser.error("--scene-port requires a valid port and --fleet")

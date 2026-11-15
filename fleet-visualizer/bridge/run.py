@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def options():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fleet", type=Path, default=ROOT / "config/fleet.yaml")
+    parser.add_argument("--schema", type=Path, help="Existing fleet JSON schema path")
     parser.add_argument("--robot", help="Limit telemetry to one robot id in fleet.yaml")
     parser.add_argument("--source", choices=("tf", "diagnostic_odom"), default="tf")
     parser.add_argument("--hz", type=float, default=20)
@@ -45,7 +46,7 @@ def options():
             if (parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username
                     or parsed.path or parsed.query or parsed.fragment or parsed.port == 0):
                 raise ValueError(f"Invalid browser origin: {origin}")
-        fleet = load_config(args.fleet, schema_path=args.fleet.with_name("fleet.schema.json"))
+        fleet = load_config(args.fleet, schema_path=args.schema)
         robots = select_robots(fleet, args.robot, args.source)
     except (ValueError, OSError, YAMLError) as error:
         parser.error(str(error))

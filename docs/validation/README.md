@@ -6,6 +6,8 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 |---|---|---|
 | C5-A main entegrasyon checkpoint'i | [Rapor](c5/c5-a-main-integration-2026-11-14.md) · [Komutlar](c5/c5-a-main-integration-commands-2026-11-14.md) | Main kullanıcı değişiklikleri korundu; 26 host testi ve 23 Chrome testi geçti. Target canlı görev `EXECUTING` durumunda durduruldu, COMPLETED doğrulanmadı |
 | C5-A ilk entegrasyon | [Rapor](c5/c5-a-first-integration-2026-11-14.md) · [Komut eki](c5/c5-a-first-integration-commands-2026-11-14.md) | Tek gerçek Chrome → FM → Nav2 pickup/dropoff COMPLETED; iki robot ve batarya görünürlüğü. Sensör qualification kabulü değildir |
+| C5 Alpha/Beta TF cold-start | [Rapor](c5/c5-alpha-beta-tf-startup-2026-11-17.md) · [Komut eki](c5/c5-alpha-beta-tf-startup-commands-2026-11-17.md) | AMCL, tüm Nav2 lifecycle düğümleri, NavigateToPose action server'ı ve güncel iki robot TF zinciri hazır olmadan API açılmaz; görev gönderilmedi |
+| C5 üç robot AMCL readiness incelemesi | [Rapor](c5/c5-three-robot-amcl-readiness-2026-11-17.md) · [Komut eki](c5/c5-three-robot-amcl-readiness-commands-2026-11-17.md) | Hareketsiz 3/3 robotta AMCL pozu tekrarı yok; odom/scan/TF güncel, AMCL/Nav2 hazır. READY → WAITING alt nedeni kaydedilmedi; PARTIAL |
 | C5 Aşama 1.3 | [Rapor](c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komutlar](c5/c5-stage1-3-commands-2026-11-11.md) | AMCL gözlem modeli, aynı damgalı raf yaklaşması ve bağımsız kabul kayıtları |
 | C5 Aşama 1.2 | [Rapor](c5/c5-stage1-2-physical-localization-2026-11-11.md) · [Komutlar](c5/c5-stage1-2-commands-2026-11-11.md) | Dönüş odometrisi ve collision zarfı düzeltildi; son pickup 1/5, paralel beta FAILED; kabul verilmedi |
 | C5 Aşama 1.1 | [Rapor](c5/stage1-1-validation-2026-11-11.md) · [Komutlar](c5/stage1-1-commands-2026-11-11.md) | F1 gerçek feedback/EXECUTING düzeltildi; üç izole F2 deneyinde 1 geçti / 2 kaldı. Koşulsuz kabul verilmedi |
@@ -71,3 +73,5 @@ B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ rob
 - [C5-B6B.5 test-only actuator watchdog](c5/c5-b6b5-watchdog-2026-11-15.md) · [Komutlar](c5/c5-b6b5-watchdog-commands-2026-11-15.md): native build/ABI ve sıfır hedef; ürün/fiziksel fren kabulü yok.
 
 - [C5-B6B.6 actuator yetkilendirme testleri](c5/c5-b6b6-authorization-2026-11-15.md) · [Komutlar](c5/c5-b6b6-authorization-commands-2026-11-15.md): hareketsiz fake actuator; ürün kabulü yok.
+
+- [C5 güvenli session cleanup ve tek demo](c5/c5-session-cleanup-2026-11-17.md) · [Komut eki](c5/c5-session-cleanup-commands-2026-11-17.md): üç robot cold-start ve readiness kaydı; PARTIAL.

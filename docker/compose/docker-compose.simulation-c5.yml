@@ -1,10 +1,18 @@
 # Read-only C5 browser validation layered after C4.5. No frontend DDS access.
 services:
+  simulation:
+    environment:
+      C5_SESSION_ID: "${C5_SESSION_ID:?Set a unique C5 session ID}"
+      IGN_PARTITION: "${IGN_PARTITION:?Set a unique Gazebo partition}"
+      ROS_DOMAIN_ID: "${ROS_DOMAIN_ID:?Set a unique ROS domain}"
   backend:
     image: ros2-fleet-c5-validation:humble-fortress
     ports:
       - "127.0.0.1:${C5_API_PORT:?Set the C5 API port}:${C5_API_PORT:?Set the C5 API port}"
     environment:
+      C5_SESSION_ID: "${C5_SESSION_ID:?Set a unique C5 session ID}"
+      IGN_PARTITION: "${IGN_PARTITION:?Set a unique Gazebo partition}"
+      ROS_DOMAIN_ID: "${ROS_DOMAIN_ID:?Set a unique ROS domain}"
       C5_API_PORT: "${C5_API_PORT:?Set the C5 API port}"
       C5_UI_ORIGIN: "${C5_UI_ORIGIN:?Set the exact Vite browser origin}"
       C5_SNAPSHOT_PATH: /run/fleet-dashboard/latest.json

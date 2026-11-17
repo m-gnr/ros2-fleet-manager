@@ -45,6 +45,8 @@ def main():
     database.parent.mkdir(parents=True,exist_ok=True)
     if database.exists():
         raise FileExistsError('A fresh database is required')
+    if any((args.output/name).exists() for name in ('reset-verified.json', 'startup-readiness.json')):
+        raise FileExistsError('Fresh reset and startup-readiness evidence is required')
     children = []
     stop = False
     def stopping(*_):
@@ -92,9 +94,43 @@ def main():
             if stop or time.monotonic()>deadline or any(p.poll() is not None for _,p in children):
                 raise RuntimeError('Reset gate unavailable')
             time.sleep(.1)
-        # Existing physical reset gate remains mandatory for Executor startup.
-        for name, cmd in commands[2:]:
+        # Preserve the physical reset gate before starting robot-facing nodes.
+        robot_commands = [(name, cmd) for name, cmd in commands[2:] if name.startswith(('battery_', 'executor_'))]
+        for name, cmd in robot_commands:
             launch(name, cmd)
+        scene_command = next((cmd for name, cmd in commands if name == 'scene'), None)
+        if scene_command is None:
+            raise RuntimeError('Scene bridge command missing')
+        launch('scene', scene_command)
+        readiness_path = args.output/'startup-readiness.json'
+        readiness_deadline = time.monotonic()+90
+        while True:
+            if readiness_path.exists():
+                try:
+                    readiness = json.loads(readiness_path.read_text())
+                except (OSError, json.JSONDecodeError):
+                    readiness = {}
+                expected = {robot.id for robot in cfg.robots}
+                phases = readiness.get('robots', {})
+                phase_names = set(readiness.get('required_phases', []))
+                phases_ready = (phase_names == {'amcl', 'nav2', 'tf'} and
+                                set(phases) == expected and
+                                all(phases[robot].get(phase, {}).get('ready') is True
+                                    for robot in expected for phase in phase_names))
+                if (readiness.get('status') == 'READY' and
+                        readiness.get('current_status') == 'READY' and phases_ready):
+                    break
+            if stop or time.monotonic() >= readiness_deadline:
+                raise RuntimeError('Bounded AMCL/Nav2/map-to-odom-to-base_link readiness unavailable')
+            failed = [name for name, child in children if child.poll() is not None]
+            if failed:
+                raise RuntimeError(f'Startup prerequisite exited before TF readiness: {failed}')
+            time.sleep(.1)
+        for name in ('manager', 'api'):
+            command = next((cmd for command_name, cmd in commands if command_name == name), None)
+            if command is None:
+                raise RuntimeError(f'{name} command missing')
+            launch(name, command)
         while not stop:
             for name, child in children:
                 if child.poll() is not None:

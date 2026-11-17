@@ -71,6 +71,17 @@ robots:
   nav2_action_name: /robot_beta/navigate_to_pose
   nav2_params_path: simulation-c2-3-params.template.yaml
   obstacle_sensor_model: compact_dual_obstacle_v1
+- id: robot_gamma
+  name: robot_gamma
+  namespace: /robot_gamma
+  initial_pose:
+    x: 8.0
+    y: 5.5
+    yaw: 3.141592653589793
+  battery_model: turtlebot3_burger
+  nav2_action_name: /robot_gamma/navigate_to_pose
+  nav2_params_path: simulation-c2-3-params.template.yaml
+  obstacle_sensor_model: compact_dual_obstacle_v1
 stations:
   charging_stations:
   - id: dock_1

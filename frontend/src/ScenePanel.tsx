@@ -116,7 +116,8 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
           </span>;
         })}
       </div>
-      <span className="scene-indicator"><i data-live={live > 0} />{live} / {robotIds.length} TF LIVE</span>
+      <span className="scene-indicator" role="status"><i data-live={robotIds.length > 0 && live === robotIds.length} />
+        {robotIds.length > 0 && live === robotIds.length ? `${live}/${robotIds.length} TF LIVE` : "WAITING FOR TF"}</span>
       </> : <p className="scene-message" role="status">Seçili depo profili için harita doğrulanamadı.</p>}
       {showCostmap && <span className="costmap-key">{costmap ? costmap.source === 'nav2_recorded'
         ? 'Nav2 global costmap · kayıt' : 'Üretilen statik harita' : 'Costmap bekleniyor'} · Engel / şişirme</span>}

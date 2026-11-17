@@ -1,10 +1,10 @@
-import { expect, test, type Page, type WebSocketRoute } from "@playwright/test";
+import { expect, test, type Page, type Route, type WebSocketRoute } from "@playwright/test";
 import { PerspectiveCamera, Vector3 } from "three";
 import { blendPose, toScene } from "../src/scene/coordinates";
 import { frameWarehouse } from "../src/scene/framing";
 import { simTime, telemetryAge } from "../src/presentation";
 
-import { backend, restarted, pose, valid, invalid, fixture, feed, telemetry } from "./dashboard-fixtures";
+import { backend, producer, restarted, pose, valid, invalid, fixture, feed, telemetry } from "./dashboard-fixtures";
 import { taskPad } from "../src/scene/taskPad";
 
 test.beforeEach(async ({ page }) => {
@@ -98,7 +98,8 @@ test("rejects older snapshots and resynchronizes after a disconnected socket", a
   await expect(details.getByRole("meter")).toHaveAttribute("aria-valuenow", "72.5");
   const priorSockets = sockets.length;
   sockets.at(-1)!.close();
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByText("Bağlanıyor", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(details.getByText("Bayat veri", { exact: true })).toBeVisible();
   await expect(details.getByRole("meter")).toHaveCount(0);
   await expect.poll(() => sockets.length).toBeGreaterThan(priorSockets);
@@ -109,6 +110,133 @@ test("rejects older snapshots and resynchronizes after a disconnected socket", a
   await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
   await expect(details.getByText("Bayat veri", { exact: true })).toBeVisible();
   await expect(details.getByRole("meter")).toHaveCount(0);
+});
+
+test("hides short outages, retries transient failures, and refreshes the task catalog once per connection", async ({ page }) => {
+  const sockets: WebSocketRoute[] = [];
+  let catalogRequests = 0;
+  const layout = {
+    frame_id: "map", grid_m: 1,
+    bounds: { x_min: 0, y_min: 0, x_max: 10, y_max: 10 },
+    wall_thickness_m: 0.1, wall_height_m: 2,
+    door: { side: "south", center: 5, width: 2 },
+    walls: [], racks: [], aisles: [], zones: [],
+    transfer_points: [
+      { id: "pickup", kind: "pickup", pose: { x: 1, y: 1, yaw: 0 } },
+      { id: "dropoff", kind: "dropoff", pose: { x: 2, y: 2, yaw: 0 } },
+    ],
+  };
+  await page.route("**/api/task-catalog", async route => {
+    catalogRequests += 1;
+    await route.fulfill({ json: { layout, enabled: true, profile_digest: "a".repeat(64),
+      backend_session_id: backend, source_session_id: producer } });
+  });
+  await feed(page, socket => { sockets.push(socket); });
+  await page.goto("/");
+  await expect.poll(() => sockets.length).toBeGreaterThan(0);
+  await page.waitForTimeout(100);
+  const initialSocket = sockets.at(-1)!;
+  initialSocket.send(JSON.stringify(fixture));
+  await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Görevler" }).click();
+  await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Alım noktası" })).toBeVisible();
+  await expect.poll(() => catalogRequests).toBe(1);
+  await page.waitForTimeout(700);
+  expect(catalogRequests).toBe(1);
+
+  await page.getByLabel("Alım noktası").selectOption("pickup");
+  await page.getByLabel("Teslim noktası").selectOption("dropoff");
+  await expect(page.getByRole("button", { name: "Görevi gönder" })).toBeEnabled();
+  const priorSockets = sockets.length;
+  initialSocket.close();
+  await expect(page.getByText("Bağlanıyor", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Görev oluştur" })).toHaveCount(0);
+
+  await expect.poll(() => sockets.length).toBeGreaterThan(priorSockets);
+  const secondFailureBaseline = sockets.length;
+  sockets.at(-1)!.close();
+  await expect.poll(() => sockets.length).toBeGreaterThan(secondFailureBaseline);
+  await page.waitForTimeout(100);
+  sockets.at(-1)!.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
+  await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByLabel("Alım noktası")).toBeEnabled();
+  await expect.poll(() => catalogRequests).toBe(2);
+  await page.waitForTimeout(700);
+  expect(catalogRequests).toBe(2);
+});
+
+test("waits through a delayed task API response and prevents a second submission", async ({ page }) => {
+  test.setTimeout(25000);
+  const sockets: WebSocketRoute[] = [];
+  const layout = {
+    frame_id: "map", grid_m: 1,
+    bounds: { x_min: 0, y_min: 0, x_max: 10, y_max: 10 },
+    wall_thickness_m: 0.1, wall_height_m: 2,
+    door: { side: "south", center: 5, width: 2 },
+    walls: [], racks: [], aisles: [], zones: [],
+    transfer_points: [
+      { id: "pickup", kind: "pickup", pose: { x: 1, y: 1, yaw: 0 } },
+      { id: "dropoff", kind: "dropoff", pose: { x: 2, y: 2, yaw: 0 } },
+    ],
+  };
+  await page.route("**/api/task-catalog", route => route.fulfill({ json: {
+    layout, enabled: true, profile_digest: "b".repeat(64), backend_session_id: backend, source_session_id: producer,
+  } }));
+  let taskRequest: Route | undefined;
+  await page.route("**/api/tasks", route => { taskRequest = route; });
+  await feed(page, socket => { sockets.push(socket); });
+  await page.goto("/");
+  await expect.poll(() => sockets.length).toBeGreaterThan(0);
+  await page.waitForTimeout(100);
+  const liveSocket = sockets.at(-1)!;
+  liveSocket.send(JSON.stringify(fixture));
+  let sequence = fixture.sequence;
+  const refresh = setInterval(() => liveSocket.send(JSON.stringify({ ...fixture, sequence: ++sequence })), 500);
+  try {
+  await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Görevler" }).click();
+  await page.getByLabel("Alım noktası").selectOption("pickup");
+  await page.getByLabel("Teslim noktası").selectOption("dropoff");
+  const submit = page.getByRole("button", { name: "Görevi gönder" });
+  await submit.click();
+  await expect.poll(() => !!taskRequest).toBe(true);
+  await expect(submit).toBeDisabled();
+  await page.waitForTimeout(5200);
+  await expect(page.getByText("Yeniden bağlanıyor…", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(submit).toBeDisabled();
+  await taskRequest!.fulfill({ json: { task_id: "task_delayed", outcome: "APPLIED" } });
+  await expect(page.getByText("Fleet Manager kabul etti · task_delayed", { exact: true })).toBeVisible();
+  await expect(submit).toBeEnabled();
+  } finally {
+    clearInterval(refresh);
+  }
+});
+
+test("shows a small reconnecting state after five seconds and a real error after fifteen, then resynchronizes", async ({ page }) => {
+  test.setTimeout(40000);
+  const sockets: WebSocketRoute[] = [];
+  await feed(page, socket => { sockets.push(socket); });
+  await page.goto("/");
+  await expect.poll(() => sockets.length).toBeGreaterThan(0);
+  await page.waitForTimeout(100);
+  const initialSocket = sockets.at(-1)!;
+  initialSocket.send(JSON.stringify(fixture));
+  await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
+  initialSocket.close();
+
+  await expect(page.getByText("Yeniden bağlanıyor", { exact: true })).toBeVisible({ timeout: 9000 });
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByRole("alert")).toContainText("15 saniyeden uzun", { timeout: 15000 });
+
+  const previous = sockets.length;
+  await expect.poll(() => sockets.length).toBeGreaterThan(previous);
+  sockets.at(-1)!.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
+  await expect(page.getByText("Bağlı", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
 test("fits, follows, orbits, pans, zooms and displays at mobile widths", async ({ page }) => {

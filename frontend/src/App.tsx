@@ -37,7 +37,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string>();
   const { fleet, connection, error, scene, sceneFeed, reconnect } = useFleet();
   const connected = connection === "CONNECTED";
-  const catalog = useTaskCatalog(fleet);
+  const catalog = useTaskCatalog(fleet, connected);
   const productIds = fleet?.robots.map((robot) => robot.robot_id).join("\0") ?? "";
   const robotIds = useMemo(() => [...new Set([
     ...(productIds ? productIds.split("\0") : []), ...(scene.roster ?? []),

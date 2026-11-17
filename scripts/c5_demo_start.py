@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -18,6 +19,36 @@ from c5_session_cleanup import CleanupError, run
 
 IMAGE = "ros2-fleet-c5-validation:humble-fortress"
 EXPECTED_ROBOTS = {"robot_alpha", "robot_beta", "robot_gamma"}
+OVERLAY_PACKAGES = (Path("interfaces/fleet_interfaces"), Path("ros2_ws/src/fleet_perception"))
+
+
+def overlay_cache(root: Path) -> tuple[Path, str, str]:
+    image_id = subprocess.check_output(
+        ["docker", "image", "inspect", "--format", "{{.Id}}", IMAGE], text=True
+    ).strip()
+    digest = hashlib.sha256(image_id.encode())
+    for package in OVERLAY_PACKAGES:
+        package_root = root / package
+        for path in sorted(item for item in package_root.rglob("*")
+                            if item.is_file() and "__pycache__" not in item.parts
+                            and item.suffix != ".pyc"):
+            relative = path.relative_to(root).as_posix()
+            digest.update(relative.encode())
+            digest.update(b"\0")
+            digest.update(path.read_bytes())
+    fingerprint = digest.hexdigest()
+    cache = Path("/tmp/ros2-fleet-c5-overlay") / fingerprint
+    cache.mkdir(mode=0o700, parents=True, exist_ok=True)
+    metadata = {"fingerprint": fingerprint, "image_id": image_id,
+                "packages": [package.as_posix() for package in OVERLAY_PACKAGES]}
+    metadata_path = cache / "source.json"
+    if not metadata_path.exists():
+        temporary = cache / f"source.{os.getpid()}.tmp"
+        temporary.write_text(json.dumps(metadata, indent=2) + "\n")
+        os.replace(temporary, metadata_path)
+    elif json.loads(metadata_path.read_text()) != metadata:
+        raise CleanupError(f"overlay cache fingerprint mismatch: {cache}")
+    return cache, fingerprint, image_id
 
 
 def available_port(start: int, excluded: set[int]) -> int:
@@ -51,7 +82,7 @@ def main() -> int:
     test_check = subprocess.run([sys.executable, "docker/simulation-warehouse-grid/test_startup_readiness.py"], cwd=root)
     if test_check.returncode:
         raise CleanupError("Üç robotlu AMCL/Nav2/TF readiness testi başarısız")
-    run(["docker", "image", "inspect", IMAGE])
+    cache, _fingerprint, _image_id = overlay_cache(root)
 
     api_port = available_port(int(os.environ.get("C5_API_PORT", "21482")), set())
     ui_port = available_port(int(os.environ.get("C5_UI_PORT", str(api_port + 2))), {api_port})
@@ -64,16 +95,20 @@ def main() -> int:
     (evidence / "live").mkdir()
     build = (
         "set -e; source /opt/ros/humble/setup.bash; cd /workspace; "
-        "colcon --log-base /evidence/overlay-log build "
+        "if [[ ! -f /c5-cache/install/local_setup.bash ]]; then "
+        "exec 9>/c5-cache/build.lock; flock 9; "
+        "if [[ ! -f /c5-cache/install/local_setup.bash ]]; then "
+        "colcon --log-base /c5-cache/log build "
         "--base-paths interfaces/fleet_interfaces ros2_ws/src/fleet_perception "
-        "--build-base /evidence/overlay-build --install-base /evidence/overlay-install; "
-        "source /evidence/overlay-install/setup.bash; "
+        "--build-base /c5-cache/build --install-base /c5-cache/install; fi; "
+        "flock -u 9; exec 9>&-; fi; "
+        "source /c5-cache/install/local_setup.bash; "
         "export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:"
         "/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; "
         "exec python3 docker/simulation-warehouse-grid/stage1_run.py "
         "config/fleet.warehouse-30x18.yaml /evidence/live "
         f"--api-port {api_port} --scene-port {scene_port} "
-        f"--origin http://127.0.0.1:{ui_port} --ros-overlay /evidence/overlay-install"
+        f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install"
     )
     run([
         "docker", "run", "--detach", "--init", "--name", session_id, "--network", "bridge",
@@ -83,6 +118,7 @@ def main() -> int:
         "--env", "ROS_LOCALHOST_ONLY=0", "--env", f"C5_SESSION_ID={session_id}",
         "--publish", f"127.0.0.1:{api_port}:{api_port}",
         "--volume", f"{evidence}:/evidence", "--volume", f"{root}:/workspace:ro",
+        "--volume", f"{cache}:/c5-cache",
         IMAGE, "bash", "-ec", build,
     ], timeout=60)
     (evidence / "session.json").write_text(json.dumps({

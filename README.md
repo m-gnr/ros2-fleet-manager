@@ -51,7 +51,7 @@ interfaces/             Ürün IDL ve ayrı DDS probe test arayüzü
 config/                 fleet.yaml, şema, harita ve test yapılandırmaları
 docker/compose/         Doğrulama Compose katmanları
 docker/                 Dockerfile ve container test araçları
-scripts/                Canlı test çalıştırıcıları
+scripts/                Canlı test çalıştırıcıları ve üç robot demo launcher'ı
 tests/                  Host/ROS otomatik testleri
 docs/architecture/      Mimari kayıtlar ve kaynak dizini
 docs/decisions/         C2–C3.3.3 onaylı karar kayıtları
@@ -65,6 +65,8 @@ PDF'ler, kişisel notlar ve tarihsel bağlantılar korunur. Ayrıntılı belge d
 ## Kurulum ve çalıştırma
 
 Yerel C5 paneli için [iki robotlu başlatma komutlarını](docs/validation/c5/c5-stage1-5-commands-2026-11-06.md) izleyin. Host test seçkisi [C1](requirements-c1.txt) ve [C5 test bağımlılıklarını](requirements-c5-test.txt) kullanır.
+
+Üç robotlu boşta demo için depo kökünden `./scripts/start_demo.sh` çalıştırın. Alpha/Beta/Gamma, AMCL/Nav2/TF, API/WebSocket ve Vite GUI readiness tamamlanınca hazır olur; GUI Chrome'da açılır. `Ctrl+C`, SIGTERM, SIGHUP veya launcher ebeveyninin kaybı bu oturumun Vite ve container'ını kapatır. Kullanım ve canlı kabul sınırları [launcher doğrulama kaydındadır](docs/validation/c5/start-demo-launcher-2026-11-17.md). ROS overlay'i yalnız kaynak veya container image değiştiğinde `/tmp` altındaki fingerprint cache'inde yeniden derlenir.
 
 ```sh
 export PYTHONPATH=.:backend:ros2_ws/src/fleet_robot_executor:ros2_ws/src/fleet_battery_simulator

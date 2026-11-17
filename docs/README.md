@@ -51,6 +51,7 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [C5 Aşama 1.6 arayüz doğrulaması](validation/c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](validation/c5/c5-stage1-6-commands-2026-11-06.md)
 - [C5 Aşama 1.6 görsel kabul düzeltmesi](validation/c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-6-visual-commands-2026-11-06.md)
 - [C5 Aşama 1.7D depo duvarları ve operasyon bölgeleri](validation/c5/c5-stage1-7d-validation-2026-11-07.md) · [Doğrulama komutları](validation/c5/c5-stage1-7d-commands-2026-11-07.md)
+- [Üç robot tek komut demo launcher'ı](validation/c5/start-demo-launcher-2026-11-17.md): readiness, sinyal/ebeveyn kaybı kapanışı, kaynak kapsamı ve canlı WebGL sonucu.
 - [C5 Aşama 1.7E işlevsel depo iç yerleşimi](validation/c5/c5-stage1-7e-validation-2026-11-08.md) · [Doğrulama komutları](validation/c5/c5-stage1-7e-commands-2026-11-08.md)
 - [Visualize V2 park alanı yer değişikliği](validation/c5/visualize-park-relocation-2026-11-17.md) · [Komutlar](validation/c5/visualize-park-relocation-commands-2026-11-17.md): gerçek park hedefleri ve görsel yuvalar; sabit robot eşleştirmesi uygulanmadı, canlı Nav2 hedefi henüz test edilmedi.
 - [Visualize V2.1 canlı park doğrulama denemesi](validation/c5/visualize-v2-1-live-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v2-1-live-commands-2026-11-17.md): yeni hedeflere 9 gerçek Nav2 planı geçti; aktif YAML eski park pozlarını kullanıyor, TF/clock akışı duraklamış, fiziksel park test edilmedi.

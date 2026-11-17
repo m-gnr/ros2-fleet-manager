@@ -4,6 +4,7 @@ import asyncio
 from contextlib import closing
 from pathlib import Path
 import signal
+import sys
 import threading
 import time
 
@@ -78,10 +79,18 @@ def main():
     try:
         asyncio.run(run(args, node))
     finally:
-        executor.shutdown()
-        thread.join(timeout=5)
-        node.destroy_node()
+        # Executor.shutdown() otherwise waits without a deadline for ROS
+        # callbacks. A callback stuck during shutdown used to keep this
+        # process alive until the outer supervisor sent SIGKILL.
+        shutdown_complete = executor.shutdown(timeout_sec=5.0)
+        thread.join(timeout=5.0)
+        if thread.is_alive():
+            print("Fleet manager ROS executor did not stop within 5 seconds", file=sys.stderr, flush=True)
+        else:
+            node.destroy_node()
         rclpy.try_shutdown()
+        if not shutdown_complete or thread.is_alive():
+            raise RuntimeError("Fleet manager ROS executor shutdown was incomplete")
 
 
 if __name__ == '__main__':

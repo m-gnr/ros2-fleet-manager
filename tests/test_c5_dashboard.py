@@ -357,3 +357,25 @@ def test_slow_scene_socket_keeps_at_most_one_upstream_event(monkeypatch, tmp_pat
         assert socket.closed == 1013
 
     asyncio.run(run())
+
+
+def test_scene_socket_close_during_send_is_a_disconnect(tmp_path):
+    from backend.dashboard import scene_stream
+
+    async def run():
+        class ClosingSocket:
+            async def receive(self):
+                await asyncio.Future()
+
+            async def send_text(self, _):
+                raise RuntimeError(
+                    "Unexpected ASGI message 'websocket.send', after sending 'websocket.close'"
+                )
+
+        feed = api.Feed(tmp_path / "snapshot.json")
+        feed.update(make_source(1))
+        await asyncio.wait_for(scene_stream.send_operations(
+            ClosingSocket(), feed, bridge_url=None, topics={}, poll_sec=0.01, send_timeout=0.1,
+        ), 1)
+
+    asyncio.run(run())

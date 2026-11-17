@@ -142,14 +142,21 @@ def main():
         exits={}
         # Finish the manager/API before the robots; the world supervisor owns Nav2 shutdown.
         order=['api','manager','scene']+[n for n,_ in children if n.startswith(('executor_','battery_'))]+['observer','simulation']
+        forced = []
         for name in order:
             for current, child in children:
                 if name != current:
                     continue
-                child.send_signal(signal.SIGINT if name!='simulation' else signal.SIGTERM)
+                # The API server and manager both install explicit SIGINT
+                # handlers. The simulation wrapper owns SIGTERM for its ordered
+                # Nav2/Gazebo shutdown.
+                shutdown_signal = signal.SIGTERM if name == 'simulation' else signal.SIGINT
+                child.send_signal(shutdown_signal)
                 try:
-                    child.wait(timeout=35 if name=='simulation' else 10)
+                    timeout = 45 if name == 'simulation' else 20 if name == 'manager' else 10
+                    child.wait(timeout=timeout)
                 except subprocess.TimeoutExpired:
+                    forced.append(name)
                     os.killpg(child.pid,signal.SIGKILL)
                     child.wait()
                 exits[name]=child.returncode
@@ -157,6 +164,9 @@ def main():
         if database.exists():
             with sqlite3.connect(database) as source, sqlite3.connect(args.output/'fleet.sqlite3') as target:
                 source.backup(target)
+        unclean = {name: code for name, code in exits.items() if code != 0}
+        if forced or unclean:
+            raise RuntimeError(f'Unclean shutdown; forced={forced}, nonzero_exits={unclean}')
 
 
 if __name__ == '__main__':

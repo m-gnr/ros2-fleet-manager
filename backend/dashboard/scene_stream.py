@@ -83,7 +83,15 @@ async def send_operations(socket, feed, *, bridge_url, topics, poll_sec, send_ti
     close_code = None
 
     async def send(payload):
-        await asyncio.wait_for(socket.send_text(payload), send_timeout)
+        try:
+            await asyncio.wait_for(socket.send_text(payload), send_timeout)
+        except RuntimeError as error:
+            # Starlette/Uvicorn reports a RuntimeError when a peer closes while
+            # a send is in flight. Treat only that closed-ASGI-state race as a
+            # disconnect; unrelated programming errors must still surface.
+            if "after sending 'websocket.close'" not in str(error):
+                raise
+            raise WebSocketDisconnect(code=1001) from error
 
     try:
         while True:

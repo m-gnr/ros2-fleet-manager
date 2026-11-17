@@ -4,6 +4,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
 |---|---|---|
+| Demo Launcher V1.1 — telemetry ve güvenli kapanış | [Doğrulama](c5/start-demo-launcher-v1-1-2026-11-17.md) | Chrome reconnect ve WebGL2, 3/3 TF LIVE, iki tam Ctrl+C kapanışında bütün child/container exit kodları 0 ve portlar boş; dashboard 8/8 test geçti. |
 | Üç robot tek komut demo launcher'ı | [Doğrulama](c5/start-demo-launcher-2026-11-17.md) | Gerçek üç robot GUI, `3/3 TF LIVE`, sinyal/ebeveyn/başarısız başlangıç cleanup ve overlay cache yeniden kullanımı geçti; Chrome WebGL sahnesi fallback'te kaldı. |
 | Visualize → main regresyon karşılaştırması | [Rapor](c5/visualize-main-integration-2026-11-17.md) · [Komutlar](c5/visualize-main-integration-commands-2026-11-17.md) | Tam Playwright 34/34, frontend build, YAML, C5 backend 255/8 skip ve ROS TF 4/4 geçti; hareket ve yeni canlı Gazebo koşusu NOT TESTED. `main` ve `origin/main` değişmedi, GitHub push onayı bekleniyor. |
 | Visualize V6 dış zemin paleti | [Rapor ve komutlar](c5/visualize-v6-palette-2026-11-17.md) | Önce V1–V6 checkpoint commit’i; ardından commit edilmemiş palet. Build ve 3/3 test geçti; Chrome’da açıklık sırası doğrulandı. |

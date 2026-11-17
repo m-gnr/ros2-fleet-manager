@@ -134,7 +134,7 @@ def stop_owned_container(root: Path, name: str) -> None:
     item = session_container(root, name)
     if item is None or not item.get("State", {}).get("Running"):
         return
-    run(["docker", "stop", "--time", "60", name], timeout=75)
+    run(["docker", "stop", "--time", "120", name], timeout=135)
     item = session_container(root, name)
     if item and item.get("State", {}).get("Running"):
         raise RuntimeError(f"owned simulation container {name} remains running")
@@ -171,10 +171,14 @@ def main() -> int:
                     signal_stop(signal.SIGHUP, None)
                 child.send_signal(signal.SIGTERM)
                 try:
-                    child.wait(timeout=10)
+                    # c5_demo_start waits for Docker to finish the owned
+                    # container's ordered ROS/Gazebo shutdown. Give that
+                    # supervisor time to finish instead of killing its owner.
+                    child.wait(timeout=150)
                 except subprocess.TimeoutExpired:
-                    child.kill()
-                    child.wait()
+                    raise RuntimeError("C5 session supervisor did not finish its graceful shutdown")
+                if child.returncode != 0:
+                    raise RuntimeError(f"C5 session supervisor exited {child.returncode} during shutdown")
                 raise RuntimeError("startup interrupted")
             time.sleep(0.2)
         if child.returncode != 0:

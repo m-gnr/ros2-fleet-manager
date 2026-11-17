@@ -22,7 +22,11 @@ def shutdown_nav2(namespaces, emit):
     clean = True
     try:
         for manager in ("navigation", "localization"):
-            deadline = time.monotonic() + 5.0
+            # Three namespaced lifecycle managers can take longer to deactivate
+            # under the full warehouse load. Keep the shutdown bounded, but do
+            # not report a clean simulation exit while a valid request is still
+            # in flight.
+            deadline = time.monotonic() + 15.0
             pending = {}
             for namespace in namespaces:
                 service = f"/{namespace}/lifecycle_manager_{manager}/manage_nodes"

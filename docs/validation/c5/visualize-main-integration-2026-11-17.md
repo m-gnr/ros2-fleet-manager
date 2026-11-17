@@ -31,4 +31,4 @@ Diğer eski dashboard beklentileri de grid profilinde GLB raf ölçüleri, stati
 
 Filo YAML çakışması V2.3’te doğrulanmış park slotlarına göre çözüldü: alpha/park_1 `(13.5, 1.5)`, beta/park_2 `(13.5, 2.75)`, gamma/park_3 `(13.5, 4.0)`, yaw `π`. `robot_gamma` için çift kayıt veya profil kaybı yoktur. Görsel depo sınırları ve park bölgesi de bu slotları kapsar.
 
-`origin/main` merge’i bu geçici entegrasyon branch’inde çözülmüş ve dosyalar test edilmiştir. Bu rapor anında merge commit’i henüz oluşturulmamıştır; `main` ve `origin/main` değişmeden durur. Kullanıcının GitHub push onayı bekleniyor. Hareket zincirinin **NOT TESTED** olması sebebiyle görev/park/şarj canlı kabulü veya hareket izni sonucu çıkarılmamalıdır.
+`origin/main` ile Visualize birleştirmesi yalnız geçici entegrasyon branch’inde tamamlandı; yerel merge commit’i `65e6bd6260a31386f7ec2a932b9f386b19d1a640` (`codex/visualize-main-integration`) olarak oluşturuldu. `main` ve `origin/main` değişmeden durur. Kullanıcının GitHub push onayı bekleniyor. Hareket zincirinin **NOT TESTED** olması sebebiyle görev/park/şarj canlı kabulü veya hareket izni sonucu çıkarılmamalıdır.

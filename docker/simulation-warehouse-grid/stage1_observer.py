@@ -240,7 +240,10 @@ def main():
                 if db.exists():
                     with sqlite3.connect(f'file:{db}?mode=ro', uri=True) as conn:
                         conn.row_factory = sqlite3.Row
-                        if conn.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='tasks'").fetchone()[0] == 0:
+                        expected = {'tasks', 'outbox_events', 'reservations', 'task_review_holds'}
+                        present = {row[0] for row in conn.execute(
+                            "SELECT name FROM sqlite_master WHERE type='table'")}
+                        if not expected <= present:
                             continue
                         conn.execute('BEGIN')
                         tables = {table:[dict(row) for row in conn.execute('SELECT * FROM '+table)]

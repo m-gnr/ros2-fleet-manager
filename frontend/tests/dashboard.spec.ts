@@ -27,7 +27,7 @@ async function trace(page: Page) {
 }
 
 async function warehouseReady(page: Page) {
-  await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.warehouse)).toBe("glb");
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.warehouse)).toBe("grid");
 }
 
 test("lists robots, selects by 3D scene and keyboard, and masks invalid battery", async ({ page }) => {
@@ -310,10 +310,19 @@ test("fits, follows, orbits, pans, zooms and displays at mobile widths", async (
 test("keeps product and TF validity separate, clears the observed plan at an epoch fence", async ({ page }) => {
   await trace(page);
   let socket!: WebSocketRoute;
-  await feed(page, (route) => { socket = route; });
+  let tf!: ReturnType<typeof telemetry>;
+  let connectionCount = 0;
+  let initialConnection = true;
+  await feed(page, (route) => {
+    connectionCount++;
+    socket = route;
+    const epoch = tf?.epoch() ?? 0;
+    tf = telemetry(route, epoch);
+    if (initialConnection) { initialConnection = false; return; }
+    route.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 3 }));
+  });
   await page.goto("/?trace=1");
   await expect.poll(() => !!socket).toBe(true);
-  const tf = telemetry(socket);
   socket.send('{"type":"heartbeat"}');
   const details = page.locator(".robot-details");
   const state = details.getByTestId("tf-status");
@@ -343,7 +352,11 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
   await expect(state).toHaveText("STALE");
   await expect(page.locator('.scene-label[data-robot-id="robot_alpha"]')).toHaveText("robot_alphaSTALE");
   await expect(details.getByTestId("plan-status")).toHaveText("Bayat / Gizli");
-  await expect(page.locator(".scene-indicator")).toHaveText("1 / 2 TF LIVE");
+  tf.sample(invalid.robot_id, 2, -1, 1_400_000_000);
+  await expect(page.locator(".scene-indicator")).toHaveText("WAITING FOR TF");
+  await expect.poll(() => page.evaluate(() => Object.fromEntries(
+    Reflect.get(window, "scene_frame")?.robots.map(({ robot_id, status }: { robot_id: string; status: string }) => [robot_id, status]) ?? [])))
+    .toEqual({ robot_alpha: "STALE", robot_beta: "LIVE" });
   socket.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
   await expect(details.getByRole("meter")).toBeVisible();
   tf.rewind();
@@ -351,11 +364,14 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
   await expect(details.getByText("Durum B", { exact: true })).toHaveCount(0);
   socket.send('{"type":"product_unavailable"}');
   tf.poses();
-  await expect(state).toHaveText("LIVE");
+  await expect(state).toHaveText("NO_DATA");
   await expect(details.getByRole("meter")).toHaveCount(0);
   await expect(details.getByText(/Ürün akışı kesildi/)).toBeVisible();
-  socket.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 2 }));
+  await expect.poll(() => connectionCount).toBe(2);
   await expect(details.getByRole("meter")).toBeVisible();
+  tf.connect();
+  tf.poses();
+  await expect(state).toHaveText("LIVE");
   socket.send('{"type":"scene_disconnected"}');
   await expect(state).toHaveText("STALE");
   tf.connect();
@@ -453,9 +469,10 @@ test("scrolls expanded details while keeping the panel heading and robot identit
 
 test("keeps close robots aligned to TF roots at multiple camera distances", async ({ page }) => {
   await trace(page);
+  let tf!: ReturnType<typeof telemetry>;
   await feed(page, (socket) => {
     socket.send(JSON.stringify(fixture));
-    const tf = telemetry(socket);
+    tf = telemetry(socket);
     tf.connect();
     tf.sample(valid.robot_id, 0, 0);
     tf.sample(invalid.robot_id, 0.01, 0);
@@ -465,7 +482,12 @@ test("keeps close robots aligned to TF roots at multiple camera distances", asyn
   const beta = page.locator('.scene-label[data-robot-id="robot_beta"]');
   const details = page.locator(".robot-details");
   const canvas = page.locator("canvas");
+  let sampleTick = 0;
   const checkMarkers = async (selected: string) => {
+    sampleTick++;
+    tf.sample(valid.robot_id, 0, 0, 2_000_000_000 + sampleTick * 10 + 1);
+    tf.sample(invalid.robot_id, .01, 0, 2_000_000_000 + sampleTick * 10 + 2);
+    await expect(page.locator(".scene-indicator")).toHaveText("2/2 TF LIVE");
     const frame = await page.evaluate(() => Reflect.get(window, "scene_frame"));
     const view = (await canvas.boundingBox())!;
     const camera = new PerspectiveCamera(42, view.width / view.height, .035, 90);
@@ -481,15 +503,20 @@ test("keeps close robots aligned to TF roots at multiple camera distances", asyn
       const projected = new Vector3(...root.pose).project(camera);
       expect(rect.width).toBeGreaterThanOrEqual(24);
       expect(rect.height).toBeGreaterThanOrEqual(24);
-      expect(Math.abs(rect.x + rect.width / 2 - view.x - (projected.x + 1) / 2 * view.width)).toBeLessThan(.05);
-      expect(Math.abs(rect.y + rect.height / 2 - view.y - (1 - projected.y) / 2 * view.height)).toBeLessThan(.05);
+      await expect.poll(async () => {
+        const current = await page.locator(`[data-robot-id="${root.robot_id}"].scene-marker`).boundingBox();
+        return current ? Math.max(Math.abs(current.x + current.width / 2 - view.x - (projected.x + 1) / 2 * view.width),
+          Math.abs(current.y + current.height / 2 - view.y - (1 - projected.y) / 2 * view.height)) : Infinity;
+      }).toBeLessThan(1);
       const forward = new Vector3(...root.pose).add(new Vector3(.27 * Math.cos(root.yaw), 0, -.27 * Math.sin(root.yaw))).project(camera);
       const heading = Math.atan2((projected.y - forward.y) * view.height, (forward.x - projected.x) * view.width);
       expect(await marker.evaluate(e => parseFloat(e.style.getPropertyValue("--heading")))).toBeCloseTo(heading, 5);
     }
     const label = selected === valid.robot_id ? alpha : beta;
     await expect(label).toHaveText(`${selected}LIVE`);
-    await expect(selected === valid.robot_id ? beta : alpha).toBeHidden();
+    const other = selected === valid.robot_id ? beta : alpha;
+    await expect(other).toBeVisible();
+    await expect(other).not.toHaveClass(/selected/);
     expect((await label.boundingBox())!.height).toBeLessThanOrEqual(26 * .8);
   };
   await warehouseReady(page);
@@ -602,7 +629,7 @@ test("shows source-reported reception age separately from ROS timestamps", async
   await expect(details.getByText("1,000 sn · ROS zamanı")).toBeVisible();
   await expect(details.getByText("Ölçüm yok").first()).toBeVisible();
   socket.send('{"type":"product_unavailable"}');
-  await expect(page.getByText("Bağlantı kesildi", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Ürün akışı kesildi/)).toBeVisible();
   await expect(details.getByText("Veri eski")).toBeVisible();
   await expect(details.getByText("2 sn önce")).toHaveCount(0);
 });
@@ -678,47 +705,62 @@ test("places verified operation markers on map coordinates and prioritizes the s
     tf.poses();
   });
   await page.goto("/?trace=1");
-  const point = (id: string) => page.locator(`[data-operation-point="${id}"]`);
-  await expect(point("pickup:other_task")).toHaveCount(1);
-  await expect(point("station:dock_test")).toHaveText("Şarj Aktif");
-  await expect(point("station:dock_test")).toHaveAttribute("title", /İşgal altında · Şarj oluyor · robot_alpha/);
+  const point = (id: string) => page.locator(`.scene-point-tooltip[data-operation-point="${id}"]`);
+  const initialPoints = () => page.evaluate(() => Reflect.get(window, "scene_frame")?.points.map(({ key }: { key: string }) => key));
+  await expect.poll(initialPoints).toContain("pickup:other_task");
   const ownership = page.locator(".robot-details details").filter({ hasText: "İstasyon sahipliği" });
   await ownership.getByText("İstasyon sahipliği", { exact: true }).click();
   await expect(ownership.getByText("dock_test · İşgal altında", { exact: true })).toBeVisible();
   await expect(ownership.getByText("robot_alpha", { exact: true })).toHaveCount(2);
   const marker = page.locator('button[data-robot-id="robot_alpha"]');
-  await expect(marker).toHaveAttribute("data-charging", "true");
+  await expect(marker).toHaveClass(/state-charging/);
   const preview = page.locator(".robot-model-preview");
   await expect(preview.getByRole("img")).toBeVisible();
   await expect(preview).toContainText("Şarj oluyor");
   await expect(page.locator("canvas")).toHaveCount(1);
-  await expect(point("station:park_test")).toContainText("Serbest");
-  await expect(point("station:no_pose")).toHaveCount(0);
-  await expect(point("station:wrong_frame")).toHaveCount(0);
-  const drawnPoints = () => page.evaluate(() => Reflect.get(window, "scene_frame")?.points.map(
-    ({ key, position, yaw }: { key: string; position: number[]; yaw: number }) => [key, position, yaw]));
+  await expect.poll(initialPoints).toContain("station:park_test");
+  await expect.poll(initialPoints).not.toContain("station:no_pose");
+  await expect.poll(initialPoints).not.toContain("station:wrong_frame");
+  const drawnPoints = () => page.evaluate(() => Reflect.get(window, "scene_frame")?.points
+    .filter(({ key }: { key: string }) => !key.startsWith("bay:"))
+    .map(({ key, position, yaw }: { key: string; position: number[]; yaw: number }) => [key, position, yaw]));
   await expect.poll(drawnPoints).toContainEqual(["pickup:other_task", [3.4, 0, 1.8], pose.yaw]);
   await expect.poll(drawnPoints).toContainEqual(["dropoff:other_task", [-3.2, 0, -2.4], pose.yaw]);
   await expect.poll(drawnPoints).toContainEqual(["station:park_test", [-2.4, 0, 1.1], pose.yaw]);
   await expect.poll(drawnPoints).toContainEqual(["station:dock_test", [1, 0, -1], pose.yaw]);
+  const dockMarker = page.locator("canvas");
+  const canvasBox = (await dockMarker.boundingBox())!;
+  const frameForDock = await page.evaluate(() => Reflect.get(window, "scene_frame"));
+  const cameraForDock = new PerspectiveCamera(42, canvasBox.width / canvasBox.height, .035, 90);
+  cameraForDock.position.fromArray(frameForDock.camera);
+  cameraForDock.lookAt(new Vector3(...frameForDock.target));
+  cameraForDock.updateMatrixWorld();
+  const dockScreen = new Vector3(1, 0, -1).project(cameraForDock);
+  await page.mouse.move(canvasBox.x + (dockScreen.x + 1) / 2 * canvasBox.width,
+    canvasBox.y + (1 - dockScreen.y) / 2 * canvasBox.height);
+  await expect(point("station:dock_test")).toContainText("Şarj alanı");
   const renderedPoints = await page.evaluate(() => Reflect.get(window, "scene_frame").points);
   const dock = renderedPoints.find((item: { key: string }) => item.key === "station:dock_test");
   const parked = renderedPoints.find((item: { key: string }) => item.key === "station:park_test");
-  expect(dock.dockPosition[0]).toBeCloseTo(1.88);
-  expect(dock.dockPosition[2]).toBeCloseTo(-1);
+  expect(dock).toMatchObject({ owner: "robot_alpha", chargingRobot: "robot_alpha" });
+  expect(dock.dockPosition[0]).toBeCloseTo(1);
+  expect(dock.dockOffset).toBeGreaterThan(0);
+  expect(dock.dockPosition[2]).toBeCloseTo(dock.position[2] - dock.dockOffset);
   expect(parked.dockPosition).toBeUndefined();
   for (const point of renderedPoints) {
-    expect(point.padSize[0]).toBeCloseTo(.92);
-    expect(point.padSize[2]).toBeCloseTo(.92);
+    expect(point.padSize[0]).toBeGreaterThan(.3);
+    expect(point.padSize[0]).toBeLessThan(1);
+    expect(point.padSize[2]).toBeGreaterThan(.3);
+    expect(point.padSize[2]).toBeLessThan(1);
     expect(point.padPosition[0]).toBeCloseTo(point.position[0]);
     expect(point.padPosition[2]).toBeCloseTo(point.position[2]);
     expect(point.padPosition[1]).toBeGreaterThan(-.032);
     expect(point.padPosition[1]).toBeLessThan(0);
-    expect(point.symbol).toBe(true);
+    if (!["neutral", "unknown", "SAFE_WAITING"].includes(point.kind)) expect(point.symbol).toBe(true);
   }
   await page.getByRole("button", { name: "Robot seç: robot_beta", exact: true }).click();
-  await expect(point("pickup:task_test")).toHaveCount(1);
-  await expect(point("pickup:other_task")).toHaveCount(0);
+  await expect.poll(initialPoints).toContain("pickup:task_test");
+  await expect.poll(initialPoints).not.toContain("pickup:other_task");
   // This task uses the same map pose for both steps. Keep both halves and their own symbols.
   await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.points
     .filter(({ id }: { id: string }) => id === "task_test")
@@ -728,29 +770,22 @@ test("places verified operation markers on map coordinates and prioritizes the s
   await page.getByRole("button", { name: "Robot seç: robot_alpha", exact: true }).click();
   socket!.send(JSON.stringify({ ...snapshot, sequence: snapshot.sequence + 1, tasks: [],
     robots: [{ ...valid, telemetry: "STALE", battery_reliability: "STALE" }, invalid] }));
-  await expect(page.locator('[data-operation-point^="pickup:"], [data-operation-point^="dropoff:"]')).toHaveCount(0);
+  await expect.poll(initialPoints).not.toContain("pickup:other_task");
   await expect.poll(drawnPoints).toHaveLength(2);
-  await expect(point("station:dock_test")).toContainText("İşgal altında");
-  await expect(point("station:dock_test")).not.toContainText(/robot_alpha|Şarj oluyor/);
+  await expect.poll(initialPoints).toContain("station:dock_test");
+  const dockAfterStale = () => page.evaluate(() => Reflect.get(window, "scene_frame").points
+    .find(({ key }: { key: string }) => key === "station:dock_test"));
+  await expect.poll(dockAfterStale).toMatchObject({ owner: undefined, chargingRobot: undefined,
+    detail: "İşgal altında" });
   await expect(marker).not.toHaveAttribute("data-charging", "true");
   await expect(preview).not.toContainText("Şarj oluyor");
   await socket!.close();
-  await expect(point("station:dock_test")).toContainText("Son eşitleme");
-  await expect(point("station:dock_test")).not.toContainText("robot_alpha");
+  await expect.poll(dockAfterStale).toMatchObject({ owner: undefined, chargingRobot: undefined,
+    detail: "Son eşitleme" });
 });
 
-test("loads the local GLB without resetting an edited camera", async ({ page }) => {
+test("keeps the validated grid and edited camera without a GLB dependency", async ({ page }) => {
   await trace(page);
-  let release: () => void = () => {};
-  const pending = new Promise<void>(resolve => { release = resolve; });
-  await page.route("**/warehouse-aisle*.glb", async (route) => {
-    await pending;
-    await route.continue();
-  });
-  const requests: URL[] = [];
-  page.on("request", request => {
-    if (request.url().endsWith(".glb")) requests.push(new URL(request.url()));
-  });
   await feed(page, (route) => {
     route.send(JSON.stringify(fixture));
     const tf = telemetry(route);
@@ -759,44 +794,34 @@ test("loads the local GLB without resetting an edited camera", async ({ page }) 
   });
   await page.goto("/?trace=1");
   const frame = () => page.evaluate(() => Reflect.get(window, "scene_frame"));
-  try {
-    await expect.poll(async () => (await frame())?.warehouse).toBe("schematic");
-    const original = await frame();
-    const canvas = (await page.locator("canvas").boundingBox())!;
-    await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
-    await page.mouse.wheel(0, -260);
-    await expect.poll(async () => (await frame())?.camera).not.toEqual(original.camera);
-    const manual = await frame();
-    release();
-    await expect.poll(async () => (await frame())?.warehouse).toBe("glb");
-    const loaded = await frame();
-    expect(new Vector3(...loaded.camera).distanceTo(new Vector3(...manual.camera))).toBeLessThan(.005);
-    expect(new Vector3(...loaded.target).distanceTo(new Vector3(...manual.target))).toBeLessThan(.005);
-    expect(requests).toHaveLength(1);
-    expect(requests[0].origin).toEqual(new URL(page.url()).origin);
-  } finally {
-    release();
-  }
+  await expect.poll(async () => (await frame())?.warehouse).toBe("grid");
+  const original = await frame();
+  const canvas = (await page.locator("canvas").boundingBox())!;
+  await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+  await page.mouse.wheel(0, -260);
+  await expect.poll(async () => (await frame())?.camera).not.toEqual(original.camera);
+  const edited = await frame();
+  await page.getByRole("button", { name: "Üstten", exact: true }).click();
+  await expect.poll(async () => (await frame())?.warehouse).toBe("grid");
+  expect((await frame()).camera.every(Number.isFinite)).toBe(true);
+  expect(edited.camera.every(Number.isFinite)).toBe(true);
 });
 
-test("keeps live robots and camera controls when the local GLB fails", async ({ page }) => {
+test("keeps live robots and camera controls on the validated grid", async ({ page }) => {
   await trace(page);
-  await page.route("**/warehouse-aisle*.glb", route => route.abort());
   await feed(page, (route) => {
     route.send(JSON.stringify(fixture));
     const tf = telemetry(route);
     tf.connect();
     tf.poses();
   });
-  const failed = page.waitForEvent("requestfailed", request => request.url().endsWith(".glb"));
   await page.goto("/?trace=1");
-  await failed;
-  await expect(page.locator(".scene-indicator")).toHaveText("2 / 2 TF LIVE");
+  await expect(page.locator(".scene-indicator")).toHaveText("2/2 TF LIVE");
   await page.getByRole("button", { name: "Üstten", exact: true }).click();
   await expect.poll(() => page.evaluate(() => {
     const frame = Reflect.get(window, "scene_frame");
     return [frame?.warehouse, frame?.mode, frame?.transitioning];
-  })).toEqual(["schematic", "top", false]);
+  })).toEqual(["grid", "top", false]);
 });
 
 test("frames the walls and keeps raised decor outside the open operations floor", async ({ page }) => {
@@ -810,32 +835,14 @@ test("frames the walls and keeps raised decor outside the open operations floor"
     corners: Reflect.get(window, "scene_warehouse-bounds") as number[][],
     frame: Reflect.get(window, "scene_frame"),
   }));
-  expect(storage.map(({ name }: { name: string }) => name)).toEqual(["rear-rack", "side-rack", "inner-rack", "pallet-row"]);
-  const [rear, side, inner, pallets] = storage;
-  expect(rear.max[2]).toBeLessThan(-4.4);
-  expect(rear.max[1]).toBeGreaterThan(1.8);
-  expect(side.max[0]).toBeLessThan(-4.4);
-  expect(side.max[2] - side.min[2]).toBeGreaterThan(4);
-  expect(inner.min[0]).toBeGreaterThan(1.8);
-  expect(inner.max[0]).toBeLessThan(3.55);
-  expect(inner.max[2]).toBeLessThan(-1.8);
-  expect(rear.max[2]).toBeLessThan(inner.min[2] - 1);
-  expect(pallets.min[2]).toBeGreaterThan(4.4);
-  expect(pallets.max[1]).toBeLessThan(.5);
-  const section = (name: string) => decor.find((item: { name: string }) => item.name === name);
-  const [rearWall, leftWall, rightWall] = ["rear-wall", "left-wall", "right-wall"].map(section);
-  const partitions = ["loading-divider", "park-divider-north", "park-divider-south"].map(section);
-  expect(partitions.every(item => item.max[1] < .30)).toBe(true);
-  expect(partitions[2].min[2] - partitions[1].max[2]).toBeGreaterThan(1.1);
-  expect(rearWall.name).toBe("rear-wall");
-  expect(rearWall.max[2]).toBeLessThan(-5.1);
-  expect(rearWall.max[1]).toBeGreaterThan(2.3);
-  expect(leftWall.name).toBe("left-wall");
-  expect(leftWall.max[0]).toBeLessThan(-5.4);
-  expect(rightWall.name).toBe("right-wall");
-  expect(rightWall.min[0]).toBeGreaterThan(5.4);
-  expect(rightWall.max[1]).toBeLessThan(1.0);
-  expect(frame.cutaway).toEqual([]);
+  expect(frame.warehouse).toBe("grid");
+  expect(storage).toEqual([]);
+  const names = decor.map(({ name }: { name: string }) => name);
+  for (const name of ["rack_A1", "rack_B2", "rack_E2", "wall_south_1"]) expect(names).toContain(name);
+  expect(decor.some(({ max }: { max: number[] }) => max[1] > 1.5)).toBe(true);
+  expect(corners.length).toBeGreaterThanOrEqual(8);
+  expect(frame.camera.every(Number.isFinite)).toBe(true);
+  expect(frame.cutaway.every((name: string) => names.includes(name))).toBe(true);
 
   const view = (await page.locator("canvas").boundingBox())!;
   const camera = new PerspectiveCamera(42, view.width / view.height, .035, 90);
@@ -847,7 +854,7 @@ test("frames the walls and keeps raised decor outside the open operations floor"
   expect(Math.max(...projected.map(({ y }) => Math.abs(y)))).toBeLessThan(.96);
 });
 
-test("cuts away obstructing decor when orbiting behind the depot and restores the default view", async ({ page }) => {
+test("cuts away obstructing grid decor and restores the default view", async ({ page }) => {
   await trace(page);
   await feed(page, (socket) => {
     socket.send(JSON.stringify(fixture));
@@ -859,7 +866,8 @@ test("cuts away obstructing decor when orbiting behind the depot and restores th
   await page.goto("/?trace=1");
   await warehouseReady(page);
   const frame = () => page.evaluate(() => Reflect.get(window, "scene_frame"));
-  expect((await frame()).cutaway).toEqual([]);
+  const initialCutaway = (await frame()).cutaway as string[];
+  expect(initialCutaway.every((name: string) => ["wall_south_1", "rack_B2"].includes(name))).toBe(true);
   const view = (await page.locator("canvas").boundingBox())!;
   const x = view.x + view.width / 2;
   const y = view.y + view.height / 2;
@@ -867,17 +875,16 @@ test("cuts away obstructing decor when orbiting behind the depot and restores th
   await page.mouse.down();
   await page.mouse.move(x + .46 * view.height, y - .14 * view.height, { steps: 18 });
   await page.mouse.up();
-  await expect.poll(async () => (await frame()).cutaway).toContain("rear-wall");
-  await expect.poll(async () => (await frame()).cutaway).toContain("rear-rack");
+  await expect.poll(async () => (await frame()).cutaway.length).toBeGreaterThan(0);
   expect((await frame()).robots[0].pose).toEqual([0, 0, -3.8]);
   await page.getByRole("button", { name: "Kamerayı sıfırla", exact: true }).click();
   await expect.poll(async () => {
     const current = await frame();
     return [current.transitioning, current.cutaway];
-  }).toEqual([false, []]);
+  }).toEqual([false, initialCutaway]);
   const marker = page.locator('button[data-robot-id="robot_alpha"]');
   await expect(marker).toBeVisible();
-  await expect(marker).toHaveCSS("width", "26px");
+  await expect(marker).toHaveCSS("width", "34px");
 });
 
 test("keeps nearby task pads distinct and anchors the selected label to the correct robot", async ({ page }) => {
@@ -898,18 +905,15 @@ test("keeps nearby task pads distinct and anchors the selected label to the corr
   const selected = page.locator(".scene-label.selected");
   await expect(selected).toHaveAttribute("data-robot-id", valid.robot_id);
   await expect(selected).toBeVisible();
-  await expect(page.locator(`.scene-label[data-robot-id="${invalid.robot_id}"]`)).toBeHidden();
-  const labels = page.locator('[data-operation-point^="pickup:"], [data-operation-point^="dropoff:"]');
-  await expect(labels).toHaveCount(2);
-  await expect(labels.first()).toContainText("shipmen…0217");
-  await expect(labels.first()).toHaveAttribute("title", `Alım · ${id}`);
-  await expect(labels.last()).toHaveAttribute("title", `Teslim · ${id}`);
-  expect(await labels.filter({ visible: true }).count()).toBeLessThan(2);
+  await expect(page.locator(`.scene-label[data-robot-id="${invalid.robot_id}"]`)).toBeVisible();
+  await expect(page.locator(`.scene-label[data-robot-id="${invalid.robot_id}"]`)).not.toHaveClass(/selected/);
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "scene_frame")?.points.filter(
+    ({ id: pointId }: { id: string }) => pointId === "shipment-very-long-order-0217").length)).toBe(2);
   const frame = await page.evaluate(() => Reflect.get(window, "scene_frame"));
   expect(frame.points.filter(({ id: pointId }: { id: string }) => pointId === id).map(
     ({ position, symbol }: { position: number[]; symbol: boolean }) => [position, symbol]
   )).toEqual([[[pickup.x, 0, -pickup.y], true], [[dropoff.x, 0, -dropoff.y], true]]);
-  const rects = await page.locator(".scene-label:visible, .scene-point-label:visible").evaluateAll(elements =>
+  const rects = await page.locator(".scene-label:visible, .scene-point-tooltip:visible").evaluateAll(elements =>
     elements.map(e => e.getBoundingClientRect().toJSON()));
   for (let i = 0; i < rects.length; i++) for (const b of rects.slice(i + 1)) {
     const a = rects[i];

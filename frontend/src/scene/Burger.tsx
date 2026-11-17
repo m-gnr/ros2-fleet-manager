@@ -4,6 +4,7 @@ import type { Mesh } from 'three'
 
 // Visual envelope in metres, based on the ROBOTIS Burger dimensions.
 export const burgerSize = { length: 0.138, width: 0.178, height: 0.192 } as const
+export const robotVisualScale = 1.30
 export const frontMarkerX = 0.27
 const wheelRadius = 0.033
 const wheelWidth = 0.024
@@ -82,9 +83,6 @@ export const Burger = memo(function Burger({ softShadows }: { softShadows: boole
         <meshBasicMaterial color="#ffd487" />
       </mesh>
     </group>
-    <mesh name="robot-front-marker" position={[frontMarkerX, 0.015, 0]} rotation={[0, 0, -Math.PI / 2]}>
-      <coneGeometry args={[0.058, 0.13, 3]} />
-      <meshBasicMaterial color="#975918" />
-    </mesh>
+    <group name="robot-front-marker" position={[frontMarkerX, 0.015, 0]} rotation={[0, 0, -Math.PI / 2]} />
   </>
 })

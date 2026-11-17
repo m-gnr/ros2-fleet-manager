@@ -736,10 +736,10 @@ export const staticWarehouse = {
       },
       {
         "bounds": {
-          "x_max": 6.0,
-          "x_min": 4.5,
-          "y_max": 8.5,
-          "y_min": 4.75
+          "x_max": 14.75,
+          "x_min": 12.5,
+          "y_max": 4.75,
+          "y_min": 0.75
         },
         "callout": null,
         "id": "park_zone",
@@ -748,6 +748,6 @@ export const staticWarehouse = {
       }
     ]
   },
-  "profile_digest": "8e8396b60c306e795ea84275ac56aa41a47fc8cf090fe14ad9627988bc91fda2",
+  "profile_digest": "e9dfb0d9cb428e822faa50606fdae99cb7d7dbf8262a15d263ee339ec191f56c",
   "profile_id": "warehouse_distributed_30x18"
 } as const

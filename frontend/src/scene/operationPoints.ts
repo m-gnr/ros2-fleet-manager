@@ -1,14 +1,16 @@
 import type { Fleet } from '../fleet'
 import { labels } from '../presentation'
-import { rectangle, wallDistance, type GridLayout } from './gridLayout'
+import { wallDistance, type GridLayout } from './gridLayout'
 import { toScene } from './coordinates'
 
 export const pointStyle = {
-  CHARGING: { name: 'Şarj', color: '#0a806e' },
-  PARKING: { name: 'Park', color: '#415e77' },
+  CHARGING: { name: 'Şarj', color: '#68877e' },
+  PARKING: { name: 'Park', color: '#74848c' },
   SAFE_WAITING: { name: 'Bekleme', color: '#576875' },
-  pickup: { name: 'Alım', color: '#275c99' },
-  dropoff: { name: 'Teslim', color: '#7850a9' },
+  pickup: { name: 'Alım', color: '#168DA4' },
+  dropoff: { name: 'Teslim', color: '#D18A28' },
+  neutral: { name: 'Çift rol', color: '#8799a2' },
+  unknown: { name: 'Rol bilinmiyor', color: '#9aaab0' },
 }
 
 export type OperationPoint = {
@@ -23,6 +25,8 @@ export type OperationPoint = {
   chargingKnown?: boolean
   layoutBay?: boolean
   dockOffset?: number
+  catalogId?: string
+  catalogRoles?: ('pickup' | 'dropoff')[]
 }
 
 export function operationPoints(fleet: Fleet | null, selected: string | undefined, connected: boolean, layout?: GridLayout) {
@@ -40,7 +44,7 @@ export function operationPoints(fleet: Fleet | null, selected: string | undefine
     if (!task || !pose || pose.frame_id !== fleet.map_frame) continue
     const [x, z, yaw] = toScene(pose)
     points.push({ key: `${kind}:${task.task_id}`, id: task.task_id, kind, position: [x, 0, z], yaw,
-      detail: connected ? undefined : 'Son eşitleme' })
+      detail: connected ? labels[task.status] : 'Son eşitleme' })
   }
   for (const station of fleet.stations) {
     if (!station.pose || station.pose.frame_id !== fleet.map_frame) continue
@@ -61,97 +65,18 @@ export function operationPoints(fleet: Fleet | null, selected: string | undefine
   }
   for (const bay of layout?.transfer_points ?? []) {
     const [x, z, yaw] = toScene(bay.pose)
-    const reusable = bay.roles?.length === 2
-    if (points.some(point => (point.kind === bay.kind || (reusable && !point.layoutBay)) &&
-      point.position[0] === x && point.position[2] === z)) continue
-    points.push({ key: `bay:${bay.id}`, id: bay.id, kind: bay.kind, position: [x, 0, z], yaw, layoutBay: true })
+    // A catalog role is permission, not the current job of a reusable point.
+    const roles = [...new Set(bay.roles ?? [bay.kind])]
+    const current = points.find(point => !point.layoutBay &&
+      point.position[0] === x && point.position[2] === z)
+    if (current) {
+      current.catalogId = bay.id
+      current.catalogRoles = roles
+      continue
+    }
+    const kind = roles.length === 2 ? 'neutral' : roles.length === 1 ? roles[0] : 'unknown'
+    points.push({ key: `bay:${bay.id}`, id: bay.id, kind, position: [x, 0, z], yaw,
+      layoutBay: true, catalogId: bay.id, catalogRoles: roles })
   }
   return points
-}
-
-export type OperationLabel = OperationPoint & {
-  groupText?: string
-  compact?: string
-  leader?: OperationPoint['position']
-  titleOverride?: string
-  lod?: 'near' | 'far'
-}
-
-function distributedLabels(points: OperationPoint[], layout: GridLayout): OperationLabel[] {
-  const tags: OperationLabel[] = []
-  const catalog = layout.transfer_points
-  const byZone = new Map<string, { name: string; points: OperationPoint[] }>()
-  for (const point of points) {
-    const bay = catalog.find(bay => bay.pose.x === point.position[0] && bay.pose.y === -point.position[2])
-    const zone = layout.zones.find(zone => zone.id === bay?.zone_id) ?? layout.zones.find(zone =>
-      zone.kind === (point.kind === 'CHARGING' ? 'charging' : point.kind === 'PARKING' ? 'parking' : point.kind) &&
-      zone.bounds.x_min <= point.position[0] && point.position[0] <= zone.bounds.x_max &&
-      zone.bounds.y_min <= -point.position[2] && -point.position[2] <= zone.bounds.y_max)
-    if (!zone) continue
-    const group = byZone.get(zone.label) ?? { name: zone.id, points: [] }
-    if (!group.points.some(item => item.position[0] === point.position[0] && item.position[2] === point.position[2])) {
-      group.points.push(point)
-      tags.push({ ...point, key: 'detail:' + point.key, titleOverride: bay?.id ?? point.id, lod: 'near',
-        leader: point.position })
-    }
-    byZone.set(zone.label, group)
-  }
-  for (const [name, group] of byZone) {
-    const members = group.points
-    const position: OperationPoint['position'] = [
-      members.reduce((sum, point) => sum + point.position[0], 0) / members.length, 0,
-      members.reduce((sum, point) => sum + point.position[2], 0) / members.length,
-    ]
-    const charging = members[0].kind === 'CHARGING'
-    const active = members.filter(point => point.chargingRobot).length
-    const activeText = members.every(point => point.chargingKnown) ? String(active) : '—'
-    tags.push({ ...members[0], key: 'zone:' + group.name, id: group.name, position, lod: 'far',
-      titleOverride: charging ? `${name} ${activeText}/${members.length}` : name,
-      groupText: members.map(point => point.id).join(' · '), compact: `${members.length} nokta`, leader: position })
-  }
-  return tags
-}
-
-export function operationLabels(points: OperationPoint[], layout?: GridLayout): OperationLabel[] {
-  const available = points.filter(point => !point.layoutBay)
-  if (!layout) return available
-  if (layout.example_tasks?.length) return distributedLabels(points, layout)
-  const zones = [['CHARGING', 'charging'], ['PARKING', 'parking'], ['pickup', 'pickup']] as const
-  const labels: OperationLabel[] = [...available]
-  for (const [kind, zoneKind] of zones) {
-    const zone = layout.zones.find(zone => zone.kind === zoneKind)
-    if (!zone || (kind === 'pickup' && !zone.callout)) continue
-    const { callout, bounds } = zone
-    const inZone = ({ position: [x, , z] }: OperationPoint) =>
-      x >= bounds.x_min && x <= bounds.x_max && -z >= bounds.y_min && -z <= bounds.y_max
-    const members = (kind === 'pickup' ? points : available)
-      .filter(point => point.kind === kind && (kind !== 'pickup' || inZone(point)))
-    if (!members.length) continue
-    const { x, z, depth } = rectangle(bounds)
-    const groupText = members.map(point => {
-      const status = point.chargingRobot ? 'aktif' : (point.detail ?? '').toLocaleLowerCase('tr')
-      const bay = kind === 'pickup' && !point.layoutBay ? layout.transfer_points.find(bay =>
-        bay.kind === kind && bay.pose.x === point.position[0] && -bay.pose.y === point.position[2]) : undefined
-      const id = bay ? `${bay.id} (${point.id})` : point.id
-      return [id, status].filter(Boolean).join(' ')
-    }).join(' · ')
-    const active = members.filter(point => point.chargingRobot).length
-    const compact = kind === 'CHARGING' ? (active ? `${active}/${members.length} aktif` : `${members.length} yuva`)
-      : kind === 'PARKING' ? `${members.length} yer` : `${members.length} nokta`
-    const leader: OperationPoint['position'] | undefined = callout
-      ? [Math.max(bounds.x_min, Math.min(bounds.x_max, callout.x)), .01,
-        -Math.max(bounds.y_min, Math.min(bounds.y_max, callout.y))] : undefined
-    // Keep live task labels for goals which are outside the configured pickup area.
-    for (let index = labels.length - 1; index >= 0; index--) {
-      const item = labels[index]
-      if (item.kind !== kind) continue
-      if (kind !== 'pickup' || inZone(item)) {
-        labels.splice(index, 1)
-      }
-    }
-    labels.push({ key: 'zone:' + zone.id, id: zone.id, kind,
-      position: callout ? [callout.x, 0, -callout.y] : [x, 0, z + depth * .20],
-      yaw: 0, groupText, compact: callout ? compact : undefined, leader })
-  }
-  return labels
 }

@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react'
 import { BufferGeometry, CanvasTexture, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace } from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
-export type Sign = { text: string; x: number; z: number; width: number; yaw?: number; wallY?: number }
+export type Sign = { text: string; x: number; z: number; width: number; height?: number; yaw?: number; wallY?: number }
 
 const floorSigns: Sign[] = [
   { text: 'A01  /  DEPOLAMA', x: -.16, z: -4.16, width: 2.75 },
@@ -21,19 +21,24 @@ export const FloorSigns = memo(function FloorSigns({ loadingDoor = false, custom
   const [signage, setSignage] = useState<{ geometry: BufferGeometry; material: MeshBasicMaterial }>()
   useEffect(() => {
     const signs = custom ?? (loadingDoor ? doorSigns : floorSigns)
+    if (!signs.length) { setSignage(undefined); return }
     const canvas = document.createElement('canvas')
     canvas.width = 512
     canvas.height = signs.length * 64
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const row = canvas.height / signs.length
-    ctx.fillStyle = loadingDoor ? '#f5fbfb' : '#526466'
-    ctx.font = loadingDoor ? '800 46px system-ui' : '800 57px system-ui'
+    ctx.fillStyle = loadingDoor ? '#f5fbfb' : '#83969d'
+    ctx.font = loadingDoor ? '800 46px system-ui' : '650 58px system-ui'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    const planes = signs.map(({ text, x, z, width, yaw = 0, wallY }, index) => {
-      ctx.fillText(text, canvas.width / 2, row * (index + .5), 482)
-      const plane = new PlaneGeometry(width, loadingDoor ? .24 : .42)
+    const planes = signs.map(({ text, x, z, width, height = .42, yaw = 0, wallY }, index) => {
+      ctx.save()
+      ctx.translate(canvas.width / 2, row * (index + .5))
+      ctx.scale(Math.min(2.5, 430 / ctx.measureText(text).width), 1)
+      ctx.fillText(text, 0, 0)
+      ctx.restore()
+      const plane = new PlaneGeometry(width, loadingDoor ? .24 : height)
       const uv = plane.getAttribute('uv')
       for (let i = 0; i < uv.count; i++) uv.setY(i, (signs.length - index - 1 + uv.getY(i)) / signs.length)
       if (wallY !== undefined) return plane.translate(x, wallY, z)

@@ -4,9 +4,10 @@ import { FloorSigns } from './FloorSigns'
 import { loadWarehouseDecor } from './warehouseDecor'
 import { innerRack, palletRow, partitions, rearRack, sideRack, wallSections, warehouseSize, type DecorBox } from './warehouseLayout'
 
-export function Boxes({ name, boxes, cutaway = false }: { name: string; boxes: DecorBox[]; cutaway?: boolean }) {
+export function Boxes({ name, boxes, cutaway = false, unlit = false }: { name: string; boxes: DecorBox[]; cutaway?: boolean; unlit?: boolean }) {
   const mesh = useRef<InstancedMesh>(null)
   useLayoutEffect(() => {
+    if (boxes.length === 0 || !mesh.current) return
     const instance = new Object3D()
     const color = new Color()
     boxes.forEach(([x, y, z, w, h, d, paint], index) => {
@@ -21,9 +22,11 @@ export function Boxes({ name, boxes, cutaway = false }: { name: string; boxes: D
     mesh.current!.computeBoundingSphere()
   }, [boxes])
 
+  if (boxes.length === 0) return null
+
   return <instancedMesh name={name} userData={{ cutaway }} ref={mesh} args={[undefined, undefined, boxes.length]}>
     <boxGeometry />
-    <meshStandardMaterial roughness={0.88} />
+    {unlit ? <meshBasicMaterial /> : <meshStandardMaterial roughness={0.94} metalness={0} />}
   </instancedMesh>
 }
 

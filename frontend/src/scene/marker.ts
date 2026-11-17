@@ -1,1 +1,1 @@
-export const markerDiameter = 26
+export const markerDiameter = 34

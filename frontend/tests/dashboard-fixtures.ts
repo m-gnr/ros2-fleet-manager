@@ -31,11 +31,11 @@ export async function feed(page: Page, handler: (socket: WebSocketRoute) => void
   await page.routeWebSocket("**/ws/fleet", handler);
 }
 
-export function telemetry(socket: WebSocketRoute) {
+export function telemetry(socket: WebSocketRoute, initialEpoch = 0) {
   const ids = [valid.robot_id, invalid.robot_id];
   const send = (packet: object) => socket.send(JSON.stringify({ type: "scene", packet }));
   let stamp = 1_000_000_000;
-  let epoch = 0;
+  let epoch = initialEpoch;
   const identity = (id: string) => ({ robot_id: id, frame_id: "map", source: "tf", version: 1, epoch,
     stream_id: id === valid.robot_id ? backend : producer });
   const sample = (id: string, x: number, y: number, sourceStamp = stamp) => send({
@@ -62,5 +62,5 @@ export function telemetry(socket: WebSocketRoute) {
     stamp = 1_000_000_000;
     status(valid.robot_id, "NO_DATA");
   }
-  return { connect, poses, sample, status, plan, rewind };
+  return { connect, poses, sample, status, plan, rewind, epoch: () => epoch };
 }

@@ -18,6 +18,16 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [Visualize V6 yaşayan dış çevre](validation/c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v6-commands-2026-11-17.md).
+
+- [Visualize V5 minimal dış çevre](validation/c5/visualize-v5-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v5-commands-2026-11-17.md).
+
+- [Visualize V4 zemin ve aydınlatma](validation/c5/visualize-v4-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v4-commands-2026-11-17.md).
+- [Visualize V3 robot öncelikli sunum](validation/c5/visualize-v3-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v3-commands-2026-11-17.md).
+- [Visualize V2 zemin adları ve nokta bilgi balonları](validation/c5/visualize-v2-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v2-commands-2026-11-17.md).
+- [Visualize V1 görev noktası görsel doğrulaması](validation/c5/visualize-v1-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v1-commands-2026-11-17.md).
+
+
 - [C5-A main entegrasyon checkpoint'i](validation/c5/c5-a-main-integration-2026-11-14.md) · [Üç taraflı karşılaştırma, komutlar ve canlı koşu sonucu](validation/c5/c5-a-main-integration-commands-2026-11-14.md).
 - [C5-A gerçek Chrome / Gazebo ilk entegrasyonu](validation/c5/c5-a-first-integration-2026-11-14.md) · [Gerçek komutlar](validation/c5/c5-a-first-integration-commands-2026-11-14.md): tek gerçek Chrome görevi COMPLETED; iki robot, TF ve batarya görünürlüğü. Sensör qualification kabulü değildir.
 - [C5 Aşama 1.7A depo modeli araştırması](research/c5-stage1-7-warehouse-model-research.md) — Sunum için üç hazır aday, lisans ve WebGL incelemesi, tek model önerisi.
@@ -35,6 +45,9 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 - [C5 Aşama 1.6 görsel kabul düzeltmesi](validation/c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Ölçüm ve doğrulama komutları](validation/c5/c5-stage1-6-visual-commands-2026-11-06.md)
 - [C5 Aşama 1.7D depo duvarları ve operasyon bölgeleri](validation/c5/c5-stage1-7d-validation-2026-11-07.md) · [Doğrulama komutları](validation/c5/c5-stage1-7d-commands-2026-11-07.md)
 - [C5 Aşama 1.7E işlevsel depo iç yerleşimi](validation/c5/c5-stage1-7e-validation-2026-11-08.md) · [Doğrulama komutları](validation/c5/c5-stage1-7e-commands-2026-11-08.md)
+- [Visualize V2 park alanı yer değişikliği](validation/c5/visualize-park-relocation-2026-11-17.md) · [Komutlar](validation/c5/visualize-park-relocation-commands-2026-11-17.md): gerçek park hedefleri ve görsel yuvalar; sabit robot eşleştirmesi uygulanmadı, canlı Nav2 hedefi henüz test edilmedi.
+- [Visualize V2.1 canlı park doğrulama denemesi](validation/c5/visualize-v2-1-live-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v2-1-live-commands-2026-11-17.md): yeni hedeflere 9 gerçek Nav2 planı geçti; aktif YAML eski park pozlarını kullanıyor, TF/clock akışı duraklamış, fiziksel park test edilmedi.
+- [Visualize V2.3 üç robotun parkta canlı başlangıcı](validation/c5/visualize-v2-3-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v2-3-commands-2026-11-17.md): gerçek spawn, WebSocket ve Chrome `3/3 TF LIVE` geçti; fiziksel hareket test edilmedi.
 - [C5 ızgara tabanlı depo profili](validation/c5/warehouse-grid-validation-2026-11-08.md) · Tek YAML, koridorlar ve Chrome kabulü.
 - [C5 20 × 12 m depo ve Fortress doğrulaması](validation/c5/warehouse-grid-20x12-validation-2026-11-08.md) · Ortak üretim, gerçek dock/teslim hedefleri ve karşılıklı geçiş.
 - [C5 üstten depo açıklığı ve etiket denetimi](validation/c5/warehouse-grid-clearance-2026-11-08.md) · Şarj ve alım erişimi, raf dışı etiketler ve Nav2 rota ölçümü.

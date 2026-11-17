@@ -50,7 +50,7 @@ class RosChecks(unittest.TestCase):
         self.assertEqual(list(self.node.publishers), [])
         self.assertEqual(list(self.node.clients), [])
         self.assertEqual(list(self.node.services), [])
-        self.assertEqual({sub.topic_name for sub in self.node.subscriptions}, {"/clock", "/selected/tf"})
+        self.assertEqual({sub.topic_name for sub in self.node.subscriptions}, {"/clock", "/tf", "/selected/tf"})
         self.tf(edge("map", "other/odom", 20, 99), edge("other/odom", "other/base_link", 20, 99))
         self.node.sample()
         self.assertEqual(self.snapshots[-1].status, "NO_DATA")
@@ -102,19 +102,18 @@ class RosChecks(unittest.TestCase):
         node = RosReader([(f"/r{i}", Telemetry(f"r{i}", "map", "tf", 1)) for i in (1, 2)],
                          20, snapshots.__setitem__, context=self.node.context)
         self.addCleanup(node.destroy_node)
-        self.assertEqual({sub.topic_name for sub in node.subscriptions}, {"/clock", "/r1/tf", "/r2/tf"})
+        self.assertEqual({sub.topic_name for sub in node.subscriptions}, {"/clock", "/tf", "/r1/tf", "/r2/tf"})
         msg = Clock()
         msg.clock.sec = 20
         node.on_clock(msg)
         first, second = node.robots.values()
-        first.on_tf(TFMessage(transforms=[
-            edge("map", "r2/odom", 20, 999), edge("r2/odom", "r2/base_link", 20, 999),
+        node.on_shared_tf(TFMessage(transforms=[
             edge("map", "r1/odom", 20, 1), edge("r1/odom", "r1/base_link", 20, 2),
         ]))
         node.sample()
         self.assertEqual(snapshots["r1"].pose.x, 3)
         self.assertEqual(snapshots["r2"].status, "NO_DATA")
-        second.on_tf(TFMessage(transforms=[
+        node.on_shared_tf(TFMessage(transforms=[
             edge("map", "r2/odom", 20, 10), edge("r2/odom", "r2/base_link", 20, 20),
         ]))
         node.sample()

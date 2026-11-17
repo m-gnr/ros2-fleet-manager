@@ -23,17 +23,21 @@ const parking = outline([[-.12, -.19], [-.12, .19], [.08, .19], [.16, .13], [.16
   [.08, -.04], [-.035, -.04], [-.035, .035], [.055, .035], [.08, .06], [.08, .095],
   [.055, .115], [-.035, .115], [-.035, -.19]])
 const heading = outline([[.20, -.033], [.30, -.033], [.30, -.095], [.41, 0], [.30, .095], [.30, .033], [.20, .033]])
-const pickupArrow = outline([[-.09, .105], [0, .20], [.09, .105], [.034, .105], [.034, .025], [-.034, .025], [-.034, .105]])
-const dropoffArrow = outline([[-.09, .12], [0, .025], [.09, .12], [.034, .12], [.034, .20], [-.034, .20], [-.034, .12]])
-const carton = outline([[-.13, -.175], [.13, -.175], [.13, -.012], [-.13, -.012]])
-carton.holes.push(new Path().moveTo(-.085, -.051).lineTo(-.085, -.136).lineTo(.085, -.136).lineTo(.085, -.051))
+const pickupArrow = outline([[-.15, .04], [0, .21], [.15, .04], [.055, .04], [.055, -.19], [-.055, -.19], [-.055, .04]])
+const dropoffArrow = outline([[-.15, -.04], [0, -.21], [.15, -.04], [.055, -.04], [.055, .19], [-.055, .19], [-.055, -.04]])
+
+// Equal visual footprints keep floor marks legible beside racks without moving task poses.
+const taskFootprint = panel(bay(.62, .62), '#e9eef0', [])
+const dualInnerFrame = panel(bay(.34, .34), '#e7edf0', []).border
 
 const panels = {
-  CHARGING: panel(bay(.46, .46), '#a4d8cb', [lightning]),
-  PARKING: panel(bay(.46, .46), '#bccbd6', [parking, heading]),
-  SAFE_WAITING: panel(bay(.44, .35), '#c4ced1', []),
-  pickup: panel(taskSquare, '#9dc8ef', [pickupArrow, carton]),
-  dropoff: panel(taskSquare, '#d4b7ec', [dropoffArrow, carton]),
+  CHARGING: panel(bay(.46, .46), '#dce7e3', [lightning]),
+  PARKING: panel(bay(.46, .46), '#e1e6e8', [parking, heading]),
+  SAFE_WAITING: panel(bay(.44, .35), '#e1e6e8', []),
+  pickup: panel(taskSquare, '#168DA4', [pickupArrow]),
+  dropoff: panel(taskSquare, '#e7edf0', [dropoffArrow]),
+  neutral: panel(taskSquare, '#e1e6e8', []),
+  unknown: panel(taskSquare, '#e7edf0', []),
 }
 
 function serviceFrame(x: number, y: number) {
@@ -43,7 +47,7 @@ function serviceFrame(x: number, y: number) {
 }
 const chargingFrame = serviceFrame(.68, 1.02)
 const parkFrame = serviceFrame(.75, .64)
-const gridCharging = panel(bay(.44, .345), '#a4d8cb', [lightning])
+const gridCharging = panel(bay(.44, .345), '#dce7e3', [lightning])
 const serviceBorders = {
   CHARGING: [panels.CHARGING.border, chargingFrame],
   PARKING: [panels.PARKING.border, parkFrame],
@@ -62,12 +66,17 @@ function ChargingUnit({ charging, offset }: { charging: boolean; offset?: number
     </mesh>
     <mesh position={[0, .251, .022]}>
       <boxGeometry args={[.45, .014, .15]} />
-      <meshBasicMaterial color={charging ? '#80e8b9' : '#a4bfba'} />
+      <meshBasicMaterial color={charging ? '#719d8a' : '#a4bfba'} />
     </mesh>
   </group>
 }
 
-export const OperationMarkers = memo(function OperationMarkers({ points, grid = false, dockApproach }: { points: OperationPoint[]; grid?: boolean; dockApproach?: number | null }) {
+export const OperationMarkers = memo(function OperationMarkers({ points, grid = false, dockApproach, onPointHover, onPointLeave, onPointClick }: {
+  points: OperationPoint[]; grid?: boolean; dockApproach?: number | null
+  onPointHover?: (key: string) => void
+  onPointLeave?: (key: string) => void
+  onPointClick?: (key: string) => void
+}) {
   const pickup = points.find(point => point.kind === 'pickup' && !point.layoutBay)
   const dropoff = points.find(point => point.kind === 'dropoff' && !point.layoutBay)
   const dx = pickup && dropoff ? dropoff.position[0] - pickup.position[0] : undefined
@@ -84,30 +93,57 @@ export const OperationMarkers = memo(function OperationMarkers({ points, grid = 
   return <group name="operation-points">
     {points.map(({ key, kind, position, yaw, chargingRobot, layoutBay, dockOffset }) => {
       const isTask = kind === 'pickup' || kind === 'dropoff'
+      const isTransfer = isTask || kind === 'neutral' || kind === 'unknown'
       const clip = isTask && !layoutBay ? clipped?.[kind] : undefined
       const { pad, border, fill, symbols } = clip?.panel ?? (grid && kind === 'CHARGING' ? gridCharging : panels[kind])
       const borderShapes = !grid && (kind === 'CHARGING' || kind === 'PARKING') ? serviceBorders[kind] : border
       // Raise overlapping paint layers by millimetres to keep their depths distinct.
       const height = layoutBay ? -.015 : kind === 'dropoff' ? -.002 : isTask ? -.006 : -.010
       const color = pointStyle[kind].color
-      return <group key={key} name={key} position={position} rotation-y={yaw}>
-        <group position-y={height} rotation-y={isTask ? -yaw : 0}>
+      const borderColor = kind === 'neutral' ? pointStyle.pickup.color : color
+      return <group key={key} name={key} position={position} rotation-y={yaw}
+        onPointerOver={event => {
+          event.stopPropagation()
+          onPointHover?.(key)
+        }}
+        onPointerOut={event => { event.stopPropagation(); onPointLeave?.(key) }}
+        onClick={event => {
+          if (event.delta <= 4) {
+            event.stopPropagation()
+            onPointClick?.(key)
+          }
+        }}>
+        <group position-y={height} rotation-y={isTransfer ? -yaw : 0}>
           <group rotation-x={-Math.PI / 2}>
+            {isTransfer && !clip && <>
+              <mesh name="operation-footprint" position-z={-.004}>
+                <shapeGeometry args={[taskFootprint.pad]} />
+                <meshBasicMaterial color={taskFootprint.fill} />
+              </mesh>
+              <mesh name="operation-footprint-border" position-z={-.003}>
+                <shapeGeometry args={[taskFootprint.border]} />
+                <meshBasicMaterial color={borderColor} transparent opacity={.42} />
+              </mesh>
+            </>}
             <mesh name="operation-pad">
               <shapeGeometry args={[pad]} />
-              <meshBasicMaterial color={chargingRobot ? '#88d5bc' : fill} transparent={layoutBay} opacity={layoutBay ? .38 : 1} />
+              <meshBasicMaterial color={chargingRobot ? '#b6d1c5' : fill} transparent={kind === 'neutral'} opacity={kind === 'neutral' ? .55 : 1} />
             </mesh>
             <mesh name="operation-border" position-z={.001}>
               <shapeGeometry args={[borderShapes]} />
-              <meshBasicMaterial color={color} />
+              <meshBasicMaterial color={borderColor} />
             </mesh>
+            {kind === 'neutral' && <mesh name="operation-dual-frame" position-z={.002}>
+              <shapeGeometry args={[dualInnerFrame]} />
+              <meshBasicMaterial color={pointStyle.dropoff.color} />
+            </mesh>}
             {symbols.length > 0 && <mesh name="operation-symbol" position={[clip?.symbolX ?? 0, clip?.symbolY ?? 0, .002]} scale={clip ? .72 : 1}>
               <shapeGeometry args={[symbols]} />
-              <meshBasicMaterial color={color} />
+              <meshBasicMaterial color={kind === 'pickup' ? '#ffffff' : color} />
             </mesh>}
           </group>
         </group>
-        {grid && kind !== 'PARKING' && <mesh name="approach-arrow" position-y={height + .003} rotation-x={-Math.PI / 2}>
+        {grid && kind === 'CHARGING' && <mesh name="approach-arrow" position-y={height + .003} rotation-x={-Math.PI / 2}>
           <shapeGeometry args={[heading]} />
           <meshBasicMaterial color={color} />
         </mesh>}

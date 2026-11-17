@@ -56,6 +56,13 @@ export function groundPoint([x, y]: Point, height: number): [number, number, num
 
 export type RouteOptions = { plan: boolean; trail: boolean; selectedOnly: boolean; highlight: boolean }
 
+export const trailFadeMs = 4500
+
+export function trailFade(lastMovementAt: number | undefined, now: number) {
+  if (lastMovementAt === undefined) return 0
+  return Math.max(0, Math.min(1, 1 - (now - lastMovementAt) / trailFadeMs))
+}
+
 export function routeVisibility(options: RouteOptions, selected: boolean) {
   const visible = !options.selectedOnly || selected
   return { plan: visible && options.plan, trail: visible && options.trail,

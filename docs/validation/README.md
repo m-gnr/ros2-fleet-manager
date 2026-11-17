@@ -4,6 +4,12 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
 |---|---|---|
+| Visualize V6 yaşayan dış çevre | [Rapor](c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](c5/visualize-v6-commands-2026-11-17.md) | Build ve 8 hedefli test geçti; avlu/saha, instancing ve durdurulabilir dekoratif hareket; kısa Chrome örneği 60,00 → 59,90 FPS. |
+| Visualize V5 minimal dış çevre | [Rapor](c5/visualize-v5-validation-2026-11-17.md) · [Komutlar](c5/visualize-v5-commands-2026-11-17.md) | V4 önkoşulu doğrulandı; build ve 7 hedefli Chrome testi geçti. Yalnız görsel sevkiyat açıklığı; gerçek harita engeli korundu. |
+| Visualize V4 zemin ve aydınlatma | [Rapor](c5/visualize-v4-validation-2026-11-17.md) · [Komutlar](c5/visualize-v4-commands-2026-11-17.md) | Build ve son seri koşuda 7 hedefli Chrome testi geçti; shadow map kapalı, gerçek ROS/Gazebo koşulmadı. |
+| Visualize V3 robot öncelikli sunum | [Rapor](c5/visualize-v3-validation-2026-11-17.md) · [Komutlar](c5/visualize-v3-commands-2026-11-17.md) | Build ve 7 hedefli Chrome testi geçti; üç robot/yaw/state ve üç zoom kadrajı doğrulandı, gerçek ROS/Gazebo koşulmadı. |
+| Visualize V2 zemin adları ve bilgi balonları | [Rapor](c5/visualize-v2-validation-2026-11-17.md) · [Komutlar](c5/visualize-v2-commands-2026-11-17.md) | Mock Chrome 3/3 TF ve 5 hedefli test geçti; gerçek ROS/Gazebo koşulmadı. |
+| Visualize V1 görev noktaları | [Rapor](c5/visualize-v1-validation-2026-11-17.md) · [Komutlar](c5/visualize-v1-commands-2026-11-17.md) | Mock Chrome 3/3 TF ve 4 hedefli test geçti; gerçek ROS/Gazebo koşulmadı. |
 | C5-A main entegrasyon checkpoint'i | [Rapor](c5/c5-a-main-integration-2026-11-14.md) · [Komutlar](c5/c5-a-main-integration-commands-2026-11-14.md) | Main kullanıcı değişiklikleri korundu; 26 host testi ve 23 Chrome testi geçti. Target canlı görev `EXECUTING` durumunda durduruldu, COMPLETED doğrulanmadı |
 | C5-A ilk entegrasyon | [Rapor](c5/c5-a-first-integration-2026-11-14.md) · [Komut eki](c5/c5-a-first-integration-commands-2026-11-14.md) | Tek gerçek Chrome → FM → Nav2 pickup/dropoff COMPLETED; iki robot ve batarya görünürlüğü. Sensör qualification kabulü değildir |
 | C5 Aşama 1.3 | [Rapor](c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komutlar](c5/c5-stage1-3-commands-2026-11-11.md) | AMCL gözlem modeli, aynı damgalı raf yaklaşması ve bağımsız kabul kayıtları |
@@ -59,6 +65,9 @@ B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ rob
 - [C5 Git checkpoint denetimi — 12 Kasım](c5/git-checkpoint-2026-11-12/README.md) · [Komut eki](c5/git-checkpoint-commands-2026-11-12.md); ürün kabulü veya Aşama 2 koşusu değildir.
 
 - [C5 Aşama 2.0 dinamik batarya kontrolleri](c5/battery-control-validation-2026-11-12.md) · [Komutlar](c5/battery-control-commands-2026-11-12.md): host, gerçek ROS servisi ve izole canlı Chrome; Gazebo şarj kabulü değildir.
+- [Visualize V2 park alanı yer değişikliği](c5/visualize-park-relocation-2026-11-17.md) · [Komutlar](c5/visualize-park-relocation-commands-2026-11-17.md): YAML, harita, 3D yuva ve aktif üç robotlu oturumun kaynak farkı; canlı park hedefi henüz test edilmedi.
+- [Visualize V2.1 canlı park doğrulama denemesi](c5/visualize-v2-1-live-validation-2026-11-17.md) · [Komutlar](c5/visualize-v2-1-live-commands-2026-11-17.md): 9/9 salt okunur Nav2 planı; aktif YAML uyuşmazlığı ve TF/clock duraksaması nedeniyle fiziksel park/çıkış yapılmadı.
+- [Visualize V2.3 üç robotun parkta canlı başlangıcı](c5/visualize-v2-3-validation-2026-11-17.md) · [Komutlar](c5/visualize-v2-3-commands-2026-11-17.md): gerçek Gazebo spawn, WebSocket ve Chrome `3/3 TF LIVE` geçti; hareket **NOT TESTED**.
 
 - [C5-B6B.1 birleşik trafik rezervasyon çekirdeği](c5/c5-b6b1-traffic-core-2026-11-15.md): 13 hedefli domain/SQLite testi geçti; hareket yetkisi kapalı.
 

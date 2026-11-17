@@ -23,7 +23,7 @@ export function Boxes({ name, boxes, cutaway = false }: { name: string; boxes: D
 
   return <instancedMesh name={name} userData={{ cutaway }} ref={mesh} args={[undefined, undefined, boxes.length]}>
     <boxGeometry />
-    <meshStandardMaterial roughness={0.88} />
+    <meshStandardMaterial roughness={0.94} metalness={0} />
   </instancedMesh>
 }
 

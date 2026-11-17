@@ -35,6 +35,7 @@ class RosReader(Node):
         self.robots = {}
         self.planners = {}
         self.on_snapshot = on_snapshot
+        self.shared_tf_readers = []
         for namespace, telemetry in robots:
             reader = RobotReader(namespace, telemetry)
             self.robots[reader.robot_id] = reader
@@ -43,9 +44,12 @@ class RosReader(Node):
                     self, namespace, plan_topics[reader.robot_id], telemetry)
             if reader.tf is not None:
                 self.create_subscription(TFMessage, namespace + "/tf", reader.on_tf, 10)
+                self.shared_tf_readers.append(reader)
             else:
                 self.create_subscription(Odometry, namespace + "/odom", reader.on_odom,
                                          QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT))
+        if self.shared_tf_readers:
+            self.create_subscription(TFMessage, "/tf", self.on_shared_tf, 10)
         self.create_subscription(ClockMessage, "/clock", self.on_clock,
                                  QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
         self.create_timer(1 / hz, self.sample, clock=Clock(clock_type=ClockType.STEADY_TIME))
@@ -58,6 +62,10 @@ class RosReader(Node):
                 if planner:
                     planner.buffer.reset()
                 self.on_snapshot(robot_id, reader.sample(now))
+
+    def on_shared_tf(self, msg):
+        for reader in self.shared_tf_readers:
+            reader.on_tf(msg)
 
     def sample(self):
         now = monotonic_ns()

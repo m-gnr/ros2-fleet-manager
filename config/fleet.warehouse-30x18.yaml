@@ -53,9 +53,9 @@ robots:
   name: robot_alpha
   namespace: /robot_alpha
   initial_pose:
-    x: -10.0
-    y: 5.25
-    yaw: 0.0
+    x: 13.5
+    y: 1.5
+    yaw: 3.141592653589793
   battery_model: turtlebot3_burger
   nav2_action_name: /robot_alpha/navigate_to_pose
   nav2_params_path: simulation-c2-3-params.template.yaml
@@ -64,11 +64,22 @@ robots:
   name: robot_beta
   namespace: /robot_beta
   initial_pose:
-    x: 5.25
-    y: 7.75
-    yaw: 1.5707963267948966
+    x: 13.5
+    y: 2.75
+    yaw: 3.141592653589793
   battery_model: turtlebot3_burger
   nav2_action_name: /robot_beta/navigate_to_pose
+  nav2_params_path: simulation-c2-3-params.template.yaml
+  obstacle_sensor_model: compact_dual_obstacle_v1
+- id: robot_gamma
+  name: robot_gamma
+  namespace: /robot_gamma
+  initial_pose:
+    x: 13.5
+    y: 4.0
+    yaw: 3.141592653589793
+  battery_model: turtlebot3_burger
+  nav2_action_name: /robot_gamma/navigate_to_pose
   nav2_params_path: simulation-c2-3-params.template.yaml
   obstacle_sensor_model: compact_dual_obstacle_v1
 stations:
@@ -112,19 +123,19 @@ stations:
   parking_stations:
   - id: park_1
     pose:
-      x: 5.25
-      y: 5.25
-      yaw: 1.5707963267948966
+      x: 13.5
+      y: 1.5
+      yaw: 3.141592653589793
   - id: park_2
     pose:
-      x: 5.25
-      y: 6.5
-      yaw: 1.5707963267948966
+      x: 13.5
+      y: 2.75
+      yaw: 3.141592653589793
   - id: park_3
     pose:
-      x: 5.25
-      y: 7.75
-      yaw: 1.5707963267948966
+      x: 13.5
+      y: 4.0
+      yaw: 3.141592653589793
   safe_waiting_areas: []
 policies:
   assignment: priority_fifo_nearest_eligible
@@ -431,10 +442,10 @@ warehouse:
     label: Park
     kind: parking
     bounds:
-      x_min: 4.5
-      x_max: 6.0
-      y_min: 4.75
-      y_max: 8.5
+      x_min: 12.5
+      x_max: 14.75
+      y_min: 0.75
+      y_max: 4.75
   transfer_points:
   - id: pick_A1
     kind: pickup

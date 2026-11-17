@@ -1,8 +1,8 @@
-import { Box, Crosshair, Layers, Maximize, Orbit, PackageCheck, PackageOpen, RotateCcw, Scan, SquareParking, Zap } from "lucide-react";
-import { Component, Fragment, lazy, Suspense, useMemo, useRef, useState, type ReactNode } from "react";
+import { Box, Crosshair, Layers, Maximize, Orbit, RotateCcw, Scan } from "lucide-react";
+import { Component, Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cameraLabels, resetCamera, selectCamera, type CameraCommand, type CameraMode } from "./scene/camera";
 import type { Fleet as SceneView } from "./scene/fleet";
-import { robotColor } from "./scene/presentation";
+import { robotStateColor, robotVisualState } from "./scene/robotPresentation";
 import type { RouteOptions } from "./scene/routes";
 import { markerDiameter } from "./scene/marker";
 import type { SceneFeed } from "./scene/sceneFeed";
@@ -10,17 +10,12 @@ import type { SceneFeed } from "./scene/sceneFeed";
 import type { Fleet } from "./fleet";
 import { useGridLayout } from "./scene/useGridLayout";
 import { useCostmap } from "./scene/Costmap";
-import { operationLabels, operationPoints, pointStyle } from "./scene/operationPoints";
+import { operationPoints } from "./scene/operationPoints";
 
 const Scene = lazy(() => import("./scene/Scene"));
 const modes = [
   ["free", Orbit], ["follow", Crosshair], ["top", Layers], ["fit", Maximize],
 ] as const;
-const pointIcons = { CHARGING: Zap, PARKING: SquareParking, pickup: PackageOpen, dropoff: PackageCheck, SAFE_WAITING: Box };
-const shortTaskId = (id: string) => {
-  const chars = Array.from(id);
-  return chars.length > 13 ? `${chars.slice(0, 7).join("")}…${chars.slice(-4).join("")}` : id;
-};
 const trace = new URLSearchParams(window.location.search).get("trace") === "1";
 
 class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -41,18 +36,37 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
 }) {
   const [command, setCommand] = useState<CameraCommand>({ mode: "free", reset: 0 });
   const [lowQuality, setLowQuality] = useState(false);
+  const [showExterior, setShowExterior] = useState(true);
   const [showCostmap, setShowCostmap] = useState(false);
   const [routes, setRoutes] = useState<RouteOptions>({ plan: true, trail: true, selectedOnly: false, highlight: false });
   const markers = useRef(new Map<string, HTMLButtonElement>()).current;
   const labels = useRef(new Map<string, HTMLSpanElement>()).current;
-  const pointLabels = useRef(new Map<string, HTMLSpanElement>()).current;
-  const leaders = useRef(new Map<string, SVGLineElement>()).current;
+  const parkLabels = useRef(new Map<string, HTMLSpanElement>()).current;
+  const tooltip = useRef<HTMLDivElement>(null);
+  const [pointPopup, setPointPopup] = useState<{ key: string; pinned: boolean } | null>(null);
   const profile = useGridLayout(fleet?.backend_session_id, fleet?.source_session_id);
   const layout = profile?.layout;
   const costmap = useCostmap(showCostmap && layout ? fleet?.backend_session_id + '/' + fleet?.source_session_id : undefined);
   const points = useMemo(() => operationPoints(fleet, selected, connected, layout), [fleet, selected, connected, layout]);
-  const operationTags = useMemo(() => operationLabels(points, layout), [points, layout]);
+  const robotStates = useMemo(() => new Map(robotIds.map(id => {
+    const robot = fleet?.robots.find(item => item.robot_id === id);
+    const reliable = connected && robot?.telemetry === 'LIVE';
+    return [id, reliable ? robotVisualState(robot.state) : 'unknown'] as const;
+  })), [connected, fleet, robotIds]);
+  const popupPoint = points.find(point => point.key === pointPopup?.key);
+  const popupRole = popupPoint?.kind === 'pickup' ? 'Alma' : popupPoint?.kind === 'dropoff' ? 'Bırakma' :
+    popupPoint?.kind === 'neutral' ? 'Çift rollü' : popupPoint?.kind === 'unknown' ? 'Rol bilinmiyor' :
+    popupPoint?.kind === 'CHARGING' ? 'Şarj alanı' : popupPoint?.kind === 'PARKING' ? 'Park alanı' : 'Güvenli bekleme';
   const live = robotIds.filter((id) => view.robots.get(id)?.status === "LIVE").length;
+
+  useEffect(() => {
+    const dismiss = (event: KeyboardEvent) => { if (event.key === 'Escape') setPointPopup(null); };
+    window.addEventListener('keydown', dismiss);
+    return () => window.removeEventListener('keydown', dismiss);
+  }, []);
+  useEffect(() => {
+    if (pointPopup && !points.some(point => point.key === pointPopup.key)) setPointPopup(null);
+  }, [pointPopup, points]);
 
   function chooseMode(mode: CameraMode) {
     setCommand((current) => selectCamera(current, mode));
@@ -70,51 +84,49 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
       {layout ? <>
         <SceneBoundary>
           <Suspense fallback={<p className="scene-message" role="status">3D depo yükleniyor…</p>}>
-            <Scene layout={layout} costmap={showCostmap ? costmap : undefined} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers}
-              robotIds={robotIds} points={points} labelPoints={operationTags} pointLabels={pointLabels} leaders={leaders} selected={selected} onSelect={onSelect} routes={routes} trace={trace} />
+            <Scene showExterior={showExterior} layout={layout} costmap={showCostmap ? costmap : undefined} feed={feed} command={command} lowQuality={lowQuality} labels={labels} markers={markers} parkLabels={parkLabels}
+              robotIds={robotIds} robotStates={robotStates} points={points} activePointKey={popupPoint?.key} tooltip={tooltip} selected={selected} onSelect={onSelect} routes={routes} trace={trace}
+              onPointHover={key => setPointPopup(current => current?.pinned ? current : { key, pinned: false })}
+              onPointLeave={key => setPointPopup(current => current?.key === key && !current.pinned ? null : current)}
+              onPointClick={key => setPointPopup(current => current?.key === key && current.pinned ? null : { key, pinned: true })}
+              onClearPoint={() => setPointPopup(null)} />
           </Suspense>
         </SceneBoundary>
       <div className="scene-labels">
-        <svg className="scene-leaders" aria-hidden="true">
-          {operationTags.filter(tag => tag.leader).map(({ key, kind }) => <line key={key}
-            data-leader={key} stroke={pointStyle[kind].color} ref={node => {
-              if (node) leaders.set(key, node);
-              else leaders.delete(key);
-            }} />)}
-        </svg>
+        {points.filter(point => point.kind === 'PARKING').map(point =>
+          <span key={point.key} className="scene-park-label" data-park-id={point.id}
+            ref={node => { if (node) parkLabels.set(point.key, node); else parkLabels.delete(point.key); }}>
+            {point.owner ?? point.id}
+          </span>)}
         {robotIds.map((id, index) => {
           const status = view.robots.get(id)?.status ?? "NO_DATA";
           const isSelected = id === selected;
-          const color = robotColor(index);
+          const visualState = robotStates.get(id) ?? 'unknown';
+          const color = robotStateColor(visualState);
           return <Fragment key={id}>
-            <button type="button" className={`scene-marker ${status.toLowerCase()}`} data-robot-id={id} tabIndex={-1}
+            <button type="button" className={`scene-marker ${status.toLowerCase()} state-${visualState}`} data-robot-id={id} data-robot-state={visualState} tabIndex={-1}
               aria-label={`3D işaretiyle seç: ${id}`} aria-pressed={isSelected} title={`${id} · ${status}`}
-              data-charging={points.some(point => point.chargingRobot === id) || undefined}
               style={{ color, width: markerDiameter, height: markerDiameter }} onClick={() => onSelect(id)}
               ref={(node) => { if (node) markers.set(id, node); else markers.delete(id); }}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7l8 5-8 5 2-5z" fill="currentColor" /></svg>
+              <svg viewBox="0 0 36 36" aria-hidden="true">
+                <circle cx="17" cy="18" r="10.5" fill="none" stroke="currentColor" />
+                <path d="M28 14.5L35 18l-7 3.5z" fill="currentColor" />
+              </svg>
             </button>
             <span data-robot-id={id} title={`${id} · ${status}`} ref={(node) => {
               if (node) labels.set(id, node);
               else labels.delete(id);
             }} className={`scene-label ${status.toLowerCase()} ${isSelected ? "selected" : ""}`}>
-              <i style={{ background: color }} /><span>{id}</span>{(isSelected || status !== "LIVE") && <small>{status}</small>}
+              <span>{id}</span>{(isSelected || status !== "LIVE") && <small>{status}</small>}
             </span>
           </Fragment>;
         })}
-        {operationTags.map(({ key, id, kind, detail, owner, chargingRobot, groupText, compact, titleOverride }) => {
-          const { name, color } = pointStyle[kind];
-          const Icon = pointIcons[kind];
-          const task = kind === "pickup" || kind === "dropoff";
-          return <span key={key} className={groupText ? "scene-point-label grouped" : "scene-point-label"} data-operation-point={key} data-callout={compact ? "" : undefined} title={[name, groupText ?? id, detail, owner].filter(Boolean).join(" · ")}
-            ref={(node) => { if (node) pointLabels.set(key, node); else pointLabels.delete(key); }}>
-            <strong style={{ color }}><Icon size={12} aria-hidden="true" />{titleOverride ?? name}</strong> {groupText ? <>{compact && <small className="zone-summary">{compact}</small>}
-              <small className={compact ? "zone-details" : undefined}>{groupText.split(" · ").map(member =>
-                <span className="zone-member" key={member}>{member}</span>)}</small></> : titleOverride ? detail && <small>{detail}</small> : task
-              ? <span>{shortTaskId(id)}</span>
-              : <small>{layout && <span>{id} · </span>}{chargingRobot ? "Aktif" : detail}</small>}
-          </span>;
-        })}
+        {popupPoint && <div className="scene-point-tooltip" role="tooltip" data-operation-point={popupPoint.key} ref={tooltip}>
+          <strong>{popupPoint.catalogId ?? popupPoint.id}</strong>
+          <span>{popupRole}{popupPoint.catalogRoles?.length === 2 && popupPoint.kind !== 'neutral' ? ' · çift rollü nokta' : ''}</span>
+          {popupPoint.detail && <small>Durum: {popupPoint.detail}</small>}
+          {popupPoint.owner && <small>Robot: {popupPoint.owner}</small>}
+        </div>}
       </div>
       <span className="scene-indicator"><i data-live={live > 0} />{live} / {robotIds.length} TF LIVE</span>
       </> : <p className="scene-message" role="status">Seçili depo profili için harita doğrulanamadı.</p>}
@@ -127,6 +139,8 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
         <i className="plan-key" />Gözlemlenen Nav2 planı <small>Durum B</small></label>
       <label><input type="checkbox" checked={routes.trail} onChange={(e) => setRoutes({ ...routes, trail: e.target.checked })} />
         <i className="trail-key" />TF hareket izi</label>
+      {layout && <label><input type="checkbox" checked={showExterior}
+        onChange={e => setShowExterior(e.target.checked)} />Çevreyi göster</label>}
       <label className="scene-quality"><input type="checkbox" checked={lowQuality} onChange={(e) => setLowQuality(e.target.checked)} />
         Düşük kalite</label>
       {layout && <label><input type="checkbox" checked={showCostmap} onChange={e => {

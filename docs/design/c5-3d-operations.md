@@ -28,6 +28,16 @@ Upstream bağlantı başına 64 KiB WebSocket mesaj sınırı, 1 frame alım su 
 
 Kamera serbest, takip, üstten, filo kadrajı ve sıfırlama modlarını sunar. WebGL sahnesi genel görünümde tembel yüklenir. Düşük kalite seçeneği piksel oranını 1'e indirir ve temas gölgelerini kapatır. Geometri instancing, rota arabelleği, renderer temizliği ve talep üzerine çizim Visualizer’dan alınmıştır.
 
+## İlk açılışta TF ve API hazır olma kapısı
+
+C5-A stage-1 launcher'ı fiziksel reset ve BT Navigator lifecycle kontrolünden sonra Executor'ları başlatıyordu; AMCL ölçümü, diğer Nav2 lifecycle düğümleri ve gerçek `map → odom → base_link` zinciri tamamlanmadan Fleet Manager/API açılabiliyordu. Yeni başlangıç kapısı sabit bekleme kullanmaz. Bağımsız observer, Visualizer köprüsündeki aynı `RobotReader` doğrulamasını kullanarak robot namespace'lerinin TF akışını, güncel `/clock`'u ve map frame pozunu izler. AMCL için lifecycle `active` ve transient-local `amcl_pose` konusundan alınmış geçerli map-frame örnek gerekir. Nav2 için AMCL/map server, controller, planner, behavior, BT navigator, waypoint follower ve velocity smoother lifecycle durumlarının tamamı `active`, `NavigateToPose` action server'ı da hazır olmalıdır.
+
+Her robotun AMCL, Nav2 ve TF ilk hazır olma monotonic süreleri ve UTC gözlem zamanları `startup-readiness.json` içine yazılır. Dosyanın `READY` durumu ancak iki robotun bütün koşulları aynı gözlem turunda güncelse verilir. Launcher bu durumu en çok 90 saniye bekler; timeout veya süreç hatasında manager/API açılmaz. Bu nedenle panel ilk ürün snapshot'ından önce yalnız `Bağlanıyor` gösterir. API açılınca WebSocket'in mevcut yeniden bağlanması ve görev kataloğu yüklemesi sayfa yenilemeden tamamlanır. TF kaybı sonradan olursa köprünün mevcut stale/no-data davranışı sürer.
+
+Bu kapı TF üretmez, TF'yi değiştirmez ve Nav2'ye goal göndermez. Önceki manuel koşuda gözlenen ilk `0/2 TF LIVE` arızasının nedeni de geciken ROS dönüşümü değildi: API köprüye `scene` Docker DNS adıyla gidiyordu, ancak standalone launcher'da API ve köprü aynı container içindeydi ve `scene` alias'ı yoktu. Standalone stage-1 launcher API'ye `127.0.0.1` köprü adresini açıkça verir; Compose kullanımında varsayılan `scene` service adı korunur. Gerçek TF geç gelirse başlatıcı API'yi açmadan bounded biçimde bekler.
+
+İki robotlu cold-start kanıtı ve phase zamanları [C5 TF başlangıç doğrulamasında](../validation/c5/c5-alpha-beta-tf-startup-2026-11-17.md); yeniden üretim komutları [komut ekinde](../validation/c5/c5-alpha-beta-tf-startup-commands-2026-11-17.md) tutulur.
+
 ## Aşama 1.7B hazır depo
 
 Sunum sahnesi yerel CC0 GLB dekorunu asenkron yükler. Model hazır olunca şematik rafların yerini alır. İstasyonlar ile öncelikli görevin alım ve teslim noktaları doğrulanmış C5 snapshot’ından map koordinatlarında çizilir. Model seçimi, kaynak ve ölçüm kanıtı [Aşama 1.7B doğrulama raporunda](../validation/c5/c5-stage1-7b-validation-2026-11-07.md).

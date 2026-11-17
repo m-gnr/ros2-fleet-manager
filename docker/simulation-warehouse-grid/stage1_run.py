@@ -26,6 +26,8 @@ def main():
     database.parent.mkdir(parents=True,exist_ok=True)
     if database.exists():
         raise FileExistsError('A fresh database is required')
+    if any((args.output/name).exists() for name in ('reset-verified.json', 'startup-readiness.json')):
+        raise FileExistsError('Fresh reset and startup-readiness evidence is required')
     children = []
     stop = False
     def stopping(*_):
@@ -60,11 +62,29 @@ def main():
                    '-p','use_sim_time:=true','-p','duplicate_record_capacity:='+str(settings['executor_duplicate_record_capacity'])])
         launch('scene',[sys.executable,'fleet-visualizer/bridge/run.py','--fleet',str(args.profile),
                         '--bind','127.0.0.1','--port',args.scene_port,'--origin','http://scene','--observed-nav2-plans'])
+        readiness_path = args.output/'startup-readiness.json'
+        readiness_deadline = time.monotonic()+90
+        while True:
+            if readiness_path.exists():
+                try:
+                    readiness = json.loads(readiness_path.read_text())
+                except (OSError, json.JSONDecodeError):
+                    readiness = {}
+                expected = {robot.id for robot in cfg.robots}
+                if readiness.get('status') == 'READY' and set(readiness.get('robots', {})) == expected:
+                    break
+            if stop or time.monotonic() >= readiness_deadline:
+                raise RuntimeError('Bounded AMCL/Nav2/map-to-odom-to-base_link readiness unavailable')
+            failed = [name for name, child in children if child.poll() is not None]
+            if failed:
+                raise RuntimeError(f'Startup prerequisite exited before TF readiness: {failed}')
+            time.sleep(.1)
         launch('manager',[sys.executable,'-m','backend.dashboard.runtime','--fleet',str(args.profile),
                           '--database',str(database),'--snapshot','/tmp/stage1/latest.json'])
         launch('api',[sys.executable,'-m','backend.dashboard.api','--fleet',str(args.profile),
                       '--snapshot','/tmp/stage1/latest.json','--task-socket','/tmp/stage1/latest.tasks.sock',
-                      '--container-bind','--port',args.api_port,'--origin',args.origin,'--scene-port',args.scene_port])
+                      '--container-bind','--port',args.api_port,'--origin',args.origin,
+                      '--scene-host','127.0.0.1','--scene-port',args.scene_port])
         while not stop:
             for name, child in children:
                 if child.poll() is not None:

@@ -300,6 +300,7 @@ def main():
     parser.add_argument("--origin", action="append", required=True)
     parser.add_argument("--container-bind", action="store_true")
     parser.add_argument("--scene-port", type=int)
+    parser.add_argument("--scene-host", default="scene")
     parser.add_argument("--fleet", type=Path)
     parser.add_argument("--task-socket", type=Path)
     parser.add_argument("--costmap", type=Path)
@@ -315,7 +316,7 @@ def main():
         if config is None or not 1 <= args.scene_port <= 65535:
             parser.error("--scene-port requires a valid port and --fleet")
         topics = {robot.id: robot.namespace + "/plan" for robot in config.robots}
-        bridge_url = f"ws://scene:{args.scene_port}/telemetry/fleet"
+        bridge_url = f"ws://{args.scene_host}:{args.scene_port}/telemetry/fleet"
     gateway = None
     token = os.environ.get("FLEET_SIM_BATTERY_TOKEN")
     if os.environ.get("FLEET_SIM_BATTERY_CONTROL") == "1":

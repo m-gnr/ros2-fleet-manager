@@ -5,7 +5,7 @@ from startup_readiness import PHASES, StartupReadiness
 
 class StartupReadinessTests(unittest.TestCase):
     def test_requires_all_phases_for_every_robot(self):
-        tracker = StartupReadiness(("robot_alpha", "robot_beta"), 1_000_000_000)
+        tracker = StartupReadiness(("robot_alpha", "robot_beta", "robot_gamma"), 1_000_000_000)
         for phase in PHASES:
             tracker.mark("robot_alpha", phase, monotonic_ns=2_000_000_000,
                          observed_at_utc="2026-11-17T10:00:00+00:00")
@@ -13,6 +13,10 @@ class StartupReadinessTests(unittest.TestCase):
         for phase in PHASES:
             tracker.mark("robot_beta", phase, monotonic_ns=3_000_000_000,
                          observed_at_utc="2026-11-17T10:00:01+00:00")
+        self.assertFalse(tracker.ready)
+        for phase in PHASES:
+            tracker.mark("robot_gamma", phase, monotonic_ns=3_050_000_000,
+                         observed_at_utc="2026-11-17T10:00:01.050+00:00")
         self.assertTrue(tracker.ready)
         now = 3_100_000_000
         snapshot = tracker.snapshot(started_at_utc="2026-11-17T10:00:00+00:00",

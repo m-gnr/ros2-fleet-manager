@@ -8,6 +8,8 @@ export type Connection = "CONNECTING" | "CONNECTED" | "RECONNECTING" | "DISCONNE
 
 const FRAME_LIMIT = 513 * 1024;
 const SILENCE_MS = 2200;
+const RECONNECT_NOTICE_MS = 5000;
+const CONNECTION_ERROR_MS = 15000;
 
 export function useFleet() {
   const [fleet, setFleet] = useState<Fleet | null>(null);
@@ -23,9 +25,37 @@ export function useFleet() {
     let socket: WebSocket | undefined;
     let reconnect: ReturnType<typeof setTimeout>;
     let watchdog: ReturnType<typeof setTimeout>;
+    let reconnectNotice: ReturnType<typeof setTimeout>;
+    let connectionError: ReturnType<typeof setTimeout>;
     let attempts = 0;
     let productWatchdog: ReturnType<typeof setTimeout>;
     let lastScenePacket = 0;
+    let outageStartedAt: number | undefined;
+    let protocolError: string | undefined;
+
+    function beginOutage() {
+      if (outageStartedAt !== undefined) return;
+      outageStartedAt = performance.now();
+      setConnection("CONNECTING");
+      if (!protocolError) setError(null);
+      reconnectNotice = setTimeout(() => {
+        if (!stopped && outageStartedAt !== undefined) setConnection("RECONNECTING");
+      }, RECONNECT_NOTICE_MS);
+      connectionError = setTimeout(() => {
+        if (stopped || outageStartedAt === undefined || protocolError) return;
+        setConnection("DISCONNECTED");
+        setError("Görev ve rezervasyon verilerine 15 saniyeden uzun süredir erişilemiyor.");
+      }, CONNECTION_ERROR_MS);
+    }
+
+    function restoreConnection() {
+      outageStartedAt = undefined;
+      clearTimeout(reconnectNotice);
+      clearTimeout(connectionError);
+      protocolError = undefined;
+      setConnection("CONNECTED");
+      setError(null);
+    }
 
     function updateScene(next: typeof initialFleet) {
       if (next !== sceneFeed.read()) sceneFeed.update(next);
@@ -44,7 +74,7 @@ export function useFleet() {
 
     function connect() {
       if (stopped) return;
-      setConnection(attempts || retry ? "RECONNECTING" : "CONNECTING");
+      beginOutage();
       const url = new URL("/ws/fleet", window.location.href);
       url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
       const peer = new WebSocket(url, "fleet.scene.v1");
@@ -54,15 +84,15 @@ export function useFleet() {
       function armWatchdog() {
         clearTimeout(watchdog);
         watchdog = setTimeout(() => {
-          setError("Filo akışından güncel veri alınamadı.");
+          beginOutage();
           peer.close();
         }, SILENCE_MS);
       }
       function productUnavailable() {
         clearTimeout(productWatchdog);
         first = true;
-        setConnection("DISCONNECTED");
-        setError("Filo akışından güncel veri alınamadı.");
+        beginOutage();
+        peer.close();
       }
       armWatchdog();
       peer.onmessage = (event) => {
@@ -106,26 +136,25 @@ export function useFleet() {
           }
           first = false;
           attempts = 0;
-          setConnection("CONNECTED");
-          setError(null);
+          restoreConnection();
           clearTimeout(productWatchdog);
           productWatchdog = setTimeout(productUnavailable, SILENCE_MS);
           armWatchdog();
         } catch {
-          setError("Filo akışı doğrulanamadı. Yeniden eşitleniyor.");
+          protocolError = "Filo akışı doğrulanamadı. Yeniden eşitleniyor.";
+          setError(protocolError);
           peer.close();
         }
       };
       peer.onerror = () => {
-        if (!stopped && peer === socket) setError("Operasyon sunucusuna erişilemiyor.");
+        if (!stopped && peer === socket) beginOutage();
       };
       peer.onclose = () => {
         if (stopped || peer !== socket) return;
         clearTimeout(watchdog);
         clearTimeout(productWatchdog);
         updateScene(disconnectFleet(sceneFeed.read()));
-        setConnection("DISCONNECTED");
-        setError((message) => message ?? "Canlı bağlantı kesildi.");
+        beginOutage();
         const delay = Math.min(4000, 400 * 2 ** attempts++);
         reconnect = setTimeout(connect, delay);
       };
@@ -135,6 +164,8 @@ export function useFleet() {
       stopped = true;
       clearTimeout(reconnect);
       clearTimeout(watchdog);
+      clearTimeout(reconnectNotice);
+      clearTimeout(connectionError);
       clearTimeout(productWatchdog);
       window.clearInterval(publishScene);
       updateScene(disconnectFleet(sceneFeed.read()));

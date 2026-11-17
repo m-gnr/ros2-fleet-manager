@@ -4,23 +4,62 @@ import { layoutResponse, type GridLayout } from './scene/gridLayout';
 
 type Catalog = { session: string; layout: GridLayout; enabled: boolean; digest: string };
 
-export function useTaskCatalog(fleet: Fleet | null) {
+export function useTaskCatalog(fleet: Fleet | null, connected: boolean) {
   const session = fleet ? fleet.backend_session_id + '/' + fleet.source_session_id : undefined;
   const [catalog, setCatalog] = useState<Catalog>();
   useEffect(() => {
-    if (!session) return;
-    const controller = new AbortController();
-    void fetch('/api/task-catalog', { signal: controller.signal }).then(async response => {
-      if (!response.ok) return;
-      const body = await response.json();
-      const parsed = layoutResponse.safeParse(body);
-      if (!parsed.success || !parsed.data.layout || controller.signal.aborted ||
-        parsed.data.backend_session_id + '/' + parsed.data.source_session_id !== session) return;
-      if (typeof body.profile_digest !== 'string') return;
-      setCatalog({ session, layout: parsed.data.layout, enabled: body.enabled === true, digest: body.profile_digest });
-    }).catch(() => {});
-    return () => controller.abort();
-  }, [session]);
+    if (!session || !connected) {
+      setCatalog(undefined);
+      return;
+    }
+    let active = true;
+    let controller: AbortController | undefined;
+    let requestTimeout: number | undefined;
+    let retryTimer: number | undefined;
+    let failures = 0;
+
+    async function synchronize() {
+      const request = new AbortController();
+      controller = request;
+      let timedOut = false;
+      requestTimeout = window.setTimeout(() => {
+        timedOut = true;
+        request.abort();
+      }, 5000);
+      try {
+        const response = await fetch('/api/task-catalog', { signal: request.signal });
+        if (!response.ok) throw new Error('Task catalog unavailable');
+        const body = await response.json();
+        const parsed = layoutResponse.safeParse(body);
+        if (!parsed.success || !parsed.data.layout ||
+          parsed.data.backend_session_id + '/' + parsed.data.source_session_id !== session ||
+          typeof body.profile_digest !== 'string') throw new Error('Task catalog invalid');
+        if (!active || request.signal.aborted) return;
+        setCatalog({ session, layout: parsed.data.layout, enabled: body.enabled === true, digest: body.profile_digest });
+        clearTimeout(requestTimeout);
+        requestTimeout = undefined;
+        return;
+      } catch {
+        clearTimeout(requestTimeout);
+        requestTimeout = undefined;
+        if (!active || (request.signal.aborted && !timedOut)) return;
+        setCatalog(undefined);
+        failures += 1;
+      }
+      if (active) {
+        const delay = Math.min(5000, 500 * 2 ** Math.min(failures - 1, 4));
+        retryTimer = window.setTimeout(synchronize, delay);
+      }
+    }
+
+    void synchronize();
+    return () => {
+      active = false;
+      if (requestTimeout !== undefined) clearTimeout(requestTimeout);
+      if (retryTimer !== undefined) clearTimeout(retryTimer);
+      controller?.abort();
+    };
+  }, [session, connected]);
   return catalog?.session === session ? catalog : undefined;
 }
 
@@ -45,11 +84,12 @@ export function TaskComposer({ catalog, fleet, connected }: {
     if (!fleet || !catalog?.enabled || !connected || pending) return;
     setPending(true);
     setMessage('Görev kabulü bekleniyor…');
+    const reconnectNotice = window.setTimeout(() => setMessage('Yeniden bağlanıyor…'), 5000);
     try {
       const response = await fetch('/api/tasks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ request_id: requestId, source_session_id: fleet.source_session_id,
-          profile_digest: catalog.digest, pickup_id: pickup, dropoff_id: dropoff, priority }), signal: AbortSignal.timeout(8000),
+          profile_digest: catalog.digest, pickup_id: pickup, dropoff_id: dropoff, priority }), signal: AbortSignal.timeout(15000),
       });
       const body = await response.json();
       if (!response.ok) {
@@ -60,7 +100,10 @@ export function TaskComposer({ catalog, fleet, connected }: {
       setRequestId(crypto.randomUUID());
     } catch {
       setMessage('Görev kabulü doğrulanamadı. Tekrar gönderimde aynı istek kimliği kullanılacak.');
-    } finally { setPending(false); }
+    } finally {
+      clearTimeout(reconnectNotice);
+      setPending(false);
+    }
   }
 
   return <section className="card task-composer" aria-labelledby="task-create-heading">

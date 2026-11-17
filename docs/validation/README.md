@@ -4,6 +4,8 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
 |---|---|---|
+| Visualize → main entegrasyon kapısı | [Rapor](c5/visualize-main-integration-2026-11-17.md) · [Komutlar](c5/visualize-main-integration-commands-2026-11-17.md) | Frontend, host ve ROS-reader kontrolleri geçti; zorunlu hareket/park/şarj kabulü ve yerel `main` worktree değişikliklerinin entegrasyonu doğrulanmadığından merge/push yapılmadı. |
+| Visualize V6 dış zemin paleti | [Rapor ve komutlar](c5/visualize-v6-palette-2026-11-17.md) | Önce V1–V6 checkpoint commit’i; ardından commit edilmemiş palet. Build ve 3/3 test geçti; Chrome’da açıklık sırası doğrulandı. |
 | Visualize V6 yaşayan dış çevre | [Rapor](c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](c5/visualize-v6-commands-2026-11-17.md) | Build ve 8 hedefli test geçti; avlu/saha, instancing ve durdurulabilir dekoratif hareket; kısa Chrome örneği 60,00 → 59,90 FPS. |
 | Visualize V5 minimal dış çevre | [Rapor](c5/visualize-v5-validation-2026-11-17.md) · [Komutlar](c5/visualize-v5-commands-2026-11-17.md) | V4 önkoşulu doğrulandı; build ve 7 hedefli Chrome testi geçti. Yalnız görsel sevkiyat açıklığı; gerçek harita engeli korundu. |
 | Visualize V4 zemin ve aydınlatma | [Rapor](c5/visualize-v4-validation-2026-11-17.md) · [Komutlar](c5/visualize-v4-commands-2026-11-17.md) | Build ve son seri koşuda 7 hedefli Chrome testi geçti; shadow map kapalı, gerçek ROS/Gazebo koşulmadı. |

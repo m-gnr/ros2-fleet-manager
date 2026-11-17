@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [Visualize V6 dış zemin paleti](validation/c5/visualize-v6-palette-2026-11-17.md).
+
 - [Visualize V6 yaşayan dış çevre](validation/c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v6-commands-2026-11-17.md).
 
 - [Visualize V5 minimal dış çevre](validation/c5/visualize-v5-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v5-commands-2026-11-17.md).

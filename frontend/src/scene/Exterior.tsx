@@ -6,7 +6,7 @@ import type { DecorBox } from './warehouseLayout'
 import type { GridLayout } from './gridLayout'
 import { shippingOpening } from './exteriorLayout'
 
-import { carBoxes, exteriorSite } from './exteriorSite'
+import { carBoxes, exteriorPalette, exteriorSite } from './exteriorSite'
 import { ExteriorScenery } from './ExteriorScenery'
 import { useExteriorMotion } from './exteriorMotion'
 export { exteriorGround } from './exteriorSite'
@@ -93,14 +93,14 @@ export const Exterior = memo(function Exterior({ layout, visible }: { layout: Gr
     <mesh name="exterior-courtyard" position={[(site.left + site.right) / 2, -.17, (site.back + site.front) / 2]}
       rotation-x={-Math.PI / 2}>
       <planeGeometry args={[site.right - site.left + 1, site.front - site.back + 1]} />
-      <meshBasicMaterial color="#c4cdc4" />
+      <meshBasicMaterial color={exteriorPalette.courtyard} />
     </mesh>
     <mesh name="exterior-two-lane-road" position={[0, -.16, site.roadZ]} rotation-x={-Math.PI / 2}>
-      <planeGeometry args={[240, 5.6]} /><meshBasicMaterial color="#b5c0b5" />
+      <planeGeometry args={[240, 5.6]} /><meshBasicMaterial color={exteriorPalette.road} />
     </mesh>
-    <Boxes name="exterior-sidewalk" boxes={[
-      [0, -.13, site.roadZ - 3.25, 240, .08, .85, '#c8cec2'],
-      [site.gateX, -.155, (site.front + site.roadZ - 3) / 2, 5, .02, site.roadZ - 3 - site.front, '#c4cdc4'],
+    <Boxes name="exterior-sidewalk" unlit boxes={[
+      [0, -.13, site.roadZ - 3.25, 240, .08, .85, exteriorPalette.sidewalk],
+      [site.gateX, -.155, (site.front + site.roadZ - 3) / 2, 5, .02, site.roadZ - 3 - site.front, exteriorPalette.courtyard],
     ]} />
     <Boxes name="exterior-road-parking-paint" boxes={site.paint} />
     <ExteriorScenery parts={site.parts} enabled={visible} />

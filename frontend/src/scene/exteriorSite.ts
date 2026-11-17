@@ -3,7 +3,14 @@ import type { DecorBox } from './warehouseLayout'
 import { shippingOpening } from './exteriorLayout'
 
 export type SitePart = { box: DecorBox; prop: string; shape: 'box' | 'cone' | 'round' }
-export const exteriorGround = '#d3ddd0'
+export const exteriorPalette = {
+  grass: '#9aa98f',
+  courtyard: '#b8b2a8',
+  sidewalk: '#b0aba2',
+  road: '#626762',
+  roadMarking: '#d5d7d1',
+} as const
+export const exteriorGround = exteriorPalette.grass
 
 // Decorative offsets from the verified building footprint; never navigation coordinates.
 export function exteriorSite(layout: GridLayout) {
@@ -58,7 +65,7 @@ export function exteriorSite(layout: GridLayout) {
     paint.push([x, -.146, z - 1.7, 2, .005, .035, '#d5d8cc'])
   }
   for (let x = left - 20; x < right + 20; x += 4) {
-    paint.push([x, -.148, roadZ, 1.8, .008, .06, '#d2d5c8'])
+    paint.push([x, -.148, roadZ, 1.8, .008, .06, exteriorPalette.roadMarking])
   }
   const opening = shippingOpening(layout)
   for (const [x, z] of [[b.x_min - 1.5, -layout.door.center + 3.2],

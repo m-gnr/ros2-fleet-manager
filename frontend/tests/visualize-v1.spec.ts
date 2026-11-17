@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 import { PerspectiveCamera, Vector3 } from 'three'
 import { fixture, valid } from './dashboard-fixtures'
 import { staticWarehouse } from '../src/scene/warehouseProfile.generated'
+import { warehouseLayoutSchema } from '../src/scene/gridLayout'
 import { exteriorSite } from '../src/scene/exteriorSite'
 import { exteriorMotionPose } from '../src/scene/exteriorMotion'
 import { robotStateColors, robotVisualState } from '../src/scene/robotPresentation'
@@ -311,7 +312,7 @@ test('robot state palette is derived only from real states', () => {
 })
 
 test('decorative vehicles wait, leave and return without entering the warehouse', () => {
-  const site = exteriorSite(layout)
+  const site = exteriorSite(warehouseLayoutSchema.parse(layout))
   const b = layout.bounds
   for (const { box: [x, , z, width, , depth, color] } of site.parts) {
     expect(x + width / 2 <= b.x_min || x - width / 2 >= b.x_max ||

@@ -64,18 +64,20 @@ def main() -> int:
     (evidence / "live").mkdir()
     build = (
         "set -e; source /opt/ros/humble/setup.bash; cd /workspace; "
-        "colcon --log-base /evidence/idl-log build --base-paths interfaces/fleet_interfaces "
-        "--build-base /evidence/idl-build --install-base /evidence/idl-install; "
-        "source /evidence/idl-install/setup.bash; "
+        "colcon --log-base /evidence/overlay-log build "
+        "--base-paths interfaces/fleet_interfaces ros2_ws/src/fleet_perception "
+        "--build-base /evidence/overlay-build --install-base /evidence/overlay-install; "
+        "source /evidence/overlay-install/setup.bash; "
         "export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:"
         "/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; "
         "exec python3 docker/simulation-warehouse-grid/stage1_run.py "
         "config/fleet.warehouse-30x18.yaml /evidence/live "
         f"--api-port {api_port} --scene-port {scene_port} "
-        f"--origin http://127.0.0.1:{ui_port}"
+        f"--origin http://127.0.0.1:{ui_port} --ros-overlay /evidence/overlay-install"
     )
     run([
         "docker", "run", "--detach", "--init", "--name", session_id, "--network", "bridge",
+        "--add-host", "scene:127.0.0.1",
         "--workdir", "/workspace", "--env", f"ROS_DOMAIN_ID={domain}",
         "--env", f"IGN_PARTITION={session_id}", "--env", "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
         "--env", "ROS_LOCALHOST_ONLY=0", "--env", f"C5_SESSION_ID={session_id}",

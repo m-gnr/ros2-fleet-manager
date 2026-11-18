@@ -146,6 +146,32 @@ class MovementGate:
             self.child_observation['terminal_status'] = status
             return True
 
+    def native_zero_matches(self, context, *, revoke=False):
+        """Read-only metadata fence for zero-only transport, never send/APPLIED.
+
+        The native receiver independently authenticates the FM MAC. Revoke can
+        be forwarded after local closure, but can only latch the receiver shut.
+        """
+        from fleet_config.native_zero import decisions
+        with self.lock:
+            try:
+                permit, child = decisions(context)
+                if not self.request or not self.decision:
+                    return False
+                if any(permit.get(k) != self.decision.get(k) for k in
+                       ('identity','request_id','geometry_digest','movement_kind','station_id')):
+                    return False
+                if child['child_provenance'] != self.request.get('child_provenance'):
+                    return False
+                if revoke:
+                    return context['operation']=='REVOKE_ZERO'
+                return (context['operation']=='INSTALL_ZERO' and self._live()
+                        and self.child_observation is not None
+                        and self.child_observation['actual_child_uuid']==self.request['child_uuid']
+                        and self.child_observation['actual_path_hash']==self.request['path_hash'])
+            except (ValueError,KeyError,TypeError):
+                return False
+
 
 def observe_follow_path_acceptance(gate, goal_handle, sent_goal, *, expected_action_name):
     """Capture real ROS client response and exact Path bytes, metadata only.

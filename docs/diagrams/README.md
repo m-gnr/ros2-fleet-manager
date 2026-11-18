@@ -1,5 +1,7 @@
 # Mimari ve algoritma diyagramları
 
+- [C5-T3A gerçek permit → native sıfır doğrulaması](../validation/c5/c5-t3a-native-permit-2026-11-18.md): [Mermaid](src/traffic-live-permit-zero.mmd) · [SVG](svg/traffic-live-permit-zero.svg). Sıfır aktarım ve ayrı ACK IMPLEMENTED; hareketli duruş/release UNVERIFIED, varsayılan kapalı.
+
 - [C5-T2 gerçek ürün child bağı — metadata IMPLEMENTED, hareket PARTIAL](../validation/c5/c5-t2-product-child-2026-11-18.md): [Mermaid](src/traffic-product-child.mmd) · [SVG](svg/traffic-product-child.svg). T1 diyagramı tarihsel component kapsamını korur; bu ek ürün üst goal bağını gösterir.
 
 - [C5 native sıfır actuator ve child/Path kaydı — PARTIAL](../validation/c5/traffic-integration-2026-11-18.md): [Mermaid](src/traffic-native-zero.mmd) · [SVG](svg/traffic-native-zero.svg). Hareketli trafik yetkisi/release bu diyagramda uygulanmış sayılmaz.

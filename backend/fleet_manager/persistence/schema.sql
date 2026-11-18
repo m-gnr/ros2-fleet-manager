@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS task_review_holds (
     reason TEXT NOT NULL,
     held_at REAL NOT NULL
 );
--- Reservation-only traffic decisions. No actuator command sender consumes these.
+-- Default product has no actuator sender. The explicit native zero test seam
+-- only forwards matching committed T2 context; PENDING never means APPLIED.
 CREATE TABLE IF NOT EXISTS traffic_state (
     singleton INTEGER PRIMARY KEY CHECK(singleton=1), snapshot TEXT NOT NULL
 );
@@ -74,4 +75,13 @@ CREATE TABLE IF NOT EXISTS traffic_decisions (
 CREATE TABLE IF NOT EXISTS traffic_outbox (
     event_id TEXT PRIMARY KEY REFERENCES traffic_decisions(event_id),
     payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'PENDING' CHECK(state='PENDING')
+);
+
+-- Experimental native zero-only transport replay fence, owned by the same consumer.
+CREATE TABLE IF NOT EXISTS traffic_native_receivers (
+    robot_id TEXT PRIMARY KEY,
+    fm_session TEXT NOT NULL,
+    receiver_session TEXT NOT NULL,
+    report_seq INTEGER NOT NULL,
+    fenced INTEGER NOT NULL DEFAULT 0 CHECK (fenced IN (0,1))
 );

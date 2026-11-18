@@ -1,0 +1,9 @@
+First offline audit draft, tool transcript (2026-11-18):
+Traceback (most recent call last):
+  File "checks/audit_live.py", line 72, in audit
+    assert json.loads(json.loads(payload['native_status'])['body']) == status
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+
+This was an analysis script schema mistake, not a product test result.
+The stored native_status is already a parsed {body,mac} dict. The corrected
+audit reads payload['native_status']['body']; source evidence was unchanged.

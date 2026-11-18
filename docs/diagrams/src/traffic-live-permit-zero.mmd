@@ -1,0 +1,18 @@
+flowchart TD
+    A["Gerçek ExecuteTask → NavigateToPose → FollowPath<br/>T2 child UUID ve Path hash — IMPLEMENTED"] --> B["Mevcut B6B.1 / B6B.2 consumer<br/>Güncel task, epoch, session ve claim kontrolü"]
+    R["Gerçek reset ve güncel RobotStatus<br/>sonrasında trafik geometrisi"] --> B
+    B --> C["SQLite transaction: permit + child + trafik Outbox<br/>Değişmez sıfır transferi COMMIT — IMPLEMENTED"]
+    C --> D["COMMIT sonrası FM HMAC imzası ve aktarım<br/>Dağıtık atomiklik yok"]
+    D --> E["Anahtarsız Executor: gerçek MovementGate bağı<br/>Tam zarf byte'ları → ROS / IGN bridge"]
+    E --> F["Native sıfır alıcısı<br/>MAC, session, sıra, bilet, context ve generation"]
+    F -->|"Doğrulanmış sıfır"| G["Native lease / hedefler sıfır<br/>Son doğrulanan body hash'i"]
+    F -->|"Yanlış veya eski"| H["Receipt yenilenmez<br/>Nonzero daima kilitlenir"]
+    G --> I["İmzalı gerçek native readback<br/>FM önceki kalıcı transferle eşler"]
+    I --> J["Ayrı değişmez native-ack kaydı<br/>Trafik Outbox PENDING kalır — IMPLEMENTED"]
+    K["Replan / iptal / gecikmiş ACK"] --> L["Eski context kapanır; yalnız sıfır revoke<br/>Native BLOCKED_REARM, kaynak tutulur"]
+    L --> F
+    M["FM / Executor / bridge kaybı"] --> N["Native steady timeout<br/>Restart otomatik devam değildir"]
+    J --> O["APPLIED değil; güncel duruş UNKNOWN<br/>Hareket ve release yetkisi false"]
+    G -.-> P["Sağlık, hareketli frenleme, hold/resume<br/>fiziksel release — UNVERIFIED / T3B+"]
+    O -.-> P
+    P -.-> Q["Varsayılan launcher KAPALI — PARTIAL"]

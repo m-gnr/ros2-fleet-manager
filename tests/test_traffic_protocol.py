@@ -30,7 +30,7 @@ class Routes:
         return 1.
 
 
-async def setup(tmp_path, *, enabled=True):
+async def setup(tmp_path, *, enabled=True, native_keys=None):
     store = SQLiteStore(tmp_path / 'traffic.db')
     core = FleetManagerCore(Routes(), Pose2D())
     core.register_robot('r1')
@@ -38,6 +38,8 @@ async def setup(tmp_path, *, enabled=True):
     loop = FleetEventLoop(store, core, clock=lambda: 10.)
     if enabled:
         loop.enable_traffic_protocol_test(enclosing_radius=.2)
+    if native_keys is not None:
+        loop.enable_native_zero_test(keys=native_keys,ack_timeout=.5)
     await loop.start()
     session = uid()
     await loop.submit(Event('ROBOT_STATUS', dict(robot_id='r1', status_seq=1, current_epoch=0,

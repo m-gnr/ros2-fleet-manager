@@ -1,0 +1,135 @@
+{
+  "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+  "case": "bridge-loss",
+  "cases": {
+    "real_permit_native_ack": {
+      "records": [
+        {
+          "fm_context_valid_at_ack": true,
+          "identity": {
+            "child_uuid": "ab67a1b5-bf62-d073-e840-2e04e620a287",
+            "epoch": 1,
+            "execute_uuid": "acabd29f-8526-40c6-b96b-6850663b5342",
+            "executor_session": "c6c9fec3-ec8c-40c3-9275-0bbd1280d34c",
+            "fm_session": "ca42d5eb-d94f-4992-8142-9084a62caa51",
+            "frame": "map",
+            "generation": 1,
+            "geometry_revision": "t3a-geometry",
+            "map_revision": "t3a-map",
+            "path_hash": "c5710e41e2a1720265289db7a2bba7b8a95ee67a8984dff99b593bcba5612098",
+            "permit_id": "1cadfeeb-891f-5ade-8ed4-50769d25ea91",
+            "robot_id": "robot_alpha",
+            "task_id": "t3a-robot_alpha"
+          },
+          "movement_authorized": false,
+          "native_status": {
+            "command_sha256": "73f0858e3af6e31d0cdfb22ddbfc20ea1af68721ef8468eaa4b75c679df59fd2",
+            "context_sha256": "74e4ceac94a4593485d973f67c3f352e526d21aa4d0f127af8d7b2b4c5ced29d",
+            "generation": 1,
+            "movement_authorized": false,
+            "operation": "INSTALL_ZERO",
+            "ownership_release": false,
+            "permit_id": "1cadfeeb-891f-5ade-8ed4-50769d25ea91",
+            "receiver_session": "9de6719d8de1c6525f12aed559bd8c83c280cfa4dc30e71a7cf3874a5d794711",
+            "receiver_state": "ACTIVE",
+            "report_sequence": 1236,
+            "robot_id": "robot_alpha",
+            "sequence": 2,
+            "source_session": "ca42d5eb-d94f-4992-8142-9084a62caa51",
+            "steady_ns": 432824519152,
+            "ticket": "6e9039d8a6a32c6215e2f620f7f486f7396894ffef8016b225b5701bf60054ce",
+            "verified_steady_ns": 432814785943
+          },
+          "native_verified": true,
+          "ownership_release": false,
+          "physical_stop": "UNKNOWN",
+          "receiver_live_now": "UNKNOWN",
+          "status": "NATIVE_ZERO_VERIFIED",
+          "transfer_id": "native-transfer:2ab887de168f8aec:4ff91ae1-c334-5d1b-b383-df5d7f718e3a"
+        }
+      ],
+      "source": "Real FM COMMIT/Outbox; actual native signed status"
+    },
+    "bridge_loss": {
+      "accepted": 2,
+      "actuator_session": "9de6719d8de1c6525f12aed559bd8c83c280cfa4dc30e71a7cf3874a5d794711",
+      "inhibited_command_sha256": "",
+      "inhibition_reason": "",
+      "joint_commands": [
+        [
+          0.0
+        ],
+        [
+          0.0
+        ]
+      ],
+      "movement_authorized": false,
+      "native_status": {
+        "body": "{\"command_sha256\":\"4a071a73b1ccfb19008eca94cbbdc8439f526b5fa01fa06100e2ee51b9fc5693\",\"context_sha256\":\"74e4ceac94a4593485d973f67c3f352e526d21aa4d0f127af8d7b2b4c5ced29d\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"1cadfeeb-891f-5ade-8ed4-50769d25ea91\",\"receiver_session\":\"9de6719d8de1c6525f12aed559bd8c83c280cfa4dc30e71a7cf3874a5d794711\",\"receiver_state\":\"TIMED_OUT\",\"report_sequence\":1291,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"ca42d5eb-d94f-4992-8142-9084a62caa51\",\"steady_ns\":433100461319,\"ticket\":\"18fa4512e1fb40a80166221f37609ddd59ab7f7fefcdc2339804d3fa71bff341\",\"verified_steady_ns\":432847918193}",
+        "mac": "99a6fc1aed35e8f7a4c7366afef16263109f4f02741a10ee7602e245b7372889"
+      },
+      "ownership_release": false,
+      "reason": "REPLAY",
+      "receipt_steady_ns": 432847918193,
+      "rejected": 2,
+      "sequence": 3,
+      "sim_ns": 6455000000,
+      "state": "TIMED_OUT",
+      "steady_ns": 433100461319,
+      "target_angular": 0.0,
+      "target_linear": 0.0,
+      "ticket": "18fa4512e1fb40a80166221f37609ddd59ab7f7fefcdc2339804d3fa71bff341"
+    },
+    "bridge_restart": {
+      "native": {
+        "accepted": 2,
+        "actuator_session": "9de6719d8de1c6525f12aed559bd8c83c280cfa4dc30e71a7cf3874a5d794711",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"4a071a73b1ccfb19008eca94cbbdc8439f526b5fa01fa06100e2ee51b9fc5693\",\"context_sha256\":\"74e4ceac94a4593485d973f67c3f352e526d21aa4d0f127af8d7b2b4c5ced29d\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"1cadfeeb-891f-5ade-8ed4-50769d25ea91\",\"receiver_session\":\"9de6719d8de1c6525f12aed559bd8c83c280cfa4dc30e71a7cf3874a5d794711\",\"receiver_state\":\"BLOCKED_REARM\",\"report_sequence\":1331,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"ca42d5eb-d94f-4992-8142-9084a62caa51\",\"steady_ns\":433380349402,\"ticket\":\"c6d2cd9701b2a7cb415f862ead894aae211765d7156813dd2eadf9872514492f\",\"verified_steady_ns\":432847918193}",
+          "mac": "a3d6a36ea575e9451d3a63cc0bf9adb856a9df0ffc453f1f165db63c2f96ad5f"
+        },
+        "ownership_release": false,
+        "reason": "BLOCKED_REARM",
+        "receipt_steady_ns": 432847918193,
+        "rejected": 4,
+        "sequence": 3,
+        "sim_ns": 6655000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 433380349402,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "c6d2cd9701b2a7cb415f862ead894aae211765d7156813dd2eadf9872514492f"
+      },
+      "reopened": false
+    },
+    "fm_restart": {
+      "exit_code": 1,
+      "scenario_reset_required": true
+    }
+  },
+  "native_samples": {
+    "robot_alpha": 1297,
+    "robot_beta": 1294,
+    "robot_gamma": 1293
+  },
+  "max_stationary_displacement_m": {
+    "robot_alpha": 1.281623811516367e-10,
+    "robot_beta": 1.2816237776841046e-10,
+    "robot_gamma": 1.2816237316357568e-10
+  },
+  "native_library_sha256": "8979ce39d5b9f3f452a51c6a36f5233e35c7e89d8571354532175cba55f57b9c",
+  "movement_authorized": false,
+  "physical_stop": "UNKNOWN",
+  "ownership_release": false
+}

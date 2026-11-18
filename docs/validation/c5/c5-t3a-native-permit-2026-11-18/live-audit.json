@@ -1,0 +1,148 @@
+{
+  "negative-a2": {
+    "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+    "actual_assignees": [
+      "robot_alpha"
+    ],
+    "transfers": 4,
+    "ack_stages": {
+      "NATIVE_ZERO_VERIFIED": 3
+    },
+    "native_samples": {
+      "robot_alpha": 968,
+      "robot_beta": 966,
+      "robot_gamma": 964
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  },
+  "executor-loss-a1": {
+    "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+    "actual_assignees": [
+      "robot_gamma"
+    ],
+    "transfers": 3,
+    "ack_stages": {
+      "NATIVE_ZERO_VERIFIED": 2
+    },
+    "native_samples": {
+      "robot_alpha": 1602,
+      "robot_beta": 1599,
+      "robot_gamma": 1596
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  },
+  "bridge-loss-a2": {
+    "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+    "actual_assignees": [
+      "robot_alpha"
+    ],
+    "transfers": 5,
+    "ack_stages": {
+      "NATIVE_ZERO_VERIFIED": 2
+    },
+    "native_samples": {
+      "robot_alpha": 1297,
+      "robot_beta": 1294,
+      "robot_gamma": 1293
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  },
+  "fm-loss-a1": {
+    "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+    "actual_assignees": [
+      "robot_alpha"
+    ],
+    "transfers": 2,
+    "ack_stages": {
+      "NATIVE_ZERO_VERIFIED": 1
+    },
+    "native_samples": {
+      "robot_alpha": 946,
+      "robot_beta": 943,
+      "robot_gamma": 941
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  },
+  "startup-missing-a1": {
+    "result": "PASS_SAFE_STARTUP_REFUSAL",
+    "actual_assignees": [],
+    "transfers": 0,
+    "ack_stages": {},
+    "native_samples": {
+      "robot_alpha": 3392,
+      "robot_beta": 3391,
+      "robot_gamma": 3389
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  },
+  "startup-delayed-a1": {
+    "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+    "actual_assignees": [
+      "robot_alpha"
+    ],
+    "transfers": 5,
+    "ack_stages": {
+      "NATIVE_ZERO_VERIFIED": 3,
+      "NATIVE_ZERO_VERIFIED_LATE": 1,
+      "NATIVE_ZERO_REVOKED": 1
+    },
+    "native_samples": {
+      "robot_alpha": 1470,
+      "robot_beta": 1469,
+      "robot_gamma": 1468
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  },
+  "replan-a2": {
+    "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+    "actual_assignees": [
+      "robot_gamma"
+    ],
+    "transfers": 32,
+    "ack_stages": {
+      "NATIVE_ZERO_VERIFIED": 30,
+      "NATIVE_ZERO_REVOKED": 1
+    },
+    "native_samples": {
+      "robot_alpha": 1158,
+      "robot_beta": 1156,
+      "robot_gamma": 1156
+    },
+    "source_outbox_bytes_match": true,
+    "outbox_all_pending": true,
+    "path_bytes_hash_match": true,
+    "zero_targets": true,
+    "startup_proof_checked": true,
+    "mac_verification": "Live runner checked with private key; offline audit is byte/linkage only"
+  }
+}

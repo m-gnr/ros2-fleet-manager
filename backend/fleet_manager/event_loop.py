@@ -38,6 +38,7 @@ class FleetEventLoop:
         self._dashboard_telemetry = None
         self._traffic_protocol_session = None
         self._traffic_test_radius = None
+        self._native_zero_profile = None
         with store.transaction():
             store.require_empty()
             store.persist_core(self._core)
@@ -103,6 +104,15 @@ class FleetEventLoop:
             raise RuntimeError("Consumer already started")
         self._worker = asyncio.create_task(self._run())
 
+    def enable_native_zero_test(self, *, keys, ack_timeout):
+        """Explicit B6B.7 test seam. Keys stay in the FM process, never SQLite."""
+        if (self._worker is not None or self._traffic_protocol_session is None or self._native_zero_profile is not None
+                or not math.isfinite(ack_timeout) or ack_timeout <= 0
+                or set(keys) != {r.robot_id for r in self._core.tracker.list_robots()}
+                or any(type(key) is not bytes or len(key) != 32 for key in keys.values())):
+            raise ValueError('Explicit native zero-only test profile required before start')
+        self._native_zero_profile = dict(keys=dict(keys), ack_timeout=ack_timeout)
+
     async def submit(self, event: Event):
         if self._worker is None or self._worker.done() or self._closed:
             raise RuntimeError("Consumer is not accepting events")
@@ -151,6 +161,10 @@ class FleetEventLoop:
         plan = resolved_route = None
         previous_dispatch = self._core.station_dispatch
         with self.store.transaction():
+            if event.kind == 'TRAFFIC_PROTOCOL_NATIVE_EXCHANGE':
+                from .persistence.traffic_native import process_native
+                return process_native(self.store, event, self._core, self._clock(),
+                                      self._traffic_protocol_session, self._native_zero_profile)
             if event.kind == 'TRAFFIC_PROTOCOL_CHILD':
                 from .persistence.traffic_child import process_child
                 return process_child(self.store, event, self._core, self._clock(),

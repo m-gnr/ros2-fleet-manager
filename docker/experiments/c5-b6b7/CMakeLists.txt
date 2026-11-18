@@ -17,3 +17,6 @@ target_link_libraries(native-test PRIVATE ignition-gazebo6::ignition-gazebo6 Ope
 enable_testing()
 add_test(NAME native-authorization COMMAND authorization-test)
 add_test(NAME native-callback-target COMMAND native-test)
+add_executable(live-permit-test test_live_permit.cc)
+target_link_libraries(live-permit-test PRIVATE OpenSSL::Crypto nlohmann_json::nlohmann_json)
+add_test(NAME live-fm-permit-context COMMAND live-permit-test)

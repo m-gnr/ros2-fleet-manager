@@ -1,5 +1,74 @@
 # C5-B6B.2 — FM ↔ Executor trafik izin protokolü
 
+## 18 Kasım C5-T3A eki — canlı permit ve native sıfır doğrulaması
+
+**IMPLEMENTED, deneysel ve varsayılan kapalı; yalnız sıfır komut.** T2'nin
+gerçek child bağı aşağıda korunur. Ürün CLI/launcher'ına yeni hareket modu
+eklenmedi. Açık `enable_native_zero_test` seam'i mevcut trafik protokolüyle
+birlikte, consumer başlamadan kurulmalıdır. Yeni trafik servisi yoktur.
+
+`traffic_native.py`, mevcut consumer transaction'ında gerçek T2
+`permit:<request>` ve `child:<context>:1` kararlarını ve bunların birebir
+aynı `traffic_outbox` yüklerini okur. Güncel task/epoch/session sahipliği,
+STALE, RESERVED claim ve child kapanma kaydı yeniden denetlenir. Native
+alıcıdan gelen domain ayrımlı HMAC readback'in receiver session ve artan
+rapor sırası kalıcı `traffic_native_receivers` cursor'ıyla fenced edilir.
+Bu tablo fiziksel durum otoritesi veya ikinci rezervasyon sistemi değildir.
+Receiver değişikliği kalıcı blokajdır; eski receiver geri dönerek açamaz.
+
+Consumer, tam SQL karar metinlerini ve SHA-256 özetlerini içeren değişmez
+`command_context` ile altı sıfır hız alanını `native-transfer:*` kararı ve
+aynı trafik Outbox'ına yazar. Transfer kimliği receiver session, bilet,
+request ve operasyonla türetilir; retry aynı body byte'larını korur.
+SQLite COMMIT tamamlandıktan sonra FM adaptörü mevcut B6B.7 `{body,mac}`
+zarfını imzalar. Ağ yayını transaction dışında yapılır. COMMIT/publish
+arasında süreç kaybı dağıtık atomiklik oluşturmaz; aktarılmayan karar ACK
+değildir. Mevcut DB ile FM restart `ScenarioResetRequired` üretir.
+
+Executor'ın anahtarsız `NativeZeroLink` adaptörü, T2 MovementGate içindeki
+gerçek child/Path bağını kontrol ederek zarfı byte değiştirmeden mevcut
+ROS→IGN command bridge'ine aktarır. MovementGate `send` kapalıdır. Native
+callback mevcut HMAC, session, sequence, ticket ve lease kontrollerine
+ek olarak karar hash'lerini ve tam permit/context/generation eşleşmesini
+denetler. İlk doğrulanmış bağ sabitlenir; rollover/rearm yoktur. Yanlış
+kimlik receipt yenilemez. Geçerli nonzero bile `BLOCKED_REARM` üretir;
+sonraki paketlerin örttüğü ret nedeni için kalıcı nonzero tanısı ve
+reddedilen body hash'i tutulur. Bu tanı accepted-command receipt değildir.
+
+Native readback, son gerçekten doğrulanan body SHA-256'sını, normalize
+edilmiş context hash'ini, alıcı oturumunu, sıra/generation/operasyonu ayrı
+`C5_NATIVE_ZERO_STATUS_V1` MAC domain'iyle imzalar. FM bunu önceki kalıcı
+transferle eşleyip **ayrı değişmez `native-ack:<transfer>` kaydına** yazar.
+`traffic_outbox` CHECK'i ve tüm kayıtları **PENDING** kalır. ACK
+`NATIVE_ZERO_VERIFIED`, `NATIVE_ZERO_VERIFIED_LATE` veya
+`NATIVE_ZERO_REVOKED` geçmiş gözlemidir; `APPLIED` değildir.
+`receiver_live_now=UNKNOWN`, `physical_stop=UNKNOWN`,
+`movement_authorized=false`, `ownership_release=false` korunur.
+
+Kapanmış/replan edilmiş veya ACK süresi aşılmış bağ yalnız `REVOKE_ZERO`
+üretebilir; geç ACK bunu canlandıramaz. Native revoke kilitler, sıfır
+receipt'ini yenilemez. Duplicate/eski report reddedilir. Executor/readback
+kesintisi yerel bağı kapatır; FM/bridge/Executor kaybında native bağımsız
+steady lease sona erer. Bu, hareketten frenleme garantisi değildir.
+
+İzole fixture önce gerçek fiziksel reset ve AMCL/Nav2/TF readiness, sonra
+bütün robotlardan ilk doğrulanmış, güncel, session-bloksuz RobotStatus
+bekler. Trafik geometrisi ancak bundan sonra kurulur. Eksik/geciken durum
+blokajı açmaz; deadline'da senaryo reddedilir. Görev kanıtı sabit Alpha
+varsayımıyla değil gerçek Scheduler ataması üzerinden izlenir. Non-replan
+kayıp testleri açık tek-plan BT, replan testi stock 1 Hz BT kullanır.
+
+FM/native aynı fixture güven alanındadır; HMAC SQLite COMMIT'in bağımsız
+kriptografik tasdiki değildir. Anahtar sahibi FM/native koduna güvenilir.
+SROS/OS rol izolasyonu, bağımsız donanım/update-loop fail-safe, gerçek sağlık
+ve hareketli duruş zarfı **UNVERIFIED / T3B bağımlılığıdır**. Hold/resume,
+fiziksel release ve hareketli trafik koordinasyonu tamamlanmamıştır.
+PeerRobotLayer ve LiDAR değişmedi. Varsayılan demo entegrasyonu kapalıdır.
+
+[T3A test/kanıt raporu](../validation/c5/c5-t3a-native-permit-2026-11-18.md)
+· [Mermaid](../diagrams/src/traffic-live-permit-zero.mmd)
+· [SVG](../diagrams/svg/traffic-live-permit-zero.svg).
+
 ## 18 Kasım C5-T2 eki — gerçek ürün child kanıtı
 
 **IMPLEMENTED, yalnız deneysel metadata; varsayılan kapalı.** Aşağıdaki

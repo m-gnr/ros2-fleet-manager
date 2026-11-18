@@ -1,0 +1,102 @@
+{
+  "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+  "case": "fm-loss",
+  "cases": {
+    "real_permit_native_ack": {
+      "records": [
+        {
+          "fm_context_valid_at_ack": true,
+          "identity": {
+            "child_uuid": "536d90cb-1704-8007-ff89-2f5831c8b595",
+            "epoch": 1,
+            "execute_uuid": "538c8556-d7b4-4b14-9911-2daa9225dd3d",
+            "executor_session": "c0d218f5-10fd-431a-93de-2e10a4ece292",
+            "fm_session": "e46af8f4-7e95-4d97-b54d-75c17c7923ee",
+            "frame": "map",
+            "generation": 1,
+            "geometry_revision": "t3a-geometry",
+            "map_revision": "t3a-map",
+            "path_hash": "be1835b3e65241cb3beacc26eedfa632ea82a2b3816f6057d5dc9bafa7f72c87",
+            "permit_id": "a16361f4-92a1-542f-ade5-f1a9f9b83df4",
+            "robot_id": "robot_alpha",
+            "task_id": "t3a-robot_alpha"
+          },
+          "movement_authorized": false,
+          "native_status": {
+            "command_sha256": "cb0ef390704f23b6b4bbaf23db34ca8d7937de563b2358ef621e5aae611243b8",
+            "context_sha256": "8ec5eee7f950df0f5513a9bc97c1adf2d3503bbf41263162c3bd048907afe07b",
+            "generation": 1,
+            "movement_authorized": false,
+            "operation": "INSTALL_ZERO",
+            "ownership_release": false,
+            "permit_id": "a16361f4-92a1-542f-ade5-f1a9f9b83df4",
+            "receiver_session": "d26933aa6d370850e308ac5efbb8090cc93fcdd32b3fe32512c7b60c2465da92",
+            "receiver_state": "ACTIVE",
+            "report_sequence": 1434,
+            "robot_id": "robot_alpha",
+            "sequence": 1,
+            "source_session": "e46af8f4-7e95-4d97-b54d-75c17c7923ee",
+            "steady_ns": 491898425346,
+            "ticket": "5ba49f2463660ab8dec340eb49c4fd052cc11a3515d162aa367952634ba71f4c",
+            "verified_steady_ns": 491849311012
+          },
+          "native_verified": true,
+          "ownership_release": false,
+          "physical_stop": "UNKNOWN",
+          "receiver_live_now": "UNKNOWN",
+          "status": "NATIVE_ZERO_VERIFIED",
+          "transfer_id": "native-transfer:2ab887de168f8aec:c0e9f9e0-d898-57ee-81f6-3dbec103e638"
+        }
+      ],
+      "source": "Real FM COMMIT/Outbox; actual native signed status"
+    },
+    "fm_loss": {
+      "accepted": 2,
+      "actuator_session": "d26933aa6d370850e308ac5efbb8090cc93fcdd32b3fe32512c7b60c2465da92",
+      "inhibited_command_sha256": "",
+      "inhibition_reason": "",
+      "joint_commands": [
+        [
+          0.0
+        ],
+        [
+          0.0
+        ]
+      ],
+      "movement_authorized": false,
+      "native_status": {
+        "body": "{\"command_sha256\":\"37f405c7f017420b7cbe4873898ff096cec89c9bc365a7e97b52c015ecc7838a\",\"context_sha256\":\"8ec5eee7f950df0f5513a9bc97c1adf2d3503bbf41263162c3bd048907afe07b\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"a16361f4-92a1-542f-ade5-f1a9f9b83df4\",\"receiver_session\":\"d26933aa6d370850e308ac5efbb8090cc93fcdd32b3fe32512c7b60c2465da92\",\"receiver_state\":\"TIMED_OUT\",\"report_sequence\":1484,\"robot_id\":\"robot_alpha\",\"sequence\":2,\"source_session\":\"e46af8f4-7e95-4d97-b54d-75c17c7923ee\",\"steady_ns\":492178228012,\"ticket\":\"b8c83c29afdf60bf6104afa4ceb79db9db7651b9949848f7cab1766f0bfb6058\",\"verified_steady_ns\":491923543346}",
+        "mac": "90c5bab0db88b96e37b4f6584d1df46957e9e67d6c0062ec9d3bea38cfed7f90"
+      },
+      "ownership_release": false,
+      "reason": "ACCEPTED_ZERO",
+      "receipt_steady_ns": 491923543346,
+      "rejected": 1,
+      "sequence": 2,
+      "sim_ns": 7420000000,
+      "state": "TIMED_OUT",
+      "steady_ns": 492178228012,
+      "target_angular": 0.0,
+      "target_linear": 0.0,
+      "ticket": "b8c83c29afdf60bf6104afa4ceb79db9db7651b9949848f7cab1766f0bfb6058"
+    },
+    "fm_restart": {
+      "exit_code": 1,
+      "scenario_reset_required": true
+    }
+  },
+  "native_samples": {
+    "robot_alpha": 946,
+    "robot_beta": 943,
+    "robot_gamma": 941
+  },
+  "max_stationary_displacement_m": {
+    "robot_alpha": 4.247091835718432e-11,
+    "robot_beta": 4.247091567322059e-11,
+    "robot_gamma": 4.247091567322059e-11
+  },
+  "native_library_sha256": "8979ce39d5b9f3f452a51c6a36f5233e35c7e89d8571354532175cba55f57b9c",
+  "movement_authorized": false,
+  "physical_stop": "UNKNOWN",
+  "ownership_release": false
+}

@@ -1,0 +1,387 @@
+{
+  "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+  "case": "negative",
+  "cases": {
+    "real_permit_native_ack": {
+      "records": [
+        {
+          "fm_context_valid_at_ack": true,
+          "identity": {
+            "child_uuid": "b0ad1987-5e96-fb55-d27c-993065ace52b",
+            "epoch": 1,
+            "execute_uuid": "7627e575-57b4-4a21-ba27-fce8a260c806",
+            "executor_session": "1884b1b0-6c4a-41ca-80fd-17ae06bd51c4",
+            "fm_session": "2b9f06cd-9575-4c33-a965-fe7cc4cc4053",
+            "frame": "map",
+            "generation": 1,
+            "geometry_revision": "t3a-geometry",
+            "map_revision": "t3a-map",
+            "path_hash": "87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18",
+            "permit_id": "851f1317-ed30-58bc-8cca-790cc883e675",
+            "robot_id": "robot_alpha",
+            "task_id": "t3a-robot_alpha"
+          },
+          "movement_authorized": false,
+          "native_status": {
+            "command_sha256": "66de9bed973f0b67c86ac2bac209b04333abff42336e67d5c15521ff355fa0a8",
+            "context_sha256": "dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036",
+            "generation": 1,
+            "movement_authorized": false,
+            "operation": "INSTALL_ZERO",
+            "ownership_release": false,
+            "permit_id": "851f1317-ed30-58bc-8cca-790cc883e675",
+            "receiver_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+            "receiver_state": "ACTIVE",
+            "report_sequence": 1418,
+            "robot_id": "robot_alpha",
+            "sequence": 1,
+            "source_session": "2b9f06cd-9575-4c33-a965-fe7cc4cc4053",
+            "steady_ns": 154354721194,
+            "ticket": "1e7a23bd9b2b1ed327b1fb30a8d9b80effdefd2ca2f1fdedce4eb4c2f8cf6e86",
+            "verified_steady_ns": 154323304319
+          },
+          "native_verified": true,
+          "ownership_release": false,
+          "physical_stop": "UNKNOWN",
+          "receiver_live_now": "UNKNOWN",
+          "status": "NATIVE_ZERO_VERIFIED",
+          "transfer_id": "native-transfer:2ab887de168f8aec:9caf8d64-9e72-5a1c-ab08-1410f42801a5"
+        }
+      ],
+      "source": "Real FM COMMIT/Outbox; actual native signed status"
+    },
+    "signature": {
+      "expected": "UNAUTHENTICATED",
+      "observed": {
+        "accepted": 2,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"cdb4f4e8d65b00d42a9fed4869f00b8af2cceabd956fcd2fbb7f787bd241e032\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1429,\"robot_id\":\"robot_alpha\",\"sequence\":2,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154409591152,\"ticket\":\"7c7272a4d240c2ab4fae5675087c7b830de70dff2a7583bc0e680dcc3ec6028c\",\"verified_steady_ns\":154367523277}",
+          "mac": "fd46a41d81510f41d179c904f8eab659d71aeee3e4d3e0ad48910687b5aa1166"
+        },
+        "ownership_release": false,
+        "reason": "UNAUTHENTICATED",
+        "receipt_steady_ns": 154367523277,
+        "rejected": 17,
+        "sequence": 2,
+        "sim_ns": 7145000000,
+        "state": "ACTIVE",
+        "steady_ns": 154409591152,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "7c7272a4d240c2ab4fae5675087c7b830de70dff2a7583bc0e680dcc3ec6028c"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"84ffa157e05f1fbb2a0858a0a8ce4eb736c9e93987353f93d8ef2a542e70aa12\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"0ff3c4ebf8ddf3a7183f0cda5bcab3f81d34240e1fd8cf13753e2eb1f22cffc2\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1002,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"7c7272a4d240c2ab4fae5675087c7b830de70dff2a7583bc0e680dcc3ec6028c\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"a1ec64acafd37da1c1d6e83c3954f839e2391ca36dfd7b9c0ac9ffbad0d13b0f\"}",
+      "movement_authorized": false
+    },
+    "generation": {
+      "expected": "PERMIT",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1432,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154424273944,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "cd634736a59270b0c4b5f11ae8a3c3ccb45aab84260be42264121d2802de23e4"
+        },
+        "ownership_release": false,
+        "reason": "PERMIT",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 46,
+        "sequence": 3,
+        "sim_ns": 7160000000,
+        "state": "ACTIVE",
+        "steady_ns": 154424273944,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"84ffa157e05f1fbb2a0858a0a8ce4eb736c9e93987353f93d8ef2a542e70aa12\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"0ff3c4ebf8ddf3a7183f0cda5bcab3f81d34240e1fd8cf13753e2eb1f22cffc2\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":2,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"1ef0fad7c48db083e6c43c2863ea7ec43d3c0d5f04612d161ba8f6726f956a52\"}",
+      "movement_authorized": false
+    },
+    "fm_session": {
+      "expected": "SESSION",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1435,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154440673902,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "b958364edc2c2963e13b76f2876ad8cb42d567f210e45d28618ba7f2e0506549"
+        },
+        "ownership_release": false,
+        "reason": "SESSION",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 59,
+        "sequence": 3,
+        "sim_ns": 7175000000,
+        "state": "ACTIVE",
+        "steady_ns": 154440673902,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"84ffa157e05f1fbb2a0858a0a8ce4eb736c9e93987353f93d8ef2a542e70aa12\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"0ff3c4ebf8ddf3a7183f0cda5bcab3f81d34240e1fd8cf13753e2eb1f22cffc2\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"6ce8d7f0-62b5-4522-b703-cea7403e7a66\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"ba58687e1b11a867111b180e5b169c070aa14022d2efbde097a3342979bd0bda\"}",
+      "movement_authorized": false
+    },
+    "epoch": {
+      "expected": "CONTEXT",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1437,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154456697735,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "549dbf46cd6bb18100539d64218110b027757d3b17e98f7a366493334198cfe7"
+        },
+        "ownership_release": false,
+        "reason": "CONTEXT",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 62,
+        "sequence": 3,
+        "sim_ns": 7185000000,
+        "state": "ACTIVE",
+        "steady_ns": 154456697735,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 2, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"05718f5cdc5ba6f316c78bcf0564f80cc0f463ab738b7888f980439545fc2863\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 2, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"08150cd27958a4f52fc9bccd43cffe83537d3900be0b944100f461e6616beae5\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"1f091ce8e2ffde26858d7b1c4c5c23cf8862b657afdd8c91fce603f311cc3cbc\"}",
+      "movement_authorized": false
+    },
+    "child_uuid": {
+      "expected": "CONTEXT",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1438,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154462721319,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "a365ccea2ae75681db751891a91b7cd931f7228a4d71cb24db47e667da217b75"
+        },
+        "ownership_release": false,
+        "reason": "CONTEXT",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 63,
+        "sequence": 3,
+        "sim_ns": 7190000000,
+        "state": "ACTIVE",
+        "steady_ns": 154462721319,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"f1c70069-2d9a-4723-94a7-82e0516709d1\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"8582be5411082b3cbd76567239af7639cee0bd758407cf23f653a39932ae2121\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"f1c70069-2d9a-4723-94a7-82e0516709d1\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"4a922e2f5483f50d39f47dc48c9d652d716938855a610cd321fc76159a532b03\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"1bbb342c7ab59180ce146e77d0751f8db78a772898569d870f9da4eb6a229afc\"}",
+      "movement_authorized": false
+    },
+    "path_hash": {
+      "expected": "CONTEXT",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1439,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154466461485,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "eac1b8a61ba6fb439d3be6437bfdc6b16ed6258e2b84ad1ba7493aebae2fdae6"
+        },
+        "ownership_release": false,
+        "reason": "CONTEXT",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 69,
+        "sequence": 3,
+        "sim_ns": 7195000000,
+        "state": "ACTIVE",
+        "steady_ns": 154466461485,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"d9e8dffd44492c58a301c2d13ba8c5905a99c67e120b6ee2915432f829b68dcc\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"d7b0230fb7b3d72c23f8308812e4e945f7db23b9df3eedfa95ba244efcf22a7e\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"b45757d130df6e24d39e5fac3ede3c0348740ec1495d8af2444d989b6938ce7d\"}",
+      "movement_authorized": false
+    },
+    "executor_session": {
+      "expected": "CONTEXT",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1440,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154471435402,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "292cd1959cb2deb8601936644cf2299506b621d793aaebeed997acd50d931876"
+        },
+        "ownership_release": false,
+        "reason": "CONTEXT",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 77,
+        "sequence": 3,
+        "sim_ns": 7200000000,
+        "state": "ACTIVE",
+        "steady_ns": 154471435402,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"3ae382c5-85fa-4589-a7ed-5579ccab0c9f\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"08e2d227b4e3b37b6d5a867383ef72c131d6f681c9aa0e5b5a446e09855e6090\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"3ae382c5-85fa-4589-a7ed-5579ccab0c9f\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"0ec509a85e6f8daf639120588f2fba3cc51a3c8217b145115cea7adb69cb4ea3\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"180d920d779c49b1d021f6e5c33f7bb4695cae37bca9c1aa9ba0b7395f776199\"}",
+      "movement_authorized": false
+    },
+    "duplicate": {
+      "expected": "REPLAY",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "",
+        "inhibition_reason": "",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1441,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154478395985,\"ticket\":\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\",\"verified_steady_ns\":154419477527}",
+          "mac": "9af89da00cc42c94d0808bc6675d4e6946662d477d67f8f061a647ee4a88b693"
+        },
+        "ownership_release": false,
+        "reason": "REPLAY",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 85,
+        "sequence": 3,
+        "sim_ns": 7205000000,
+        "state": "ACTIVE",
+        "steady_ns": 154478395985,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"84ffa157e05f1fbb2a0858a0a8ce4eb736c9e93987353f93d8ef2a542e70aa12\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"0ff3c4ebf8ddf3a7183f0cda5bcab3f81d34240e1fd8cf13753e2eb1f22cffc2\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e6c2bf247cc47094ffc856232c3891edee6bcae8819dcb2e77437e172390da2a\\\",\\\"velocity\\\":[0.0,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"5053ac7b9776dcd7517422c7c663e88dbd436b3037967511eef3b0759a8a1d8d\"}",
+      "movement_authorized": false
+    },
+    "nonzero": {
+      "expected": "NONZERO_DISABLED",
+      "observed": {
+        "accepted": 3,
+        "actuator_session": "612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654",
+        "inhibited_command_sha256": "b45680380ba96de8b48356fe7ad28e02486018e5233da4632ad209756177a16a",
+        "inhibition_reason": "NONZERO_DISABLED",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "native_status": {
+          "body": "{\"command_sha256\":\"1fbebb93ef0acff2389412b75210bea7335a9e8b6903bf90ae9a356cde3484c6\",\"context_sha256\":\"dd1cc328a0adb8066116e2bf71bff1cb5c26cca3e9ca2dc66686e0bf366fa036\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"851f1317-ed30-58bc-8cca-790cc883e675\",\"receiver_session\":\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\",\"receiver_state\":\"BLOCKED_REARM\",\"report_sequence\":1443,\"robot_id\":\"robot_alpha\",\"sequence\":3,\"source_session\":\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\",\"steady_ns\":154488015819,\"ticket\":\"af0e430fb1af193d4621c311acdab3a0e68541247d369f246631057ceb365cca\",\"verified_steady_ns\":154419477527}",
+          "mac": "c8e263ead030e6ff5921a3023fdc910555433e3ee0ef8a2117afc7e042149da9"
+        },
+        "ownership_release": false,
+        "reason": "BLOCKED_REARM",
+        "receipt_steady_ns": 154419477527,
+        "rejected": 96,
+        "sequence": 3,
+        "sim_ns": 7215000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 154488015819,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "af0e430fb1af193d4621c311acdab3a0e68541247d369f246631057ceb365cca"
+      },
+      "wire": "{\"body\":\"{\\\"actuator_session\\\":\\\"612a087421eb389db0f9e327538fcb560050f9f9b52d13fb68b72c610f519654\\\",\\\"command_context\\\":{\\\"child_decision\\\":\\\"{\\\\\\\"child_provenance\\\\\\\": {\\\\\\\"context_id\\\\\\\": \\\\\\\"da8d448f-0a3e-470d-b75f-593a532db6c2\\\\\\\", \\\\\\\"kind\\\\\\\": 1, \\\\\\\"nav_uuid\\\\\\\": \\\\\\\"60afa824-377b-454d-a422-5cc5957b7b90\\\\\\\", \\\\\\\"observer_session\\\\\\\": \\\\\\\"89d822e7-7cd5-4d05-a1cf-5d76bfe230b9\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"CLIENT_GOAL_HANDLE_ACCEPTED\\\\\\\", \\\\\\\"sequence\\\\\\\": 1, \\\\\\\"terminal_status\\\\\\\": 0}, \\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"ownership_release\\\\\\\": false, \\\\\\\"physical_stop\\\\\\\": \\\\\\\"UNKNOWN\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"child_decision_sha256\\\":\\\"84ffa157e05f1fbb2a0858a0a8ce4eb736c9e93987353f93d8ef2a542e70aa12\\\",\\\"child_event_id\\\":\\\"child:da8d448f-0a3e-470d-b75f-593a532db6c2:1\\\",\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"permit_decision\\\":\\\"{\\\\\\\"geometry_digest\\\\\\\": \\\\\\\"aeffffded86722569fa71c038e67bba3fc95515b75bcedf2642c0873de763f4a\\\\\\\", \\\\\\\"identity\\\\\\\": {\\\\\\\"child_uuid\\\\\\\": \\\\\\\"b0ad1987-5e96-fb55-d27c-993065ace52b\\\\\\\", \\\\\\\"epoch\\\\\\\": 1, \\\\\\\"execute_uuid\\\\\\\": \\\\\\\"7627e575-57b4-4a21-ba27-fce8a260c806\\\\\\\", \\\\\\\"executor_session\\\\\\\": \\\\\\\"1884b1b0-6c4a-41ca-80fd-17ae06bd51c4\\\\\\\", \\\\\\\"fm_session\\\\\\\": \\\\\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\\\\\", \\\\\\\"frame\\\\\\\": \\\\\\\"map\\\\\\\", \\\\\\\"generation\\\\\\\": 1, \\\\\\\"geometry_revision\\\\\\\": \\\\\\\"t3a-geometry\\\\\\\", \\\\\\\"map_revision\\\\\\\": \\\\\\\"t3a-map\\\\\\\", \\\\\\\"path_hash\\\\\\\": \\\\\\\"87ce7784064c5618f4bfbd17cf7b7d09acd2814fbc44cd316292c1204694ee18\\\\\\\", \\\\\\\"permit_id\\\\\\\": \\\\\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\\\\\", \\\\\\\"robot_id\\\\\\\": \\\\\\\"robot_alpha\\\\\\\", \\\\\\\"task_id\\\\\\\": \\\\\\\"t3a-robot_alpha\\\\\\\"}, \\\\\\\"movement_authorized\\\\\\\": false, \\\\\\\"movement_kind\\\\\\\": \\\\\\\"PICKUP\\\\\\\", \\\\\\\"reason\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"request_id\\\\\\\": \\\\\\\"c8e83f80-f640-4a16-9d30-02e2bda93510\\\\\\\", \\\\\\\"station_id\\\\\\\": \\\\\\\"\\\\\\\", \\\\\\\"status\\\\\\\": \\\\\\\"RESERVED\\\\\\\"}\\\",\\\"permit_decision_sha256\\\":\\\"0ff3c4ebf8ddf3a7183f0cda5bcab3f81d34240e1fd8cf13753e2eb1f22cffc2\\\",\\\"permit_event_id\\\":\\\"permit:c8e83f80-f640-4a16-9d30-02e2bda93510\\\"},\\\"command_sequence\\\":1003,\\\"issued_at\\\":{\\\"clock\\\":\\\"source_monotonic\\\",\\\"value\\\":154.315634527},\\\"permit_generation\\\":1,\\\"permit_id\\\":\\\"851f1317-ed30-58bc-8cca-790cc883e675\\\",\\\"source_session\\\":\\\"2b9f06cd-9575-4c33-a965-fe7cc4cc4053\\\",\\\"ticket\\\":\\\"e95f501e71689c17732d2de216447960d5edfdc4bd6e424dcbc5e086e3a35448\\\",\\\"velocity\\\":[0.2,0.0,0.0,0.0,0.0,0.0]}\",\"mac\":\"2042aa4ce2ebcf496781a53ba53761a38ddd140e3a2be27d759820471a04bf51\"}",
+      "movement_authorized": false
+    },
+    "fm_restart": {
+      "exit_code": 1,
+      "scenario_reset_required": true
+    }
+  },
+  "native_samples": {
+    "robot_alpha": 968,
+    "robot_beta": 966,
+    "robot_gamma": 964
+  },
+  "max_stationary_displacement_m": {
+    "robot_alpha": 4.247091835718432e-11,
+    "robot_beta": 4.247091567322059e-11,
+    "robot_gamma": 4.247091567322059e-11
+  },
+  "native_library_sha256": "8979ce39d5b9f3f452a51c6a36f5233e35c7e89d8571354532175cba55f57b9c",
+  "movement_authorized": false,
+  "physical_stop": "UNKNOWN",
+  "ownership_release": false
+}

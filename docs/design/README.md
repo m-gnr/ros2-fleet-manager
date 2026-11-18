@@ -1,5 +1,7 @@
 # Teknik tasarımlar
 
+- [C5-T3A canlı permit ve native sıfır doğrulaması](c5-b6b2-traffic-permit-protocol.md#18-kasım-c5-t3a-eki--canlı-permit-ve-native-sıfır-doğrulaması): mevcut B6B.2 tasarımına ek; varsayılan kapalı, ACK fiziksel kanıt değildir.
+
 - [C5 native actuator ve gerçek child/Path bağımlılık aşamaları](../validation/c5/traffic-integration-2026-11-18.md): [izole deney sözleşmesi](../../docker/experiments/c5-b6b7/README.md); hareket yetkisi kapalı.
 
 - [C5 robotlar arası konum ve rota farkındalığı](c5-peer-awareness.md): deneysel Nav2 peer katmanı ve kapalı trafik yetkisi sınırı.

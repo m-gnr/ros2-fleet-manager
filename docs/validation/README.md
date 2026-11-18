@@ -1,5 +1,9 @@
 # Doğrulama kayıtları
 
+- [C5-T3A gerçek FM permit → native sıfır context](c5/c5-t3a-native-permit-2026-11-18.md) · [Komutlar](c5/c5-t3a-native-permit-commands-2026-11-18.md): 375 host, 84 ROS, 3 native CTest; yedi izole sıfır-komut senaryosu. Deneysel ve varsayılan kapalı; fiziksel hareket kabulü değildir.
+
+- [C5-T3A güvenli durdurma / devam notu — 18 Kasım](c5/c5-t3a-continuation-2026-11-18.md): kaynak snapshot'ı, geçen seçkiler ve iki canlı deneme korunur; entegrasyon PARTIAL, commit/push yok.
+
 - [C5-T2 gerçek ürün child/Path bağı — 18 Kasım](c5/c5-t2-product-child-2026-11-18.md) · [Komutlar](c5/c5-t2-product-child-commands-2026-11-18.md): bağımsız testler ve izole gerçek Nav2 metadata koşusu; nonzero/hold/resume/release kabulü değildir, varsayılan kapalıdır.
 
 - [C5-T1 deneysel çalışmaların korunması](c5/c5-t1-checkpoint-2026-11-18.md): yeni bağımsız testler ve varsayılan launcher izolasyonu; deneysel checkpoint, hareket güvenliği kabulü değildir.

@@ -1,0 +1,373 @@
+diff --git a/backend/fleet_manager/event_loop.py b/backend/fleet_manager/event_loop.py
+index b5e1d46..9192d52 100644
+--- a/backend/fleet_manager/event_loop.py
++++ b/backend/fleet_manager/event_loop.py
+@@ -38,6 +38,7 @@ class FleetEventLoop:
+         self._dashboard_telemetry = None
+         self._traffic_protocol_session = None
+         self._traffic_test_radius = None
++        self._native_zero_profile = None
+         with store.transaction():
+             store.require_empty()
+             store.persist_core(self._core)
+@@ -103,6 +104,15 @@ class FleetEventLoop:
+             raise RuntimeError("Consumer already started")
+         self._worker = asyncio.create_task(self._run())
+ 
++    def enable_native_zero_test(self, *, keys, ack_timeout):
++        """Explicit B6B.7 test seam. Keys stay in the FM process, never SQLite."""
++        if (self._worker is not None or self._traffic_protocol_session is None or self._native_zero_profile is not None
++                or not math.isfinite(ack_timeout) or ack_timeout <= 0
++                or set(keys) != {r.robot_id for r in self._core.tracker.list_robots()}
++                or any(type(key) is not bytes or len(key) != 32 for key in keys.values())):
++            raise ValueError('Explicit native zero-only test profile required before start')
++        self._native_zero_profile = dict(keys=dict(keys), ack_timeout=ack_timeout)
++
+     async def submit(self, event: Event):
+         if self._worker is None or self._worker.done() or self._closed:
+             raise RuntimeError("Consumer is not accepting events")
+@@ -151,6 +161,10 @@ class FleetEventLoop:
+         plan = resolved_route = None
+         previous_dispatch = self._core.station_dispatch
+         with self.store.transaction():
++            if event.kind == 'TRAFFIC_PROTOCOL_NATIVE_EXCHANGE':
++                from .persistence.traffic_native import process_native
++                return process_native(self.store, event, self._core, self._clock(),
++                                      self._traffic_protocol_session, self._native_zero_profile)
+             if event.kind == 'TRAFFIC_PROTOCOL_CHILD':
+                 from .persistence.traffic_child import process_child
+                 return process_child(self.store, event, self._core, self._clock(),
+diff --git a/backend/fleet_manager/persistence/schema.sql b/backend/fleet_manager/persistence/schema.sql
+index 1a46c5f..101c57d 100644
+--- a/backend/fleet_manager/persistence/schema.sql
++++ b/backend/fleet_manager/persistence/schema.sql
+@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS task_review_holds (
+     reason TEXT NOT NULL,
+     held_at REAL NOT NULL
+ );
+--- Reservation-only traffic decisions. No actuator command sender consumes these.
++-- Default product has no actuator sender. The explicit native zero test seam
++-- only forwards matching committed T2 context; PENDING never means APPLIED.
+ CREATE TABLE IF NOT EXISTS traffic_state (
+     singleton INTEGER PRIMARY KEY CHECK(singleton=1), snapshot TEXT NOT NULL
+ );
+@@ -75,3 +76,12 @@ CREATE TABLE IF NOT EXISTS traffic_outbox (
+     event_id TEXT PRIMARY KEY REFERENCES traffic_decisions(event_id),
+     payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'PENDING' CHECK(state='PENDING')
+ );
++
++-- Experimental native zero-only transport replay fence, owned by the same consumer.
++CREATE TABLE IF NOT EXISTS traffic_native_receivers (
++    robot_id TEXT PRIMARY KEY,
++    fm_session TEXT NOT NULL,
++    receiver_session TEXT NOT NULL,
++    report_seq INTEGER NOT NULL,
++    fenced INTEGER NOT NULL DEFAULT 0 CHECK (fenced IN (0,1))
++);
+diff --git a/backend/fleet_manager/persistence/store.py b/backend/fleet_manager/persistence/store.py
+index cbcbe74..2e7fe99 100644
+--- a/backend/fleet_manager/persistence/store.py
++++ b/backend/fleet_manager/persistence/store.py
+@@ -43,7 +43,8 @@ class SQLiteStore:
+ 
+     def require_empty(self):
+         for table in ("tasks", "robots", "reservations", "station_moves", "outbox_events",
+-                      "processed_events", "task_review_holds", "traffic_state", "traffic_decisions", "traffic_outbox"):
++                      "processed_events", "task_review_holds", "traffic_state", "traffic_decisions", "traffic_outbox",
++                      "traffic_native_receivers"):
+             if self.connection.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone():
+                 raise ScenarioResetRequired(
+                     "Scenario reset required; preserve this database and use a new database after reset"
+diff --git a/docker/experiments/c5-b6b7/AuthorizedZero.hh b/docker/experiments/c5-b6b7/AuthorizedZero.hh
+index ed9fca0..a9150a2 100644
+--- a/docker/experiments/c5-b6b7/AuthorizedZero.hh
++++ b/docker/experiments/c5-b6b7/AuthorizedZero.hh
+@@ -4,6 +4,7 @@
+ #include <openssl/crypto.h>
+ #include <openssl/hmac.h>
+ #include <openssl/rand.h>
++#include <openssl/sha.h>
+ #include <nlohmann/json.hpp>
+ #include <fcntl.h>
+ #include <sys/stat.h>
+@@ -46,25 +47,50 @@ inline bool Keys(const Json & value, const std::set<std::string> & keys) {
+   for (const auto & key : keys) if (!value.contains(key)) return false;
+   return true;
+ }
++inline std::string Digest(const std::string & value) {
++  unsigned char bytes[SHA256_DIGEST_LENGTH];
++  SHA256(reinterpret_cast<const unsigned char *>(value.data()), value.size(), bytes);
++  return Hex(bytes, SHA256_DIGEST_LENGTH);
++}
++inline bool Uuid(const Json & v) {
++  if (!v.is_string()) return false;
++  const auto text = v.get<std::string>();
++  if (text.size() != 36 || text == "00000000-0000-0000-0000-000000000000") return false;
++  for (size_t i=0; i<text.size(); ++i) {
++    if (i==8 || i==13 || i==18 || i==23) {if (text[i]!='-') return false;}
++    else if (std::string("0123456789abcdef").find(text[i])==std::string::npos) return false;
++  }
++  return true;
++}
++inline bool Hash(const Json & v) {
++  return v.is_string() && v.get<std::string>().size()==64 &&
++    v.get<std::string>().find_first_not_of("0123456789abcdef")==std::string::npos;
++}
+ class AuthorizedZero {
+  public:
+   using Clock = Lease::Clock;
+   using Time = Clock::time_point;
+   explicit AuthorizedZero(const Json & p, Time now) {
+-    if (!Keys(p, {"key_hex", "source_session", "context", "permit_id", "generation",
+-                  "lease_sec", "ticket_sec", "permit_sec"})) throw std::invalid_argument("Provision schema");
++    live = p.contains("live_permits");
++    auto fields = std::set<std::string>{"key_hex", "source_session", "context", "permit_id", "generation",
++                  "lease_sec", "ticket_sec", "permit_sec"};
++    if (live) {fields.insert("live_permits"); fields.insert("robot_id");}
++    if (!Keys(p, fields) || (live && p["live_permits"] != Json(true))) throw std::invalid_argument("Provision schema");
+     auto hex = p.at("key_hex").get<std::string>();
+     if (hex.size() != 64 || hex.find_first_not_of("0123456789abcdef") != std::string::npos)
+       throw std::invalid_argument("256-bit key required");
+     for (size_t i = 0; i < key.size(); ++i) key[i] = std::stoul(hex.substr(i*2, 2), nullptr, 16);
+     source = p.at("source_session").get<std::string>();
+     permit = p.at("permit_id").get<std::string>();
+-    if (!p.at("generation").is_number_unsigned() || p.at("generation").get<uint64_t>() == 0 ||
+-        source.empty() || permit.empty() || !p.at("context").is_object() || p.at("context").empty())
++    if ((!live && (!p.at("generation").is_number_unsigned() || p.at("generation").get<uint64_t>() == 0 ||
++        source.empty() || permit.empty() || !p.at("context").is_object() || p.at("context").empty())) ||
++        (live && (p["source_session"]!="" || p["permit_id"]!="" || p["generation"]!=0 ||
++                  p["context"]!=Json::object() || !p["robot_id"].is_string() || p["robot_id"]=="")))
+       throw std::invalid_argument("Explicit context and nonempty identities required");
+     generation = p.at("generation").get<uint64_t>(); context = p.at("context");
++    if (live) robot = p["robot_id"].get<std::string>();
+     leaseSec = Positive(p.at("lease_sec")); ticketSec = Positive(p.at("ticket_sec"));
+-    permitUntil = Add(now, Positive(p.at("permit_sec")));
++    permitSec = Positive(p.at("permit_sec")); permitUntil = Add(now, permitSec);
+     session = Nonce();
+   }
+   ~AuthorizedZero() {OPENSSL_cleanse(key.data(), key.size());}
+@@ -90,7 +116,7 @@ class AuthorizedZero {
+   }
+   void Tick(Time now, long long sim, Lease & lease) {
+     lease.Tick(now, sim);
+-    if (now >= permitUntil) {lease.Block(); reason = "PERMIT_EXPIRED";}
++    if ((!live || bound) && now >= permitUntil) {lease.Block(); reason = "PERMIT_EXPIRED";}
+   }
+   std::string Offer(Time now) {
+     if (ticket.empty() || now >= ticketUntil) {ticket = Nonce(); ticketUntil = Add(now, ticketSec);}
+@@ -121,14 +147,23 @@ class AuthorizedZero {
+       const auto b = StrictJson(bodyBytes);
+       if (!Keys(b, {"source_session", "actuator_session", "command_sequence", "permit_id", "permit_generation",
+                     "issued_at", "velocity", "command_context", "ticket"})) return reject("SCHEMA");
+-      if (b["source_session"] != source || b["actuator_session"] != session) return reject("SESSION");
++      if (b["actuator_session"] != session || ((!live || bound) && b["source_session"] != source) ||
++          (live && !Uuid(b["source_session"]))) return reject("SESSION");
+       if (!b["command_sequence"].is_number_unsigned() || b["command_sequence"].get<uint64_t>() == 0)
+         return reject("SEQUENCE");
+       const auto next = b["command_sequence"].get<uint64_t>();
+       if (next <= sequence) return reject(next == sequence && bodyBytes != lastBody ? "CHANGED_PAYLOAD" : "REPLAY");
+-      if (!b["permit_generation"].is_number_unsigned() || b["permit_generation"] != generation || b["permit_id"] != permit)
++      if (!b["permit_generation"].is_number_unsigned() || b["permit_generation"]==0 ||
++          ((!live || bound) && (b["permit_generation"] != generation || b["permit_id"] != permit)))
+         return reject("PERMIT");
+-      if (b["command_context"].dump() != context.dump()) return reject("CONTEXT");
++      Json candidate = b["command_context"];
++      std::string operation = "INSTALL_ZERO";
++      if (live) {
++        if (!LiveContext(candidate, b)) return reject("CONTEXT");
++        operation = candidate["operation"].get<std::string>();
++        candidate["operation"] = "INSTALL_ZERO";
++      }
++      if ((!live || bound) && candidate.dump() != context.dump()) return reject("CONTEXT");
+       const auto & stamp = b["issued_at"];
+       if (!Keys(stamp, {"clock", "value"}) || stamp["clock"] != "source_monotonic" ||
+           !stamp["value"].is_number() || !std::isfinite(stamp["value"].get<double>())) return reject("CLOCK_SCHEMA");
+@@ -142,22 +177,78 @@ class AuthorizedZero {
+           lease.Block(); return reject("NONZERO_DISABLED");
+         }
+       }
+-      sequence = next; lastBody = bodyBytes; receipt = now;
++      if (live && !bound) {
++        context = candidate; source = b["source_session"].get<std::string>();
++        permit = b["permit_id"].get<std::string>(); generation = b["permit_generation"].get<uint64_t>();
++        permitUntil = Add(now, permitSec); bound = true;
++      }
++      sequence = next; lastBody = bodyBytes; verifiedAt = now; lastOperation = operation;
++      if (live && operation == "REVOKE_ZERO") {
++        lease.Block(); reason = "PERMIT_REVOKED"; return reason;
++      }
++      receipt = now;
+       lease.Receive(now, true, leaseSec); ++accepted; reason = "ACCEPTED_ZERO";
+       return reason;
+     } catch (const std::exception &) {return reject("MALFORMED");}
+   }
+   Json Snapshot(Time now, const Lease & lease) {
+-    return {{"state", lease.Name()}, {"reason", reason}, {"actuator_session", session},
++    Json output = {{"state", lease.Name()}, {"reason", reason}, {"actuator_session", session},
+       {"ticket", Offer(now)}, {"sequence", sequence}, {"accepted", accepted}, {"rejected", rejected},
+       {"receipt_steady_ns", std::chrono::duration_cast<std::chrono::nanoseconds>(receipt.time_since_epoch()).count()},
+       {"steady_ns", std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count()},
+       {"movement_authorized", false}, {"ownership_release", false}};
++    if (live) {
++      Json status = {{"robot_id", robot}, {"receiver_session", session}, {"ticket", ticket},
++        {"report_sequence", ++reports}, {"receiver_state", lease.Name()}, {"source_session", source},
++        {"sequence", sequence}, {"permit_id", permit}, {"generation", generation},
++        {"context_sha256", bound ? Digest(context.dump()) : ""},
++        {"command_sha256", lastBody.empty() ? "" : Digest(lastBody)}, {"operation", lastOperation},
++        {"verified_steady_ns", std::chrono::duration_cast<std::chrono::nanoseconds>(verifiedAt.time_since_epoch()).count()},
++        {"steady_ns", output["steady_ns"]}, {"movement_authorized", false}, {"ownership_release", false}};
++      const auto body = status.dump();
++      const auto macInput = std::string("C5_NATIVE_ZERO_STATUS_V1\n") + body;
++      unsigned int size=0; unsigned char mac[EVP_MAX_MD_SIZE];
++      if (!HMAC(EVP_sha256(), key.data(), key.size(), reinterpret_cast<const unsigned char *>(macInput.data()),
++          macInput.size(), mac, &size)) throw std::runtime_error("Status HMAC unavailable");
++      output["native_status"] = {{"body", body}, {"mac", Hex(mac, size)}};
++    }
++    return output;
+   }
+   std::string session, reason{"NO_COMMAND"};
+   uint64_t sequence{0}, accepted{0}, rejected{0};
+   Time receipt{};
+  private:
++  bool LiveContext(const Json & c, const Json & b) {
++    if (!Keys(c, {"operation", "permit_event_id", "permit_decision", "permit_decision_sha256",
++                  "child_event_id", "child_decision", "child_decision_sha256"}) ||
++        (c["operation"]!="INSTALL_ZERO" && c["operation"]!="REVOKE_ZERO") ||
++        !c["permit_decision"].is_string() || !c["child_decision"].is_string() ||
++        Digest(c["permit_decision"].get<std::string>())!=c["permit_decision_sha256"] ||
++        Digest(c["child_decision"].get<std::string>())!=c["child_decision_sha256"]) return false;
++    const auto p=StrictJson(c["permit_decision"].get<std::string>());
++    const auto child=StrictJson(c["child_decision"].get<std::string>());
++    for (const auto & name : {"identity", "request_id", "geometry_digest", "movement_kind", "station_id"})
++      if (p.at(name)!=child.at(name)) return false;
++    if (p.at("status")!="RESERVED" || child.at("status")!="RESERVED" ||
++        p.at("movement_authorized")!=Json(false) || child.at("movement_authorized")!=Json(false) ||
++        child.at("physical_stop")!="UNKNOWN" || child.at("ownership_release")!=Json(false)) return false;
++    const auto i=p.at("identity"); const auto proof=child.at("child_provenance");
++    if (!Keys(i, {"robot_id", "task_id", "epoch", "execute_uuid", "child_uuid", "executor_session", "fm_session",
++                  "permit_id", "generation", "path_hash", "map_revision", "frame", "geometry_revision"})) return false;
++    for (const auto & name : {"execute_uuid", "child_uuid", "executor_session", "fm_session", "permit_id"})
++      if (!Uuid(i.at(name))) return false;
++    for (const auto & name : {"context_id", "nav_uuid", "observer_session"}) if (!Uuid(proof.at(name))) return false;
++    for (const auto & name : {"task_id", "map_revision", "frame", "geometry_revision"})
++      if (!i.at(name).is_string() || i.at(name)=="") return false;
++    return i.at("robot_id")==robot && i.at("fm_session")==b["source_session"] &&
++      i.at("epoch").is_number_unsigned() && i.at("epoch")!=0 &&
++      i.at("generation").is_number_unsigned() && i.at("generation")==b["permit_generation"] &&
++      i.at("permit_id")==b["permit_id"] && Hash(i.at("path_hash")) && Hash(p.at("geometry_digest")) &&
++      i.at("child_uuid")!=i.at("execute_uuid") && proof.at("nav_uuid")!=i.at("execute_uuid") &&
++      proof.at("nav_uuid")!=i.at("child_uuid") && proof.at("kind")==1 && proof.at("sequence")==1 &&
++      Uuid(p.at("request_id")) && c["permit_event_id"]=="permit:"+p.at("request_id").get<std::string>() &&
++      c["child_event_id"]=="child:"+proof.at("context_id").get<std::string>()+":1";
++  }
+   static double Positive(const Json & v) {
+     if (!v.is_number() || !std::isfinite(v.get<double>()) || v.get<double>() <= 0 || v.get<double>() > 3600)
+       throw std::invalid_argument("Finite positive fixture timing budget required");
+@@ -170,7 +261,11 @@ class AuthorizedZero {
+   Json context;
+   std::string source, permit, ticket, lastBody;
+   uint64_t generation;
+-  double leaseSec, ticketSec;
++  bool live{false}, bound{false};
++  std::string robot, lastOperation{"NONE"};
++  uint64_t reports{0};
++  Time verifiedAt{};
++  double leaseSec, ticketSec, permitSec;
+   Time ticketUntil{}, permitUntil{};
+ };
+ }  // namespace c5_test
+diff --git a/docker/experiments/c5-b6b7/CMakeLists.txt b/docker/experiments/c5-b6b7/CMakeLists.txt
+index 98418fb..9f3b6ad 100644
+--- a/docker/experiments/c5-b6b7/CMakeLists.txt
++++ b/docker/experiments/c5-b6b7/CMakeLists.txt
+@@ -17,3 +17,6 @@ target_link_libraries(native-test PRIVATE ignition-gazebo6::ignition-gazebo6 Ope
+ enable_testing()
+ add_test(NAME native-authorization COMMAND authorization-test)
+ add_test(NAME native-callback-target COMMAND native-test)
++add_executable(live-permit-test test_live_permit.cc)
++target_link_libraries(live-permit-test PRIVATE OpenSSL::Crypto nlohmann_json::nlohmann_json)
++add_test(NAME live-fm-permit-context COMMAND live-permit-test)
+diff --git a/docs/README.md b/docs/README.md
+index fea34c8..fd269f8 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
+ 
+ ## Geliştirme
+ 
++- [C5-T3A devam notu — durduruldu](validation/c5/c5-t3a-continuation-2026-11-18.md): commit edilmemiş çalışma ve kanıtlar korundu; tam T3A kabulü yok, varsayılan kapalı.
++
+ - [C5-T2 gerçek ürün child/Path bağı](validation/c5/c5-t2-product-child-2026-11-18.md) · [Komutlar](validation/c5/c5-t2-product-child-commands-2026-11-18.md): gerçek Outbox → ExecuteTask → Nav2 child metadata bağı; izole sıfır dünya doğrulandı, varsayılan kapalı. Actuator hareket yetkisi/release T3–T5'e açık.
+ 
+ - [C5-T1 deneysel checkpoint](validation/c5/c5-t1-checkpoint-2026-11-18.md): bağımsız testler ve varsayılan kapalı izolasyon yeniden doğrulandı; kaynak/kanıtlar korunur. T2 için hareketli güvenlik kabulü açık kalır.
+diff --git a/docs/validation/README.md b/docs/validation/README.md
+index 089bc78..2247d1e 100644
+--- a/docs/validation/README.md
++++ b/docs/validation/README.md
+@@ -1,5 +1,7 @@
+ # Doğrulama kayıtları
+ 
++- [C5-T3A güvenli durdurma / devam notu — 18 Kasım](c5/c5-t3a-continuation-2026-11-18.md): kaynak snapshot'ı, geçen seçkiler ve iki canlı deneme korunur; entegrasyon PARTIAL, commit/push yok.
++
+ - [C5-T2 gerçek ürün child/Path bağı — 18 Kasım](c5/c5-t2-product-child-2026-11-18.md) · [Komutlar](c5/c5-t2-product-child-commands-2026-11-18.md): bağımsız testler ve izole gerçek Nav2 metadata koşusu; nonzero/hold/resume/release kabulü değildir, varsayılan kapalıdır.
+ 
+ - [C5-T1 deneysel çalışmaların korunması](c5/c5-t1-checkpoint-2026-11-18.md): yeni bağımsız testler ve varsayılan launcher izolasyonu; deneysel checkpoint, hareket güvenliği kabulü değildir.
+diff --git a/ros2_ws/src/fleet_robot_executor/fleet_robot_executor/traffic.py b/ros2_ws/src/fleet_robot_executor/fleet_robot_executor/traffic.py
+index e0ce9a1..ff0c8ea 100644
+--- a/ros2_ws/src/fleet_robot_executor/fleet_robot_executor/traffic.py
++++ b/ros2_ws/src/fleet_robot_executor/fleet_robot_executor/traffic.py
+@@ -146,6 +146,32 @@ class MovementGate:
+             self.child_observation['terminal_status'] = status
+             return True
+ 
++    def native_zero_matches(self, context, *, revoke=False):
++        """Read-only metadata fence for zero-only transport, never send/APPLIED.
++
++        The native receiver independently authenticates the FM MAC. Revoke can
++        be forwarded after local closure, but can only latch the receiver shut.
++        """
++        from fleet_config.native_zero import decisions
++        with self.lock:
++            try:
++                permit, child = decisions(context)
++                if not self.request or not self.decision:
++                    return False
++                if any(permit.get(k) != self.decision.get(k) for k in
++                       ('identity','request_id','geometry_digest','movement_kind','station_id')):
++                    return False
++                if child['child_provenance'] != self.request.get('child_provenance'):
++                    return False
++                if revoke:
++                    return context['operation']=='REVOKE_ZERO'
++                return (context['operation']=='INSTALL_ZERO' and self._live()
++                        and self.child_observation is not None
++                        and self.child_observation['actual_child_uuid']==self.request['child_uuid']
++                        and self.child_observation['actual_path_hash']==self.request['path_hash'])
++            except (ValueError,KeyError,TypeError):
++                return False
++
+ 
+ def observe_follow_path_acceptance(gate, goal_handle, sent_goal, *, expected_action_name):
+     """Capture real ROS client response and exact Path bytes, metadata only.
+diff --git a/tests/test_traffic_protocol.py b/tests/test_traffic_protocol.py
+index db968c2..b067ef9 100644
+--- a/tests/test_traffic_protocol.py
++++ b/tests/test_traffic_protocol.py
+@@ -30,7 +30,7 @@ class Routes:
+         return 1.
+ 
+ 
+-async def setup(tmp_path, *, enabled=True):
++async def setup(tmp_path, *, enabled=True, native_keys=None):
+     store = SQLiteStore(tmp_path / 'traffic.db')
+     core = FleetManagerCore(Routes(), Pose2D())
+     core.register_robot('r1')
+@@ -38,6 +38,8 @@ async def setup(tmp_path, *, enabled=True):
+     loop = FleetEventLoop(store, core, clock=lambda: 10.)
+     if enabled:
+         loop.enable_traffic_protocol_test(enclosing_radius=.2)
++    if native_keys is not None:
++        loop.enable_native_zero_test(keys=native_keys,ack_timeout=.5)
+     await loop.start()
+     session = uid()
+     await loop.submit(Event('ROBOT_STATUS', dict(robot_id='r1', status_seq=1, current_epoch=0,

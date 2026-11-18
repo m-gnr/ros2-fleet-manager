@@ -25,6 +25,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrafficPermitIdentity.msg"
   "msg/TrafficPermitDecision.msg"
   "msg/TrafficPermitAck.msg"
+  "msg/TrafficChildObservation.msg"
   "srv/RequestTrafficPermit.srv"
   "srv/ClearRobotError.srv"
   "srv/ControlBattery.srv"

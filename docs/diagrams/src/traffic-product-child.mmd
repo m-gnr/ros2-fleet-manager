@@ -1,0 +1,18 @@
+flowchart TD
+    A["FM ataması: task / epoch / üst UUID / oturum"] --> B["Mevcut SQLite ve hareket Outbox COMMIT"]
+    B --> C["Gerçek ExecuteTask kabulü: ExecutorSafety"]
+    C --> D["Açık test seam'i: goal'a özel değişmez BT XML ve context UUID"]
+    D --> E["NavigateToPose: ayrı gerçek client UUID ve accepted handle teyidi"]
+    E --> F["Nav2 BT: gerçek FollowPath accepted handle ve gönderilen Path kopyası"]
+    F --> G{"Bağlam, sıra, oturum ve zaman güncel mi?"}
+    G -->|Evet| H["Mevcut B6B servisinden gerçek child / Path hash isteği"]
+    H --> I["Tek consumer: sahiplik kontrolü, rezervasyon ve trafik Outbox atomik COMMIT"]
+    I --> J["MovementGate gözlemi: yalnız metadata — IMPLEMENTED"]
+    G -->|Hayır| K["Gözlemi reddet; eski bağlamı canlandırma"]
+    F --> L["Replan / child değişimi / iptal / terminal / timeout"]
+    L --> M["Eski bağlam kapanır; claim BLOCKED ve sahiplik korunur"]
+    M --> N["Fiziksel release: doğrulanmamış, DENIED"]
+    J --> O["APPLIED gönderilmez; nonzero hareket yetkisi yok"]
+    P["İzole dünyada native B6B.7: gerçek joint hedefleri daima sıfır"] --> O
+    O -.-> Q["T3–T5: actuator bağı, hold/resume ve fiziksel release — PLANNED / UNVERIFIED"]
+    R["Varsayılan launcher: gözlemci / peer / native deney kapalı"]

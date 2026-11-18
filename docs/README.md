@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5-T2 gerçek ürün child/Path bağı](validation/c5/c5-t2-product-child-2026-11-18.md) · [Komutlar](validation/c5/c5-t2-product-child-commands-2026-11-18.md): gerçek Outbox → ExecuteTask → Nav2 child metadata bağı; izole sıfır dünya doğrulandı, varsayılan kapalı. Actuator hareket yetkisi/release T3–T5'e açık.
+
 - [C5-T1 deneysel checkpoint](validation/c5/c5-t1-checkpoint-2026-11-18.md): bağımsız testler ve varsayılan kapalı izolasyon yeniden doğrulandı; kaynak/kanıtlar korunur. T2 için hareketli güvenlik kabulü açık kalır.
 
 - [C5 trafik entegrasyonu bağımlılık aşamaları](validation/c5/traffic-integration-2026-11-18.md) · [Komutlar](validation/c5/traffic-integration-commands-2026-11-18.md): gerçek native sıfır alıcısı, gerçek child/Path metadata testi ve peer TF sorgu düzeltmesi; hareketli stop/hold/resume/release kabulü açık, varsayılan launcher kapalı.

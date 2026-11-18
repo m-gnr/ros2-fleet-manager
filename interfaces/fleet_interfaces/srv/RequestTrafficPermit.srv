@@ -15,5 +15,13 @@ float64[] geometry
 string geometry_digest
 string map_revision
 string geometry_revision
+# Optional experimental actual-child evidence. All zero means legacy preparation only.
+unique_identifier_msgs/UUID context_id
+unique_identifier_msgs/UUID nav_goal_uuid
+unique_identifier_msgs/UUID observer_session_id
+uint64 observation_seq
+uint8 observation_kind
+int8 child_terminal_status
+string observation_reason
 ---
 fleet_interfaces/TrafficPermitDecision decision

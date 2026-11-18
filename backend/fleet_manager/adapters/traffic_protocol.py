@@ -49,7 +49,7 @@ def request_payload(request, robot_id):
     # Hash the complete ROS path, including orientation and stamps, not its length.
     if hashlib.sha256(raw).hexdigest() != request.path_digest:
         raise ValueError('Path digest mismatch')
-    return dict(request_id=uuid_text(request.request_id), robot_id=robot_id, task_id=request.task_id,
+    payload = dict(request_id=uuid_text(request.request_id), robot_id=robot_id, task_id=request.task_id,
                 epoch=request.assignment_epoch, execute_uuid=uuid_text(request.parent_goal_uuid),
                 child_uuid=uuid_text(request.child_goal_uuid), executor_session=uuid_text(request.executor_session_id),
                 movement_kind=request.movement_kind, station_id=request.station_id,
@@ -58,6 +58,16 @@ def request_payload(request, robot_id):
                 geometry=[dict(zip(('x0', 'y0', 'x1', 'y1'), values[n:n+4])) for n in range(0, len(values), 4)],
                 geometry_digest=request.geometry_digest, map_revision=request.map_revision,
                 geometry_revision=request.geometry_revision, frame=path.header.frame_id)
+    if request.observation_kind:
+        payload['child_provenance'] = dict(context_id=uuid_text(request.context_id),
+            nav_uuid=uuid_text(request.nav_goal_uuid), observer_session=uuid_text(request.observer_session_id),
+            sequence=request.observation_seq, kind=request.observation_kind,
+            terminal_status=request.child_terminal_status, reason=request.observation_reason)
+    elif (request.observation_seq or request.child_terminal_status or request.observation_reason
+          or any(bytes(v.uuid) != bytes(16) for v in
+          (request.context_id, request.nav_goal_uuid, request.observer_session_id))):
+        raise ValueError('Partial child provenance is not legacy preparation')
+    return payload
 
 
 class TrafficProtocolROSBridge:
@@ -100,8 +110,11 @@ class TrafficProtocolROSBridge:
     def request(self, robot, request, response):
         try:
             p = request_payload(request, robot)
+            child = p.get('child_provenance')
+            kind = 'TRAFFIC_PROTOCOL_CHILD' if child else 'TRAFFIC_PROTOCOL_REQUEST'
+            event_id = ('child:' + child['context_id'] + ':' + str(child['sequence'])) if child else 'permit:' + p['request_id']
             future = asyncio.run_coroutine_threadsafe(self.consumer.submit(
-                Event('TRAFFIC_PROTOCOL_REQUEST', p, 'permit:' + p['request_id'])), self.loop)
+                Event(kind, p, event_id)), self.loop)
             data = future.result(self.timeout)
             write_decision(data, response.decision)
             self.publishers[robot].publish(response.decision)

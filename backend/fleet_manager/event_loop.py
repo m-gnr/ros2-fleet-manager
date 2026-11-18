@@ -151,6 +151,10 @@ class FleetEventLoop:
         plan = resolved_route = None
         previous_dispatch = self._core.station_dispatch
         with self.store.transaction():
+            if event.kind == 'TRAFFIC_PROTOCOL_CHILD':
+                from .persistence.traffic_child import process_child
+                return process_child(self.store, event, self._core, self._clock(),
+                                     self._traffic_protocol_session, self._traffic_test_radius)
             if event.kind.startswith("TRAFFIC_PROTOCOL_"):
                 from .persistence.traffic_protocol import process_protocol
                 return process_protocol(self.store, event, self._core, self._clock(),

@@ -1,5 +1,7 @@
 # Mimari ve algoritma diyagramları
 
+- [C5-T2 gerçek ürün child bağı — metadata IMPLEMENTED, hareket PARTIAL](../validation/c5/c5-t2-product-child-2026-11-18.md): [Mermaid](src/traffic-product-child.mmd) · [SVG](svg/traffic-product-child.svg). T1 diyagramı tarihsel component kapsamını korur; bu ek ürün üst goal bağını gösterir.
+
 - [C5 native sıfır actuator ve child/Path kaydı — PARTIAL](../validation/c5/traffic-integration-2026-11-18.md): [Mermaid](src/traffic-native-zero.mmd) · [SVG](svg/traffic-native-zero.svg). Hareketli trafik yetkisi/release bu diyagramda uygulanmış sayılmaz.
 
 26 Ekim 2026 kaynak incelemesi. Bu katalog mevcut kararların görsel anlatımıdır; yeni mimari karar değildir. [İnceleme ve fark raporu](../validation/organization/organization-validation-2026-10-26.md) hedef ile kodun ayrıldığı yolları kaydeder.

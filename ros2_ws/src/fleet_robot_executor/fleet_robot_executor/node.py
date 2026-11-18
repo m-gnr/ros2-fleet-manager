@@ -86,7 +86,7 @@ class RobotExecutorNode(Node):
 
     def __init__(self, node_name: str = "robot_executor", *, parameter_overrides=None,
                  _test_reset_verified: bool = False, _legacy_test_battery: bool = False,
-                 _traffic_protocol_test_profile=None) -> None:
+                 _traffic_protocol_test_profile=None, _traffic_child_test_profile=None) -> None:
         super().__init__(node_name, parameter_overrides=parameter_overrides)
         self.declare_parameter("duplicate_record_capacity", Parameter.Type.INTEGER)
         self.safety = ExecutorSafety(self.get_parameter("duplicate_record_capacity").value)
@@ -300,6 +300,26 @@ class RobotExecutorNode(Node):
         if _traffic_protocol_test_profile is not None:
             from .traffic import ROSTrafficMovementClient
             self._traffic_movement = ROSTrafficMovementClient(self, _traffic_protocol_test_profile)
+        self._traffic_child_observer = None
+        if _traffic_child_test_profile is not None:
+            if _traffic_protocol_test_profile is not None:
+                raise ValueError("Planner-only and actual-child test seams cannot be combined")
+            from .child_binding_ros import ROSChildBindingObserver
+            self._traffic_child_observer = ROSChildBindingObserver(self, _traffic_child_test_profile)
+
+    def _send_nav2_observed(self, handle, goal, kind):
+        observer = self._traffic_child_observer
+        if observer is None:
+            return self._nav2_client.send_goal_async(goal)
+        goal_uuid, context_id = observer.begin(handle, goal, kind)
+        future = self._nav2_client.send_goal_async(goal, goal_uuid=goal_uuid)
+        future.add_done_callback(lambda done: observer.confirm(context_id, done))
+        return future
+
+    def _close_child_observation(self, reason):
+        observer = getattr(self, '_traffic_child_observer', None)
+        if observer is not None:
+            observer.close(reason)
 
     def prepare_and_authorize_movement(self, handle, target, movement_kind):
         """Shared admission for both transport legs and park/charge navigation."""
@@ -400,6 +420,7 @@ class RobotExecutorNode(Node):
             return CancelResponse.REJECT
 
         self.get_logger().info(f"Accepted cancel request for goal {goal_uuid}. Initiating safe preemption.")
+        self._close_child_observation("PARENT_CANCEL_ACCEPTED")
         return CancelResponse.ACCEPT
 
     def _hold_uncertain(self, reason, *, brake_until=None):
@@ -586,7 +607,10 @@ class RobotExecutorNode(Node):
                 goal_handle.abort()
             return result
         except Exception as exc:
+            self._close_child_observation("PARENT_EXECUTION_UNCERTAIN")
             return self._hold_uncertain(f"Execution evidence unavailable: {exc}")
+        finally:
+            self._close_child_observation("EXECUTE_TASK_ENDED")
 
     def _execute_task_body(self, goal_handle: ServerGoalHandle) -> ExecuteTask.Result:
         """Execute full logistics lifecycle: Pickup -> Load -> Dropoff -> Unload."""
@@ -724,7 +748,8 @@ class RobotExecutorNode(Node):
         nav2_goal_handle = None
         for attempt in range(5):
             nav2_goal.pose.header.stamp = self.get_clock().now().to_msg()
-            send_future = self._nav2_client.send_goal_async(nav2_goal)
+            kind = "PICKUP" if phase == TaskPhase.PHASE_MOVING_TO_PICKUP else "DROPOFF"
+            send_future = self._send_nav2_observed(goal_handle, nav2_goal, kind)
             while not send_future.done():
                 if self._stopping.wait(0.02):
                     raise RuntimeError("Stopped with unresolved Nav2 delivery")
@@ -760,6 +785,7 @@ class RobotExecutorNode(Node):
 
         self._active_nav2_goal_handle = None
         nav2_res = result_future.result()
+        self._close_child_observation("NAVIGATE_RESULT_RECEIVED")
         self.get_logger().info(f"Nav2 navigation completed with status {nav2_res.status} for goal {goal_uuid}")
         with self._lock:
             cancelling = self.state_machine.is_cancelling

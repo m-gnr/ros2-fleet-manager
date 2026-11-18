@@ -1,5 +1,7 @@
 # Doğrulama kayıtları
 
+- [C5-T2 gerçek ürün child/Path bağı — 18 Kasım](c5/c5-t2-product-child-2026-11-18.md) · [Komutlar](c5/c5-t2-product-child-commands-2026-11-18.md): bağımsız testler ve izole gerçek Nav2 metadata koşusu; nonzero/hold/resume/release kabulü değildir, varsayılan kapalıdır.
+
 - [C5-T1 deneysel çalışmaların korunması](c5/c5-t1-checkpoint-2026-11-18.md): yeni bağımsız testler ve varsayılan launcher izolasyonu; deneysel checkpoint, hareket güvenliği kabulü değildir.
 
 - [C5 trafik entegrasyonu bağımlılık aşamaları](c5/traffic-integration-2026-11-18.md) · [Komut eki](c5/traffic-integration-commands-2026-11-18.md): native sıfır yetkilendirme ve gerçek durağan child/Path testleri geçti; gerçek hareket zinciri tamamlanmadı, tam kabul yok.

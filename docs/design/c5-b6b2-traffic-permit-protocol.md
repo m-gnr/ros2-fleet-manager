@@ -1,5 +1,64 @@
 # C5-B6B.2 — FM ↔ Executor trafik izin protokolü
 
+## 18 Kasım C5-T2 eki — gerçek ürün child kanıtı
+
+**IMPLEMENTED, yalnız deneysel metadata; varsayılan kapalı.** Aşağıdaki
+15 Kasım hazırlama modu korunur. T2, hazırlanan UUID'yi gerçek child saymaz:
+ayrı `_traffic_child_test_profile=None` kurucu seam'i ile Executor, gerçek
+ExecuteTask handle/request/ExecutorSafety oturumundan bir `ChildBinding`
+oluşturur. Her NavigateToPose gönderimi için ayrı client UUID'si ve yalnız
+o goal'a ait XML dosyası ayrılır; response gerçek NavigateToPose
+ClientGoalHandle tipi, endpoint ve UUID ile tekrar denetlenir. XML token'ı
+üst UUID'nin child gibi kullanılmasının yerine geçmez; üç UUID farklıdır.
+
+Yeni `fleet_nav2_observer` BT eklentisi stock Humble FollowPathAction'ını
+genişletir. Gönderim öncesindeki Path kopyasını ve kabul edilmiş kendi gerçek
+FollowPath handle UUID'sini typed `TrafficChildObservation` ile yayınlar.
+On-wait, gerçek terminal ve halt ayrıdır; base `halt()` callback'inin
+`on_cancelled()` çağırması gerçek terminal kanıtı sayılmaz. Yeni Path veya
+controller/goal-checker güncellemesi eski bağı geçersizleştirir. Eklenti
+stock replanning politikasını ve action istemcisini yeniden kullanır.
+
+Executor, o NavigateToPose kabulü teyit edilene kadar en fazla 16 gözlemi
+bekletir; sonrasında yerel aktif assignment, epoch, kendi session'ı,
+context/nav UUID, observer session, artan kesintisiz sıra ve ROS kaynak
+yaşını denetler. Kaynak yaş sınırı mevcut Executor
+`odometry_freshness_sec` değeridir; toplam test receipt deadline'ı açık
+monotonik `timeout` ile ayrıdır. Mevcut FM 2 s STALE / 5 s uyarı eşikleri
+değişmedi. İlk observer session o benzersiz XML context'inde sabitlenir;
+değişen session, duplicate, eski sıra ve kapalı context yeniden kullanılmaz.
+
+`RequestTrafficPermit` sonuna opsiyonel context/nav/observer UUID, sıra,
+gözlem türü, terminal ve neden alanları eklenmiştir. Tümü sıfır olan eski
+B6B.2 hazırlama isteği aynı davranışı korur; kısmi kanıt eski moda düşemez.
+Yeni adapter `TRAFFIC_PROTOCOL_CHILD` olayını mevcut consumer'a yollar.
+`traffic_child.py`, mevcut `process_protocol` rezervasyonunu, child
+kanıtını ve aynı `traffic_outbox` kayıtlarını tek transaction'da tutar.
+Yeni tablo, ikinci trafik çekirdeği veya ikinci fiziksel durum makinesi yoktur.
+İptal önce gelirse kapanma kaydı ilk kabulden önce kalıcılaşabilir; gecikmiş
+kabul bu kaydı aşamaz. Replan/iptal/terminal mevcut claim'i BLOCKED tutar.
+
+Bu sürüm bir context'te yalnız ilk gerçek child'ı bağlar. Replan sonrası
+yeni child, kalifiye release/rollover bulunmadan eski rezervasyonu devralmaz.
+Yeni epoch için ayrı gözlem eski context'i diriltmez. Executor restart'ında
+context yüklenmez; FM mevcut nonempty DB'yi otomatik devam için kabul etmez.
+Eski terminal veya ACK sahipliği serbest bırakamaz.
+
+Gözlem bir izin önkoşulu olarak actuator'a uygulanmış değildir: test modunda
+gerçek child kabulünden **sonra** metadata rezervasyonu alınır. T2 yalnız
+native sıfır sürücülü veya actuator bulunmayan izole fixture içindir.
+Varsayılan launcher eklentiyi yüklemez ve bu seam'i açmaz. APPLIED/RETIRED ACK
+üretilmez; MovementGate `send` kapalı, fiziksel stop UNKNOWN ve release
+reddidir. DDS/SROS yayıncı kimlik doğrulaması, native canlı permit uygulaması,
+sağlık/stop zarfı ve hold/resume T3–T5 bağımlılıklarıdır. Context token/Path
+hash'i kriptografik yayıncı kimliği veya fiziksel kanıt değildir.
+
+[T2 test ve canlı kanıt kaydı](../validation/c5/c5-t2-product-child-2026-11-18.md)
+· [Mermaid](../diagrams/src/traffic-product-child.mmd)
+· [SVG](../diagrams/svg/traffic-product-child.svg).
+
+## Korunan B6B.2 hazırlama modu kaydı
+
 15 Kasım 2026. **IMPLEMENTED / DOĞRULANDI:** hareket kapalı, hedefli fake action/service ve consumer/SQLite kapsamı. **PLANNED / UNVERIFIED:** gerçek local boundary interlock, actuator fail-safe, kalifiye applied/retire kanıtı ve fiziksel release. Bu uygulama yeni ürün hareket yetkisi veya mimarinin tamamına onay değildir.
 
 Dayanak: [B6A.1](../validation/c5/c5-b6a-1-warehouse-traffic-architecture-2026-11-15.md), [B6B.0](../validation/c5/c5-b6b0-followpath-spike-2026-11-15.md), [B6B.1](../validation/c5/c5-b6b1-traffic-core-2026-11-15.md), [Outbox](c3-2-sqlite-outbox.md). [Doğrulama](../validation/c5/c5-b6b2-traffic-protocol-2026-11-15.md), [Mermaid kaynak](../diagrams/src/traffic-permit-protocol.mmd), [türetilmiş SVG](../diagrams/svg/traffic-permit-protocol.svg).

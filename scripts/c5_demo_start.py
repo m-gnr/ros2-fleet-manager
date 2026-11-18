@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shlex
 import socket
 import subprocess
 import sys
@@ -18,7 +19,6 @@ from c5_session_cleanup import CleanupError, run
 
 
 IMAGE = "ros2-fleet-c5-validation:humble-fortress"
-EXPECTED_ROBOTS = {"robot_alpha", "robot_beta", "robot_gamma"}
 OVERLAY_PACKAGES = (Path("interfaces/fleet_interfaces"), Path("ros2_ws/src/fleet_perception"))
 
 
@@ -71,17 +71,26 @@ def api_get(port: int, path: str) -> dict:
 
 def main() -> int:
     root = Path(sys.argv[1]).resolve()
+    sys.path.insert(0, str(root))
+    from fleet_config import load_config
     session_id = os.environ.get("C5_SESSION_ID", "")
     domain = os.environ.get("ROS_DOMAIN_ID", "")
     if not session_id or not domain.isdigit():
         raise CleanupError("C5_SESSION_ID veya benzersiz ROS_DOMAIN_ID eksik")
-    profile = root / "config/fleet.warehouse-30x18.yaml"
+    profile = (root / os.environ.get("C5_DEMO_PROFILE", "config/fleet.warehouse-30x18.yaml")).resolve()
+    try:
+        profile.relative_to(root / "config")
+    except ValueError as error:
+        raise CleanupError("C5_DEMO_PROFILE yalnız bu workspace'in config dizininde olmalı") from error
+    if not profile.is_file() or profile.suffix != ".yaml":
+        raise CleanupError("C5_DEMO_PROFILE geçerli bir YAML dosyası olmalı")
+    expected_robots = {robot.id for robot in load_config(profile).robots}
     config_check = subprocess.run([sys.executable, "-m", "fleet_config", str(profile)], cwd=root)
     if config_check.returncode:
-        raise CleanupError("Üç robotlu C5 profil doğrulaması başarısız")
+        raise CleanupError("C5 profil doğrulaması başarısız")
     test_check = subprocess.run([sys.executable, "docker/simulation-warehouse-grid/test_startup_readiness.py"], cwd=root)
     if test_check.returncode:
-        raise CleanupError("Üç robotlu AMCL/Nav2/TF readiness testi başarısız")
+        raise CleanupError("AMCL/Nav2/TF readiness testi başarısız")
     cache, _fingerprint, _image_id = overlay_cache(root)
 
     api_port = available_port(int(os.environ.get("C5_API_PORT", "21482")), set())
@@ -106,7 +115,7 @@ def main() -> int:
         "export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:"
         "/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; "
         "exec python3 docker/simulation-warehouse-grid/stage1_run.py "
-        "config/fleet.warehouse-30x18.yaml /evidence/live "
+        f"{shlex.quote(str(profile.relative_to(root)))} /evidence/live "
         f"--api-port {api_port} --scene-port {scene_port} "
         f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install"
     )
@@ -125,7 +134,7 @@ def main() -> int:
         "session_id": session_id, "ros_domain_id": int(domain), "workspace": str(root),
         "container_name": session_id, "api_port": api_port, "scene_port": scene_port,
         "ui_port": ui_port, "started_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "expected_robots": sorted(EXPECTED_ROBOTS), "task_submissions": 0,
+        "expected_robots": sorted(expected_robots), "profile": str(profile.relative_to(root)), "task_submissions": 0,
     }, indent=2) + "\n")
 
     readiness_path = evidence / "live/startup-readiness.json"
@@ -151,13 +160,13 @@ def main() -> int:
             idle = all(item.get("active_task_id") is None and item.get("state") == "IDLE"
                        and item.get("telemetry") == "LIVE" and item.get("pose_reliability") == "LIVE"
                        for item in robot_rows)
-            phases_ready = bool(readiness and set(readiness.get("robots", {})) == EXPECTED_ROBOTS and
+            phases_ready = bool(readiness and set(readiness.get("robots", {})) == expected_robots and
                                 set(readiness.get("required_phases", [])) == {"amcl", "nav2", "tf"} and
                                 all(readiness["robots"][robot].get(phase, {}).get("ready") is True
-                                    for robot in EXPECTED_ROBOTS for phase in ("amcl", "nav2", "tf")))
+                                    for robot in expected_robots for phase in ("amcl", "nav2", "tf")))
             if (readiness and readiness.get("status") == "READY" and
                     readiness.get("current_status") == "READY" and phases_ready and
-                    health.get("source") == "LIVE" and ids == EXPECTED_ROBOTS and idle and
+                    health.get("source") == "LIVE" and ids == expected_robots and idle and
                     tasks.get("task_counts", {}).get("total") == 0 and
                     tasks.get("task_counts", {}).get("active") == 0):
                 break
@@ -165,7 +174,7 @@ def main() -> int:
             pass
         time.sleep(0.5)
     else:
-        raise CleanupError(f"300 sn içinde üç robot için gerçek AMCL/Nav2/TF readiness sağlanmadı; container={session_id}")
+        raise CleanupError(f"300 sn içinde AMCL/Nav2/TF readiness sağlanmadı; container={session_id}")
 
     gui_log = (evidence / "gui-vite.log").open("ab", buffering=0)
     gui_env = os.environ.copy()
@@ -192,12 +201,12 @@ def main() -> int:
         "ui_port": ui_port, "vite_pid": gui.pid,
         "started_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "ready_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "robots": sorted(EXPECTED_ROBOTS), "readiness": readiness,
+        "robots": sorted(expected_robots), "profile": str(profile.relative_to(root)), "readiness": readiness,
         "tasks": tasks, "task_submissions": 0,
     }, indent=2) + "\n")
     print(json.dumps({"result": "READY", "session_id": session_id, "ros_domain_id": int(domain),
                       "container": session_id, "api": f"http://127.0.0.1:{api_port}",
-                      "gui": f"http://127.0.0.1:{ui_port}/", "robots": sorted(EXPECTED_ROBOTS),
+                      "gui": f"http://127.0.0.1:{ui_port}/", "robots": sorted(expected_robots),
                       "task_counts": tasks.get("task_counts"), "evidence": str(evidence)}, indent=2))
     return 0
 

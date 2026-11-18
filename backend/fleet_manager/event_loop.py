@@ -141,6 +141,9 @@ class FleetEventLoop:
                     future.set_result(result)
             finally:
                 self._queue.task_done()
+            # Queue.get() does not suspend while a backlog exists. Yield only
+            # after the complete transaction and committed memory publication.
+            await asyncio.sleep(0)
 
     def _process(self, event):
         db = self.store.connection

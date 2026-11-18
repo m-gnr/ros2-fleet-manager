@@ -18,6 +18,11 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5 kanıta dayalı performans](validation/c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.
+
+
+- [C5 TF STALE kök neden ve canlı karşılaştırma](validation/c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](validation/c5/tf-stale-commands-2026-11-18.md): ürün kesintisinin TF soketini kapatma hatası düzeltildi; üç robotlu gerçek TF ve snapshot gecikmesi açık.
+
 - [Visualize V6 dış zemin paleti](validation/c5/visualize-v6-palette-2026-11-17.md).
 
 - [Visualize V6 yaşayan dış çevre](validation/c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v6-commands-2026-11-17.md).

@@ -1,0 +1,433 @@
+{
+  "composition-tail": {
+    "sqlite_commit_s": null,
+    "sqlite_transaction_s": null,
+    "event_loop_lag_s": null,
+    "event_duration_s": null,
+    "sqlite_commit_by_event_s": {},
+    "queue_depth": null,
+    "publisher_write_s": null,
+    "publisher_actual_intervals_s": null,
+    "publisher_right_censored_gap_s": null,
+    "nav2_query_s": null,
+    "nav2_query_outcomes": {},
+    "max_executing": 0,
+    "task_states_last": [],
+    "action_results": [],
+    "worst_5s_simulation_windows": [
+      {
+        "start_utc": 1794955281.7753015,
+        "duration_s": 1.9695751680001194,
+        "samples": 20,
+        "rtf_by_received_sim_progress": 0.8732847712263072,
+        "reported_rtf_mean": 0.91387
+      }
+    ],
+    "max_simultaneous_odom_moving": 2,
+    "three_moving_source_stamp_span_s": null,
+    "longest_three_moving_sample_segment_s": null,
+    "three_moving_segment_physical_displacement_m": {},
+    "unsafe_contacts": [],
+    "observer_relative_callback_delay_s": {
+      "physical:robot_alpha": null,
+      "odom:robot_alpha": null,
+      "physical:robot_beta": null,
+      "odom:robot_beta": null,
+      "physical:robot_gamma": null,
+      "odom:robot_gamma": null
+    },
+    "amcl_xy_error_m": {
+      "robot_alpha": null,
+      "robot_beta": null,
+      "robot_gamma": null
+    },
+    "amcl_yaw_error_rad": {
+      "robot_alpha": null,
+      "robot_beta": null,
+      "robot_gamma": null
+    },
+    "physical_distance_m": {
+      "robot_alpha": 0.03937529998818065,
+      "robot_beta": 0.004053608689151391,
+      "robot_gamma": 0.16578947368422806
+    },
+    "completed_task_physical_errors": []
+  },
+  "composition": {
+    "sqlite_commit_s": {
+      "n": 12955,
+      "mean": 0.005656254732457385,
+      "p50": 0.0019973339999523887,
+      "p95": 0.020657542000208196,
+      "min": 2.1249998098937795e-06,
+      "max": 0.4244507089997569
+    },
+    "sqlite_transaction_s": {
+      "n": 12955,
+      "mean": 0.010650808325125266,
+      "p50": 0.005434165999758989,
+      "p95": 0.03272004200016454,
+      "min": 1.8124999769497663e-05,
+      "max": 0.7593311670002549
+    },
+    "event_loop_lag_s": {
+      "n": 2222,
+      "mean": 0.031058244107380586,
+      "p50": 0.013096041999688168,
+      "p95": 0.10985829199989894,
+      "min": 3.258399965488934e-05,
+      "max": 0.7794192499995916
+    },
+    "event_duration_s": {
+      "n": 12955,
+      "mean": 0.010764597454190816,
+      "p50": 0.005522292000023299,
+      "p95": 0.032924708999871655,
+      "min": 2.2416000319935847e-05,
+      "max": 0.7595742499997868
+    },
+    "sqlite_commit_by_event_s": {
+      "TICK": {
+        "n": 1262,
+        "mean": 0.008169991563390896,
+        "p50": 0.0029886249999435677,
+        "p95": 0.026358042000083515,
+        "min": 0.00020312500009822543,
+        "max": 0.3448600419997092
+      },
+      "OUTBOX_CLAIM": {
+        "n": 1222,
+        "mean": 4.507716775748396e-05,
+        "p50": 5.167000381334219e-06,
+        "p95": 8.154199986165622e-05,
+        "min": 2.1249998098937795e-06,
+        "max": 0.005987042000015208
+      },
+      "ROBOT_STATUS": {
+        "n": 2641,
+        "mean": 0.006407121409321847,
+        "p50": 0.0024834169998939615,
+        "p95": 0.02227474999972401,
+        "min": 0.00015483400011362392,
+        "max": 0.4244507089997569
+      },
+      "SUBMIT_TASK": {
+        "n": 3,
+        "mean": 0.004529861000113063,
+        "p50": 0.005215832999965642,
+        "p95": 0.006764250000287575,
+        "min": 0.0016095000000859727,
+        "max": 0.006764250000287575
+      },
+      "ROUTE_RESOLVED": {
+        "n": 40,
+        "mean": 0.006300183299981654,
+        "p50": 0.0036195830002725415,
+        "p95": 0.025794666999900073,
+        "min": 0.0003708330000335991,
+        "max": 0.03005279100034386
+      },
+      "ACTION_FEEDBACK": {
+        "n": 7781,
+        "mean": 0.005871241717898445,
+        "p50": 0.002304291999735142,
+        "p95": 0.020657542000208196,
+        "min": 0.0001606669998182042,
+        "max": 0.42316008299985697
+      },
+      "OUTBOX_FINISH": {
+        "n": 4,
+        "mean": 0.005748145999973531,
+        "p50": 0.0005472089997056173,
+        "p95": 0.021193041000060475,
+        "min": 0.0003377500001988665,
+        "max": 0.021193041000060475
+      },
+      "ACTION_RESULT": {
+        "n": 1,
+        "mean": 0.010296709000158444,
+        "p50": 0.010296709000158444,
+        "p95": 0.010296709000158444,
+        "min": 0.010296709000158444,
+        "max": 0.010296709000158444
+      }
+    },
+    "queue_depth": {
+      "n": 12955,
+      "mean": 3.9680432265534544,
+      "p50": 2,
+      "p95": 17,
+      "min": 0,
+      "max": 45
+    },
+    "publisher_write_s": {
+      "n": 625,
+      "mean": 0.00855989321760062,
+      "p50": 0.002692292000119778,
+      "p95": 0.03140741599963803,
+      "min": 0.00042500000017753337,
+      "max": 0.30368437499964784
+    },
+    "publisher_actual_intervals_s": {
+      "n": 624,
+      "mean": 0.28836083780288463,
+      "p50": 0.2600377089997892,
+      "p95": 0.48059462499986694,
+      "min": 0.026923165999960474,
+      "max": 1.148285291999855
+    },
+    "publisher_right_censored_gap_s": 0.07619754200004536,
+    "nav2_query_s": {
+      "n": 40,
+      "mean": 0.16406148245006308,
+      "p50": 0.11034420799978761,
+      "p95": 0.5591608340000676,
+      "min": 0.046239499999956024,
+      "max": 0.933157876000223
+    },
+    "nav2_query_outcomes": {
+      "success": 40
+    },
+    "max_executing": 3,
+    "task_states_last": [
+      {
+        "task": "web-6ac883f4-0acc-4efe-a5ee-7c2e86c9996d",
+        "state": "EXECUTING",
+        "robot": "robot_gamma"
+      },
+      {
+        "task": "web-519b1567-69eb-4b38-bbe5-42ea9ad7e7ff",
+        "state": "COMPLETED",
+        "robot": "robot_beta"
+      },
+      {
+        "task": "web-9b94fc5a-0a6e-48aa-8830-7e3d4d382912",
+        "state": "EXECUTING",
+        "robot": "robot_alpha"
+      }
+    ],
+    "action_results": [
+      {
+        "robot": "robot_beta",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      },
+      {
+        "robot": "robot_gamma",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      },
+      {
+        "robot": "robot_beta",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      },
+      {
+        "robot": "robot_beta",
+        "action": "execute_task",
+        "message": {
+          "status": 4,
+          "result": {
+            "status": 1,
+            "completed_epoch": 1,
+            "completion_stamp": {
+              "sec": 116,
+              "nanosec": 235000000
+            },
+            "error_reason": ""
+          }
+        }
+      },
+      {
+        "robot": "robot_alpha",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      }
+    ],
+    "worst_5s_simulation_windows": [
+      {
+        "start_utc": 1794954937.7029119,
+        "duration_s": 4.788448460999916,
+        "samples": 36,
+        "rtf_by_received_sim_progress": 0.5419291908715911,
+        "reported_rtf_mean": 0.7301277777777778
+      },
+      {
+        "start_utc": 1794955087.57788,
+        "duration_s": 4.910413377999703,
+        "samples": 40,
+        "rtf_by_received_sim_progress": 0.5467971417701205,
+        "reported_rtf_mean": 0.7020725
+      },
+      {
+        "start_utc": 1794954952.5441413,
+        "duration_s": 4.881806460000007,
+        "samples": 42,
+        "rtf_by_received_sim_progress": 0.5479528985669776,
+        "reported_rtf_mean": 0.68275
+      },
+      {
+        "start_utc": 1794954967.7630684,
+        "duration_s": 4.687344544000098,
+        "samples": 42,
+        "rtf_by_received_sim_progress": 0.5621519765114892,
+        "reported_rtf_mean": 0.7015190476190476
+      },
+      {
+        "start_utc": 1794954987.6355271,
+        "duration_s": 4.810344336000071,
+        "samples": 43,
+        "rtf_by_received_sim_progress": 0.5696057929770539,
+        "reported_rtf_mean": 0.727506976744186
+      }
+    ],
+    "max_simultaneous_odom_moving": 3,
+    "three_moving_source_stamp_span_s": 105.0,
+    "longest_three_moving_sample_segment_s": 41.37,
+    "three_moving_segment_physical_displacement_m": {
+      "robot_alpha": 9.726556475824943,
+      "robot_beta": 8.316145672695086,
+      "robot_gamma": 9.991546673075446
+    },
+    "unsafe_contacts": [],
+    "observer_relative_callback_delay_s": {
+      "physical:robot_alpha": {
+        "n": 1033,
+        "mean": 0.22914398529333363,
+        "p50": 0.19914479199997004,
+        "p95": 0.5085008330001983,
+        "min": 0.006607167000311165,
+        "max": 1.2937786259999484
+      },
+      "odom:robot_alpha": {
+        "n": 635,
+        "mean": 0.24519714020944725,
+        "p50": 0.20414883400007966,
+        "p95": 0.5518347090001043,
+        "min": 0.006569250000211468,
+        "max": 1.2956413339998107
+      },
+      "physical:robot_beta": {
+        "n": 1032,
+        "mean": 0.22813786454456167,
+        "p50": 0.1983960420002404,
+        "p95": 0.5039014170001792,
+        "min": 0.008739584000068135,
+        "max": 1.3198584589999882
+      },
+      "odom:robot_beta": {
+        "n": 639,
+        "mean": 0.24780890991236665,
+        "p50": 0.20585170799995467,
+        "p95": 0.5595272509999631,
+        "min": 0.007731790999969235,
+        "max": 1.267174167000121
+      },
+      "physical:robot_gamma": {
+        "n": 1033,
+        "mean": 0.22969043141723172,
+        "p50": 0.19801450100021611,
+        "p95": 0.5076309589999255,
+        "min": 0.010657499999979336,
+        "max": 1.2804034589998992
+      },
+      "odom:robot_gamma": {
+        "n": 639,
+        "mean": 0.24862437466823017,
+        "p50": 0.20650629200008552,
+        "p95": 0.584250376,
+        "min": 0.028311083000062354,
+        "max": 1.2586475829998562
+      }
+    },
+    "amcl_xy_error_m": {
+      "robot_alpha": {
+        "n": 178,
+        "mean": 0.0551565597796736,
+        "p50": 0.04719882007202527,
+        "p95": 0.12359589031901543,
+        "min": 0.004304906328856744,
+        "max": 0.16257699761192207
+      },
+      "robot_beta": {
+        "n": 175,
+        "mean": 0.05040062147546761,
+        "p50": 0.049585875249484414,
+        "p95": 0.09243762757666113,
+        "min": 0.0023128850436708605,
+        "max": 0.11462426057739232
+      },
+      "robot_gamma": {
+        "n": 179,
+        "mean": 0.059140777780025064,
+        "p50": 0.05044738735571813,
+        "p95": 0.1510696962507453,
+        "min": 0.0022361868241827228,
+        "max": 0.1758360931290757
+      }
+    },
+    "amcl_yaw_error_rad": {
+      "robot_alpha": {
+        "n": 178,
+        "mean": 0.011840071253066197,
+        "p50": 0.009489100920735627,
+        "p95": 0.03092650239184458,
+        "min": 4.2924776147312826e-05,
+        "max": 0.048701695639643355
+      },
+      "robot_beta": {
+        "n": 175,
+        "mean": 0.010399058492148294,
+        "p50": 0.008663758574713132,
+        "p95": 0.025993649587141232,
+        "min": 5.643936178367781e-05,
+        "max": 0.040000813244059685
+      },
+      "robot_gamma": {
+        "n": 179,
+        "mean": 0.013245340095156771,
+        "p50": 0.012047189427004222,
+        "p95": 0.03159566016757803,
+        "min": 0.00015025158310238984,
+        "max": 0.0405771305795426
+      }
+    },
+    "physical_distance_m": {
+      "robot_alpha": 23.64564470511637,
+      "robot_beta": 21.78495854504096,
+      "robot_gamma": 23.47512751574448
+    },
+    "completed_task_physical_errors": [
+      {
+        "task": "web-519b1567-69eb-4b38-bbe5-42ea9ad7e7ff",
+        "robot": "robot_beta",
+        "status": 4,
+        "result_status": 1,
+        "assignment_epoch": 1,
+        "actual_completed_epoch": 1,
+        "completion_stamp_ns": 116235000000,
+        "physical_target_error_m": 0.2568907308936801
+      }
+    ]
+  }
+}

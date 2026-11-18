@@ -1,0 +1,156 @@
+{
+  "fairness-uninstrumented": {
+    "sqlite_commit_s": null,
+    "sqlite_transaction_s": null,
+    "event_loop_lag_s": null,
+    "event_duration_s": null,
+    "queue_depth": null,
+    "publisher_write_s": null,
+    "nav2_query_s": null,
+    "nav2_query_outcomes": {},
+    "max_executing": 2,
+    "task_states_last": [
+      {
+        "task": "web-06a754e6-7435-409a-9041-68ba649a283a",
+        "state": "EXECUTING",
+        "robot": "robot_gamma"
+      },
+      {
+        "task": "web-07dfa007-cd7a-4aea-b35b-6bade3705a4f",
+        "state": "EXECUTING",
+        "robot": "robot_beta"
+      },
+      {
+        "task": "web-b86f5c61-302c-4261-aa8f-25903e24fb36",
+        "state": "QUEUED",
+        "robot": null
+      }
+    ],
+    "action_results": [
+      {
+        "robot": "robot_beta",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      }
+    ],
+    "worst_5s_simulation_windows": [
+      {
+        "start_utc": 1794953901.9844754,
+        "duration_s": 4.426940460000196,
+        "samples": 28,
+        "rtf_by_received_sim_progress": 0.2880092947985895,
+        "reported_rtf_mean": 0.49254642857142855
+      },
+      {
+        "start_utc": 1794953936.5143526,
+        "duration_s": 4.760562835999963,
+        "samples": 33,
+        "rtf_by_received_sim_progress": 0.35289944863150063,
+        "reported_rtf_mean": 0.49976363636363635
+      },
+      {
+        "start_utc": 1794954006.5497468,
+        "duration_s": 4.820772669000007,
+        "samples": 37,
+        "rtf_by_received_sim_progress": 0.36197516867394053,
+        "reported_rtf_mean": 0.4706945945945946
+      },
+      {
+        "start_utc": 1794953921.490238,
+        "duration_s": 4.922833417999982,
+        "samples": 37,
+        "rtf_by_received_sim_progress": 0.3930663168338814,
+        "reported_rtf_mean": 0.4971810810810811
+      },
+      {
+        "start_utc": 1794953951.54064,
+        "duration_s": 4.870186585000056,
+        "samples": 35,
+        "rtf_by_received_sim_progress": 0.400395337214781,
+        "reported_rtf_mean": 0.5821057142857142
+      }
+    ],
+    "max_simultaneous_odom_moving": 2,
+    "three_moving_source_stamp_span_s": null,
+    "unsafe_contacts": [],
+    "observer_relative_callback_delay_s": {
+      "physical:robot_alpha": {
+        "n": 810,
+        "mean": 0.29061646208888897,
+        "p50": 0.23743195800011563,
+        "p95": 0.644933458999958,
+        "min": 0.06681275000005371,
+        "max": 1.4109819999998763
+      },
+      "odom:robot_alpha": {
+        "n": 538,
+        "mean": 0.3077553997546457,
+        "p50": 0.2450204169999779,
+        "p95": 0.6981090420001692,
+        "min": 0.07051737500000854,
+        "max": 1.4097860010001568
+      },
+      "physical:robot_beta": {
+        "n": 802,
+        "mean": 0.2927068446371577,
+        "p50": 0.2361844999998084,
+        "p95": 0.6468062919998374,
+        "min": 0.07340033300010873,
+        "max": 1.3163691260001542
+      },
+      "odom:robot_beta": {
+        "n": 540,
+        "mean": 0.30620097003333185,
+        "p50": 0.2454790409999532,
+        "p95": 0.7340711249999003,
+        "min": 0.09675658299988754,
+        "max": 1.3268725420000465
+      },
+      "physical:robot_gamma": {
+        "n": 791,
+        "mean": 0.29062169648672814,
+        "p50": 0.23785420899980636,
+        "p95": 0.6350266249999095,
+        "min": 0.07410499999991771,
+        "max": 1.502813667999817
+      },
+      "odom:robot_gamma": {
+        "n": 534,
+        "mean": 0.30479766611423476,
+        "p50": 0.24584933300002376,
+        "p95": 0.7054771260000052,
+        "min": 0.08825624999985848,
+        "max": 1.5333187510000243
+      }
+    },
+    "amcl_xy_error_m": {
+      "robot_alpha": null,
+      "robot_beta": {
+        "n": 128,
+        "mean": 0.06485572404468587,
+        "p50": 0.049802527475409336,
+        "p95": 0.13379797944273794,
+        "min": 0.0007245770002414742,
+        "max": 0.17845766631790377
+      },
+      "robot_gamma": {
+        "n": 132,
+        "mean": 0.04735536857954596,
+        "p50": 0.038245385590249155,
+        "p95": 0.14662159199946967,
+        "min": 0.002105070693908003,
+        "max": 0.19353639040074774
+      }
+    },
+    "physical_distance_m": {
+      "robot_alpha": 0.0,
+      "robot_beta": 14.436215817476322,
+      "robot_gamma": 16.726982547243523
+    }
+  }
+}

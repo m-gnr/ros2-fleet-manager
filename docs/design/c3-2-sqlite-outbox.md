@@ -8,7 +8,7 @@
 
 ## Uygulama sınırı
 
-`backend/fleet_manager/event_loop.py`, C3.1 `FleetManagerCore` çekirdeğini kullanır. `FleetEventLoop` yalnız bir `asyncio.Queue` consumer çalıştırır. Üreticiler `Event` değerlerini `submit` ile verir. İkinci consumer başlatılması reddedilir. Kuyruğa giriş sırası korunur; bu sıra ağın üretim sırası garantisi değildir. Görev önceliği/FIFO kararı yine domain zamanlayıcısındadır.
+`backend/fleet_manager/event_loop.py`, C3.1 `FleetManagerCore` çekirdeğini kullanır. `FleetEventLoop` yalnız bir `asyncio.Queue` consumer çalıştırır. Üreticiler `Event` değerlerini `submit` ile verir. İkinci consumer başlatılması reddedilir. Kuyruğa giriş sırası korunur; bu sıra ağın üretim sırası garantisi değildir. 18 Kasım 2026 performans düzeltmesinde consumer, her tamamlanmış olaydan sonra asyncio döngüsüne çalışma sırası verir. Transaction ve commit sonrası bellek yayını birlikte tamamlanır; sıradaki domain olayı bundan sonra işlenir. Bu, dolu kuyrukta dashboard yayıncısı ve diğer zamanlayıcıların uzun süre beklemesini sınırlar; SQLite işlemini asenkron yapmaz. [Ölçüm kaydı](../validation/c5/performance-2026-11-18.md). Görev önceliği/FIFO kararı yine domain zamanlayıcısındadır.
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ Zamanlayıcı aktif görev sahipliğini denetler. Terminal sonuçtan önce gelen
 
 ## SQLite şeması
 
-Şema `backend/fleet_manager/persistence/schema.sql` içindedir. SQLite yabancı anahtarları açık, kalıcı yazma ayarı `synchronous=FULL` kullanılır. Bu ilk şema sürümüdür; eski bir ürün şemasından geçiş desteği yoktur.
+Şema `backend/fleet_manager/persistence/schema.sql` içindedir. SQLite yabancı anahtarları açık, kalıcı yazma ayarı `synchronous=FULL` kullanılır. 18 Kasım 2026 ölçümüne dayalı değişiklikte dosya veritabanları `journal_mode=WAL` kullanır; bellek testlerinde SQLite doğal `memory` modunu döndürür. WAL etkinleşmezse açık hatayla başlangıç durur. Tek consumer/yazar, her olayın `BEGIN IMMEDIATE`/`COMMIT` sınırı ve commit sonrası bellek yayını aynıdır. Salt okunur observer ayrı bir okuma görüntüsü tutarken yazarı kilitlemez. `-wal` ve `-shm` dosyaları SQLite kalıcı durumunun parçasıdır; aynı yerel volume içinde tutulur, çalışan veritabanı yalnız ana dosyası kopyalanarak yedeklenmez. Kabul aracı bütün süreçleri kapattıktan sonra SQLite backup API kullanır. Ağ dosya sistemi veya ikinci yazar/checkpointer desteklenmez. Gerekçe ve önce/sonra kanıtı [performans kaydındadır](../validation/c5/performance-2026-11-18.md); [SQLite WAL](https://sqlite.org/wal.html) ve [FULL](https://sqlite.org/pragma.html#pragma_synchronous) sözleşmeleri esas alındı. Bu ilk şema sürümüdür; eski bir ürün şemasından geçiş desteği yoktur.
 
 | Tablo | İçerik ve kısıt |
 |---|---|

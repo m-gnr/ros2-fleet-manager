@@ -1,0 +1,39 @@
+{
+  "start_utc": 1794953900.8862872,
+  "label": "fairness-uninstrumented",
+  "mode": "chrome",
+  "commands": [
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T221747Z-b41e671a",
+      "python3",
+      "/tmp/perf-tools/sample.py",
+      "/evidence/fairness-uninstrumented",
+      "180.0"
+    ],
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T221747Z-b41e671a",
+      "bash",
+      "-c",
+      "source /opt/ros/humble/setup.bash; python3 /tmp/perf-tools/ros.py /evidence/fairness-uninstrumented/ros-probe.jsonl 180.0"
+    ],
+    [
+      "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+      "scripts/c5_telemetry_probe.py",
+      "/tmp/c5-perf-20261117T221747Z-b41e671a",
+      "/tmp/c5-perf-20261117T221747Z-b41e671a/fairness-uninstrumented/api-ws.jsonl",
+      "--seconds",
+      "180.0"
+    ],
+    [
+      "node",
+      "/tmp/c5-perf-tools/chrome.mjs",
+      "http://127.0.0.1:21723/",
+      "/tmp/c5-perf-20261117T221747Z-b41e671a/fairness-uninstrumented/chrome.jsonl",
+      "177.0"
+    ]
+  ]
+}

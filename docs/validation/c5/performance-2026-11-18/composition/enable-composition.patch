@@ -1,0 +1,11 @@
+--- a/docker/simulation-warehouse-grid/serve.py
++++ b/docker/simulation-warehouse-grid/serve.py
+@@ -46,7 +46,7 @@
+             "ros2", "launch", "nav2_bringup", "bringup_launch.py",
+             "use_sim_time:=True", "autostart:=True", "use_namespace:=True", "namespace:=" + ns,
+             "map:=" + str(args.output / "map.yaml"), "params_file:=" + str(args.output / f"nav2-{robot.id}.yaml"),
+-            "slam:=False", "use_composition:=False",
++            "slam:=False", "use_composition:=True",
+         ]))
+     return run_simulation(commands, namespaces, emit)
+ 

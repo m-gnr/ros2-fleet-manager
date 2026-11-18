@@ -1,0 +1,14 @@
+True
+    def __init__(self, name, level=NOTSET):
+        """
+        Initialize the logger with a name and an optional level.
+        """
+        Filterer.__init__(self)
+        self.name = name
+        self.level = _checkLevel(level)
+        self.parent = None
+        self.propagate = True
+        self.handlers = []
+        self.disabled = False
+        self._cache = {}
+

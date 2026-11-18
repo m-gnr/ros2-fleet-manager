@@ -1,0 +1,201 @@
+{
+  "robot_alpha": {
+    "components": [
+      "/robot_alpha/map_server",
+      "/robot_alpha/amcl",
+      "/robot_alpha/lifecycle_manager_localization",
+      "/robot_alpha/controller_server",
+      "/robot_alpha/smoother_server",
+      "/robot_alpha/planner_server",
+      "/robot_alpha/behavior_server",
+      "/robot_alpha/bt_navigator",
+      "/robot_alpha/waypoint_follower",
+      "/robot_alpha/velocity_smoother",
+      "/robot_alpha/lifecycle_manager_navigation"
+    ],
+    "amcl": [
+      {
+        "type": 1,
+        "bool": true,
+        "double": 0.0,
+        "string": ""
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "robot_alpha/base_link"
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "robot_alpha/odom"
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "/robot_alpha/scan"
+      }
+    ],
+    "controller": [
+      {
+        "type": 1,
+        "bool": true,
+        "double": 0.0,
+        "string": ""
+      },
+      {
+        "type": 3,
+        "bool": false,
+        "double": 10.0,
+        "string": ""
+      }
+    ],
+    "navigate_to_pose_ready": true,
+    "tf_publishers": [
+      {
+        "name": "warehouse_tf",
+        "namespace": "/"
+      },
+      {
+        "name": "_NODE_NAME_UNKNOWN_",
+        "namespace": "_NODE_NAMESPACE_UNKNOWN_"
+      }
+    ]
+  },
+  "robot_beta": {
+    "components": [
+      "/robot_beta/controller_server",
+      "/robot_beta/map_server",
+      "/robot_beta/smoother_server",
+      "/robot_beta/amcl",
+      "/robot_beta/planner_server",
+      "/robot_beta/lifecycle_manager_localization",
+      "/robot_beta/behavior_server",
+      "/robot_beta/bt_navigator",
+      "/robot_beta/waypoint_follower",
+      "/robot_beta/velocity_smoother",
+      "/robot_beta/lifecycle_manager_navigation"
+    ],
+    "amcl": [
+      {
+        "type": 1,
+        "bool": true,
+        "double": 0.0,
+        "string": ""
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "robot_beta/base_link"
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "robot_beta/odom"
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "/robot_beta/scan"
+      }
+    ],
+    "controller": [
+      {
+        "type": 1,
+        "bool": true,
+        "double": 0.0,
+        "string": ""
+      },
+      {
+        "type": 3,
+        "bool": false,
+        "double": 10.0,
+        "string": ""
+      }
+    ],
+    "navigate_to_pose_ready": true,
+    "tf_publishers": [
+      {
+        "name": "warehouse_tf",
+        "namespace": "/"
+      },
+      {
+        "name": "amcl",
+        "namespace": "/robot_beta"
+      }
+    ]
+  },
+  "robot_gamma": {
+    "components": [
+      "/robot_gamma/map_server",
+      "/robot_gamma/controller_server",
+      "/robot_gamma/amcl",
+      "/robot_gamma/smoother_server",
+      "/robot_gamma/lifecycle_manager_localization",
+      "/robot_gamma/planner_server",
+      "/robot_gamma/behavior_server",
+      "/robot_gamma/bt_navigator",
+      "/robot_gamma/waypoint_follower",
+      "/robot_gamma/velocity_smoother",
+      "/robot_gamma/lifecycle_manager_navigation"
+    ],
+    "amcl": [
+      {
+        "type": 1,
+        "bool": true,
+        "double": 0.0,
+        "string": ""
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "robot_gamma/base_link"
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "robot_gamma/odom"
+      },
+      {
+        "type": 4,
+        "bool": false,
+        "double": 0.0,
+        "string": "/robot_gamma/scan"
+      }
+    ],
+    "controller": [
+      {
+        "type": 1,
+        "bool": true,
+        "double": 0.0,
+        "string": ""
+      },
+      {
+        "type": 3,
+        "bool": false,
+        "double": 10.0,
+        "string": ""
+      }
+    ],
+    "navigate_to_pose_ready": true,
+    "tf_publishers": [
+      {
+        "name": "warehouse_tf",
+        "namespace": "/"
+      },
+      {
+        "name": "amcl",
+        "namespace": "/robot_gamma"
+      }
+    ]
+  },
+  "unresolved": []
+}

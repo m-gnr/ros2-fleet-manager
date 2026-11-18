@@ -1,0 +1,33 @@
+logging /usr/lib/python3.10/logging/__init__.py root [<_LiveLoggingNullHandler (NOTSET)>, <_FileHandler /dev/null (NOTSET)>, <LogCaptureHandler (NOTSET)>, <LogCaptureHandler (NOTSET)>]
+backend False False 0 []
+backend.fleet_manager False False 0 []
+backend.fleet_manager.domain False False 0 []
+backend.fleet_manager.domain.fleet_manager_core False False 0 []
+backend.fleet_manager.adapters.route_planning False False 0 []
+CAPLOG ''
+F
+=================================== FAILURES ===================================
+_________________________________ test_capture _________________________________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0xffffb53f39a0>
+
+    def test_capture(caplog):
+        print('logging',logging.__file__,'root',logging.root.handlers)
+        for name in ('backend','backend.fleet_manager','backend.fleet_manager.domain','backend.fleet_manager.domain.fleet_manager_core','backend.fleet_manager.adapters.route_planning'):
+            logger=logging.getLogger(name)
+            print(name,logger.disabled,logger.propagate,logger.level,logger.handlers)
+            logger.warning('probe %s',name)
+        print('CAPLOG',repr(caplog.text))
+>       assert 'probe backend.fleet_manager.domain.fleet_manager_core' in caplog.text
+E       AssertionError: assert 'probe backend.fleet_manager.domain.fleet_manager_core' in ''
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0xffffb53f39a0>.text
+
+/perf-tools/native_logging_probe.py:13: AssertionError
+=========================== short test summary info ============================
+FAILED ../perf-tools/native_logging_probe.py::test_capture - AssertionError: ...
+1 failed in 0.13s
+probe backend
+probe backend.fleet_manager
+probe backend.fleet_manager.domain
+probe backend.fleet_manager.domain.fleet_manager_core
+probe backend.fleet_manager.adapters.route_planning

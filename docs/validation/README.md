@@ -1,5 +1,7 @@
 # Doğrulama kayıtları
 
+- [C5 kanıta dayalı performans](c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.
+
 Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalıştırılan komutları ve alınan çıktıları aynen korur; eski Compose yolları için [güncel yol kılavuzunu](../../docker/compose/README.md) kullanın. Tarihsel komutların bu düzenlemede yeniden çalıştırıldığı iddia edilmez.
 
 | Aşama | Kayıtlar | Tarihsel sonuç |
@@ -50,6 +52,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
 | C4.5 | [Sonuç raporu](c4/c4-5-validation-2026-11-06.md) · [Komut eki](c4/c4-5-commands-2026-11-06.md) · [C4 kabul listesi](c4/c4-acceptance-2026-11-06.md) | İki robotlu enerji, fiziksel şarj devri, görev ve güvenli preemption |
 | C5 Aşama 1 | [Rapor](c5/c5-stage1-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-commands-2026-11-06.md) · [Performans](c5/c5-stage1-performance-2026-11-06.md) | İki robotlu Fortress ve Chrome, salt okunur canlı panel ve güvenli yeniden eşitleme |
 | C5 Aşama 1.5 | [Rapor](c5/c5-stage1-5-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-5-commands-2026-11-06.md) | 3D Chrome/WebGL, TF/Path ve bağımsız ürün güncelliği |
+| C5 TF STALE araştırması | [Rapor](c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](c5/tf-stale-commands-2026-11-18.md) | 1/2/3 robot canlı karşılaştırması; frontend ürün/TF ayrımı düzeltildi, üç robotlu tam kabul açık |
 | C5 Aşama 1.6 | [Rapor](c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-commands-2026-11-06.md) | Depo öncelikli yerleşim, kadraj ve canlı Chrome karşılaştırması |
 | C5 Aşama 1.6 görsel kabul düzeltmesi | [Rapor](c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-visual-commands-2026-11-06.md) | Üretim Chrome projeksiyonu, robot işaretleri, yerleşim ve canlı Fortress |
 | C5 Aşama 1.7B | [Rapor](c5/c5-stage1-7b-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7b-commands-2026-11-07.md) | Yerel CC0 depo, dört viewport, 19 Chrome testi ve iki robotlu canlı Fortress |

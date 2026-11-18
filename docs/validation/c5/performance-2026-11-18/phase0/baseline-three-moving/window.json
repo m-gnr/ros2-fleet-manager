@@ -1,0 +1,39 @@
+{
+  "start_utc": 1794953135.909594,
+  "label": "baseline-three-moving",
+  "mode": "chrome",
+  "commands": [
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T220400Z-6ece89b2",
+      "python3",
+      "/tmp/perf-tools/sample.py",
+      "/evidence/baseline-three-moving",
+      "180.0"
+    ],
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T220400Z-6ece89b2",
+      "bash",
+      "-c",
+      "source /opt/ros/humble/setup.bash; python3 /tmp/perf-tools/ros.py /evidence/baseline-three-moving/ros-probe.jsonl 180.0"
+    ],
+    [
+      "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+      "scripts/c5_telemetry_probe.py",
+      "/tmp/c5-perf-20261117T220400Z-6ece89b2",
+      "/tmp/c5-perf-20261117T220400Z-6ece89b2/baseline-three-moving/api-ws.jsonl",
+      "--seconds",
+      "180.0"
+    ],
+    [
+      "node",
+      "/tmp/c5-perf-tools/chrome.mjs",
+      "http://127.0.0.1:21722/",
+      "/tmp/c5-perf-20261117T220400Z-6ece89b2/baseline-three-moving/chrome.jsonl",
+      "177.0"
+    ]
+  ]
+}

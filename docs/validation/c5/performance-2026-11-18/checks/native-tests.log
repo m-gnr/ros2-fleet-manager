@@ -1,0 +1,616 @@
+...........................................FFF.......................... [ 50%]
+.....F..................F............................................... [100%]
+=================================== FAILURES ===================================
+____ test_invalid_terminal_epochs_preserve_ownership_and_sqlite[succeeded] _____
+
+runtime = <backend.fleet_manager.event_loop.FleetEventLoop object at 0xffff88f97be0>
+result_status = 1
+caplog = <_pytest.logging.LogCaptureFixture object at 0xffff88f97820>
+
+    @pytest.mark.parametrize("result_status", [1, 2, 3], ids=["succeeded", "failed", "preempted"])
+    def test_invalid_terminal_epochs_preserve_ownership_and_sqlite(runtime, result_status, caplog):
+        async def scenario():
+            await runtime.start()
+            await runtime.submit(status())
+            await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+            await preempt(runtime)
+            valid = action(runtime, result_status=result_status)
+            missing_epoch = dict(valid.payload)
+            del missing_epoch["completed_epoch"]
+            invalid_payloads = [missing_epoch] + [
+                dict(valid.payload, completed_epoch=epoch)
+                for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+            ]
+            before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+            processed = rows(runtime, "processed_events")
+            for payload in invalid_payloads:
+                event = Event("ACTION_RESULT", payload)
+                assert await runtime.submit(event) == "STALE"
+                entry = rows(runtime, "processed_events")[-1]
+                assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+                assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                    payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+                )
+                active = runtime.core._active_tasks_by_robot["r1"]
+                assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                    payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+                )
+                assert active.preemption_count == 0
+                assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+                assert {table: rows(runtime, table) for table in before} == before
+            assert rows(runtime, "processed_events")[:len(processed)] == processed
+            assert "ACTION_RESULT completed_epoch" in caplog.text
+            assert await runtime.submit(valid) == "APPLIED"
+            await runtime.close()
+>       asyncio.run(scenario())
+
+tests/test_fleet_manager_outbox.py:459: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.10/asyncio/runners.py:44: in run
+    return loop.run_until_complete(main)
+/usr/lib/python3.10/asyncio/base_events.py:649: in run_until_complete
+    return future.result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def scenario():
+        await runtime.start()
+        await runtime.submit(status())
+        await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+        await preempt(runtime)
+        valid = action(runtime, result_status=result_status)
+        missing_epoch = dict(valid.payload)
+        del missing_epoch["completed_epoch"]
+        invalid_payloads = [missing_epoch] + [
+            dict(valid.payload, completed_epoch=epoch)
+            for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+        ]
+        before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+        processed = rows(runtime, "processed_events")
+        for payload in invalid_payloads:
+            event = Event("ACTION_RESULT", payload)
+            assert await runtime.submit(event) == "STALE"
+            entry = rows(runtime, "processed_events")[-1]
+            assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+            assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            active = runtime.core._active_tasks_by_robot["r1"]
+            assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            assert active.preemption_count == 0
+            assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+            assert {table: rows(runtime, table) for table in before} == before
+        assert rows(runtime, "processed_events")[:len(processed)] == processed
+>       assert "ACTION_RESULT completed_epoch" in caplog.text
+E       AssertionError: assert 'ACTION_RESULT completed_epoch' in ''
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0xffff88f97820>.text
+
+tests/test_fleet_manager_outbox.py:456: AssertionError
+----------------------------- Captured stderr call -----------------------------
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got None, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got None, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 0, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got -1, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 99, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got '1', expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got True, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 1.0, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 18446744073709551616, expected 1
+______ test_invalid_terminal_epochs_preserve_ownership_and_sqlite[failed] ______
+
+runtime = <backend.fleet_manager.event_loop.FleetEventLoop object at 0xffff89b9ee30>
+result_status = 2
+caplog = <_pytest.logging.LogCaptureFixture object at 0xffff89706770>
+
+    @pytest.mark.parametrize("result_status", [1, 2, 3], ids=["succeeded", "failed", "preempted"])
+    def test_invalid_terminal_epochs_preserve_ownership_and_sqlite(runtime, result_status, caplog):
+        async def scenario():
+            await runtime.start()
+            await runtime.submit(status())
+            await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+            await preempt(runtime)
+            valid = action(runtime, result_status=result_status)
+            missing_epoch = dict(valid.payload)
+            del missing_epoch["completed_epoch"]
+            invalid_payloads = [missing_epoch] + [
+                dict(valid.payload, completed_epoch=epoch)
+                for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+            ]
+            before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+            processed = rows(runtime, "processed_events")
+            for payload in invalid_payloads:
+                event = Event("ACTION_RESULT", payload)
+                assert await runtime.submit(event) == "STALE"
+                entry = rows(runtime, "processed_events")[-1]
+                assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+                assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                    payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+                )
+                active = runtime.core._active_tasks_by_robot["r1"]
+                assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                    payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+                )
+                assert active.preemption_count == 0
+                assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+                assert {table: rows(runtime, table) for table in before} == before
+            assert rows(runtime, "processed_events")[:len(processed)] == processed
+            assert "ACTION_RESULT completed_epoch" in caplog.text
+            assert await runtime.submit(valid) == "APPLIED"
+            await runtime.close()
+>       asyncio.run(scenario())
+
+tests/test_fleet_manager_outbox.py:459: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.10/asyncio/runners.py:44: in run
+    return loop.run_until_complete(main)
+/usr/lib/python3.10/asyncio/base_events.py:649: in run_until_complete
+    return future.result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def scenario():
+        await runtime.start()
+        await runtime.submit(status())
+        await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+        await preempt(runtime)
+        valid = action(runtime, result_status=result_status)
+        missing_epoch = dict(valid.payload)
+        del missing_epoch["completed_epoch"]
+        invalid_payloads = [missing_epoch] + [
+            dict(valid.payload, completed_epoch=epoch)
+            for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+        ]
+        before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+        processed = rows(runtime, "processed_events")
+        for payload in invalid_payloads:
+            event = Event("ACTION_RESULT", payload)
+            assert await runtime.submit(event) == "STALE"
+            entry = rows(runtime, "processed_events")[-1]
+            assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+            assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            active = runtime.core._active_tasks_by_robot["r1"]
+            assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            assert active.preemption_count == 0
+            assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+            assert {table: rows(runtime, table) for table in before} == before
+        assert rows(runtime, "processed_events")[:len(processed)] == processed
+>       assert "ACTION_RESULT completed_epoch" in caplog.text
+E       AssertionError: assert 'ACTION_RESULT completed_epoch' in ''
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0xffff89706770>.text
+
+tests/test_fleet_manager_outbox.py:456: AssertionError
+----------------------------- Captured stderr call -----------------------------
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got None, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got None, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 0, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got -1, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 99, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got '1', expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got True, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 1.0, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 18446744073709551616, expected 1
+____ test_invalid_terminal_epochs_preserve_ownership_and_sqlite[preempted] _____
+
+runtime = <backend.fleet_manager.event_loop.FleetEventLoop object at 0xffff88e82800>
+result_status = 3
+caplog = <_pytest.logging.LogCaptureFixture object at 0xffff88e82260>
+
+    @pytest.mark.parametrize("result_status", [1, 2, 3], ids=["succeeded", "failed", "preempted"])
+    def test_invalid_terminal_epochs_preserve_ownership_and_sqlite(runtime, result_status, caplog):
+        async def scenario():
+            await runtime.start()
+            await runtime.submit(status())
+            await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+            await preempt(runtime)
+            valid = action(runtime, result_status=result_status)
+            missing_epoch = dict(valid.payload)
+            del missing_epoch["completed_epoch"]
+            invalid_payloads = [missing_epoch] + [
+                dict(valid.payload, completed_epoch=epoch)
+                for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+            ]
+            before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+            processed = rows(runtime, "processed_events")
+            for payload in invalid_payloads:
+                event = Event("ACTION_RESULT", payload)
+                assert await runtime.submit(event) == "STALE"
+                entry = rows(runtime, "processed_events")[-1]
+                assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+                assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                    payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+                )
+                active = runtime.core._active_tasks_by_robot["r1"]
+                assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                    payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+                )
+                assert active.preemption_count == 0
+                assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+                assert {table: rows(runtime, table) for table in before} == before
+            assert rows(runtime, "processed_events")[:len(processed)] == processed
+            assert "ACTION_RESULT completed_epoch" in caplog.text
+            assert await runtime.submit(valid) == "APPLIED"
+            await runtime.close()
+>       asyncio.run(scenario())
+
+tests/test_fleet_manager_outbox.py:459: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.10/asyncio/runners.py:44: in run
+    return loop.run_until_complete(main)
+/usr/lib/python3.10/asyncio/base_events.py:649: in run_until_complete
+    return future.result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def scenario():
+        await runtime.start()
+        await runtime.submit(status())
+        await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1")))
+        await preempt(runtime)
+        valid = action(runtime, result_status=result_status)
+        missing_epoch = dict(valid.payload)
+        del missing_epoch["completed_epoch"]
+        invalid_payloads = [missing_epoch] + [
+            dict(valid.payload, completed_epoch=epoch)
+            for epoch in (None, 0, -1, 99, "1", True, 1.0, 2**64)
+        ]
+        before = {table: rows(runtime, table) for table in ("tasks", "robots", "reservations", "outbox_events")}
+        processed = rows(runtime, "processed_events")
+        for payload in invalid_payloads:
+            event = Event("ACTION_RESULT", payload)
+            assert await runtime.submit(event) == "STALE"
+            entry = rows(runtime, "processed_events")[-1]
+            assert (entry["event_id"], entry["outcome"]) == (event.event_id, "STALE")
+            assert (entry["task_id"], entry["assignment_epoch"], entry["goal_uuid"]) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            active = runtime.core._active_tasks_by_robot["r1"]
+            assert (active.task_id, active.assignment_epoch, active.goal_uuid) == (
+                payload["task_id"], payload["assignment_epoch"], payload["goal_uuid"],
+            )
+            assert active.preemption_count == 0
+            assert runtime.core._pending_preemption_assignments["r1"].task_id == "high"
+            assert {table: rows(runtime, table) for table in before} == before
+        assert rows(runtime, "processed_events")[:len(processed)] == processed
+>       assert "ACTION_RESULT completed_epoch" in caplog.text
+E       AssertionError: assert 'ACTION_RESULT completed_epoch' in ''
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0xffff88e82260>.text
+
+tests/test_fleet_manager_outbox.py:456: AssertionError
+----------------------------- Captured stderr call -----------------------------
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got None, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got None, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 0, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got -1, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 99, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got '1', expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got True, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 1.0, expected 1
+ACTION_RESULT completed_epoch invalid or mismatched for task t1: got 18446744073709551616, expected 1
+____ test_communication_loss_no_automatic_failure_and_reservation_ownership ____
+
+runtime = <backend.fleet_manager.event_loop.FleetEventLoop object at 0xffff8986c520>
+caplog = <_pytest.logging.LogCaptureFixture object at 0xffff8986e590>
+
+    def test_communication_loss_no_automatic_failure_and_reservation_ownership(runtime, caplog):
+        async def scenario():
+            await runtime.start()
+            await runtime.submit(status())
+            assert await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1"))) == "APPLIED"
+            assert await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r2"))) == "REJECTED"
+            assert await runtime.submit(Event("OCCUPIED", dict(station_id="dock", robot_id="r2"))) == "REJECTED"
+            await runtime.submit(submit())
+            await runtime.submit(Event("TICK", {"current_time": 10}))
+            await runtime.submit(Event("TICK", {"current_time": 30}))
+            assert runtime.core._active_tasks["t1"].status == "ASSIGNED"
+            assert runtime.core.tracker.get_robot("r1").state != 6
+            assert runtime.core.tracker.check_communication_health(30)[0][1] == "ALERT"
+            assert "COMMUNICATION_WARNING" in caplog.text
+            assert rows(runtime, "reservations")[0]["state"] == "RELEASING"
+            await runtime.submit(status(seq=2, epoch=1, task="t1", state=2, pose=Pose2D(1, 0), timestamp=31))
+            assert rows(runtime, "reservations")[0]["state"] == "FREE"
+            await runtime.close()
+>       asyncio.run(scenario())
+
+tests/test_fleet_manager_outbox.py:847: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.10/asyncio/runners.py:44: in run
+    return loop.run_until_complete(main)
+/usr/lib/python3.10/asyncio/base_events.py:649: in run_until_complete
+    return future.result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def scenario():
+        await runtime.start()
+        await runtime.submit(status())
+        assert await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r1"))) == "APPLIED"
+        assert await runtime.submit(Event("RESERVE", dict(station_id="dock", robot_id="r2"))) == "REJECTED"
+        assert await runtime.submit(Event("OCCUPIED", dict(station_id="dock", robot_id="r2"))) == "REJECTED"
+        await runtime.submit(submit())
+        await runtime.submit(Event("TICK", {"current_time": 10}))
+        await runtime.submit(Event("TICK", {"current_time": 30}))
+        assert runtime.core._active_tasks["t1"].status == "ASSIGNED"
+        assert runtime.core.tracker.get_robot("r1").state != 6
+        assert runtime.core.tracker.check_communication_health(30)[0][1] == "ALERT"
+>       assert "COMMUNICATION_WARNING" in caplog.text
+E       AssertionError: assert 'COMMUNICATION_WARNING' in ''
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0xffff8986e590>.text
+
+tests/test_fleet_manager_outbox.py:842: AssertionError
+----------------------------- Captured stderr call -----------------------------
+COMMUNICATION_WARNING robot=r1 severity=ALERT elapsed=20
+____ test_live_route_commit_failure_publishes_neither_cache_nor_assignment _____
+
+    async def wait():
+        while not condition():
+>           await asyncio.sleep(0.001)
+
+tests/test_fleet_manager_outbox.py:1018: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+delay = 0.001, result = None
+
+    async def sleep(delay, result=None):
+        """Coroutine that completes after a given time (in seconds)."""
+        if delay <= 0:
+            await __sleep0()
+            return result
+    
+        loop = events.get_running_loop()
+        future = loop.create_future()
+        h = loop.call_later(delay,
+                            futures._set_result_unless_cancelled,
+                            future, result)
+        try:
+>           return await future
+E           asyncio.exceptions.CancelledError
+
+/usr/lib/python3.10/asyncio/tasks.py:605: CancelledError
+
+During handling of the above exception, another exception occurred:
+
+fut = <Task cancelled name='Task-524' coro=<wait_for_routes.<locals>.wait() done, defined at /workspace/tests/test_fleet_manager_outbox.py:1016>>
+timeout = 2
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout <= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+>                   return fut.result()
+E                   asyncio.exceptions.CancelledError
+
+/usr/lib/python3.10/asyncio/tasks.py:456: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_live_route_commit_failure0')
+caplog = <_pytest.logging.LogCaptureFixture object at 0xffff896a70d0>
+
+    def test_live_route_commit_failure_publishes_neither_cache_nor_assignment(tmp_path, caplog):
+        async def scenario():
+            now = [10.0]
+            started, release = asyncio.Event(), asyncio.Event()
+    
+            async def query(robot_id, start, goal):
+                started.set()
+                await release.wait()
+                return 1.0
+    
+            async with live_routing_runtime(tmp_path, query, now) as (loop, cache):
+                await loop.submit(submit())
+                await asyncio.wait_for(started.wait(), timeout=2)
+                before = rows(loop, "processed_events")
+                connection = loop.store.connection
+    
+                def deny_commit(operation, argument, *_):
+                    if operation == sqlite3.SQLITE_TRANSACTION and argument == "COMMIT":
+                        return sqlite3.SQLITE_DENY
+                    return sqlite3.SQLITE_OK
+    
+                connection.set_authorizer(deny_commit)
+                try:
+                    release.set()
+                    await wait_for_routes(lambda: "Could not commit Nav2 route result" in caplog.text)
+                    assert rows(loop, "processed_events") == before
+                    assert len(cache) == 0
+                    assert not rows(loop, "outbox_events")
+                    assert loop.core.queue.get("t1") is not None
+                finally:
+                    connection.set_authorizer(lambda *_: sqlite3.SQLITE_OK)
+    
+                await loop.submit(Event("TICK", {"current_time": now[0]}))
+                await wait_for_routes(lambda: bool(rows(loop, "outbox_events")))
+                applied = [row for row in rows(loop, "processed_events") if row["outcome"] == "ROUTE_APPLIED"]
+                assert len(applied) == 3
+                replay = {"robot_id": "r1", "distance": 99.0, "timestamp": now[0]}
+                assert await loop.submit(Event("ROUTE_RESOLVED", replay, applied[0]["event_id"])) == "DUPLICATE"
+                assert await loop.submit(Event("ROUTE_RESOLVED", replay)) == "STALE"
+                assert len(rows(loop, "outbox_events")) == 1
+>       asyncio.run(scenario())
+
+tests/test_fleet_manager_outbox.py:1185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.10/asyncio/runners.py:44: in run
+    return loop.run_until_complete(main)
+/usr/lib/python3.10/asyncio/base_events.py:649: in run_until_complete
+    return future.result()
+tests/test_fleet_manager_outbox.py:1169: in scenario
+    await wait_for_routes(lambda: "Could not commit Nav2 route result" in caplog.text)
+tests/test_fleet_manager_outbox.py:1019: in wait_for_routes
+    await asyncio.wait_for(wait(), timeout=2)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fut = <Task cancelled name='Task-524' coro=<wait_for_routes.<locals>.wait() done, defined at /workspace/tests/test_fleet_manager_outbox.py:1016>>
+timeout = 2
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout <= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+                    return fut.result()
+                except exceptions.CancelledError as exc:
+>                   raise exceptions.TimeoutError() from exc
+E                   asyncio.exceptions.TimeoutError
+
+/usr/lib/python3.10/asyncio/tasks.py:458: TimeoutError
+----------------------------- Captured stderr call -----------------------------
+EVENT_REJECTED kind=ROUTE_RESOLVED robot=r1 task=None epoch=None goal=None
+Traceback (most recent call last):
+  File "/workspace/backend/fleet_manager/event_loop.py", line 134, in _run
+    result = self._process(event)
+  File "/workspace/backend/fleet_manager/event_loop.py", line 153, in _process
+    with self.store.transaction():
+  File "/usr/lib/python3.10/contextlib.py", line 142, in __exit__
+    next(self.gen)
+  File "/workspace/backend/fleet_manager/persistence/store.py", line 38, in transaction
+    self.connection.execute("COMMIT")
+sqlite3.DatabaseError: not authorized
+Could not commit Nav2 route result robot=r1
+Traceback (most recent call last):
+  File "/workspace/backend/fleet_manager/adapters/route_planning.py", line 213, in _resolve
+    await self.consumer.submit(Event("ROUTE_RESOLVED", {
+  File "/workspace/backend/fleet_manager/event_loop.py", line 112, in submit
+    return await asyncio.shield(future)
+  File "/workspace/backend/fleet_manager/event_loop.py", line 134, in _run
+    result = self._process(event)
+  File "/workspace/backend/fleet_manager/event_loop.py", line 153, in _process
+    with self.store.transaction():
+  File "/usr/lib/python3.10/contextlib.py", line 142, in __exit__
+    next(self.gen)
+  File "/workspace/backend/fleet_manager/persistence/store.py", line 38, in transaction
+    self.connection.execute("COMMIT")
+sqlite3.DatabaseError: not authorized
+=============================== warnings summary ===============================
+../usr/local/lib/python3.10/dist-packages/fastapi/testclient.py:1
+  Warning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_fleet_manager_outbox.py::test_invalid_terminal_epochs_preserve_ownership_and_sqlite[succeeded]
+FAILED tests/test_fleet_manager_outbox.py::test_invalid_terminal_epochs_preserve_ownership_and_sqlite[failed]
+FAILED tests/test_fleet_manager_outbox.py::test_invalid_terminal_epochs_preserve_ownership_and_sqlite[preempted]
+FAILED tests/test_fleet_manager_outbox.py::test_communication_loss_no_automatic_failure_and_reservation_ownership
+FAILED tests/test_fleet_manager_outbox.py::test_live_route_commit_failure_publishes_neither_cache_nor_assignment
+5 failed, 139 passed, 1 warning in 11.81s

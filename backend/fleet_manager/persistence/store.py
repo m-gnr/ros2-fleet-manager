@@ -19,6 +19,11 @@ class SQLiteStore:
     def __init__(self, path):
         self.connection = sqlite3.connect(path, isolation_level=None)
         self.connection.row_factory = sqlite3.Row
+        # Keep the sole writer durable without blocking it behind read snapshots.
+        journal_mode = self.connection.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+        if journal_mode not in ("wal", "memory"):
+            self.connection.close()
+            raise sqlite3.OperationalError(f"SQLite WAL unavailable: journal_mode={journal_mode}")
         self.connection.execute("PRAGMA synchronous = FULL")
         self.connection.executescript(Path(__file__).with_name("schema.sql").read_text())
 

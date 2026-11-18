@@ -324,6 +324,7 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
   await page.goto("/?trace=1");
   await expect.poll(() => !!socket).toBe(true);
   socket.send('{"type":"heartbeat"}');
+  const keepAlive = setInterval(() => socket.send('{"type":"heartbeat"}'), 400);
   const details = page.locator(".robot-details");
   const state = details.getByTestId("tf-status");
   socket.send(JSON.stringify(fixture));
@@ -364,19 +365,44 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
   await expect(details.getByText("Durum B", { exact: true })).toHaveCount(0);
   socket.send('{"type":"product_unavailable"}');
   tf.poses();
-  await expect(state).toHaveText("NO_DATA");
+  await expect(state).toHaveText("LIVE");
   await expect(details.getByRole("meter")).toHaveCount(0);
   await expect(details.getByText(/Ürün akışı kesildi/)).toBeVisible();
-  await expect.poll(() => connectionCount).toBe(2);
-  await expect(details.getByRole("meter")).toBeVisible();
-  tf.connect();
-  tf.poses();
-  await expect(state).toHaveText("LIVE");
   socket.send('{"type":"scene_disconnected"}');
   await expect(state).toHaveText("STALE");
   tf.connect();
   tf.poses();
   await expect(state).toHaveText("LIVE");
+  clearInterval(keepAlive);
+});
+
+test("keeps TF live across product-only outage on one open socket", async ({ page }) => {
+  let socket!: WebSocketRoute;
+  let connectionCount = 0;
+  await feed(page, (route) => { socket = route; connectionCount++; });
+  await page.goto("/");
+  await expect.poll(() => !!socket).toBe(true);
+  const keepAlive = setInterval(() => socket.send('{"type":"heartbeat"}'), 400);
+  try {
+    const tf = telemetry(socket);
+    socket.send(JSON.stringify(fixture));
+    tf.connect();
+    tf.poses();
+    const details = page.locator(".robot-details");
+    await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
+    const stableConnections = connectionCount;
+    socket.send('{"type":"product_unavailable"}');
+    tf.poses();
+    await expect(details.getByRole("meter")).toHaveCount(0);
+    await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
+    await page.waitForTimeout(300);
+    expect(connectionCount).toBe(stableConnections);
+    socket.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
+    await expect(details.getByRole("meter")).toBeVisible();
+    expect(connectionCount).toBe(stableConnections);
+  } finally {
+    clearInterval(keepAlive);
+  }
 });
 
 test("transforms measured ROS axes and yaw and bounds interpolation", () => {

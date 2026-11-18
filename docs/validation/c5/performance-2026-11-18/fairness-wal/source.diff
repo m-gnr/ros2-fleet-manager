@@ -1,0 +1,374 @@
+diff --git a/backend/fleet_manager/event_loop.py b/backend/fleet_manager/event_loop.py
+index c775f35..de2f7ca 100644
+--- a/backend/fleet_manager/event_loop.py
++++ b/backend/fleet_manager/event_loop.py
+@@ -141,6 +141,9 @@ class FleetEventLoop:
+                     future.set_result(result)
+             finally:
+                 self._queue.task_done()
++            # Queue.get() does not suspend while a backlog exists. Yield only
++            # after the complete transaction and committed memory publication.
++            await asyncio.sleep(0)
+ 
+     def _process(self, event):
+         db = self.store.connection
+diff --git a/backend/fleet_manager/persistence/store.py b/backend/fleet_manager/persistence/store.py
+index a68d68a..cbcbe74 100644
+--- a/backend/fleet_manager/persistence/store.py
++++ b/backend/fleet_manager/persistence/store.py
+@@ -19,6 +19,11 @@ class SQLiteStore:
+     def __init__(self, path):
+         self.connection = sqlite3.connect(path, isolation_level=None)
+         self.connection.row_factory = sqlite3.Row
++        # Keep the sole writer durable without blocking it behind read snapshots.
++        journal_mode = self.connection.execute("PRAGMA journal_mode=WAL").fetchone()[0]
++        if journal_mode not in ("wal", "memory"):
++            self.connection.close()
++            raise sqlite3.OperationalError(f"SQLite WAL unavailable: journal_mode={journal_mode}")
+         self.connection.execute("PRAGMA synchronous = FULL")
+         self.connection.executescript(Path(__file__).with_name("schema.sql").read_text())
+ 
+diff --git a/docs/README.md b/docs/README.md
+index 0e636c2..ad9dd41 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -18,6 +18,11 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
+ 
+ ## Geliştirme
+ 
++- [C5 kanıta dayalı performans](validation/c5/performance-2026-11-18.md): değişikliksiz baseline, ölçüm etkisi ve kontrollü müdahaleler.
++
++
++- [C5 TF STALE kök neden ve canlı karşılaştırma](validation/c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](validation/c5/tf-stale-commands-2026-11-18.md): ürün kesintisinin TF soketini kapatma hatası düzeltildi; üç robotlu gerçek TF ve snapshot gecikmesi açık.
++
+ - [Visualize V6 dış zemin paleti](validation/c5/visualize-v6-palette-2026-11-17.md).
+ 
+ - [Visualize V6 yaşayan dış çevre](validation/c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v6-commands-2026-11-17.md).
+diff --git a/docs/design/c3-2-sqlite-outbox.md b/docs/design/c3-2-sqlite-outbox.md
+index 8cbac10..ec8a668 100644
+--- a/docs/design/c3-2-sqlite-outbox.md
++++ b/docs/design/c3-2-sqlite-outbox.md
+@@ -8,7 +8,7 @@
+ 
+ ## Uygulama sınırı
+ 
+-`backend/fleet_manager/event_loop.py`, C3.1 `FleetManagerCore` çekirdeğini kullanır. `FleetEventLoop` yalnız bir `asyncio.Queue` consumer çalıştırır. Üreticiler `Event` değerlerini `submit` ile verir. İkinci consumer başlatılması reddedilir. Kuyruğa giriş sırası korunur; bu sıra ağın üretim sırası garantisi değildir. Görev önceliği/FIFO kararı yine domain zamanlayıcısındadır.
++`backend/fleet_manager/event_loop.py`, C3.1 `FleetManagerCore` çekirdeğini kullanır. `FleetEventLoop` yalnız bir `asyncio.Queue` consumer çalıştırır. Üreticiler `Event` değerlerini `submit` ile verir. İkinci consumer başlatılması reddedilir. Kuyruğa giriş sırası korunur; bu sıra ağın üretim sırası garantisi değildir. 18 Kasım 2026 performans düzeltmesinde consumer, her tamamlanmış olaydan sonra asyncio döngüsüne çalışma sırası verir. Transaction ve commit sonrası bellek yayını birlikte tamamlanır; sıradaki domain olayı bundan sonra işlenir. Bu, dolu kuyrukta dashboard yayıncısı ve diğer zamanlayıcıların uzun süre beklemesini sınırlar; SQLite işlemini asenkron yapmaz. [Ölçüm kaydı](../validation/c5/performance-2026-11-18.md). Görev önceliği/FIFO kararı yine domain zamanlayıcısındadır.
+ 
+ ```mermaid
+ flowchart LR
+@@ -28,7 +28,7 @@ Zamanlayıcı aktif görev sahipliğini denetler. Terminal sonuçtan önce gelen
+ 
+ ## SQLite şeması
+ 
+-Şema `backend/fleet_manager/persistence/schema.sql` içindedir. SQLite yabancı anahtarları açık, kalıcı yazma ayarı `synchronous=FULL` kullanılır. Bu ilk şema sürümüdür; eski bir ürün şemasından geçiş desteği yoktur.
++Şema `backend/fleet_manager/persistence/schema.sql` içindedir. SQLite yabancı anahtarları açık, kalıcı yazma ayarı `synchronous=FULL` kullanılır. 18 Kasım 2026 ölçümüne dayalı değişiklikte dosya veritabanları `journal_mode=WAL` kullanır; bellek testlerinde SQLite doğal `memory` modunu döndürür. WAL etkinleşmezse açık hatayla başlangıç durur. Tek consumer/yazar, her olayın `BEGIN IMMEDIATE`/`COMMIT` sınırı ve commit sonrası bellek yayını aynıdır. Salt okunur observer ayrı bir okuma görüntüsü tutarken yazarı kilitlemez. `-wal` ve `-shm` dosyaları SQLite kalıcı durumunun parçasıdır; aynı yerel volume içinde tutulur, çalışan veritabanı yalnız ana dosyası kopyalanarak yedeklenmez. Kabul aracı bütün süreçleri kapattıktan sonra SQLite backup API kullanır. Ağ dosya sistemi veya ikinci yazar/checkpointer desteklenmez. Gerekçe ve önce/sonra kanıtı [performans kaydındadır](../validation/c5/performance-2026-11-18.md); [SQLite WAL](https://sqlite.org/wal.html) ve [FULL](https://sqlite.org/pragma.html#pragma_synchronous) sözleşmeleri esas alındı. Bu ilk şema sürümüdür; eski bir ürün şemasından geçiş desteği yoktur.
+ 
+ | Tablo | İçerik ve kısıt |
+ |---|---|
+diff --git a/docs/design/c5-3d-operations.md b/docs/design/c5-3d-operations.md
+index a236104..4cf4f47 100644
+--- a/docs/design/c5-3d-operations.md
++++ b/docs/design/c5-3d-operations.md
+@@ -26,6 +26,8 @@ FastAPI köprüye özel DDS ağındaki `scene` adı ve yapılandırılmış port
+ 
+ Upstream bağlantı başına 64 KiB WebSocket mesaj sınırı, 1 frame alım su seviyesi ve uygulamada bekleyen en fazla bir olay vardır. 250 ms'den uzun süre relay'de kalan poz atılır. Relay beklemesi plan TTL'sinden düşülür. İstemci gönderimi bir saniye içinde tamamlanamazsa bağlantı 1013 ile kapatılır. Ürün için yalnız son snapshot tutulur. Ürün sessizliği, tek başına açık TF akışını kapatmaz. Köprü sessizliği 2,5 sn sonra kendi yeniden bağlantısını tetikler. Köprü Aşama 4'ten gelen dört eşzamanlı istemci sınırına sahiptir. C5 ürün akışı kendi mevcut istemci sınırını kullanır.
+ 
++18 Kasım 2026 düzeltmesi: frontend `product_unavailable` veya yalnız ürün watchdog süresi dolduğunda ürün erişimini eski olarak işaretler ve görev/batarya güvenilirliğini maskeler; aynı WebSocket'teki TF sahne akışını kapatmaz. Taşıma heartbeat'i de susarsa mevcut WebSocket yeniden bağlantısı çalışır. Yeni ürün snapshot'ı geldiğinde oturum/sıra doğrulaması sürer. Bu davranış ürün kaynağındaki gecikmeyi çözmez; gerçek TF veya `/clock` kesintisi yine STALE görünür.
++
+ Kamera serbest, takip, üstten, filo kadrajı ve sıfırlama modlarını sunar. WebGL sahnesi genel görünümde tembel yüklenir. Düşük kalite seçeneği piksel oranını 1'e indirir ve temas gölgelerini kapatır. Geometri instancing, rota arabelleği, renderer temizliği ve talep üzerine çizim Visualizer’dan alınmıştır.
+ 
+ ## İlk açılışta TF ve API hazır olma kapısı
+diff --git a/docs/validation/README.md b/docs/validation/README.md
+index 766ec6b..2c67e3b 100644
+--- a/docs/validation/README.md
++++ b/docs/validation/README.md
+@@ -1,5 +1,7 @@
+ # Doğrulama kayıtları
+ 
++- [C5 kanıta dayalı performans](c5/performance-2026-11-18.md): değişikliksiz baseline, ölçüm etkisi ve kontrollü müdahaleler.
++
+ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalıştırılan komutları ve alınan çıktıları aynen korur; eski Compose yolları için [güncel yol kılavuzunu](../../docker/compose/README.md) kullanın. Tarihsel komutların bu düzenlemede yeniden çalıştırıldığı iddia edilmez.
+ 
+ | Aşama | Kayıtlar | Tarihsel sonuç |
+@@ -50,6 +52,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
+ | C4.5 | [Sonuç raporu](c4/c4-5-validation-2026-11-06.md) · [Komut eki](c4/c4-5-commands-2026-11-06.md) · [C4 kabul listesi](c4/c4-acceptance-2026-11-06.md) | İki robotlu enerji, fiziksel şarj devri, görev ve güvenli preemption |
+ | C5 Aşama 1 | [Rapor](c5/c5-stage1-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-commands-2026-11-06.md) · [Performans](c5/c5-stage1-performance-2026-11-06.md) | İki robotlu Fortress ve Chrome, salt okunur canlı panel ve güvenli yeniden eşitleme |
+ | C5 Aşama 1.5 | [Rapor](c5/c5-stage1-5-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-5-commands-2026-11-06.md) | 3D Chrome/WebGL, TF/Path ve bağımsız ürün güncelliği |
++| C5 TF STALE araştırması | [Rapor](c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](c5/tf-stale-commands-2026-11-18.md) | 1/2/3 robot canlı karşılaştırması; frontend ürün/TF ayrımı düzeltildi, üç robotlu tam kabul açık |
+ | C5 Aşama 1.6 | [Rapor](c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-commands-2026-11-06.md) | Depo öncelikli yerleşim, kadraj ve canlı Chrome karşılaştırması |
+ | C5 Aşama 1.6 görsel kabul düzeltmesi | [Rapor](c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-visual-commands-2026-11-06.md) | Üretim Chrome projeksiyonu, robot işaretleri, yerleşim ve canlı Fortress |
+ | C5 Aşama 1.7B | [Rapor](c5/c5-stage1-7b-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7b-commands-2026-11-07.md) | Yerel CC0 depo, dört viewport, 19 Chrome testi ve iki robotlu canlı Fortress |
+diff --git a/frontend/src/useFleet.ts b/frontend/src/useFleet.ts
+index 457d23c..3be7aff 100644
+--- a/frontend/src/useFleet.ts
++++ b/frontend/src/useFleet.ts
+@@ -92,7 +92,6 @@ export function useFleet() {
+         clearTimeout(productWatchdog);
+         first = true;
+         beginOutage();
+-        peer.close();
+       }
+       armWatchdog();
+       peer.onmessage = (event) => {
+diff --git a/frontend/tests/dashboard.spec.ts b/frontend/tests/dashboard.spec.ts
+index 26effe5..3740046 100644
+--- a/frontend/tests/dashboard.spec.ts
++++ b/frontend/tests/dashboard.spec.ts
+@@ -324,6 +324,7 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
+   await page.goto("/?trace=1");
+   await expect.poll(() => !!socket).toBe(true);
+   socket.send('{"type":"heartbeat"}');
++  const keepAlive = setInterval(() => socket.send('{"type":"heartbeat"}'), 400);
+   const details = page.locator(".robot-details");
+   const state = details.getByTestId("tf-status");
+   socket.send(JSON.stringify(fixture));
+@@ -364,19 +365,44 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
+   await expect(details.getByText("Durum B", { exact: true })).toHaveCount(0);
+   socket.send('{"type":"product_unavailable"}');
+   tf.poses();
+-  await expect(state).toHaveText("NO_DATA");
++  await expect(state).toHaveText("LIVE");
+   await expect(details.getByRole("meter")).toHaveCount(0);
+   await expect(details.getByText(/Ürün akışı kesildi/)).toBeVisible();
+-  await expect.poll(() => connectionCount).toBe(2);
+-  await expect(details.getByRole("meter")).toBeVisible();
+-  tf.connect();
+-  tf.poses();
+-  await expect(state).toHaveText("LIVE");
+   socket.send('{"type":"scene_disconnected"}');
+   await expect(state).toHaveText("STALE");
+   tf.connect();
+   tf.poses();
+   await expect(state).toHaveText("LIVE");
++  clearInterval(keepAlive);
++});
++
++test("keeps TF live across product-only outage on one open socket", async ({ page }) => {
++  let socket!: WebSocketRoute;
++  let connectionCount = 0;
++  await feed(page, (route) => { socket = route; connectionCount++; });
++  await page.goto("/");
++  await expect.poll(() => !!socket).toBe(true);
++  const keepAlive = setInterval(() => socket.send('{"type":"heartbeat"}'), 400);
++  try {
++    const tf = telemetry(socket);
++    socket.send(JSON.stringify(fixture));
++    tf.connect();
++    tf.poses();
++    const details = page.locator(".robot-details");
++    await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
++    const stableConnections = connectionCount;
++    socket.send('{"type":"product_unavailable"}');
++    tf.poses();
++    await expect(details.getByRole("meter")).toHaveCount(0);
++    await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
++    await page.waitForTimeout(300);
++    expect(connectionCount).toBe(stableConnections);
++    socket.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
++    await expect(details.getByRole("meter")).toBeVisible();
++    expect(connectionCount).toBe(stableConnections);
++  } finally {
++    clearInterval(keepAlive);
++  }
+ });
+ 
+ test("transforms measured ROS axes and yaw and bounds interpolation", () => {
+diff --git a/scripts/c5_demo_start.py b/scripts/c5_demo_start.py
+index 1b1cff0..9949635 100644
+--- a/scripts/c5_demo_start.py
++++ b/scripts/c5_demo_start.py
+@@ -8,6 +8,7 @@ import hashlib
+ import json
+ import os
+ from pathlib import Path
++import shlex
+ import socket
+ import subprocess
+ import sys
+@@ -18,7 +19,6 @@ from c5_session_cleanup import CleanupError, run
+ 
+ 
+ IMAGE = "ros2-fleet-c5-validation:humble-fortress"
+-EXPECTED_ROBOTS = {"robot_alpha", "robot_beta", "robot_gamma"}
+ OVERLAY_PACKAGES = (Path("interfaces/fleet_interfaces"), Path("ros2_ws/src/fleet_perception"))
+ 
+ 
+@@ -71,17 +71,26 @@ def api_get(port: int, path: str) -> dict:
+ 
+ def main() -> int:
+     root = Path(sys.argv[1]).resolve()
++    sys.path.insert(0, str(root))
++    from fleet_config import load_config
+     session_id = os.environ.get("C5_SESSION_ID", "")
+     domain = os.environ.get("ROS_DOMAIN_ID", "")
+     if not session_id or not domain.isdigit():
+         raise CleanupError("C5_SESSION_ID veya benzersiz ROS_DOMAIN_ID eksik")
+-    profile = root / "config/fleet.warehouse-30x18.yaml"
++    profile = (root / os.environ.get("C5_DEMO_PROFILE", "config/fleet.warehouse-30x18.yaml")).resolve()
++    try:
++        profile.relative_to(root / "config")
++    except ValueError as error:
++        raise CleanupError("C5_DEMO_PROFILE yalnız bu workspace'in config dizininde olmalı") from error
++    if not profile.is_file() or profile.suffix != ".yaml":
++        raise CleanupError("C5_DEMO_PROFILE geçerli bir YAML dosyası olmalı")
++    expected_robots = {robot.id for robot in load_config(profile).robots}
+     config_check = subprocess.run([sys.executable, "-m", "fleet_config", str(profile)], cwd=root)
+     if config_check.returncode:
+-        raise CleanupError("Üç robotlu C5 profil doğrulaması başarısız")
++        raise CleanupError("C5 profil doğrulaması başarısız")
+     test_check = subprocess.run([sys.executable, "docker/simulation-warehouse-grid/test_startup_readiness.py"], cwd=root)
+     if test_check.returncode:
+-        raise CleanupError("Üç robotlu AMCL/Nav2/TF readiness testi başarısız")
++        raise CleanupError("AMCL/Nav2/TF readiness testi başarısız")
+     cache, _fingerprint, _image_id = overlay_cache(root)
+ 
+     api_port = available_port(int(os.environ.get("C5_API_PORT", "21482")), set())
+@@ -106,7 +115,7 @@ def main() -> int:
+         "export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:"
+         "/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; "
+         "exec python3 docker/simulation-warehouse-grid/stage1_run.py "
+-        "config/fleet.warehouse-30x18.yaml /evidence/live "
++        f"{shlex.quote(str(profile.relative_to(root)))} /evidence/live "
+         f"--api-port {api_port} --scene-port {scene_port} "
+         f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install"
+     )
+@@ -125,7 +134,7 @@ def main() -> int:
+         "session_id": session_id, "ros_domain_id": int(domain), "workspace": str(root),
+         "container_name": session_id, "api_port": api_port, "scene_port": scene_port,
+         "ui_port": ui_port, "started_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+-        "expected_robots": sorted(EXPECTED_ROBOTS), "task_submissions": 0,
++        "expected_robots": sorted(expected_robots), "profile": str(profile.relative_to(root)), "task_submissions": 0,
+     }, indent=2) + "\n")
+ 
+     readiness_path = evidence / "live/startup-readiness.json"
+@@ -151,13 +160,13 @@ def main() -> int:
+             idle = all(item.get("active_task_id") is None and item.get("state") == "IDLE"
+                        and item.get("telemetry") == "LIVE" and item.get("pose_reliability") == "LIVE"
+                        for item in robot_rows)
+-            phases_ready = bool(readiness and set(readiness.get("robots", {})) == EXPECTED_ROBOTS and
++            phases_ready = bool(readiness and set(readiness.get("robots", {})) == expected_robots and
+                                 set(readiness.get("required_phases", [])) == {"amcl", "nav2", "tf"} and
+                                 all(readiness["robots"][robot].get(phase, {}).get("ready") is True
+-                                    for robot in EXPECTED_ROBOTS for phase in ("amcl", "nav2", "tf")))
++                                    for robot in expected_robots for phase in ("amcl", "nav2", "tf")))
+             if (readiness and readiness.get("status") == "READY" and
+                     readiness.get("current_status") == "READY" and phases_ready and
+-                    health.get("source") == "LIVE" and ids == EXPECTED_ROBOTS and idle and
++                    health.get("source") == "LIVE" and ids == expected_robots and idle and
+                     tasks.get("task_counts", {}).get("total") == 0 and
+                     tasks.get("task_counts", {}).get("active") == 0):
+                 break
+@@ -165,7 +174,7 @@ def main() -> int:
+             pass
+         time.sleep(0.5)
+     else:
+-        raise CleanupError(f"300 sn içinde üç robot için gerçek AMCL/Nav2/TF readiness sağlanmadı; container={session_id}")
++        raise CleanupError(f"300 sn içinde AMCL/Nav2/TF readiness sağlanmadı; container={session_id}")
+ 
+     gui_log = (evidence / "gui-vite.log").open("ab", buffering=0)
+     gui_env = os.environ.copy()
+@@ -192,12 +201,12 @@ def main() -> int:
+         "ui_port": ui_port, "vite_pid": gui.pid,
+         "started_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+         "ready_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+-        "robots": sorted(EXPECTED_ROBOTS), "readiness": readiness,
++        "robots": sorted(expected_robots), "profile": str(profile.relative_to(root)), "readiness": readiness,
+         "tasks": tasks, "task_submissions": 0,
+     }, indent=2) + "\n")
+     print(json.dumps({"result": "READY", "session_id": session_id, "ros_domain_id": int(domain),
+                       "container": session_id, "api": f"http://127.0.0.1:{api_port}",
+-                      "gui": f"http://127.0.0.1:{ui_port}/", "robots": sorted(EXPECTED_ROBOTS),
++                      "gui": f"http://127.0.0.1:{ui_port}/", "robots": sorted(expected_robots),
+                       "task_counts": tasks.get("task_counts"), "evidence": str(evidence)}, indent=2))
+     return 0
+ 
+diff --git a/scripts/start_demo.py b/scripts/start_demo.py
+index 1b88b2a..37840c4 100755
+--- a/scripts/start_demo.py
++++ b/scripts/start_demo.py
+@@ -191,7 +191,7 @@ def main() -> int:
+         if session.get("session_id") != name or session.get("ros_domain_id") != domain:
+             raise RuntimeError("session evidence does not match this launcher")
+         url = f"http://127.0.0.1:{ui_port}/"
+-        print(f"\nREADY — üç robot, AMCL/Nav2/TF, API/WebSocket ve Vite hazır", flush=True)
++        print(f"\nREADY — {len(session['robots'])} robot, AMCL/Nav2/TF, API/WebSocket ve Vite hazır", flush=True)
+         print(f"GUI: {url}", flush=True)
+         print(f"Oturum: {name} (ROS_DOMAIN_ID={domain}); kanıt: {evidence}", flush=True)
+         if sys.platform == "darwin":
+diff --git a/tests/test_fleet_manager_outbox.py b/tests/test_fleet_manager_outbox.py
+index 75a00c0..c1969a6 100644
+--- a/tests/test_fleet_manager_outbox.py
++++ b/tests/test_fleet_manager_outbox.py
+@@ -1372,3 +1372,71 @@ def test_yaml_energy_policy_and_robot_models_after_automatic_routes(energy_polic
+             finally:
+                 await loop.close()
+     asyncio.run(scenario())
++
++
++
++def test_backlogged_consumer_schedules_observer_between_committed_events(runtime):
++    async def scenario():
++        original = runtime._process
++        observed, scheduled = [], []
++
++        def observe():
++            count = runtime.store.connection.execute(
++                "SELECT count(*) FROM processed_events WHERE event_id LIKE 'fairness-%'"
++            ).fetchone()[0]
++            observed.append((runtime.store.connection.in_transaction, count))
++
++        def process(event):
++            result = original(event)
++            if not scheduled:
++                scheduled.append(asyncio.get_running_loop().call_soon(observe))
++            return result
++
++        runtime._process = process
++        await runtime.start()
++        events = [Event("TICK", {"current_time": 10}, event_id=f"fairness-{i}") for i in range(12)]
++        await asyncio.gather(*(runtime.submit(event) for event in events))
++        await runtime.close()
++        assert len(observed) == 1
++        in_transaction, count = observed[0]
++        assert not in_transaction
++        assert 0 < count < len(events), "Other loop work must run before the backlog drains"
++        committed = [row[0] for row in runtime.store.connection.execute(
++            "SELECT event_id FROM processed_events WHERE event_id LIKE 'fairness-%' ORDER BY rowid"
++        )]
++        assert committed == [event.event_id for event in events]
++
++    asyncio.run(scenario())
++
++
++
++def test_readonly_snapshot_does_not_block_atomic_assignment(tmp_path):
++    async def scenario():
++        path = tmp_path / "reader.db"
++        with closing(SQLiteStore(path)) as store:
++            core = FleetManagerCore(Routes(), Pose2D())
++            core.register_robot("r1")
++            loop = FleetEventLoop(store, core)
++            reader = sqlite3.connect(f"file:{path}?mode=ro", uri=True, isolation_level=None)
++            # Fail immediately if a reader would block the sole writer.
++            store.connection.execute("PRAGMA busy_timeout=0")
++            reader.execute("BEGIN")
++            assert reader.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
++            await loop.start()
++            try:
++                await assign(loop)
++                assert store.connection.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
++                assert store.connection.execute("PRAGMA synchronous").fetchone()[0] == 2
++                assert store.connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
++                assert rows(loop, "tasks")[0]["status"] == "ASSIGNED"
++                assert rows(loop, "outbox_events")[0]["state"] == "PENDING"
++                # The old reader still sees one coherent generation.
++                assert reader.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
++                assert reader.execute("SELECT count(*) FROM outbox_events").fetchone()[0] == 0
++                reader.execute("COMMIT")
++                assert reader.execute("SELECT status FROM tasks").fetchone()[0] == "ASSIGNED"
++                assert reader.execute("SELECT count(*) FROM outbox_events").fetchone()[0] == 1
++            finally:
++                reader.close()
++                await loop.close()
++    asyncio.run(scenario())

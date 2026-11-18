@@ -1,0 +1,1970 @@
+{
+  "wal-tail": {
+    "sqlite_commit_s": {
+      "n": 6371,
+      "mean": 0.007758905705383757,
+      "p50": 0.0023981250001270382,
+      "p95": 0.026967165999849385,
+      "min": 2.1249998098937795e-06,
+      "max": 0.7712655420000374
+    },
+    "sqlite_transaction_s": {
+      "n": 6371,
+      "mean": 0.015402181617167816,
+      "p50": 0.006854249999832973,
+      "p95": 0.05031291700015572,
+      "min": 2.075000020340667e-05,
+      "max": 1.2671597920002569
+    },
+    "event_loop_lag_s": {
+      "n": 1814,
+      "mean": 0.03473017602738615,
+      "p50": 0.008996166999622801,
+      "p95": 0.1387932079996972,
+      "min": 9.591699972588685e-05,
+      "max": 1.3405202089998056
+    },
+    "event_duration_s": {
+      "n": 6371,
+      "mean": 0.01564480234123378,
+      "p50": 0.0070246669997686695,
+      "p95": 0.05106091700008619,
+      "min": 2.487499978087726e-05,
+      "max": 1.269600334000188
+    },
+    "sqlite_commit_by_event_s": {
+      "ACTION_FEEDBACK": {
+        "n": 1989,
+        "mean": 0.008280022443938342,
+        "p50": 0.0032343339998988085,
+        "p95": 0.02869129200007592,
+        "min": 0.00019525000016074046,
+        "max": 0.3908796250002524
+      },
+      "ROBOT_STATUS": {
+        "n": 2176,
+        "mean": 0.009285555900277968,
+        "p50": 0.003508374999910302,
+        "p95": 0.028013958999963506,
+        "min": 0.00020366699982332648,
+        "max": 0.7712655420000374
+      },
+      "TICK": {
+        "n": 1101,
+        "mean": 0.01134659726976365,
+        "p50": 0.005433332999928098,
+        "p95": 0.034575166999729845,
+        "min": 0.00021570799981418531,
+        "max": 0.4875172509996446
+      },
+      "OUTBOX_CLAIM": {
+        "n": 1080,
+        "mean": 6.970779536332985e-05,
+        "p50": 5.332999990059761e-06,
+        "p95": 4.045800005769706e-05,
+        "min": 2.1249998098937795e-06,
+        "max": 0.017604250000204047
+      },
+      "ACTION_RESULT": {
+        "n": 2,
+        "mean": 0.0068562710000605875,
+        "p50": 0.000439709000147559,
+        "p95": 0.013272832999973616,
+        "min": 0.000439709000147559,
+        "max": 0.013272832999973616
+      },
+      "ROUTE_RESOLVED": {
+        "n": 21,
+        "mean": 0.007023535619022628,
+        "p50": 0.0036254169999665464,
+        "p95": 0.014158916000269528,
+        "min": 0.00041091699995376985,
+        "max": 0.05231679200005601
+      },
+      "OUTBOX_FINISH": {
+        "n": 2,
+        "mean": 0.014279582999961349,
+        "p50": 0.01069412500010003,
+        "p95": 0.017865040999822668,
+        "min": 0.01069412500010003,
+        "max": 0.017865040999822668
+      }
+    },
+    "queue_depth": {
+      "n": 6371,
+      "mean": 3.422382671480144,
+      "p50": 0,
+      "p95": 18,
+      "min": 0,
+      "max": 58
+    },
+    "publisher_write_s": {
+      "n": 503,
+      "mean": 0.012496341614322183,
+      "p50": 0.0021504999999706342,
+      "p95": 0.060650792000160436,
+      "min": 0.0004677920001086022,
+      "max": 0.28967720799983
+    },
+    "publisher_actual_intervals_s": {
+      "n": 502,
+      "mean": 0.30557655408964174,
+      "p50": 0.2612672919999568,
+      "p95": 0.6125551670002096,
+      "min": 0.028052499999830616,
+      "max": 1.5011525009999787
+    },
+    "publisher_right_censored_gap_s": 20.546052676000272,
+    "nav2_query_s": {
+      "n": 21,
+      "mean": 0.12991958533337397,
+      "p50": 0.10856520900006217,
+      "p95": 0.22431150000011257,
+      "min": 0.05496658399988519,
+      "max": 0.2540262500001518
+    },
+    "nav2_query_outcomes": {
+      "success": 21
+    },
+    "max_executing": 1,
+    "task_states_last": [
+      {
+        "task": "web-0fa92c1f-e7ea-4c8b-a3a0-cc62c48e6fef",
+        "state": "COMPLETED",
+        "robot": "robot_gamma"
+      },
+      {
+        "task": "web-52b73592-e743-4d0c-b62c-f11fad49a458",
+        "state": "COMPLETED",
+        "robot": "robot_beta"
+      },
+      {
+        "task": "web-0e338a36-8bc5-40c9-978a-0232ba297e5e",
+        "state": "COMPLETED",
+        "robot": "robot_alpha"
+      }
+    ],
+    "action_results": [
+      {
+        "robot": "robot_gamma",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      },
+      {
+        "robot": "robot_gamma",
+        "action": "execute_task",
+        "message": {
+          "status": 4,
+          "result": {
+            "status": 1,
+            "completed_epoch": 1,
+            "completion_stamp": {
+              "sec": 213,
+              "nanosec": 110000000
+            },
+            "error_reason": ""
+          }
+        }
+      },
+      {
+        "robot": "robot_alpha",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      },
+      {
+        "robot": "robot_alpha",
+        "action": "execute_task",
+        "message": {
+          "status": 4,
+          "result": {
+            "status": 1,
+            "completed_epoch": 1,
+            "completion_stamp": {
+              "sec": 224,
+              "nanosec": 345000000
+            },
+            "error_reason": ""
+          }
+        }
+      }
+    ],
+    "worst_5s_simulation_windows": [
+      {
+        "start_utc": 1794954518.6826096,
+        "duration_s": 4.8011638779998975,
+        "samples": 29,
+        "rtf_by_received_sim_progress": 0.30409293185972586,
+        "reported_rtf_mean": 0.4655793103448276
+      },
+      {
+        "start_utc": 1794954508.5757399,
+        "duration_s": 4.8897871270000905,
+        "samples": 38,
+        "rtf_by_received_sim_progress": 0.43151162723406644,
+        "reported_rtf_mean": 0.5824263157894737
+      },
+      {
+        "start_utc": 1794954504.5984657,
+        "duration_s": 3.8549120019997645,
+        "samples": 32,
+        "rtf_by_received_sim_progress": 0.4384017064782023,
+        "reported_rtf_mean": 0.548315625
+      },
+      {
+        "start_utc": 1794954613.5585988,
+        "duration_s": 4.896211334999862,
+        "samples": 41,
+        "rtf_by_received_sim_progress": 0.47383575611122297,
+        "reported_rtf_mean": 0.607119512195122
+      },
+      {
+        "start_utc": 1794954658.601606,
+        "duration_s": 4.910095919000014,
+        "samples": 39,
+        "rtf_by_received_sim_progress": 0.4765691014192167,
+        "reported_rtf_mean": 0.6163846153846154
+      }
+    ],
+    "max_simultaneous_odom_moving": 2,
+    "three_moving_source_stamp_span_s": null,
+    "longest_three_moving_sample_segment_s": null,
+    "three_moving_segment_physical_displacement_m": {},
+    "unsafe_contacts": [
+      {
+        "utc": "2026-11-17T22:30:57.388331+00:00",
+        "monotonic": 2504.572711017,
+        "sim_ns": 265670000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:57.437311+00:00",
+        "monotonic": 2504.621695725,
+        "sim_ns": 265670000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:57.531152+00:00",
+        "monotonic": 2504.715539142,
+        "sim_ns": 265800000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:57.683684+00:00",
+        "monotonic": 2504.868066267,
+        "sim_ns": 265800000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:57.717584+00:00",
+        "monotonic": 2504.901967809,
+        "sim_ns": 265885000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:57.751048+00:00",
+        "monotonic": 2504.935428642,
+        "sim_ns": 265885000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:57.947395+00:00",
+        "monotonic": 2505.131774809,
+        "sim_ns": 266030000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.017763+00:00",
+        "monotonic": 2505.2021521,
+        "sim_ns": 266030000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.215126+00:00",
+        "monotonic": 2505.399506892,
+        "sim_ns": 266170000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.304555+00:00",
+        "monotonic": 2505.488936476,
+        "sim_ns": 266170000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.417847+00:00",
+        "monotonic": 2505.602226267,
+        "sim_ns": 266305000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.442940+00:00",
+        "monotonic": 2505.627318517,
+        "sim_ns": 266305000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.500811+00:00",
+        "monotonic": 2505.685190642,
+        "sim_ns": 266350000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.527846+00:00",
+        "monotonic": 2505.712233142,
+        "sim_ns": 266350000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.621721+00:00",
+        "monotonic": 2505.806103142,
+        "sim_ns": 266400000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.730960+00:00",
+        "monotonic": 2505.915338684,
+        "sim_ns": 266400000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.973145+00:00",
+        "monotonic": 2506.157535768,
+        "sim_ns": 266490000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:30:58.998869+00:00",
+        "monotonic": 2506.183247268,
+        "sim_ns": 266490000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.391524+00:00",
+        "monotonic": 2507.575924643,
+        "sim_ns": 266595000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.450156+00:00",
+        "monotonic": 2507.634544268,
+        "sim_ns": 266595000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.690882+00:00",
+        "monotonic": 2507.87526206,
+        "sim_ns": 266930000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.718879+00:00",
+        "monotonic": 2507.903261685,
+        "sim_ns": 266930000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.763982+00:00",
+        "monotonic": 2507.948360518,
+        "sim_ns": 267000000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.772105+00:00",
+        "monotonic": 2507.956484018,
+        "sim_ns": 267000000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.794331+00:00",
+        "monotonic": 2507.978720685,
+        "sim_ns": 267015000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.863620+00:00",
+        "monotonic": 2508.048014602,
+        "sim_ns": 267015000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.908927+00:00",
+        "monotonic": 2508.093305894,
+        "sim_ns": 267065000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.935074+00:00",
+        "monotonic": 2508.119453519,
+        "sim_ns": 267065000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:00.988278+00:00",
+        "monotonic": 2508.172656977,
+        "sim_ns": 267095000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.034449+00:00",
+        "monotonic": 2508.218834269,
+        "sim_ns": 267095000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.097258+00:00",
+        "monotonic": 2508.281636727,
+        "sim_ns": 267205000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.164330+00:00",
+        "monotonic": 2508.348721144,
+        "sim_ns": 267205000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.214374+00:00",
+        "monotonic": 2508.398756519,
+        "sim_ns": 267320000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.241890+00:00",
+        "monotonic": 2508.426271894,
+        "sim_ns": 267320000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.266638+00:00",
+        "monotonic": 2508.451016602,
+        "sim_ns": 267375000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.288720+00:00",
+        "monotonic": 2508.473109227,
+        "sim_ns": 267375000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.397901+00:00",
+        "monotonic": 2508.582291852,
+        "sim_ns": 267405000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.424663+00:00",
+        "monotonic": 2508.609053144,
+        "sim_ns": 267405000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.446921+00:00",
+        "monotonic": 2508.631299644,
+        "sim_ns": 267470000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.484192+00:00",
+        "monotonic": 2508.668579935,
+        "sim_ns": 267470000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.536447+00:00",
+        "monotonic": 2508.720826769,
+        "sim_ns": 267540000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.596376+00:00",
+        "monotonic": 2508.780760019,
+        "sim_ns": 267540000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.624383+00:00",
+        "monotonic": 2508.808764519,
+        "sim_ns": 267600000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.667100+00:00",
+        "monotonic": 2508.851481394,
+        "sim_ns": 267600000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.706525+00:00",
+        "monotonic": 2508.890904102,
+        "sim_ns": 267655000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.725587+00:00",
+        "monotonic": 2508.910144852,
+        "sim_ns": 267655000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.764594+00:00",
+        "monotonic": 2508.948972894,
+        "sim_ns": 267715000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.770428+00:00",
+        "monotonic": 2508.954807227,
+        "sim_ns": 267715000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.792612+00:00",
+        "monotonic": 2508.976991144,
+        "sim_ns": 267740000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.820616+00:00",
+        "monotonic": 2509.004995102,
+        "sim_ns": 267740000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.853911+00:00",
+        "monotonic": 2509.038298436,
+        "sim_ns": 267775000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.867606+00:00",
+        "monotonic": 2509.051991311,
+        "sim_ns": 267775000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.947823+00:00",
+        "monotonic": 2509.132202644,
+        "sim_ns": 267855000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.958068+00:00",
+        "monotonic": 2509.142461352,
+        "sim_ns": 267855000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.982754+00:00",
+        "monotonic": 2509.167132644,
+        "sim_ns": 267890000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:01.998241+00:00",
+        "monotonic": 2509.182621644,
+        "sim_ns": 267890000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.031856+00:00",
+        "monotonic": 2509.216234019,
+        "sim_ns": 267945000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.038304+00:00",
+        "monotonic": 2509.222682644,
+        "sim_ns": 267945000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.070495+00:00",
+        "monotonic": 2509.254878769,
+        "sim_ns": 267980000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.153949+00:00",
+        "monotonic": 2509.338335352,
+        "sim_ns": 267980000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.182819+00:00",
+        "monotonic": 2509.367198894,
+        "sim_ns": 268065000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.189449+00:00",
+        "monotonic": 2509.373827394,
+        "sim_ns": 268065000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.206540+00:00",
+        "monotonic": 2509.390919227,
+        "sim_ns": 268090000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.215184+00:00",
+        "monotonic": 2509.399563269,
+        "sim_ns": 268090000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.230097+00:00",
+        "monotonic": 2509.414476227,
+        "sim_ns": 268115000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.238053+00:00",
+        "monotonic": 2509.422431352,
+        "sim_ns": 268115000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.250703+00:00",
+        "monotonic": 2509.435081561,
+        "sim_ns": 268135000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.255910+00:00",
+        "monotonic": 2509.440297311,
+        "sim_ns": 268135000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.266858+00:00",
+        "monotonic": 2509.451236561,
+        "sim_ns": 268150000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.270374+00:00",
+        "monotonic": 2509.454752769,
+        "sim_ns": 268150000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.289861+00:00",
+        "monotonic": 2509.474239644,
+        "sim_ns": 268170000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.298495+00:00",
+        "monotonic": 2509.482873186,
+        "sim_ns": 268170000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.377741+00:00",
+        "monotonic": 2509.562119769,
+        "sim_ns": 268225000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.430310+00:00",
+        "monotonic": 2509.614689436,
+        "sim_ns": 268225000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.450863+00:00",
+        "monotonic": 2509.635242269,
+        "sim_ns": 268305000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.467240+00:00",
+        "monotonic": 2509.651619894,
+        "sim_ns": 268305000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.484583+00:00",
+        "monotonic": 2509.668961894,
+        "sim_ns": 268340000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:02.491957+00:00",
+        "monotonic": 2509.676337019,
+        "sim_ns": 268340000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.120026+00:00",
+        "monotonic": 2510.304405061,
+        "sim_ns": 268400000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.199709+00:00",
+        "monotonic": 2510.38408827,
+        "sim_ns": 268400000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.227968+00:00",
+        "monotonic": 2510.41234852,
+        "sim_ns": 268485000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.249111+00:00",
+        "monotonic": 2510.433490686,
+        "sim_ns": 268485000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.290450+00:00",
+        "monotonic": 2510.474832853,
+        "sim_ns": 268550000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.299796+00:00",
+        "monotonic": 2510.484174936,
+        "sim_ns": 268550000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.312333+00:00",
+        "monotonic": 2510.496711645,
+        "sim_ns": 268575000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.331915+00:00",
+        "monotonic": 2510.516307436,
+        "sim_ns": 268575000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.394720+00:00",
+        "monotonic": 2510.57909877,
+        "sim_ns": 268645000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.427384+00:00",
+        "monotonic": 2510.61176302,
+        "sim_ns": 268645000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.456643+00:00",
+        "monotonic": 2510.641032603,
+        "sim_ns": 268700000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.512211+00:00",
+        "monotonic": 2510.696601561,
+        "sim_ns": 268700000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.748795+00:00",
+        "monotonic": 2510.933173687,
+        "sim_ns": 268795000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.767072+00:00",
+        "monotonic": 2510.951451812,
+        "sim_ns": 268795000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.797615+00:00",
+        "monotonic": 2510.98199602,
+        "sim_ns": 268835000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.818152+00:00",
+        "monotonic": 2511.002532645,
+        "sim_ns": 268835000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.907238+00:00",
+        "monotonic": 2511.091630145,
+        "sim_ns": 268890000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:03.940344+00:00",
+        "monotonic": 2511.124734978,
+        "sim_ns": 268890000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.019972+00:00",
+        "monotonic": 2511.204352978,
+        "sim_ns": 269010000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.030449+00:00",
+        "monotonic": 2511.214828645,
+        "sim_ns": 269010000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.052297+00:00",
+        "monotonic": 2511.236675062,
+        "sim_ns": 269055000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.059948+00:00",
+        "monotonic": 2511.244327228,
+        "sim_ns": 269055000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.069071+00:00",
+        "monotonic": 2511.253449978,
+        "sim_ns": 269070000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.093714+00:00",
+        "monotonic": 2511.27809527,
+        "sim_ns": 269070000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.191436+00:00",
+        "monotonic": 2511.375815062,
+        "sim_ns": 269185000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.212359+00:00",
+        "monotonic": 2511.396742062,
+        "sim_ns": 269185000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.428389+00:00",
+        "monotonic": 2511.612769187,
+        "sim_ns": 269255000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.487043+00:00",
+        "monotonic": 2511.67142452,
+        "sim_ns": 269255000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.559099+00:00",
+        "monotonic": 2511.743478562,
+        "sim_ns": 269320000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.598931+00:00",
+        "monotonic": 2511.783316895,
+        "sim_ns": 269320000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.755251+00:00",
+        "monotonic": 2511.939630812,
+        "sim_ns": 269405000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.782686+00:00",
+        "monotonic": 2511.967066187,
+        "sim_ns": 269405000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.906064+00:00",
+        "monotonic": 2512.090449437,
+        "sim_ns": 269510000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.973225+00:00",
+        "monotonic": 2512.15762377,
+        "sim_ns": 269510000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.991776+00:00",
+        "monotonic": 2512.176154604,
+        "sim_ns": 269610000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:04.998915+00:00",
+        "monotonic": 2512.183293895,
+        "sim_ns": 269610000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:05.023094+00:00",
+        "monotonic": 2512.207475395,
+        "sim_ns": 269635000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:05.037954+00:00",
+        "monotonic": 2512.222333645,
+        "sim_ns": 269635000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:05.067466+00:00",
+        "monotonic": 2512.251856479,
+        "sim_ns": 269670000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_alpha",
+        "names": [
+          "robot_alpha::base_link::body",
+          "robot_beta::base_link::body"
+        ]
+      },
+      {
+        "utc": "2026-11-17T22:31:05.086354+00:00",
+        "monotonic": 2512.270745021,
+        "sim_ns": 269670000000,
+        "kind": "UNSAFE_CONTACT",
+        "robot": "robot_beta",
+        "names": [
+          "robot_beta::base_link::body",
+          "robot_alpha::base_link::body"
+        ]
+      }
+    ],
+    "observer_relative_callback_delay_s": {
+      "physical:robot_alpha": {
+        "n": 777,
+        "mean": 0.28631652593307527,
+        "p50": 0.22513854199996786,
+        "p95": 0.7409030419998999,
+        "min": 0.016642584000237548,
+        "max": 1.8707221670001672
+      },
+      "odom:robot_alpha": {
+        "n": 506,
+        "mean": 0.31101197709090445,
+        "p50": 0.2325376249996225,
+        "p95": 0.7708316670000386,
+        "min": 0.020879749999949127,
+        "max": 1.8719159180000133
+      },
+      "physical:robot_beta": {
+        "n": 772,
+        "mean": 0.28738146320077407,
+        "p50": 0.22569283300026655,
+        "p95": 0.7193683330001477,
+        "min": 0.020544083999993745,
+        "max": 1.8865531680003187
+      },
+      "odom:robot_beta": {
+        "n": 507,
+        "mean": 0.3133646679013735,
+        "p50": 0.23322183399977803,
+        "p95": 0.800806583999929,
+        "min": 0.02793429199982711,
+        "max": 1.8689258760000484
+      },
+      "physical:robot_gamma": {
+        "n": 758,
+        "mean": 0.29008659422427235,
+        "p50": 0.2250768330000028,
+        "p95": 0.7632144170001993,
+        "min": 0.02557512500015946,
+        "max": 1.8777523759999895
+      },
+      "odom:robot_gamma": {
+        "n": 498,
+        "mean": 0.30886215374698894,
+        "p50": 0.23323629200012874,
+        "p95": 0.7703311660002328,
+        "min": 0.045349540999723104,
+        "max": 1.8790318759997717
+      }
+    },
+    "amcl_xy_error_m": {
+      "robot_alpha": {
+        "n": 140,
+        "mean": 0.06446358954264468,
+        "p50": 0.04870892494373603,
+        "p95": 0.17067095634673013,
+        "min": 0.0012785641256830732,
+        "max": 0.20784977071719957
+      },
+      "robot_beta": null,
+      "robot_gamma": {
+        "n": 149,
+        "mean": 0.056776226312135344,
+        "p50": 0.0478208403717811,
+        "p95": 0.11912406968731694,
+        "min": 0.011492805163735792,
+        "max": 0.17334415552134283
+      }
+    },
+    "amcl_yaw_error_rad": {
+      "robot_alpha": {
+        "n": 140,
+        "mean": 0.027253741912806995,
+        "p50": 0.00892641863606447,
+        "p95": 0.06909128814051724,
+        "min": 4.627996849060345e-05,
+        "max": 0.5511984731693531
+      },
+      "robot_beta": null,
+      "robot_gamma": {
+        "n": 149,
+        "mean": 0.015282888300213474,
+        "p50": 0.012683865749859358,
+        "p95": 0.040227099854460956,
+        "min": 0.0006646908593334055,
+        "max": 0.08073854691057147
+      }
+    },
+    "physical_distance_m": {
+      "robot_alpha": 13.40112865441184,
+      "robot_beta": 0.08473711483863562,
+      "robot_gamma": 16.615797578480958
+    },
+    "completed_task_physical_errors": [
+      {
+        "task": "web-0fa92c1f-e7ea-4c8b-a3a0-cc62c48e6fef",
+        "robot": "robot_gamma",
+        "status": 4,
+        "result_status": 1,
+        "assignment_epoch": 1,
+        "actual_completed_epoch": 1,
+        "completion_stamp_ns": 213110000000,
+        "physical_target_error_m": 0.1974918751131954
+      },
+      {
+        "task": "web-0e338a36-8bc5-40c9-978a-0232ba297e5e",
+        "robot": "robot_alpha",
+        "status": 4,
+        "result_status": 1,
+        "assignment_epoch": 1,
+        "actual_completed_epoch": 1,
+        "completion_stamp_ns": 224345000000,
+        "physical_target_error_m": 0.2520068021533786
+      }
+    ]
+  },
+  "fairness-wal": {
+    "sqlite_commit_s": {
+      "n": 11440,
+      "mean": 0.007222455733478568,
+      "p50": 0.0024414590002379555,
+      "p95": 0.026802542000041285,
+      "min": 2.1249998098937795e-06,
+      "max": 0.4371626249999281
+    },
+    "sqlite_transaction_s": {
+      "n": 11440,
+      "mean": 0.01347287812770742,
+      "p50": 0.00629704099992523,
+      "p95": 0.04341187499994703,
+      "min": 1.7042000308720162e-05,
+      "max": 0.7168755009997767
+    },
+    "event_loop_lag_s": {
+      "n": 1811,
+      "mean": 0.049614562003685414,
+      "p50": 0.024829416000102356,
+      "p95": 0.1732733339999868,
+      "min": 3.666699967652676e-05,
+      "max": 0.9960272919997806
+    },
+    "event_duration_s": {
+      "n": 11440,
+      "mean": 0.013671883474213267,
+      "p50": 0.006416375000299013,
+      "p95": 0.043990750000375556,
+      "min": 2.1708000076614553e-05,
+      "max": 0.7169741250004336
+    },
+    "sqlite_commit_by_event_s": {
+      "TICK": {
+        "n": 685,
+        "mean": 0.011044031567886175,
+        "p50": 0.0037130410000827396,
+        "p95": 0.04172075099995709,
+        "min": 0.0001969579998331028,
+        "max": 0.22084662499992191
+      },
+      "ROBOT_STATUS": {
+        "n": 2627,
+        "mean": 0.00741401191016194,
+        "p50": 0.0027732909998121613,
+        "p95": 0.029024124999978085,
+        "min": 0.00016095799992399407,
+        "max": 0.2920371250002063
+      },
+      "OUTBOX_CLAIM": {
+        "n": 664,
+        "mean": 8.107757379896185e-05,
+        "p50": 5.207999947742792e-06,
+        "p95": 7.016600011411356e-05,
+        "min": 2.1249998098937795e-06,
+        "max": 0.009807666999677167
+      },
+      "SUBMIT_TASK": {
+        "n": 3,
+        "mean": 0.054501514000094176,
+        "p50": 0.03881758300030924,
+        "p95": 0.12243662499986385,
+        "min": 0.002250334000109433,
+        "max": 0.12243662499986385
+      },
+      "ROUTE_RESOLVED": {
+        "n": 18,
+        "mean": 0.024369925999963016,
+        "p50": 0.012220124999657855,
+        "p95": 0.18819200000007186,
+        "min": 0.0006710000002385641,
+        "max": 0.18819200000007186
+      },
+      "OUTBOX_FINISH": {
+        "n": 3,
+        "mean": 0.01028612499991747,
+        "p50": 0.009149749999778578,
+        "p95": 0.01358445899995786,
+        "min": 0.008124166000015975,
+        "max": 0.01358445899995786
+      },
+      "ACTION_FEEDBACK": {
+        "n": 7437,
+        "mean": 0.007381504252520527,
+        "p50": 0.0026628750001691515,
+        "p95": 0.026236250000238215,
+        "min": 0.00013933399986854056,
+        "max": 0.4371626249999281
+      }
+    },
+    "queue_depth": {
+      "n": 11440,
+      "mean": 16.013461538461538,
+      "p50": 9,
+      "p95": 56,
+      "min": 0,
+      "max": 106
+    },
+    "publisher_write_s": {
+      "n": 573,
+      "mean": 0.008871940532283813,
+      "p50": 0.002946624999822234,
+      "p95": 0.03262304200006838,
+      "min": 0.0004523749998952553,
+      "max": 0.3863457500001459
+    },
+    "publisher_actual_intervals_s": {
+      "n": 572,
+      "mean": 0.3150011556643355,
+      "p50": 0.27424500000006446,
+      "p95": 0.5813831669997853,
+      "min": 0.06248462500025198,
+      "max": 1.252384376000009
+    },
+    "publisher_right_censored_gap_s": 0.16984837600011815,
+    "nav2_query_s": {
+      "n": 18,
+      "mean": 0.3272416806111475,
+      "p50": 0.2787532500001362,
+      "p95": 0.8042450419998204,
+      "min": 0.09924641699990389,
+      "max": 0.8042450419998204
+    },
+    "nav2_query_outcomes": {
+      "success": 18
+    },
+    "max_executing": 3,
+    "task_states_last": [
+      {
+        "task": "web-0fa92c1f-e7ea-4c8b-a3a0-cc62c48e6fef",
+        "state": "EXECUTING",
+        "robot": "robot_gamma"
+      },
+      {
+        "task": "web-52b73592-e743-4d0c-b62c-f11fad49a458",
+        "state": "EXECUTING",
+        "robot": "robot_beta"
+      },
+      {
+        "task": "web-0e338a36-8bc5-40c9-978a-0232ba297e5e",
+        "state": "EXECUTING",
+        "robot": "robot_alpha"
+      }
+    ],
+    "action_results": [
+      {
+        "robot": "robot_beta",
+        "action": "navigate_to_pose",
+        "message": {
+          "status": 4,
+          "result": {
+            "result": {}
+          }
+        }
+      }
+    ],
+    "worst_5s_simulation_windows": [
+      {
+        "start_utc": 1794954338.9515264,
+        "duration_s": 4.659662628000206,
+        "samples": 34,
+        "rtf_by_received_sim_progress": 0.36054112370813596,
+        "reported_rtf_mean": 0.4887764705882353
+      },
+      {
+        "start_utc": 1794954253.7747025,
+        "duration_s": 4.805343253000046,
+        "samples": 40,
+        "rtf_by_received_sim_progress": 0.4474186102434458,
+        "reported_rtf_mean": 0.5739425
+      },
+      {
+        "start_utc": 1794954268.6423168,
+        "duration_s": 4.890770628000155,
+        "samples": 38,
+        "rtf_by_received_sim_progress": 0.4508491948847801,
+        "reported_rtf_mean": 0.6160289473684211
+      },
+      {
+        "start_utc": 1794954303.7066453,
+        "duration_s": 4.831611127000087,
+        "samples": 39,
+        "rtf_by_received_sim_progress": 0.47913624237333163,
+        "reported_rtf_mean": 0.6071923076923077
+      },
+      {
+        "start_utc": 1794954224.1210847,
+        "duration_s": 4.5020445850000215,
+        "samples": 38,
+        "rtf_by_received_sim_progress": 0.4820032229867376,
+        "reported_rtf_mean": 0.6154368421052632
+      }
+    ],
+    "max_simultaneous_odom_moving": 3,
+    "three_moving_source_stamp_span_s": 87.325,
+    "longest_three_moving_sample_segment_s": 39.235,
+    "three_moving_segment_physical_displacement_m": {
+      "robot_alpha": 8.78246898051274,
+      "robot_beta": 6.2189100546223095,
+      "robot_gamma": 9.411820487197593
+    },
+    "unsafe_contacts": [],
+    "observer_relative_callback_delay_s": {
+      "physical:robot_alpha": {
+        "n": 887,
+        "mean": 0.28036996840925454,
+        "p50": 0.23539045799998348,
+        "p95": 0.6430357919998642,
+        "min": 0.00040383299983659526,
+        "max": 1.5558202090001032
+      },
+      "odom:robot_alpha": {
+        "n": 591,
+        "mean": 0.29017680463452417,
+        "p50": 0.242673583999931,
+        "p95": 0.6626471250001487,
+        "min": 0.021804709000207367,
+        "max": 1.5549028750001526
+      },
+      "physical:robot_beta": {
+        "n": 892,
+        "mean": 0.27934369934752595,
+        "p50": 0.23294508300023153,
+        "p95": 0.6415430840002045,
+        "min": 0.02119337500016627,
+        "max": 1.6806556259998615
+      },
+      "odom:robot_beta": {
+        "n": 588,
+        "mean": 0.29453562165474834,
+        "p50": 0.23853233399995588,
+        "p95": 0.6498694169999908,
+        "min": 0.04570324999986042,
+        "max": 1.666187250999883
+      },
+      "physical:robot_gamma": {
+        "n": 878,
+        "mean": 0.2766865321548966,
+        "p50": 0.2309991660004016,
+        "p95": 0.6332257079998271,
+        "min": 0.023238332999881095,
+        "max": 1.6132188340002358
+      },
+      "odom:robot_gamma": {
+        "n": 582,
+        "mean": 0.2904747079879697,
+        "p50": 0.2395027080001455,
+        "p95": 0.6535828329997457,
+        "min": 0.04903183399983391,
+        "max": 1.618613792999895
+      }
+    },
+    "amcl_xy_error_m": {
+      "robot_alpha": {
+        "n": 140,
+        "mean": 0.08046128160899997,
+        "p50": 0.07903243207384926,
+        "p95": 0.17784556332288176,
+        "min": 0.0028482809609795315,
+        "max": 0.21299813593081013
+      },
+      "robot_beta": {
+        "n": 151,
+        "mean": 0.03511520218282113,
+        "p50": 0.0310353190166427,
+        "p95": 0.07690541216742046,
+        "min": 0.0007809080025993185,
+        "max": 0.09320787527171998
+      },
+      "robot_gamma": {
+        "n": 152,
+        "mean": 0.038609346360886844,
+        "p50": 0.03852360850932624,
+        "p95": 0.06811006479160006,
+        "min": 0.0017385744497183274,
+        "max": 0.08205219540528215
+      }
+    },
+    "amcl_yaw_error_rad": {
+      "robot_alpha": {
+        "n": 140,
+        "mean": 0.02305201011127145,
+        "p50": 0.010300624171503348,
+        "p95": 0.14445505041027862,
+        "min": 0.0001256717019271214,
+        "max": 0.1844979594713714
+      },
+      "robot_beta": {
+        "n": 151,
+        "mean": 0.010825843557568467,
+        "p50": 0.009556539911240504,
+        "p95": 0.02767278608314583,
+        "min": 0.00011118898128481547,
+        "max": 0.037293430487436385
+      },
+      "robot_gamma": {
+        "n": 152,
+        "mean": 0.010826021399013563,
+        "p50": 0.00856743566435414,
+        "p95": 0.027761364065191252,
+        "min": 0.00020209557957961977,
+        "max": 0.036005005765972875
+      }
+    },
+    "physical_distance_m": {
+      "robot_alpha": 20.450613334685777,
+      "robot_beta": 15.751936308485224,
+      "robot_gamma": 20.08335305762326
+    },
+    "completed_task_physical_errors": []
+  }
+}

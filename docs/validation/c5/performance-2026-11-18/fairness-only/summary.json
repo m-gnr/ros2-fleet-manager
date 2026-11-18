@@ -1,0 +1,1286 @@
+{
+  "fairness-uninstrumented": {
+    "rtf": {
+      "n": 1459,
+      "mean": 0.6406651130911584,
+      "p50": 0.6624,
+      "p95": 0.9786,
+      "min": 0.0324,
+      "max": 1.0854
+    },
+    "worst_rtf": [
+      {
+        "kind": "gazebo",
+        "mono": 1751.58036809,
+        "utc": 1794953904.391249,
+        "data": {
+          "simTime": {
+            "sec": "14",
+            "nsec": 915000000
+          },
+          "realTime": {
+            "sec": "28",
+            "nsec": 945298513
+          },
+          "iterations": "2983",
+          "realTimeFactor": 0.0324
+        }
+      },
+      {
+        "kind": "gazebo",
+        "mono": 1751.370151215,
+        "utc": 1794953904.1810312,
+        "data": {
+          "simTime": {
+            "sec": "14",
+            "nsec": 890000000
+          },
+          "realTime": {
+            "sec": "28",
+            "nsec": 719796222
+          },
+          "iterations": "2978",
+          "realTimeFactor": 0.0441
+        }
+      },
+      {
+        "kind": "gazebo",
+        "mono": 1787.248948648,
+        "utc": 1794953940.0595005,
+        "data": {
+          "simTime": {
+            "sec": "30",
+            "nsec": 575000000
+          },
+          "realTime": {
+            "sec": "64",
+            "nsec": 621288154
+          },
+          "iterations": "6115",
+          "realTimeFactor": 0.0558
+        }
+      },
+      {
+        "kind": "gazebo",
+        "mono": 1803.67976628,
+        "utc": 1794953956.4785511,
+        "data": {
+          "simTime": {
+            "sec": "37",
+            "nsec": 530000000
+          },
+          "realTime": {
+            "sec": "81",
+            "nsec": 48992703
+          },
+          "iterations": "7506",
+          "realTimeFactor": 0.0611
+        }
+      },
+      {
+        "kind": "gazebo",
+        "mono": 1787.186514606,
+        "utc": 1794953939.9970665,
+        "data": {
+          "simTime": {
+            "sec": "30",
+            "nsec": 565000000
+          },
+          "realTime": {
+            "sec": "64",
+            "nsec": 519057154
+          },
+          "iterations": "6113",
+          "realTimeFactor": 0.0665
+        }
+      }
+    ],
+    "snapshot_age": {
+      "n": 1318,
+      "mean": 0.21654813008118362,
+      "p50": 0.188798042,
+      "p95": 0.530251125,
+      "min": 0.002637125,
+      "max": 1.594952626
+    },
+    "publisher_intervals": {
+      "n": 471,
+      "mean": 0.3817177613205943,
+      "p50": 0.3132196249998742,
+      "p95": 0.7968487089999599,
+      "min": 0.10037204199988992,
+      "max": 2.1799628759999905
+    },
+    "api_counts": {
+      "ws_connected": 1,
+      "ws_product": 485,
+      "heartbeat": 173,
+      "api": 693,
+      "ws_control": 2,
+      "scene": 6771,
+      "api_error": 1
+    },
+    "api_success_duration_ms": {
+      "n": 693,
+      "mean": 49.879036216763446,
+      "p50": 19.051874987781048,
+      "p95": 231.3969160313718,
+      "min": 3.3276660251431167,
+      "max": 1171.7634999658912
+    },
+    "clock_receive_intervals": {
+      "n": 14533,
+      "mean": 0.012345150075001714,
+      "p50": 0.006168083000147817,
+      "p95": 0.03538241700016442,
+      "min": 0.00016620800010969106,
+      "max": 0.7895380840000144
+    },
+    "clock_rate": 0.5220663362692529,
+    "worst_clock_gaps": [
+      {
+        "wall_s": 0.7895380840000144,
+        "sim_s": 0.03,
+        "utc": 1794953979.0725524
+      },
+      {
+        "wall_s": 0.734375916999852,
+        "sim_s": 0.115,
+        "utc": 1794953925.6632237
+      },
+      {
+        "wall_s": 0.7072400419999667,
+        "sim_s": 0.01,
+        "utc": 1794953938.6122205
+      },
+      {
+        "wall_s": 0.6787649170000805,
+        "sim_s": 0.005,
+        "utc": 1794953955.4243686
+      },
+      {
+        "wall_s": 0.6717725010000777,
+        "sim_s": 0.005,
+        "utc": 1794953972.5412142
+      }
+    ],
+    "ros": {
+      "odom:robot_alpha": {
+        "receive_s": {
+          "n": 2676,
+          "mean": 0.06704352744992523,
+          "p50": 0.04639337499997964,
+          "p95": 0.16694195800005218,
+          "min": 0.0006492909999451513,
+          "max": 1.152127375999953
+        },
+        "source_stamp_s": {
+          "n": 2676,
+          "mean": 0.035,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.035
+        },
+        "sim_age_s": {
+          "n": 2677,
+          "mean": 0.0039465819947702655,
+          "p50": 0.0,
+          "p95": 0.015,
+          "min": 0.0,
+          "max": 0.155
+        }
+      },
+      "odom:robot_beta": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.0670683062452337,
+          "p50": 0.04582033300016519,
+          "p95": 0.1676180839999688,
+          "min": 0.0006603330000416463,
+          "max": 1.1529132509999727
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.03501308411214953,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.07
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.003901345291479821,
+          "p50": 0.0,
+          "p95": 0.015,
+          "min": 0.0,
+          "max": 0.12
+        }
+      },
+      "odom:robot_gamma": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.06706818556,
+          "p50": 0.0460213339999882,
+          "p95": 0.16463533299997835,
+          "min": 0.0005571249998865824,
+          "max": 1.1845457500000975
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.03501308411214953,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.07
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.00398542600896861,
+          "p50": 0.0,
+          "p95": 0.015,
+          "min": 0.0,
+          "max": 0.12
+        }
+      },
+      "tf:robot_alpha": {
+        "receive_s": {
+          "n": 2676,
+          "mean": 0.06704483348841556,
+          "p50": 0.04586204099996394,
+          "p95": 0.1655223330001263,
+          "min": 0.00042329100006099907,
+          "max": 1.1506360839998706
+        },
+        "source_stamp_s": {
+          "n": 2676,
+          "mean": 0.035,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.035
+        },
+        "sim_age_s": {
+          "n": 2677,
+          "mean": 0.008401195367949197,
+          "p50": 0.005,
+          "p95": 0.03,
+          "min": 0.0,
+          "max": 0.185
+        }
+      },
+      "tf:robot_beta": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.06702322073121497,
+          "p50": 0.045996166999884736,
+          "p95": 0.166377834000059,
+          "min": 0.00027116599994769786,
+          "max": 1.1504650430001675
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.035,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.035
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.009792600896860987,
+          "p50": 0.005,
+          "p95": 0.03,
+          "min": 0.0,
+          "max": 0.185
+        }
+      },
+      "tf:robot_gamma": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.06702318616747668,
+          "p50": 0.04574841600015134,
+          "p95": 0.16776404100005493,
+          "min": 0.00030662499989375647,
+          "max": 1.1811194590000014
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.035,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.035
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.01094357249626308,
+          "p50": 0.005,
+          "p95": 0.035,
+          "min": 0.0,
+          "max": 0.185
+        }
+      },
+      "scan:robot_alpha": {
+        "receive_s": {
+          "n": 468,
+          "mean": 0.3829281679978632,
+          "p50": 0.2999593750000713,
+          "p95": 0.8925267080001049,
+          "min": 0.1484219579999717,
+          "max": 1.7505995839999287
+        },
+        "source_stamp_s": {
+          "n": 468,
+          "mean": 0.2,
+          "p50": 0.2,
+          "p95": 0.2,
+          "min": 0.2,
+          "max": 0.2
+        },
+        "sim_age_s": {
+          "n": 469,
+          "mean": 0.039466950959488274,
+          "p50": 0.035,
+          "p95": 0.08,
+          "min": 0.0,
+          "max": 0.165
+        }
+      },
+      "scan:robot_beta": {
+        "receive_s": {
+          "n": 468,
+          "mean": 0.3829432631730771,
+          "p50": 0.3057089999999789,
+          "p95": 0.938035291999995,
+          "min": 0.09996841600013795,
+          "max": 1.9367567090000648
+        },
+        "source_stamp_s": {
+          "n": 468,
+          "mean": 0.2,
+          "p50": 0.2,
+          "p95": 0.2,
+          "min": 0.2,
+          "max": 0.2
+        },
+        "sim_age_s": {
+          "n": 469,
+          "mean": 0.09989339019189766,
+          "p50": 0.095,
+          "p95": 0.185,
+          "min": 0.015,
+          "max": 0.2
+        }
+      },
+      "scan:robot_gamma": {
+        "receive_s": {
+          "n": 467,
+          "mean": 0.382583417732334,
+          "p50": 0.3069412090001151,
+          "p95": 0.9594883750000918,
+          "min": 0.07854183299991746,
+          "max": 1.43806133399994
+        },
+        "source_stamp_s": {
+          "n": 467,
+          "mean": 0.2,
+          "p50": 0.2,
+          "p95": 0.2,
+          "min": 0.2,
+          "max": 0.2
+        },
+        "sim_age_s": {
+          "n": 468,
+          "mean": 0.14701923076923076,
+          "p50": 0.15,
+          "p95": 0.2,
+          "min": 0.03,
+          "max": 0.21
+        }
+      },
+      "physical:robot_alpha": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.06706855489046727,
+          "p50": 0.04617333300006976,
+          "p95": 0.16777254099997663,
+          "min": 0.0005685829999038106,
+          "max": 1.1522695000001022
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.03501308411214953,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.07
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.004052690582959641,
+          "p50": 0.0,
+          "p95": 0.015,
+          "min": 0.0,
+          "max": 0.12
+        }
+      },
+      "physical:robot_beta": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.06706823426691588,
+          "p50": 0.04602058299997225,
+          "p95": 0.16587916600019526,
+          "min": 0.0005995829999392299,
+          "max": 1.1529234590000215
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.03501308411214953,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.07
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.004099402092675636,
+          "p50": 0.0,
+          "p95": 0.015,
+          "min": 0.0,
+          "max": 0.12
+        }
+      },
+      "physical:robot_gamma": {
+        "receive_s": {
+          "n": 2675,
+          "mean": 0.06706815546654206,
+          "p50": 0.04587112499984869,
+          "p95": 0.16707341699998324,
+          "min": 0.0005699999999251304,
+          "max": 1.1867515009998897
+        },
+        "source_stamp_s": {
+          "n": 2675,
+          "mean": 0.03501308411214953,
+          "p50": 0.035,
+          "p95": 0.035,
+          "min": 0.035,
+          "max": 0.07
+        },
+        "sim_age_s": {
+          "n": 2676,
+          "mean": 0.0040601644245142005,
+          "p50": 0.0,
+          "p95": 0.02,
+          "min": 0.0,
+          "max": 0.12
+        }
+      },
+      "amcl:robot_alpha": {
+        "receive_s": null,
+        "source_stamp_s": null,
+        "sim_age_s": {
+          "n": 1,
+          "mean": 14.84,
+          "p50": 14.84,
+          "p95": 14.84,
+          "min": 14.84,
+          "max": 14.84
+        }
+      },
+      "amcl:robot_beta": {
+        "receive_s": {
+          "n": 128,
+          "mean": 1.3973348053203125,
+          "p50": 0.9819916250000915,
+          "p95": 3.059477917999857,
+          "min": 0.39743983300013497,
+          "max": 20.341934967000043
+        },
+        "source_stamp_s": {
+          "n": 128,
+          "mean": 0.84375,
+          "p50": 0.6,
+          "p95": 1.0,
+          "min": 0.4,
+          "max": 24.0
+        },
+        "sim_age_s": {
+          "n": 129,
+          "mean": 0.22934108527131783,
+          "p50": 0.115,
+          "p95": 0.2,
+          "min": 0.035,
+          "max": 14.84
+        }
+      },
+      "amcl:robot_gamma": {
+        "receive_s": {
+          "n": 132,
+          "mean": 1.354443719681819,
+          "p50": 1.099910958999999,
+          "p95": 2.6389543350001077,
+          "min": 0.38635804199998347,
+          "max": 16.528006174999973
+        },
+        "source_stamp_s": {
+          "n": 132,
+          "mean": 0.8166666666666667,
+          "p50": 0.6,
+          "p95": 1.0,
+          "min": 0.4,
+          "max": 22.4
+        },
+        "sim_age_s": {
+          "n": 133,
+          "mean": 0.2681954887218045,
+          "p50": 0.165,
+          "p95": 0.205,
+          "min": 0.05,
+          "max": 14.825
+        }
+      }
+    },
+    "ws": {
+      "ws_product": {
+        "n": 484,
+        "mean": 0.37160217312387334,
+        "p50": 0.3256992920069024,
+        "p95": 0.7836941249552183,
+        "min": 0.05983645794913173,
+        "max": 1.6155766670126468
+      },
+      "heartbeat": {
+        "n": 172,
+        "mean": 1.0428727681685623,
+        "p50": 1.0210742079652846,
+        "p95": 1.1938957080128603,
+        "min": 0.30988700001034886,
+        "max": 1.9658394999569282
+      },
+      "robot_alpha": {
+        "n": 1931,
+        "mean": 0.09310980612376646,
+        "p50": 0.06386887497501448,
+        "p95": 0.2489173750509508,
+        "min": 0.00010054197628051043,
+        "max": 1.2332851249957457
+      },
+      "robot_beta": {
+        "n": 1923,
+        "mean": 0.09347111583463737,
+        "p50": 0.0656272919732146,
+        "p95": 0.2557815419859253,
+        "min": 4.904100205749273e-05,
+        "max": 1.886164875002578
+      },
+      "robot_gamma": {
+        "n": 1946,
+        "mean": 0.09236220253082537,
+        "p50": 0.06371566699817777,
+        "p95": 0.26466179196722806,
+        "min": 5.245796637609601e-05,
+        "max": 1.8844301670324057
+      },
+      "stale_packets": {
+        "robot_gamma": 2,
+        "robot_alpha": 1,
+        "robot_beta": 2
+      }
+    },
+    "chrome": {
+      "counts": {
+        "ws_open": 2,
+        "ws_close": 1,
+        "page_loaded": 1,
+        "dom": 686,
+        "ws_heartbeat": 169,
+        "ws_product": 477,
+        "ws_scene": 6696
+      },
+      "renderer": {
+        "kind": "page_loaded",
+        "utc": "2026-11-17T22:18:23.377Z",
+        "webgl": true,
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)"
+      },
+      "long_tasks_ms": {
+        "n": 2,
+        "mean": 460,
+        "p50": 50,
+        "p95": 870,
+        "min": 50,
+        "max": 870
+      },
+      "loop_lag_ms": {
+        "n": 3519,
+        "mean": 1.2725206020373654,
+        "p50": 0,
+        "p95": 4.800000011920929,
+        "min": 0,
+        "max": 903.0999999642372
+      },
+      "tf": {
+        "robot_alpha": {
+          "stale_sample_count": 2,
+          "total_samples": 686,
+          "events": 2,
+          "observed_durations_s": [
+            0.253,
+            0.254
+          ]
+        },
+        "robot_beta": {
+          "stale_sample_count": 3,
+          "total_samples": 686,
+          "events": 2,
+          "observed_durations_s": [
+            0.506,
+            0.254
+          ]
+        },
+        "robot_gamma": {
+          "stale_sample_count": 3,
+          "total_samples": 686,
+          "events": 2,
+          "observed_durations_s": [
+            0.506,
+            0.254
+          ]
+        }
+      }
+    },
+    "cpu_processes": [
+      {
+        "cmd": "ign gazebo -s -r -v 3 --headless-rendering --physics-engine /usr/lib/aarch64-linux-gnu/ign-physics-5/engine-plugins/libignition-physics5-dartsim-plugin.so.5 --render-engine-server /usr/lib/aarch64-linux-gnu/ign-rendering-6/engine-plugins/libignition-rendering6-ogre2.so.6 /evidence/live/generated/warehouse.sdf               ",
+        "cpu": {
+          "n": 169,
+          "mean": 49.06092773458422,
+          "p50": 50.45433229262702,
+          "p95": 60.61317806257876,
+          "min": 19.941551602312888,
+          "max": 67.85053462009218
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 docker/simulation-warehouse-grid/stage1_observer.py /workspace/config/fleet.warehouse-30x18.yaml /evidence/live --database /var/lib/fleet/live.sqlite3 ",
+        "cpu": {
+          "n": 169,
+          "mean": 48.85356930030067,
+          "p50": 50.019196020756524,
+          "p95": 71.18248334691523,
+          "min": 10.73355295412167,
+          "max": 78.61983280579325
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 -m backend.dashboard.runtime --fleet /workspace/config/fleet.warehouse-30x18.yaml --database /var/lib/fleet/live.sqlite3 --snapshot /tmp/stage1/latest.json ",
+        "cpu": {
+          "n": 169,
+          "mean": 35.99586644369986,
+          "p50": 37.313932301889864,
+          "p95": 49.8503796244881,
+          "min": 11.75308135032928,
+          "max": 59.77762716999161
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 docker/simulation-c4-2/executor_test_entry.py --ros-args -r __node:=executor_robot_gamma -r __ns:=/robot_gamma -p fleet_config_path:=/workspace/config/fleet.warehouse-30x18.yaml -p robot_id:=robot_gamma -p use_sim_time:=true -p duplicate_record_capacity:=32 ",
+        "cpu": {
+          "n": 169,
+          "mean": 28.569355513176266,
+          "p50": 29.161613836117848,
+          "p95": 41.30110952195618,
+          "min": 12.685108036689302,
+          "max": 52.34258369165144
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 docker/simulation-c4-2/executor_test_entry.py --ros-args -r __node:=executor_robot_beta -r __ns:=/robot_beta -p fleet_config_path:=/workspace/config/fleet.warehouse-30x18.yaml -p robot_id:=robot_beta -p use_sim_time:=true -p duplicate_record_capacity:=32 ",
+        "cpu": {
+          "n": 169,
+          "mean": 28.021348069981133,
+          "p50": 28.860595029820825,
+          "p95": 37.93984527214525,
+          "min": 5.87654067516464,
+          "max": 53.642589194977845
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 docker/simulation-c4-2/executor_test_entry.py --ros-args -r __node:=executor_robot_alpha -r __ns:=/robot_alpha -p fleet_config_path:=/workspace/config/fleet.warehouse-30x18.yaml -p robot_id:=robot_alpha -p use_sim_time:=true -p duplicate_record_capacity:=32 ",
+        "cpu": {
+          "n": 169,
+          "mean": 22.153239787604978,
+          "p50": 22.569863518498412,
+          "p95": 33.33839759468005,
+          "min": 8.080243428351396,
+          "max": 46.36089628930705
+        }
+      },
+      {
+        "cmd": "python3 /tmp/perf-tools/ros.py /evidence/fairness-uninstrumented/ros-probe.jsonl 180.0 ",
+        "cpu": {
+          "n": 169,
+          "mean": 21.58901861510544,
+          "p50": 21.47629198279666,
+          "p95": 32.40714112305565,
+          "min": 7.549200731486202,
+          "max": 48.57880792367661
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 fleet-visualizer/bridge/run.py --fleet /workspace/config/fleet.warehouse-30x18.yaml --schema /workspace/config/fleet.schema.json --bind 127.0.0.1 --port 21721 --origin http://scene --observed-nav2-plans ",
+        "cpu": {
+          "n": 169,
+          "mean": 18.330779357368026,
+          "p50": 16.520978012969334,
+          "p95": 34.343603779376444,
+          "min": 6.605649595621867,
+          "max": 54.024090852951055
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/ros_gz_bridge/parameter_bridge /clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock /robot_alpha/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_alpha/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry /robot_alpha/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist /robot_alpha/contact_base_link@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_alpha/contact_left_wheel@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_alpha/contact_right_wheel@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_alpha/contact_caster@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_alpha/contact_obstacle_front_left@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_alpha/contact_obstacle_rear_right@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_alpha/obstacle_front_left@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_alpha/obstacle_rear_right@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_beta/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_beta/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry /robot_beta/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist /robot_beta/contact_base_link@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_beta/contact_left_wheel@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_beta/contact_right_wheel@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_beta/contact_caster@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_beta/contact_obstacle_front_left@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_beta/contact_obstacle_rear_right@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_beta/obstacle_front_left@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_beta/obstacle_rear_right@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_gamma/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_gamma/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry /robot_gamma/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist /robot_gamma/contact_base_link@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_gamma/contact_left_wheel@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_gamma/contact_right_wheel@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_gamma/contact_caster@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_gamma/contact_obstacle_front_left@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_gamma/contact_obstacle_rear_right@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /robot_gamma/obstacle_front_left@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /robot_gamma/obstacle_rear_right@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan /dock/dock_1/contacts@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /dock/dock_2/contacts@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /dock/dock_3/contacts@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /dock/dock_4/contacts@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /dock/dock_5/contacts@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /dock/dock_6/contacts@ros_gz_interfaces/msg/Contacts[ignition.msgs.Contacts /model/robot_alpha/pose@geometry_msgs/msg/PoseStamped[ignition.msgs.Pose /model/robot_beta/pose@geometry_msgs/msg/PoseStamped[ignition.msgs.Pose /model/robot_gamma/pose@geometry_msgs/msg/PoseStamped[ignition.msgs.Pose --ros-args -r /model/robot_alpha/pose:=/robot_alpha/physical_pose -r /model/robot_beta/pose:=/robot_beta/physical_pose -r /model/robot_gamma/pose:=/robot_gamma/physical_pose ",
+        "cpu": {
+          "n": 169,
+          "mean": 17.648336590243012,
+          "p50": 17.16006255210126,
+          "p95": 24.72288903440122,
+          "min": 4.532170818707401,
+          "max": 31.36737657901309
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 -c from fleet_battery_simulator.node import main; main() --fleet-config /workspace/config/fleet.warehouse-30x18.yaml --robot-id robot_gamma ",
+        "cpu": {
+          "n": 169,
+          "mean": 15.885673559000878,
+          "p50": 15.570923356723872,
+          "p95": 24.761828094565075,
+          "min": 2.719302491224441,
+          "max": 40.28995923406917
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 -c from fleet_battery_simulator.node import main; main() --fleet-config /workspace/config/fleet.warehouse-30x18.yaml --robot-id robot_alpha ",
+        "cpu": {
+          "n": 169,
+          "mean": 15.774898690868397,
+          "p50": 15.423553464365403,
+          "p95": 22.930776112546674,
+          "min": 4.718250457178709,
+          "max": 43.8482594150462
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 -c from fleet_battery_simulator.node import main; main() --fleet-config /workspace/config/fleet.warehouse-30x18.yaml --robot-id robot_beta ",
+        "cpu": {
+          "n": 169,
+          "mean": 15.197668835080202,
+          "p50": 15.423111366774434,
+          "p95": 21.43929916500976,
+          "min": 4.878887706418949,
+          "max": 29.528295012430664
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 /workspace/docker/simulation-warehouse-grid/tf.py /workspace/config/fleet.warehouse-30x18.yaml /evidence/live/generated/warehouse.sdf ",
+        "cpu": {
+          "n": 169,
+          "mean": 15.145612222122306,
+          "p50": 14.68531378930611,
+          "p95": 23.119134169931524,
+          "min": 5.769386792311011,
+          "max": 40.12885819695651
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_bt_navigator/bt_navigator --ros-args --log-level info --ros-args -r __node:=bt_navigator -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 14.062077239282498,
+          "p50": 12.533839861153659,
+          "p95": 24.737652882703575,
+          "min": 3.903110165135133,
+          "max": 31.132526932208982
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_bt_navigator/bt_navigator --ros-args --log-level info --ros-args -r __node:=bt_navigator -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 13.756469557102925,
+          "p50": 12.758206053301599,
+          "p95": 24.24908094863703,
+          "min": 2.93827033758232,
+          "max": 36.71488716210763
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_controller/controller_server --ros-args --log-level info --ros-args -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav ",
+        "cpu": {
+          "n": 169,
+          "mean": 12.35807564500884,
+          "p50": 10.816957255750504,
+          "p95": 25.831957182716778,
+          "min": 3.672837921977916,
+          "max": 40.858605364020384
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_controller/controller_server --ros-args --log-level info --ros-args -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav ",
+        "cpu": {
+          "n": 169,
+          "mean": 12.220017928803255,
+          "p50": 10.823079619854663,
+          "p95": 23.813141139057088,
+          "min": 3.672837921977916,
+          "max": 34.79517715952769
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_navigation -r __ns:=/robot_beta --params-file /tmp/launch_params_dkofz67i --params-file /tmp/launch_params_5wvspm48 --params-file /tmp/launch_params_po32z0n3 ",
+        "cpu": {
+          "n": 169,
+          "mean": 12.142474519950705,
+          "p50": 10.681053499378605,
+          "p95": 21.318344991998263,
+          "min": 3.672837921977916,
+          "max": 38.8655026633365
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_navigation -r __ns:=/robot_alpha --params-file /tmp/launch_params_qifr0uz8 --params-file /tmp/launch_params_z91za6nf --params-file /tmp/launch_params_iyyp4pn5 ",
+        "cpu": {
+          "n": 169,
+          "mean": 11.5435606754502,
+          "p50": 10.293888957581293,
+          "p95": 19.926572235221162,
+          "min": 3.774656911783996,
+          "max": 32.369021228239
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_navigation -r __ns:=/robot_gamma --params-file /tmp/launch_params_0hgjl227 --params-file /tmp/launch_params_ohoceum8 --params-file /tmp/launch_params_o5jcbjfj ",
+        "cpu": {
+          "n": 169,
+          "mean": 10.578464147393055,
+          "p50": 9.579191693569522,
+          "p95": 19.231289307703715,
+          "min": 3.842479936550665,
+          "max": 48.39141247094562
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 -m backend.dashboard.api --fleet /workspace/config/fleet.warehouse-30x18.yaml --schema /workspace/config/fleet.schema.json --snapshot /tmp/stage1/latest.json --task-socket /tmp/stage1/latest.tasks.sock --container-bind --port 21720 --origin http://127.0.0.1:21723 --scene-port 21721 ",
+        "cpu": {
+          "n": 169,
+          "mean": 10.006741873062568,
+          "p50": 8.926405500036275,
+          "p95": 18.194200824093862,
+          "min": 3.6257366549660017,
+          "max": 30.65540376505264
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_planner/planner_server --ros-args --log-level info --ros-args -r __node:=planner_server -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 8.283008514415105,
+          "p50": 7.305504908163767,
+          "p95": 17.346860785442654,
+          "min": 1.9735399272293392,
+          "max": 37.44430458527273
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_localization -r __ns:=/robot_beta --params-file /tmp/launch_params_eq0ysrz1 --params-file /tmp/launch_params_9u9pi2oi --params-file /tmp/launch_params_mpb0i7b1 ",
+        "cpu": {
+          "n": 169,
+          "mean": 8.024730650489335,
+          "p50": 6.529981961140236,
+          "p95": 18.451456852351026,
+          "min": 1.9548870691508076,
+          "max": 31.52981715475142
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_controller/controller_server --ros-args --log-level info --ros-args -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.873257550398364,
+          "p50": 7.427510969936433,
+          "p95": 14.4234669807777,
+          "min": 2.8721482342049947,
+          "max": 25.740093828151966
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_bt_navigator/bt_navigator --ros-args --log-level info --ros-args -r __node:=bt_navigator -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.7992322043552855,
+          "p50": 7.346392947510175,
+          "p95": 13.871480501958947,
+          "min": 2.87214823420491,
+          "max": 19.2691109380331
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_planner/planner_server --ros-args --log-level info --ros-args -r __node:=planner_server -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.729151468381785,
+          "p50": 6.643848470334869,
+          "p95": 15.801534699366558,
+          "min": 0.977443534575317,
+          "max": 24.7228890344013
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_amcl/amcl --ros-args --log-level info --ros-args -r __node:=amcl -r __ns:=/robot_gamma --params-file /tmp/launch_params_dbz0p6fh -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.703831112786767,
+          "p50": 6.712263443007634,
+          "p95": 14.124099824978753,
+          "min": 2.87214823420491,
+          "max": 19.435474082363655
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_localization -r __ns:=/robot_gamma --params-file /tmp/launch_params_wmysvq5b --params-file /tmp/launch_params_rmxen5rs --params-file /tmp/launch_params_ztg2qk1v ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.536398374002829,
+          "p50": 6.535532501678512,
+          "p95": 15.238048058194023,
+          "min": 1.967062361029628,
+          "max": 22.71470613033945
+        }
+      },
+      {
+        "cmd": "python3 /tmp/perf-tools/sample.py /evidence/fairness-uninstrumented 180.0 ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.384263496756058,
+          "p50": 5.97930810205181,
+          "p95": 16.789130618076946,
+          "min": 1.8241216823999078,
+          "max": 39.85175144666109
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_behaviors/behavior_server --ros-args --log-level info --ros-args -r __node:=behavior_server -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.337597637787561,
+          "p50": 6.410218494870646,
+          "p95": 14.990235395935388,
+          "min": 1.8951102274945455,
+          "max": 21.774428420280596
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_waypoint_follower/waypoint_follower --ros-args --log-level info --ros-args -r __node:=waypoint_follower -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 7.085389721776731,
+          "p50": 5.841771483398239,
+          "p95": 15.326454055707956,
+          "min": 1.954887069150634,
+          "max": 23.808020922956175
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_planner/planner_server --ros-args --log-level info --ros-args -r __node:=planner_server -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.99887968706189,
+          "p50": 6.359439376463549,
+          "p95": 13.18249316998011,
+          "min": 1.954887069150634,
+          "max": 25.618983072853514
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_behaviors/behavior_server --ros-args --log-level info --ros-args -r __node:=behavior_server -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.936332472858497,
+          "p50": 5.900158503136535,
+          "p95": 14.108456843233323,
+          "min": 1.8873001828715505,
+          "max": 26.086893509918546
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_lifecycle_manager/lifecycle_manager --ros-args --log-level info --ros-args -r __node:=lifecycle_manager_localization -r __ns:=/robot_alpha --params-file /tmp/launch_params_4l_2p82z --params-file /tmp/launch_params_ehshn3l_ --params-file /tmp/launch_params_vekjmvb3 ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.824003525813661,
+          "p50": 5.891321559898298,
+          "p95": 13.248039615423794,
+          "min": 1.954887069150634,
+          "max": 17.7218830985104
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_amcl/amcl --ros-args --log-level info --ros-args -r __node:=amcl -r __ns:=/robot_beta --params-file /tmp/launch_params_85njl19m -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.804729219184704,
+          "p50": 5.951444638992317,
+          "p95": 12.706235604976763,
+          "min": 1.954887069150634,
+          "max": 31.78579199543716
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_amcl/amcl --ros-args --log-level info --ros-args -r __node:=amcl -r __ns:=/robot_alpha --params-file /tmp/launch_params_fy8vudw3 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.797148982183688,
+          "p50": 5.865791425410861,
+          "p95": 14.177846743193435,
+          "min": 1.8128683274829605,
+          "max": 37.26251118288809
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_smoother/smoother_server --ros-args --log-level info --ros-args -r __node:=smoother_server -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.687843632618144,
+          "p50": 5.506992670989832,
+          "p95": 15.270729636142839,
+          "min": 1.46913516879116,
+          "max": 37.7694504435194
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_behaviors/behavior_server --ros-args --log-level info --ros-args -r __node:=behavior_server -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.5995612450187,
+          "p50": 5.751781622505448,
+          "p95": 14.006277380084569,
+          "min": 1.8417823044498376,
+          "max": 27.89720112930966
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_smoother/smoother_server --ros-args --log-level info --ros-args -r __node:=smoother_server -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.5935967481986975,
+          "p50": 5.460575458813146,
+          "p95": 15.87201394863745,
+          "min": 1.8128683274829605,
+          "max": 28.384222217943165
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_map_server/map_server --ros-args --log-level info --ros-args -r __node:=map_server -r __ns:=/robot_gamma --params-file /tmp/launch_params_dbz0p6fh -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.335066737742853,
+          "p50": 5.5389310693876945,
+          "p95": 13.245970368373454,
+          "min": 1.887328455891998,
+          "max": 24.00275934953382
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_smoother/smoother_server --ros-args --log-level info --ros-args -r __node:=smoother_server -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.30905372170435,
+          "p50": 5.5643425747189665,
+          "p95": 12.870046914076022,
+          "min": 0.977443534575317,
+          "max": 22.44723573345162
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_map_server/map_server --ros-args --log-level info --ros-args -r __node:=map_server -r __ns:=/robot_beta --params-file /tmp/launch_params_85njl19m -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.2010519306627385,
+          "p50": 4.92505037166677,
+          "p95": 15.458899857729461,
+          "min": 0.9436642279459571,
+          "max": 21.823578173171565
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_velocity_smoother/velocity_smoother --ros-args --log-level info --ros-args -r __node:=velocity_smoother -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav -r cmd_vel_smoothed:=cmd_vel ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.190458135197271,
+          "p50": 4.911947606904279,
+          "p95": 17.482819594334586,
+          "min": 0.977443534575317,
+          "max": 43.45422042325804
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_velocity_smoother/velocity_smoother --ros-args --log-level info --ros-args -r __node:=velocity_smoother -r __ns:=/robot_beta --params-file /tmp/launch_params_wxiuzar6 -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav -r cmd_vel_smoothed:=cmd_vel ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.166172324229706,
+          "p50": 5.506992670989832,
+          "p95": 13.673529732111549,
+          "min": 1.8128683274829605,
+          "max": 32.87884418811504
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_waypoint_follower/waypoint_follower --ros-args --log-level info --ros-args -r __node:=waypoint_follower -r __ns:=/robot_alpha --params-file /tmp/launch_params_iq7_tg69 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.099987961930785,
+          "p50": 4.911947606904279,
+          "p95": 13.728050041681069,
+          "min": 0.9573827447349699,
+          "max": 21.01987810316767
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_map_server/map_server --ros-args --log-level info --ros-args -r __node:=map_server -r __ns:=/robot_alpha --params-file /tmp/launch_params_fy8vudw3 -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 6.053299780220618,
+          "p50": 4.937167546998712,
+          "p95": 12.870046914075983,
+          "min": 0.9436642279460409,
+          "max": 25.718192430181613
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_velocity_smoother/velocity_smoother --ros-args --log-level info --ros-args -r __node:=velocity_smoother -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static -r cmd_vel:=cmd_vel_nav -r cmd_vel_smoothed:=cmd_vel ",
+        "cpu": {
+          "n": 169,
+          "mean": 5.800610498674364,
+          "p50": 5.45197001825354,
+          "p95": 10.946802175762961,
+          "min": 0.9814026243993013,
+          "max": 24.67013184793305
+        }
+      },
+      {
+        "cmd": "/opt/ros/humble/lib/nav2_waypoint_follower/waypoint_follower --ros-args --log-level info --ros-args -r __node:=waypoint_follower -r __ns:=/robot_gamma --params-file /tmp/launch_params_pxkbwthy -r /tf:=tf -r /tf_static:=tf_static ",
+        "cpu": {
+          "n": 169,
+          "mean": 5.4920915893660345,
+          "p50": 4.706201630517972,
+          "p95": 11.491074204690873,
+          "min": 0.9573827447349699,
+          "max": 22.772429398092047
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 /opt/ros/humble/bin/ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True autostart:=True use_namespace:=True namespace:=robot_gamma map:=/evidence/live/generated/map.yaml params_file:=/evidence/live/generated/nav2-robot_gamma.yaml slam:=False use_composition:=False ",
+        "cpu": {
+          "n": 169,
+          "mean": 1.9511807938603714,
+          "p50": 0.9936559203096756,
+          "p95": 5.812560428286484,
+          "min": 0.0,
+          "max": 14.368550677226208
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 /opt/ros/humble/bin/ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True autostart:=True use_namespace:=True namespace:=robot_beta map:=/evidence/live/generated/map.yaml params_file:=/evidence/live/generated/nav2-robot_beta.yaml slam:=False use_composition:=False ",
+        "cpu": {
+          "n": 169,
+          "mean": 1.6807255240271863,
+          "p50": 0.9859281356112813,
+          "p95": 5.443607105070149,
+          "min": 0.0,
+          "max": 10.17706080927083
+        }
+      },
+      {
+        "cmd": "/usr/libexec/gz/transport11/ign-transport-topic -e -t /world/warehouse_grid/stats --json-output -d 180.0 ",
+        "cpu": {
+          "n": 169,
+          "mean": 1.4141672979890703,
+          "p50": 0.9757775412837913,
+          "p95": 2.9975707177312128,
+          "min": 0.0,
+          "max": 6.131080753010528
+        }
+      },
+      {
+        "cmd": "python3 docker/simulation-warehouse-grid/stage1_run.py config/fleet.warehouse-30x18.yaml /evidence/live --api-port 21720 --scene-port 21721 --origin http://127.0.0.1:21723 --ros-overlay /c5-cache/install ",
+        "cpu": {
+          "n": 169,
+          "mean": 0.7305775396813161,
+          "p50": 0.831379101238951,
+          "p95": 1.9751918374208197,
+          "min": 0.0,
+          "max": 10.135637468658436
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 docker/simulation-warehouse-grid/serve.py /workspace/config/fleet.warehouse-30x18.yaml /evidence/live/generated routes ",
+        "cpu": {
+          "n": 169,
+          "mean": 0.20211678533785193,
+          "p50": 0.0,
+          "p95": 0.9839163290776867,
+          "min": 0.0,
+          "max": 9.023612966811688
+        }
+      },
+      {
+        "cmd": "/sbin/docker-init -- /ros_entrypoint.sh bash -ec set -e; source /opt/ros/humble/setup.bash; cd /workspace; if [[ ! -f /c5-cache/install/local_setup.bash ]]; then exec 9>/c5-cache/build.lock; flock 9; if [[ ! -f /c5-cache/install/local_setup.bash ]]; then colcon --log-base /c5-cache/log build --base-paths interfaces/fleet_interfaces ros2_ws/src/fleet_perception --build-base /c5-cache/build --install-base /c5-cache/install; fi; flock -u 9; exec 9>&-; fi; source /c5-cache/install/local_setup.bash; export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; exec python3 docker/simulation-warehouse-grid/stage1_run.py config/fleet.warehouse-30x18.yaml /evidence/live --api-port 21720 --scene-port 21721 --origin http://127.0.0.1:21723 --ros-overlay /c5-cache/install ",
+        "cpu": {
+          "n": 169,
+          "mean": 0.06507784893485495,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 7.2514733099319955
+        }
+      },
+      {
+        "cmd": "/usr/bin/python3 /opt/ros/humble/bin/ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True autostart:=True use_namespace:=True namespace:=robot_alpha map:=/evidence/live/generated/map.yaml params_file:=/evidence/live/generated/nav2-robot_alpha.yaml slam:=False use_composition:=False ",
+        "cpu": {
+          "n": 169,
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    ],
+    "container_memory_bytes": {
+      "n": 170,
+      "mean": 1773456540.6117647,
+      "p50": 1783717888,
+      "p95": 1817522176,
+      "min": 1667227648,
+      "max": 1824305152
+    },
+    "container_proc_cpu": {
+      "n": 169,
+      "mean": 620.5847710188366,
+      "p50": 612.437965383819,
+      "p95": 874.9928103225027,
+      "min": 280.51314420735247,
+      "max": 1094.6988806606248
+    },
+    "container_ctx_s": {
+      "n": 169,
+      "mean": 68538.52234166226,
+      "p50": 72031.02297368551,
+      "p95": 97454.90596350127,
+      "min": 10005.545067052186,
+      "max": 104652.07609652307
+    }
+  }
+}

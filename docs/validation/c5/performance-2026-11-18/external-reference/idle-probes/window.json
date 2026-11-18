@@ -1,0 +1,32 @@
+{
+  "start_utc": 1794952316.605314,
+  "label": "idle-probes",
+  "mode": "probes",
+  "commands": [
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T214912Z-d41750a1",
+      "python3",
+      "/tmp/perf-tools/sample.py",
+      "/evidence/idle-probes",
+      "35.0"
+    ],
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T214912Z-d41750a1",
+      "bash",
+      "-c",
+      "source /opt/ros/humble/setup.bash; python3 /tmp/perf-tools/ros.py /evidence/idle-probes/ros-probe.jsonl 35.0"
+    ],
+    [
+      "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+      "scripts/c5_telemetry_probe.py",
+      "/tmp/c5-perf-20261117T214912Z-d41750a1",
+      "/tmp/c5-perf-20261117T214912Z-d41750a1/idle-probes/api-ws.jsonl",
+      "--seconds",
+      "35.0"
+    ]
+  ]
+}

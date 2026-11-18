@@ -191,7 +191,7 @@ def main() -> int:
         if session.get("session_id") != name or session.get("ros_domain_id") != domain:
             raise RuntimeError("session evidence does not match this launcher")
         url = f"http://127.0.0.1:{ui_port}/"
-        print(f"\nREADY — üç robot, AMCL/Nav2/TF, API/WebSocket ve Vite hazır", flush=True)
+        print(f"\nREADY — {len(session['robots'])} robot, AMCL/Nav2/TF, API/WebSocket ve Vite hazır", flush=True)
         print(f"GUI: {url}", flush=True)
         print(f"Oturum: {name} (ROS_DOMAIN_ID={domain}); kanıt: {evidence}", flush=True)
         if sys.platform == "darwin":

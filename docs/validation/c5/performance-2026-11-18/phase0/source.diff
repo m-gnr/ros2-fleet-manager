@@ -1,0 +1,235 @@
+diff --git a/docs/README.md b/docs/README.md
+index 0e636c2..9a9a59e 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
+ 
+ ## Geliştirme
+ 
++- [C5 TF STALE kök neden ve canlı karşılaştırma](validation/c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](validation/c5/tf-stale-commands-2026-11-18.md): ürün kesintisinin TF soketini kapatma hatası düzeltildi; üç robotlu gerçek TF ve snapshot gecikmesi açık.
++
+ - [Visualize V6 dış zemin paleti](validation/c5/visualize-v6-palette-2026-11-17.md).
+ 
+ - [Visualize V6 yaşayan dış çevre](validation/c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](validation/c5/visualize-v6-commands-2026-11-17.md).
+diff --git a/docs/design/c5-3d-operations.md b/docs/design/c5-3d-operations.md
+index a236104..4cf4f47 100644
+--- a/docs/design/c5-3d-operations.md
++++ b/docs/design/c5-3d-operations.md
+@@ -26,6 +26,8 @@ FastAPI köprüye özel DDS ağındaki `scene` adı ve yapılandırılmış port
+ 
+ Upstream bağlantı başına 64 KiB WebSocket mesaj sınırı, 1 frame alım su seviyesi ve uygulamada bekleyen en fazla bir olay vardır. 250 ms'den uzun süre relay'de kalan poz atılır. Relay beklemesi plan TTL'sinden düşülür. İstemci gönderimi bir saniye içinde tamamlanamazsa bağlantı 1013 ile kapatılır. Ürün için yalnız son snapshot tutulur. Ürün sessizliği, tek başına açık TF akışını kapatmaz. Köprü sessizliği 2,5 sn sonra kendi yeniden bağlantısını tetikler. Köprü Aşama 4'ten gelen dört eşzamanlı istemci sınırına sahiptir. C5 ürün akışı kendi mevcut istemci sınırını kullanır.
+ 
++18 Kasım 2026 düzeltmesi: frontend `product_unavailable` veya yalnız ürün watchdog süresi dolduğunda ürün erişimini eski olarak işaretler ve görev/batarya güvenilirliğini maskeler; aynı WebSocket'teki TF sahne akışını kapatmaz. Taşıma heartbeat'i de susarsa mevcut WebSocket yeniden bağlantısı çalışır. Yeni ürün snapshot'ı geldiğinde oturum/sıra doğrulaması sürer. Bu davranış ürün kaynağındaki gecikmeyi çözmez; gerçek TF veya `/clock` kesintisi yine STALE görünür.
++
+ Kamera serbest, takip, üstten, filo kadrajı ve sıfırlama modlarını sunar. WebGL sahnesi genel görünümde tembel yüklenir. Düşük kalite seçeneği piksel oranını 1'e indirir ve temas gölgelerini kapatır. Geometri instancing, rota arabelleği, renderer temizliği ve talep üzerine çizim Visualizer’dan alınmıştır.
+ 
+ ## İlk açılışta TF ve API hazır olma kapısı
+diff --git a/docs/validation/README.md b/docs/validation/README.md
+index 766ec6b..f7b67a3 100644
+--- a/docs/validation/README.md
++++ b/docs/validation/README.md
+@@ -50,6 +50,7 @@ Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalı
+ | C4.5 | [Sonuç raporu](c4/c4-5-validation-2026-11-06.md) · [Komut eki](c4/c4-5-commands-2026-11-06.md) · [C4 kabul listesi](c4/c4-acceptance-2026-11-06.md) | İki robotlu enerji, fiziksel şarj devri, görev ve güvenli preemption |
+ | C5 Aşama 1 | [Rapor](c5/c5-stage1-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-commands-2026-11-06.md) · [Performans](c5/c5-stage1-performance-2026-11-06.md) | İki robotlu Fortress ve Chrome, salt okunur canlı panel ve güvenli yeniden eşitleme |
+ | C5 Aşama 1.5 | [Rapor](c5/c5-stage1-5-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-5-commands-2026-11-06.md) | 3D Chrome/WebGL, TF/Path ve bağımsız ürün güncelliği |
++| C5 TF STALE araştırması | [Rapor](c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](c5/tf-stale-commands-2026-11-18.md) | 1/2/3 robot canlı karşılaştırması; frontend ürün/TF ayrımı düzeltildi, üç robotlu tam kabul açık |
+ | C5 Aşama 1.6 | [Rapor](c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-commands-2026-11-06.md) | Depo öncelikli yerleşim, kadraj ve canlı Chrome karşılaştırması |
+ | C5 Aşama 1.6 görsel kabul düzeltmesi | [Rapor](c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-visual-commands-2026-11-06.md) | Üretim Chrome projeksiyonu, robot işaretleri, yerleşim ve canlı Fortress |
+ | C5 Aşama 1.7B | [Rapor](c5/c5-stage1-7b-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7b-commands-2026-11-07.md) | Yerel CC0 depo, dört viewport, 19 Chrome testi ve iki robotlu canlı Fortress |
+diff --git a/frontend/src/useFleet.ts b/frontend/src/useFleet.ts
+index 457d23c..3be7aff 100644
+--- a/frontend/src/useFleet.ts
++++ b/frontend/src/useFleet.ts
+@@ -92,7 +92,6 @@ export function useFleet() {
+         clearTimeout(productWatchdog);
+         first = true;
+         beginOutage();
+-        peer.close();
+       }
+       armWatchdog();
+       peer.onmessage = (event) => {
+diff --git a/frontend/tests/dashboard.spec.ts b/frontend/tests/dashboard.spec.ts
+index 26effe5..3740046 100644
+--- a/frontend/tests/dashboard.spec.ts
++++ b/frontend/tests/dashboard.spec.ts
+@@ -324,6 +324,7 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
+   await page.goto("/?trace=1");
+   await expect.poll(() => !!socket).toBe(true);
+   socket.send('{"type":"heartbeat"}');
++  const keepAlive = setInterval(() => socket.send('{"type":"heartbeat"}'), 400);
+   const details = page.locator(".robot-details");
+   const state = details.getByTestId("tf-status");
+   socket.send(JSON.stringify(fixture));
+@@ -364,19 +365,44 @@ test("keeps product and TF validity separate, clears the observed plan at an epo
+   await expect(details.getByText("Durum B", { exact: true })).toHaveCount(0);
+   socket.send('{"type":"product_unavailable"}');
+   tf.poses();
+-  await expect(state).toHaveText("NO_DATA");
++  await expect(state).toHaveText("LIVE");
+   await expect(details.getByRole("meter")).toHaveCount(0);
+   await expect(details.getByText(/Ürün akışı kesildi/)).toBeVisible();
+-  await expect.poll(() => connectionCount).toBe(2);
+-  await expect(details.getByRole("meter")).toBeVisible();
+-  tf.connect();
+-  tf.poses();
+-  await expect(state).toHaveText("LIVE");
+   socket.send('{"type":"scene_disconnected"}');
+   await expect(state).toHaveText("STALE");
+   tf.connect();
+   tf.poses();
+   await expect(state).toHaveText("LIVE");
++  clearInterval(keepAlive);
++});
++
++test("keeps TF live across product-only outage on one open socket", async ({ page }) => {
++  let socket!: WebSocketRoute;
++  let connectionCount = 0;
++  await feed(page, (route) => { socket = route; connectionCount++; });
++  await page.goto("/");
++  await expect.poll(() => !!socket).toBe(true);
++  const keepAlive = setInterval(() => socket.send('{"type":"heartbeat"}'), 400);
++  try {
++    const tf = telemetry(socket);
++    socket.send(JSON.stringify(fixture));
++    tf.connect();
++    tf.poses();
++    const details = page.locator(".robot-details");
++    await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
++    const stableConnections = connectionCount;
++    socket.send('{"type":"product_unavailable"}');
++    tf.poses();
++    await expect(details.getByRole("meter")).toHaveCount(0);
++    await expect(details.getByTestId("tf-status")).toHaveText("LIVE");
++    await page.waitForTimeout(300);
++    expect(connectionCount).toBe(stableConnections);
++    socket.send(JSON.stringify({ ...fixture, sequence: fixture.sequence + 1 }));
++    await expect(details.getByRole("meter")).toBeVisible();
++    expect(connectionCount).toBe(stableConnections);
++  } finally {
++    clearInterval(keepAlive);
++  }
+ });
+ 
+ test("transforms measured ROS axes and yaw and bounds interpolation", () => {
+diff --git a/scripts/c5_demo_start.py b/scripts/c5_demo_start.py
+index 1b1cff0..9949635 100644
+--- a/scripts/c5_demo_start.py
++++ b/scripts/c5_demo_start.py
+@@ -8,6 +8,7 @@ import hashlib
+ import json
+ import os
+ from pathlib import Path
++import shlex
+ import socket
+ import subprocess
+ import sys
+@@ -18,7 +19,6 @@ from c5_session_cleanup import CleanupError, run
+ 
+ 
+ IMAGE = "ros2-fleet-c5-validation:humble-fortress"
+-EXPECTED_ROBOTS = {"robot_alpha", "robot_beta", "robot_gamma"}
+ OVERLAY_PACKAGES = (Path("interfaces/fleet_interfaces"), Path("ros2_ws/src/fleet_perception"))
+ 
+ 
+@@ -71,17 +71,26 @@ def api_get(port: int, path: str) -> dict:
+ 
+ def main() -> int:
+     root = Path(sys.argv[1]).resolve()
++    sys.path.insert(0, str(root))
++    from fleet_config import load_config
+     session_id = os.environ.get("C5_SESSION_ID", "")
+     domain = os.environ.get("ROS_DOMAIN_ID", "")
+     if not session_id or not domain.isdigit():
+         raise CleanupError("C5_SESSION_ID veya benzersiz ROS_DOMAIN_ID eksik")
+-    profile = root / "config/fleet.warehouse-30x18.yaml"
++    profile = (root / os.environ.get("C5_DEMO_PROFILE", "config/fleet.warehouse-30x18.yaml")).resolve()
++    try:
++        profile.relative_to(root / "config")
++    except ValueError as error:
++        raise CleanupError("C5_DEMO_PROFILE yalnız bu workspace'in config dizininde olmalı") from error
++    if not profile.is_file() or profile.suffix != ".yaml":
++        raise CleanupError("C5_DEMO_PROFILE geçerli bir YAML dosyası olmalı")
++    expected_robots = {robot.id for robot in load_config(profile).robots}
+     config_check = subprocess.run([sys.executable, "-m", "fleet_config", str(profile)], cwd=root)
+     if config_check.returncode:
+-        raise CleanupError("Üç robotlu C5 profil doğrulaması başarısız")
++        raise CleanupError("C5 profil doğrulaması başarısız")
+     test_check = subprocess.run([sys.executable, "docker/simulation-warehouse-grid/test_startup_readiness.py"], cwd=root)
+     if test_check.returncode:
+-        raise CleanupError("Üç robotlu AMCL/Nav2/TF readiness testi başarısız")
++        raise CleanupError("AMCL/Nav2/TF readiness testi başarısız")
+     cache, _fingerprint, _image_id = overlay_cache(root)
+ 
+     api_port = available_port(int(os.environ.get("C5_API_PORT", "21482")), set())
+@@ -106,7 +115,7 @@ def main() -> int:
+         "export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:"
+         "/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:${PYTHONPATH:-}; "
+         "exec python3 docker/simulation-warehouse-grid/stage1_run.py "
+-        "config/fleet.warehouse-30x18.yaml /evidence/live "
++        f"{shlex.quote(str(profile.relative_to(root)))} /evidence/live "
+         f"--api-port {api_port} --scene-port {scene_port} "
+         f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install"
+     )
+@@ -125,7 +134,7 @@ def main() -> int:
+         "session_id": session_id, "ros_domain_id": int(domain), "workspace": str(root),
+         "container_name": session_id, "api_port": api_port, "scene_port": scene_port,
+         "ui_port": ui_port, "started_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+-        "expected_robots": sorted(EXPECTED_ROBOTS), "task_submissions": 0,
++        "expected_robots": sorted(expected_robots), "profile": str(profile.relative_to(root)), "task_submissions": 0,
+     }, indent=2) + "\n")
+ 
+     readiness_path = evidence / "live/startup-readiness.json"
+@@ -151,13 +160,13 @@ def main() -> int:
+             idle = all(item.get("active_task_id") is None and item.get("state") == "IDLE"
+                        and item.get("telemetry") == "LIVE" and item.get("pose_reliability") == "LIVE"
+                        for item in robot_rows)
+-            phases_ready = bool(readiness and set(readiness.get("robots", {})) == EXPECTED_ROBOTS and
++            phases_ready = bool(readiness and set(readiness.get("robots", {})) == expected_robots and
+                                 set(readiness.get("required_phases", [])) == {"amcl", "nav2", "tf"} and
+                                 all(readiness["robots"][robot].get(phase, {}).get("ready") is True
+-                                    for robot in EXPECTED_ROBOTS for phase in ("amcl", "nav2", "tf")))
++                                    for robot in expected_robots for phase in ("amcl", "nav2", "tf")))
+             if (readiness and readiness.get("status") == "READY" and
+                     readiness.get("current_status") == "READY" and phases_ready and
+-                    health.get("source") == "LIVE" and ids == EXPECTED_ROBOTS and idle and
++                    health.get("source") == "LIVE" and ids == expected_robots and idle and
+                     tasks.get("task_counts", {}).get("total") == 0 and
+                     tasks.get("task_counts", {}).get("active") == 0):
+                 break
+@@ -165,7 +174,7 @@ def main() -> int:
+             pass
+         time.sleep(0.5)
+     else:
+-        raise CleanupError(f"300 sn içinde üç robot için gerçek AMCL/Nav2/TF readiness sağlanmadı; container={session_id}")
++        raise CleanupError(f"300 sn içinde AMCL/Nav2/TF readiness sağlanmadı; container={session_id}")
+ 
+     gui_log = (evidence / "gui-vite.log").open("ab", buffering=0)
+     gui_env = os.environ.copy()
+@@ -192,12 +201,12 @@ def main() -> int:
+         "ui_port": ui_port, "vite_pid": gui.pid,
+         "started_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+         "ready_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+-        "robots": sorted(EXPECTED_ROBOTS), "readiness": readiness,
++        "robots": sorted(expected_robots), "profile": str(profile.relative_to(root)), "readiness": readiness,
+         "tasks": tasks, "task_submissions": 0,
+     }, indent=2) + "\n")
+     print(json.dumps({"result": "READY", "session_id": session_id, "ros_domain_id": int(domain),
+                       "container": session_id, "api": f"http://127.0.0.1:{api_port}",
+-                      "gui": f"http://127.0.0.1:{ui_port}/", "robots": sorted(EXPECTED_ROBOTS),
++                      "gui": f"http://127.0.0.1:{ui_port}/", "robots": sorted(expected_robots),
+                       "task_counts": tasks.get("task_counts"), "evidence": str(evidence)}, indent=2))
+     return 0
+ 
+diff --git a/scripts/start_demo.py b/scripts/start_demo.py
+index 1b88b2a..37840c4 100755
+--- a/scripts/start_demo.py
++++ b/scripts/start_demo.py
+@@ -191,7 +191,7 @@ def main() -> int:
+         if session.get("session_id") != name or session.get("ros_domain_id") != domain:
+             raise RuntimeError("session evidence does not match this launcher")
+         url = f"http://127.0.0.1:{ui_port}/"
+-        print(f"\nREADY — üç robot, AMCL/Nav2/TF, API/WebSocket ve Vite hazır", flush=True)
++        print(f"\nREADY — {len(session['robots'])} robot, AMCL/Nav2/TF, API/WebSocket ve Vite hazır", flush=True)
+         print(f"GUI: {url}", flush=True)
+         print(f"Oturum: {name} (ROS_DOMAIN_ID={domain}); kanıt: {evidence}", flush=True)
+         if sys.platform == "darwin":

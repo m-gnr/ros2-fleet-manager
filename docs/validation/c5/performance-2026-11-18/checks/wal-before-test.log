@@ -1,0 +1,86 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_readonly_snapshot_does_not_block_atomic_assignment ____________
+
+tmp_path = PosixPath('/private/var/folders/mw/fkgtxzhs7jv9_tgbsd6p1shh0000gn/T/pytest-of-murat/pytest-189/test_readonly_snapshot_does_no0')
+
+    def test_readonly_snapshot_does_not_block_atomic_assignment(tmp_path):
+        async def scenario():
+            path = tmp_path / "reader.db"
+            with closing(SQLiteStore(path)) as store:
+                core = FleetManagerCore(Routes(), Pose2D())
+                core.register_robot("r1")
+                loop = FleetEventLoop(store, core)
+                reader = sqlite3.connect(f"file:{path}?mode=ro", uri=True, isolation_level=None)
+                # Fail immediately if a reader would block the sole writer.
+                store.connection.execute("PRAGMA busy_timeout=0")
+                reader.execute("BEGIN")
+                assert reader.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
+                await loop.start()
+                try:
+                    await assign(loop)
+                    assert store.connection.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+                    assert store.connection.execute("PRAGMA synchronous").fetchone()[0] == 2
+                    assert store.connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+                    assert rows(loop, "tasks")[0]["status"] == "ASSIGNED"
+                    assert rows(loop, "outbox_events")[0]["state"] == "PENDING"
+                    # The old reader still sees one coherent generation.
+                    assert reader.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
+                    assert reader.execute("SELECT count(*) FROM outbox_events").fetchone()[0] == 0
+                    reader.execute("COMMIT")
+                    assert reader.execute("SELECT status FROM tasks").fetchone()[0] == "ASSIGNED"
+                    assert reader.execute("SELECT count(*) FROM outbox_events").fetchone()[0] == 1
+                finally:
+                    reader.close()
+                    await loop.close()
+>       asyncio.run(scenario())
+
+tests/test_fleet_manager_outbox.py:1442: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:687: in run_until_complete
+    return future.result()
+tests/test_fleet_manager_outbox.py:1427: in scenario
+    await assign(loop)
+tests/test_fleet_manager_outbox.py:67: in assign
+    await loop.submit(status())
+backend/fleet_manager/event_loop.py:112: in submit
+    return await asyncio.shield(future)
+backend/fleet_manager/event_loop.py:134: in _run
+    result = self._process(event)
+backend/fleet_manager/event_loop.py:153: in _process
+    with self.store.transaction():
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:144: in __exit__
+    next(self.gen)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <backend.fleet_manager.persistence.store.SQLiteStore object at 0x10ad79d90>
+
+    @contextmanager
+    def transaction(self):
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            yield
+>           self.connection.execute("COMMIT")
+E           sqlite3.OperationalError: database is locked
+
+backend/fleet_manager/persistence/store.py:33: OperationalError
+------------------------------ Captured log call -------------------------------
+ERROR    backend.fleet_manager.event_loop:event_loop.py:136 EVENT_REJECTED kind=ROBOT_STATUS robot=r1 task=None epoch=None goal=None
+Traceback (most recent call last):
+  File "/Users/murat/develop/ros2-fleet-manager-demo/backend/fleet_manager/event_loop.py", line 134, in _run
+    result = self._process(event)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/murat/develop/ros2-fleet-manager-demo/backend/fleet_manager/event_loop.py", line 153, in _process
+    with self.store.transaction():
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 144, in __exit__
+    next(self.gen)
+  File "/Users/murat/develop/ros2-fleet-manager-demo/backend/fleet_manager/persistence/store.py", line 33, in transaction
+    self.connection.execute("COMMIT")
+sqlite3.OperationalError: database is locked
+=========================== short test summary info ============================
+FAILED tests/test_fleet_manager_outbox.py::test_readonly_snapshot_does_not_block_atomic_assignment
+1 failed, 102 deselected in 0.41s

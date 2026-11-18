@@ -1,0 +1,75 @@
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_battery_consumption.py ______________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_battery_consumption.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_battery_consumption.py:4: in <module>
+    from fleet_battery_simulator.consumption import BatteryConsumption, OdometrySample
+E   ModuleNotFoundError: No module named 'fleet_battery_simulator'
+________________ ERROR collecting tests/test_battery_control.py ________________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_battery_control.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_battery_control.py:14: in <module>
+    from fleet_battery_simulator.consumption import BatteryConsumption
+E   ModuleNotFoundError: No module named 'fleet_battery_simulator'
+____________ ERROR collecting tests/test_c42_battery_measurement.py ____________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_c42_battery_measurement.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_c42_battery_measurement.py:8: in <module>
+    from fleet_robot_executor.battery import BatteryTelemetry
+E   ModuleNotFoundError: No module named 'fleet_robot_executor'
+_________________ ERROR collecting tests/test_c44_charging.py __________________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_c44_charging.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_c44_charging.py:9: in <module>
+    from fleet_battery_simulator.consumption import BatteryConsumption
+E   ModuleNotFoundError: No module named 'fleet_battery_simulator'
+____________ ERROR collecting tests/test_executor_config_loader.py _____________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_executor_config_loader.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_executor_config_loader.py:6: in <module>
+    from fleet_robot_executor.config_loader import (
+E   ModuleNotFoundError: No module named 'fleet_robot_executor'
+________________ ERROR collecting tests/test_executor_safety.py ________________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_executor_safety.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_executor_safety.py:4: in <module>
+    from fleet_robot_executor.safety import ExecutorSafety, StatusOrderGuard, UINT64_MAX
+E   ModuleNotFoundError: No module named 'fleet_robot_executor'
+____________ ERROR collecting tests/test_executor_state_machine.py _____________
+ImportError while importing test module '/Users/murat/develop/ros2-fleet-manager-demo/tests/test_executor_state_machine.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_executor_state_machine.py:16: in <module>
+    from fleet_robot_executor import (
+E   ModuleNotFoundError: No module named 'fleet_robot_executor'
+=========================== short test summary info ============================
+ERROR tests/test_battery_consumption.py
+ERROR tests/test_battery_control.py
+ERROR tests/test_c42_battery_measurement.py
+ERROR tests/test_c44_charging.py
+ERROR tests/test_executor_config_loader.py
+ERROR tests/test_executor_safety.py
+ERROR tests/test_executor_state_machine.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!!
+7 skipped, 7 errors in 2.36s

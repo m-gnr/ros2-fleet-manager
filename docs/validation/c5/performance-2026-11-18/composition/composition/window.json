@@ -1,0 +1,39 @@
+{
+  "start_utc": 1794954937.22399,
+  "label": "composition",
+  "mode": "chrome",
+  "commands": [
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T223516Z-175dc2e9",
+      "python3",
+      "/tmp/perf-tools/sample.py",
+      "/evidence/composition",
+      "180.0"
+    ],
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T223516Z-175dc2e9",
+      "bash",
+      "-c",
+      "source /opt/ros/humble/setup.bash; python3 /tmp/perf-tools/ros.py /evidence/composition/ros-probe.jsonl 180.0"
+    ],
+    [
+      "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+      "scripts/c5_telemetry_probe.py",
+      "/tmp/c5-perf-20261117T223516Z-175dc2e9",
+      "/tmp/c5-perf-20261117T223516Z-175dc2e9/composition/api-ws.jsonl",
+      "--seconds",
+      "180.0"
+    ],
+    [
+      "node",
+      "/tmp/c5-perf-tools/chrome.mjs",
+      "http://127.0.0.1:21722/",
+      "/tmp/c5-perf-20261117T223516Z-175dc2e9/composition/chrome.jsonl",
+      "177.0"
+    ]
+  ]
+}

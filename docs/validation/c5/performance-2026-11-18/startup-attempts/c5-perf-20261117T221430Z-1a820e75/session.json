@@ -1,0 +1,98 @@
+{
+  "session_id": "c5-perf-20261117T221430Z-1a820e75",
+  "ros_domain_id": 214,
+  "workspace": "/Users/murat/develop/ros2-fleet-manager-demo",
+  "container_name": "c5-perf-20261117T221430Z-1a820e75",
+  "api_port": 21721,
+  "scene_port": 21724,
+  "ui_port": 21722,
+  "vite_pid": 95992,
+  "started_at_utc": "2026-11-17T22:17:11.278352+00:00",
+  "ready_at_utc": "2026-11-17T22:17:11.278398+00:00",
+  "robots": [
+    "robot_alpha",
+    "robot_beta",
+    "robot_gamma"
+  ],
+  "profile": "config/fleet.warehouse-30x18.yaml",
+  "readiness": {
+    "schema_version": 1,
+    "status": "READY",
+    "current_status": "READY",
+    "started_at_utc": "2026-11-17T22:14:37.985016+00:00",
+    "elapsed_ms": 8433.968,
+    "ready_at_utc": "2026-11-17T22:14:46.420152+00:00",
+    "required_phases": [
+      "amcl",
+      "nav2",
+      "tf"
+    ],
+    "robots": {
+      "robot_alpha": {
+        "amcl": {
+          "ready": true,
+          "elapsed_ms": 4704.077,
+          "observed_at_utc": "2026-11-17T22:14:42.689116+00:00"
+        },
+        "nav2": {
+          "ready": true,
+          "elapsed_ms": 8211.25,
+          "observed_at_utc": "2026-11-17T22:14:46.197261+00:00"
+        },
+        "tf": {
+          "ready": true,
+          "elapsed_ms": 6146.287,
+          "observed_at_utc": "2026-11-17T22:14:44.131542+00:00"
+        }
+      },
+      "robot_beta": {
+        "amcl": {
+          "ready": true,
+          "elapsed_ms": 4743.356,
+          "observed_at_utc": "2026-11-17T22:14:42.728406+00:00"
+        },
+        "nav2": {
+          "ready": true,
+          "elapsed_ms": 7382.239,
+          "observed_at_utc": "2026-11-17T22:14:45.368947+00:00"
+        },
+        "tf": {
+          "ready": true,
+          "elapsed_ms": 6152.623,
+          "observed_at_utc": "2026-11-17T22:14:44.137928+00:00"
+        }
+      },
+      "robot_gamma": {
+        "amcl": {
+          "ready": true,
+          "elapsed_ms": 4767.318,
+          "observed_at_utc": "2026-11-17T22:14:42.752383+00:00"
+        },
+        "nav2": {
+          "ready": true,
+          "elapsed_ms": 8433.968,
+          "observed_at_utc": "2026-11-17T22:14:46.420030+00:00"
+        },
+        "tf": {
+          "ready": true,
+          "elapsed_ms": 6163.583,
+          "observed_at_utc": "2026-11-17T22:14:44.148714+00:00"
+        }
+      }
+    }
+  },
+  "tasks": {
+    "schema_version": 1,
+    "source_session_id": "7c01d41b-e78c-429c-ba3b-4c5443322112",
+    "sequence": 502,
+    "generated_at_utc": "2026-11-17T22:17:10.563185+00:00",
+    "backend_session_id": "7513e5c5-1c32-4de6-b60a-c3300d40f31e",
+    "tasks": [],
+    "task_counts": {
+      "total": 0,
+      "queued": 0,
+      "active": 0
+    }
+  },
+  "task_submissions": 0
+}

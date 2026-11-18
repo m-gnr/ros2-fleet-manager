@@ -1,0 +1,29 @@
+{
+  "name": "c5-perf-tests-50b06d54f4",
+  "domain": 208,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "c5-perf-tests-50b06d54f4",
+    "--network",
+    "bridge",
+    "--env",
+    "ROS_DOMAIN_ID=208",
+    "--env",
+    "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+    "--volume",
+    "/Users/murat/develop/ros2-fleet-manager-demo:/workspace:ro",
+    "--volume",
+    "/tmp/ros2-fleet-c5-overlay/d3c739d774adce8f7214b7f8d34d8b56a68b31df0d5f346f904cb59f8a267ba8:/c5-cache:ro",
+    "--workdir",
+    "/workspace",
+    "ros2-fleet-c5-validation:humble-fortress",
+    "bash",
+    "-ec",
+    "source /opt/ros/humble/setup.bash; source /c5-cache/install/local_setup.bash; export PYTHONDONTWRITEBYTECODE=1; export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:/opt/visualizer-deps:${PYTHONPATH:-}; python3 -m pytest -p no:cacheprovider tests/test_fleet_manager_outbox.py tests/test_c5_dashboard.py tests/test_ros2_route_resolver.py tests/test_ros2_status_subscriber.py tests/test_ros2_action_client.py tests/test_ros2_outbox_sender.py -q"
+  ],
+  "image_id": "sha256:7fb7e7fc4aebe0d2b4097752e9b470e30d8ea7a8126bb1dee87d03f30330609d",
+  "fingerprint": "d3c739d774adce8f7214b7f8d34d8b56a68b31df0d5f346f904cb59f8a267ba8"
+}

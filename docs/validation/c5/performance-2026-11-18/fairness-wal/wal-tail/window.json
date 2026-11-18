@@ -1,0 +1,39 @@
+{
+  "start_utc": 1794954503.172531,
+  "label": "wal-tail",
+  "mode": "chrome",
+  "commands": [
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T222323Z-0f9e7fb0",
+      "python3",
+      "/tmp/perf-tools/sample.py",
+      "/evidence/wal-tail",
+      "220.0"
+    ],
+    [
+      "docker",
+      "exec",
+      "c5-perf-20261117T222323Z-0f9e7fb0",
+      "bash",
+      "-c",
+      "source /opt/ros/humble/setup.bash; python3 /tmp/perf-tools/ros.py /evidence/wal-tail/ros-probe.jsonl 220.0"
+    ],
+    [
+      "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
+      "scripts/c5_telemetry_probe.py",
+      "/tmp/c5-perf-20261117T222323Z-0f9e7fb0",
+      "/tmp/c5-perf-20261117T222323Z-0f9e7fb0/wal-tail/api-ws.jsonl",
+      "--seconds",
+      "220.0"
+    ],
+    [
+      "node",
+      "/tmp/c5-perf-tools/chrome.mjs",
+      "http://127.0.0.1:21722/",
+      "/tmp/c5-perf-20261117T222323Z-0f9e7fb0/wal-tail/chrome.jsonl",
+      "217.0"
+    ]
+  ]
+}

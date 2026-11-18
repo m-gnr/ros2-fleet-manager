@@ -26,6 +26,8 @@ FastAPI köprüye özel DDS ağındaki `scene` adı ve yapılandırılmış port
 
 Upstream bağlantı başına 64 KiB WebSocket mesaj sınırı, 1 frame alım su seviyesi ve uygulamada bekleyen en fazla bir olay vardır. 250 ms'den uzun süre relay'de kalan poz atılır. Relay beklemesi plan TTL'sinden düşülür. İstemci gönderimi bir saniye içinde tamamlanamazsa bağlantı 1013 ile kapatılır. Ürün için yalnız son snapshot tutulur. Ürün sessizliği, tek başına açık TF akışını kapatmaz. Köprü sessizliği 2,5 sn sonra kendi yeniden bağlantısını tetikler. Köprü Aşama 4'ten gelen dört eşzamanlı istemci sınırına sahiptir. C5 ürün akışı kendi mevcut istemci sınırını kullanır.
 
+18 Kasım 2026 düzeltmesi: frontend `product_unavailable` veya yalnız ürün watchdog süresi dolduğunda ürün erişimini eski olarak işaretler ve görev/batarya güvenilirliğini maskeler; aynı WebSocket'teki TF sahne akışını kapatmaz. Taşıma heartbeat'i de susarsa mevcut WebSocket yeniden bağlantısı çalışır. Yeni ürün snapshot'ı geldiğinde oturum/sıra doğrulaması sürer. Bu davranış ürün kaynağındaki gecikmeyi çözmez; gerçek TF veya `/clock` kesintisi yine STALE görünür.
+
 Kamera serbest, takip, üstten, filo kadrajı ve sıfırlama modlarını sunar. WebGL sahnesi genel görünümde tembel yüklenir. Düşük kalite seçeneği piksel oranını 1'e indirir ve temas gölgelerini kapatır. Geometri instancing, rota arabelleği, renderer temizliği ve talep üzerine çizim Visualizer’dan alınmıştır.
 
 ## İlk açılışta TF ve API hazır olma kapısı
@@ -129,3 +131,6 @@ Dekoratif timer 50 ms aralıkla en fazla yaklaşık 20 Hz görsel güncelleme is
 ### V6 dış zemin paleti — 17 Kasım 2026
 
 V6 saha düzeni ve hareketi korunur. Kullanıcının sonraki isteğiyle düz zemin bölgeleri ayrıştırıldı: soluk adaçayı çim `#9aa98f`, sıcak krem-gri avlu `#b8b2a8`, aynı ailede biraz daha koyu kaldırım `#b0aba2`, koyu nötr asfalt `#626762`, soluk beyaz mevcut yol çizgileri `#d5d7d1`. Palet `exteriorSite.ts::exteriorPalette` içinde tek yerde tutulur. Kaldırım yalnız kendi malzemesinde ışıktan bağımsız düz renk kullanır; diğer `Boxes` çağrılarının varsayılan malzemesi değişmez. Depo zemini ve çevre kapalı arka planı değiştirilmez. Açıktan koyuya depo → avlu → kaldırım → çim → yol sırası hedeflenir. Yeni doku/desen veya geometri eklenmez. [Güncel kontrol](../validation/c5/visualize-v6-palette-2026-11-17.md).
+
+
+18 Kasım 2026 [performans çalışması](../validation/c5/performance-2026-11-18.md), kaynak/TF, FM/SQLite, ürün yayını ve Chrome gecikmesini ayrı ölçer. Üç robotlu görev ve görev sonrası park dönüşü ayrı kabul adımlarıdır; tamamlanmış taşıma, güvenli park dönüşü kanıtı sayılmaz. Nav2 composition yalnız bu kayıttaki kontrollü karşılaştırmanın sonucuyla değerlendirilir. V1–V6 sunumu ve TF STALE algılaması bu çalışmada değiştirilmez.

@@ -92,7 +92,6 @@ export function useFleet() {
         clearTimeout(productWatchdog);
         first = true;
         beginOutage();
-        peer.close();
       }
       armWatchdog();
       peer.onmessage = (event) => {

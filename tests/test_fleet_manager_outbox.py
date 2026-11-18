@@ -1372,3 +1372,69 @@ def test_yaml_energy_policy_and_robot_models_after_automatic_routes(energy_polic
             finally:
                 await loop.close()
     asyncio.run(scenario())
+
+
+def test_backlogged_consumer_schedules_observer_between_committed_events(runtime):
+    async def scenario():
+        original = runtime._process
+        observed, scheduled = [], []
+
+        def observe():
+            count = runtime.store.connection.execute(
+                "SELECT count(*) FROM processed_events WHERE event_id LIKE 'fairness-%'"
+            ).fetchone()[0]
+            observed.append((runtime.store.connection.in_transaction, count))
+
+        def process(event):
+            result = original(event)
+            if not scheduled:
+                scheduled.append(asyncio.get_running_loop().call_soon(observe))
+            return result
+
+        runtime._process = process
+        await runtime.start()
+        events = [Event("TICK", {"current_time": 10}, event_id=f"fairness-{i}") for i in range(12)]
+        await asyncio.gather(*(runtime.submit(event) for event in events))
+        await runtime.close()
+        assert len(observed) == 1
+        in_transaction, count = observed[0]
+        assert not in_transaction
+        assert 0 < count < len(events), "Other loop work must run before the backlog drains"
+        committed = [row[0] for row in runtime.store.connection.execute(
+            "SELECT event_id FROM processed_events WHERE event_id LIKE 'fairness-%' ORDER BY rowid"
+        )]
+        assert committed == [event.event_id for event in events]
+
+    asyncio.run(scenario())
+
+
+def test_readonly_snapshot_does_not_block_atomic_assignment(tmp_path):
+    async def scenario():
+        path = tmp_path / "reader.db"
+        with closing(SQLiteStore(path)) as store:
+            core = FleetManagerCore(Routes(), Pose2D())
+            core.register_robot("r1")
+            loop = FleetEventLoop(store, core)
+            reader = sqlite3.connect(f"file:{path}?mode=ro", uri=True, isolation_level=None)
+            # Fail immediately if a reader would block the sole writer.
+            store.connection.execute("PRAGMA busy_timeout=0")
+            reader.execute("BEGIN")
+            assert reader.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
+            await loop.start()
+            try:
+                await assign(loop)
+                assert store.connection.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+                assert store.connection.execute("PRAGMA synchronous").fetchone()[0] == 2
+                assert store.connection.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+                assert rows(loop, "tasks")[0]["status"] == "ASSIGNED"
+                assert rows(loop, "outbox_events")[0]["state"] == "PENDING"
+                # The old reader still sees one coherent generation.
+                assert reader.execute("SELECT count(*) FROM tasks").fetchone()[0] == 0
+                assert reader.execute("SELECT count(*) FROM outbox_events").fetchone()[0] == 0
+                reader.execute("COMMIT")
+                assert reader.execute("SELECT status FROM tasks").fetchone()[0] == "ASSIGNED"
+                assert reader.execute("SELECT count(*) FROM outbox_events").fetchone()[0] == 1
+            finally:
+                reader.close()
+                await loop.close()
+    asyncio.run(scenario())

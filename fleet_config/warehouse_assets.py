@@ -66,7 +66,32 @@ def passing(config):
             (dict(x=right,y=lane_n,yaw=pi),dict(x=left,y=lane_n,yaw=pi))]
 
 
-def generate(path, out, scenario="delivery"):
+def configure_peer_observations(params, config, robot, radii):
+    """Opt-in experiment: reuse geometry and timing from the validated profile.
+
+    This observes occupancy, not another traffic scheduler or movement permit.
+    The default launcher deliberately does not opt into unqualified behavior.
+    """
+    safety = config.fleet.perception_safety
+    if safety is None:
+        raise ValueError("peer observation experiment requires explicit perception_safety")
+    amcl = params["amcl"]["ros__parameters"]
+    for layer in ("local_costmap", "global_costmap"):
+        cost = params[layer][layer]["ros__parameters"]
+        cost["plugins"].insert(cost["plugins"].index("inflation_layer"), "peer_robot_layer")
+        cost["peer_robot_layer"] = dict(
+            plugin="fleet_perception::PeerRobotLayer", self_id=robot.id,
+            map_frame=amcl["global_frame_id"], robot_ids=[r.id for r in config.robots],
+            tf_topics=[r.namespace + "/tf" for r in config.robots],
+            radii=[radii[r.id] for r in config.robots],
+            pose_age_sec=safety.odometry_freshness_sec,
+            transport_sec=safety.transport_sec,
+            localization_age_sec=safety.observation_age_sec,
+            future_tolerance_sec=amcl["transform_tolerance"],
+        )
+
+
+def generate(path, out, scenario="delivery", *, peer_awareness=False):
     config = load_config(path)
     layout = config.warehouse
     if layout is None:
@@ -111,10 +136,26 @@ def generate(path, out, scenario="delivery"):
     install_docks(sdf, config.stations.charging_stations, config.robots)
     tree = ET.parse(sdf)
     envelope_evidence = []
+    radii = {}
     for robot in config.robots:
         raw = yaml.safe_load(re.sub(r'@[A-Z_]+@', '0', (path.parent/robot.nav2_params_path).read_text()))
         radius = raw['local_costmap']['local_costmap']['ros__parameters'].get('robot_radius')
         global_radius = raw['global_costmap']['global_costmap']['ros__parameters'].get('robot_radius')
+        if peer_awareness:
+            if radius != global_radius or radius is None or radius <= 0:
+                raise ValueError('peer observations require matching explicit Nav2 robot_radius')
+            radii[robot.id] = float(radius)
+            # Verify the generated collision assembly, including sensor housings,
+            # is enclosed; a convenient Nav2 radius alone is not geometry proof.
+            if robot.obstacle_sensor_model is None:
+                from fleet_config.obstacle_sensors import pose, compose, shape_bound
+                model = tree.find(f'.//model[@name="{robot.id}"]')
+                for link in model.findall('link'):
+                    for collision in link.findall('collision'):
+                        center, matrix = compose(pose(link), pose(collision))
+                        bound, _ = shape_bound(collision.find('geometry'), center, matrix)
+                        if bound > radius:
+                            raise ValueError(f'{robot.id}: collision exceeds peer radius')
         if robot.obstacle_sensor_model is not None:
             if radius != global_radius or radius is None:
                 raise ValueError('obstacle assembly requires matching explicit Nav2 robot_radius')
@@ -148,7 +189,10 @@ def generate(path, out, scenario="delivery"):
                 cost["plugins"].insert(0, "static_layer")
                 cost["static_layer"] = {"plugin":"nav2_costmap_2d::StaticLayer",
                                         "map_subscribe_transient_local":True}
-        configure_observations(params, config, next(r for r in config.robots if r.id == name))
+        configured_robot = next(r for r in config.robots if r.id == name)
+        configure_observations(params, config, configured_robot)
+        if peer_awareness:
+            configure_peer_observations(params, config, configured_robot, radii)
         (out / f"nav2-{name}.yaml").write_text(yaml.safe_dump(params, sort_keys=False))
     (out / "scene.json").write_text(json.dumps(layout.scene_payload(), ensure_ascii=False, indent=2)+"\n")
     (out / "goals.json").write_text(json.dumps(goals, indent=2)+"\n")

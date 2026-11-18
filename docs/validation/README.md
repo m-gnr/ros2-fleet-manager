@@ -1,5 +1,11 @@
 # Doğrulama kayıtları
 
+- [C5-T1 deneysel çalışmaların korunması](c5/c5-t1-checkpoint-2026-11-18.md): yeni bağımsız testler ve varsayılan launcher izolasyonu; deneysel checkpoint, hareket güvenliği kabulü değildir.
+
+- [C5 trafik entegrasyonu bağımlılık aşamaları](c5/traffic-integration-2026-11-18.md) · [Komut eki](c5/traffic-integration-commands-2026-11-18.md): native sıfır yetkilendirme ve gerçek durağan child/Path testleri geçti; gerçek hareket zinciri tamamlanmadı, tam kabul yok.
+
+- [C5 robotlar arası farkındalık](c5/peer-awareness-2026-11-18.md) · [Komutlar](c5/peer-awareness-commands-2026-11-18.md): baseline park teması yeniden üretildi; deneysel adayda üç taşıma/park ve ayrı üçlü şarj yaklaşması temassız geçti. Trafik koordinasyonu ve hareketli kesinti kabulü açık, ürün varsayılanında kapalı.
+
 - [C5 kanıta dayalı performans](c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.
 
 Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalıştırılan komutları ve alınan çıktıları aynen korur; eski Compose yolları için [güncel yol kılavuzunu](../../docker/compose/README.md) kullanın. Tarihsel komutların bu düzenlemede yeniden çalıştırıldığı iddia edilmez.

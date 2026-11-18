@@ -1,0 +1,248 @@
+Starting >>> fleet_interfaces
+Finished <<< fleet_interfaces [1.12s]
+Starting >>> fleet_perception
+Finished <<< fleet_perception [9.06s]
+
+Summary: 2 packages finished [10.3s]
+Starting >>> fleet_perception
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+   Site: 776e76613b08
+   Build name: (empty)
+ Add coverage exclude regular expressions.
+Create new tag: 20261118-0657 - Experimental
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+Test project /peer-build/build/fleet_perception
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: test_peer_robot_layer
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml" "--package-name" "fleet_perception" "--output-file" "/peer-build/build/fleet_perception/ament_cmake_gtest/test_peer_robot_layer.txt" "--command" "/peer-build/build/fleet_perception/test_peer_robot_layer" "--gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml"
+1: Test timeout computed to be: 60
+1: -- run_test.py: invoking following command in '/peer-build/build/fleet_perception':
+1:  - /peer-build/build/fleet_perception/test_peer_robot_layer --gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml
+1: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+1: [==========] Running 10 tests from 2 test suites.
+1: [----------] Global test environment set-up.
+1: [----------] 9 tests from PeerLayerTest
+1: [ RUN      ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.MarksBothPeersAndExcludesSelf (1 ms)
+1: [ RUN      ] PeerLayerTest.MovingPeerClearsOldBounds
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.MovingPeerClearsOldBounds (0 ms)
+1: [ RUN      ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy (0 ms)
+1: [ RUN      ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.SourceAgeAndWrongParentCannotPass (0 ms)
+1: [ RUN      ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer (0 ms)
+1: [ RUN      ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy (0 ms)
+1: [ RUN      ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent (0 ms)
+1: [ RUN      ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform (0 ms)
+1: [ RUN      ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer (0 ms)
+1: [----------] 9 tests from PeerLayerTest (1 ms total)
+1: 
+1: [----------] 1 test from PeerLayerLocalTest
+1: [ RUN      ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry
+1: unknown file: Failure
+1: C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+1: [  FAILED  ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry (0 ms)
+1: [----------] 1 test from PeerLayerLocalTest (0 ms total)
+1: 
+1: [----------] Global test environment tear-down
+1: [==========] 10 tests from 2 test suites ran. (1 ms total)
+1: [  PASSED  ] 0 tests.
+1: [  FAILED  ] 10 tests, listed below:
+1: [  FAILED  ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+1: [  FAILED  ] PeerLayerTest.MovingPeerClearsOldBounds
+1: [  FAILED  ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+1: [  FAILED  ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+1: [  FAILED  ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+1: [  FAILED  ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+1: [  FAILED  ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+1: [  FAILED  ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform
+1: [  FAILED  ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer
+1: [  FAILED  ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry
+1: 
+1: 10 FAILED TESTS
+1: -- run_test.py: return code 1
+1: -- run_test.py: inject classname prefix into gtest result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1: -- run_test.py: verify result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1/1 Test #1: test_peer_robot_layer ............***Failed    0.05 sec
+
+0% tests passed, 1 tests failed out of 1
+
+Label Time Summary:
+gtest    =   0.05 sec*proc (1 test)
+
+Total Test time (real) =   0.05 sec
+
+The following tests FAILED:
+	  1 - test_peer_robot_layer (Failed)
+Errors while running CTest
+Output from these tests are in: /peer-build/build/fleet_perception/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
+--- stderr: fleet_perception
+Errors while running CTest
+Output from these tests are in: /peer-build/build/fleet_perception/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
+---
+Finished <<< fleet_perception [0.09s]	[ with test failures ]
+
+Summary: 1 package finished [1.08s]
+  1 package had stderr output: fleet_perception
+  1 package had test failures: fleet_perception
+/peer-build/build/fleet_perception/Testing/20261118-0657/Test.xml: 1 test, 0 errors, 1 failure, 0 skipped
+- test_peer_robot_layer
+  <<< failure message
+    -- run_test.py: invoking following command in '/peer-build/build/fleet_perception':
+     - /peer-build/build/fleet_perception/test_peer_robot_layer --gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml
+    Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+    [==========] Running 10 tests from 2 test suites.
+    [----------] Global test environment set-up.
+    [----------] 9 tests from PeerLayerTest
+    [ RUN      ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.MarksBothPeersAndExcludesSelf (1 ms)
+    [ RUN      ] PeerLayerTest.MovingPeerClearsOldBounds
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.MovingPeerClearsOldBounds (0 ms)
+    [ RUN      ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy (0 ms)
+    [ RUN      ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.SourceAgeAndWrongParentCannotPass (0 ms)
+    [ RUN      ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer (0 ms)
+    [ RUN      ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy (0 ms)
+    [ RUN      ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent (0 ms)
+    [ RUN      ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform (0 ms)
+    [ RUN      ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer (0 ms)
+    [----------] 9 tests from PeerLayerTest (1 ms total)
+    
+    [----------] 1 test from PeerLayerLocalTest
+    [ RUN      ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry
+    unknown file: Failure
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+    [  FAILED  ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry (0 ms)
+    [----------] 1 test from PeerLayerLocalTest (0 ms total)
+    
+    [----------] Global test environment tear-down
+    [==========] 10 tests from 2 test suites ran. (1 ms total)
+    [  PASSED  ] 0 tests.
+    [  FAILED  ] 10 tests, listed below:
+    [  FAILED  ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+    [  FAILED  ] PeerLayerTest.MovingPeerClearsOldBounds
+    [  FAILED  ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+    [  FAILED  ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+    [  FAILED  ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+    [  FAILED  ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+    [  FAILED  ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+    [  FAILED  ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform
+    [  FAILED  ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer
+    [  FAILED  ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry
+    
+    10 FAILED TESTS
+    -- run_test.py: return code 1
+    -- run_test.py: inject classname prefix into gtest result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+    -- run_test.py: verify result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+  >>>
+/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml: 10 tests, 0 errors, 10 failures, 0 skipped
+- fleet_perception.PeerLayerTest MarksBothPeersAndExcludesSelf
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest MovingPeerClearsOldBounds
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest SourceAgeAndWrongParentCannotPass
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest FutureAndReorderedMeasurementsCannotMovePeer
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest MissingChainAndInvalidQuaternionStayUncurrent
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest MissingExactTimeHistoryDoesNotUseLatestTransform
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerTest ClipsPartialDiscAndNeverClearsAnotherLayer
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+- fleet_perception.PeerLayerLocalTest TransformsPeersThroughSharedMapIntoOwnOdometry
+  <<< failure message
+    unknown file
+    C++ exception with description "failed to create guard condition: context argument is null, at ./src/rcl/guard_condition.c:65" thrown in the test fixture's constructor.
+  >>>
+
+Summary: 11 tests, 0 errors, 11 failures, 0 skipped

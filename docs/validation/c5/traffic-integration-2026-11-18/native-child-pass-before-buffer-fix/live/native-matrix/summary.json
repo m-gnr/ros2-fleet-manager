@@ -1,0 +1,127 @@
+{
+  "movement_authorized": false,
+  "ownership_release": false,
+  "cases": {
+    "raw_ros_and_ign_twist": "NO_AUTHENTICATED_RECEIPT; no raw driver subscriber",
+    "authorized_zero": {
+      "robot_alpha": 12,
+      "robot_beta": 12,
+      "robot_gamma": 8
+    },
+    "source_loss_wrong_mac_and_no_rearm": {
+      "receipt_unchanged": true,
+      "state": {
+        "accepted": 12,
+        "actuator_session": "7c31ddb8bb5976a5d2ab98781b07214b49dc049fd776a366d061aba41aab91db",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "ownership_release": false,
+        "reason": "BLOCKED_REARM",
+        "receipt_steady_ns": 1038580384722,
+        "rejected": 20,
+        "sequence": 12,
+        "sim_ns": 200625000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 1039275818931,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "247daba3379a775dd63656e41b08e55ae639fc81bf361ef1f6c65c4257cfba58",
+        "observed_monotonic": 1039.276756681
+      }
+    },
+    "authenticated_nonzero": {
+      "state": {
+        "accepted": 35,
+        "actuator_session": "9e4f1b5d09f235c01b16f42f540ac9f21f9f50166c8d8c32e0a039e4e54a2ed3",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "ownership_release": false,
+        "reason": "NONZERO_DISABLED",
+        "receipt_steady_ns": 1039274934431,
+        "rejected": 1,
+        "sequence": 35,
+        "sim_ns": 200670000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 1039319218389,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "30565745ac410280969b104549cdbcc995e60890edf7c6ea8cd437c13274220c",
+        "observed_monotonic": 1039.320825056
+      }
+    },
+    "bridge_loss_and_restart": {
+      "state": {
+        "accepted": 31,
+        "actuator_session": "0ebff2cf95ef887c20816e471817e4b552c92f78af412fb676b0e5fbf7437916",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "ownership_release": false,
+        "reason": "BLOCKED_REARM",
+        "receipt_steady_ns": 1039293088431,
+        "rejected": 1,
+        "sequence": 33,
+        "sim_ns": 201435000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 1040092773598,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "f7f7ad27b93089c37dff096851ada444f7dbbc6cf36e0dd82f623170a5d6d6bd",
+        "observed_monotonic": 1040.094941223
+      },
+      "receipt_unchanged": true
+    }
+  },
+  "transport_inventory": {
+    "/robot_alpha/cmd_vel": "Publishers [Address, Message Type]:\n  tcp://172.17.0.2:39751, ignition.msgs.Twist\n",
+    "/robot_alpha/authorized_zero": "No publishers on topic [/robot_alpha/authorized_zero]\n",
+    "/robot_beta/cmd_vel": "Publishers [Address, Message Type]:\n  tcp://172.17.0.2:39751, ignition.msgs.Twist\n",
+    "/robot_beta/authorized_zero": "No publishers on topic [/robot_beta/authorized_zero]\n",
+    "/robot_gamma/cmd_vel": "Publishers [Address, Message Type]:\n  tcp://172.17.0.2:39751, ignition.msgs.Twist\n",
+    "/robot_gamma/authorized_zero": "No publishers on topic [/robot_gamma/authorized_zero]\n"
+  },
+  "native_loaded_mappings": [
+    {
+      "pid": 56,
+      "mappings": [
+        "ffffa0ed0000-ffffa0f4c000 r-xp 00000000 00:34 158                        /b6b7-native/libc5-authorized-zero-drive.so",
+        "ffffa0f4c000-ffffa0f5c000 ---p 0007c000 00:34 158                        /b6b7-native/libc5-authorized-zero-drive.so",
+        "ffffa0f5c000-ffffa0f5e000 r--p 0007c000 00:34 158                        /b6b7-native/libc5-authorized-zero-drive.so",
+        "ffffa0f5e000-ffffa0f60000 rw-p 0007e000 00:34 158                        /b6b7-native/libc5-authorized-zero-drive.so"
+      ]
+    }
+  ],
+  "physical_max_displacement_m": {
+    "robot_alpha": 0.0,
+    "robot_beta": 0.0,
+    "robot_gamma": 0.0
+  },
+  "result": "PASS_ZERO_ONLY",
+  "native_samples": {
+    "robot_alpha": 558,
+    "robot_beta": 551,
+    "robot_gamma": 549
+  },
+  "invalid_joint_commands": [],
+  "limits": "No moving-stop, release, traffic motion authority, or transport ACL qualification"
+}

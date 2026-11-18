@@ -1,0 +1,200 @@
+{
+  "discovery-test-failure/live/fleet.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 0,
+    "station_moves_count": 0,
+    "reservations_count": 9,
+    "traffic_state_count": 0,
+    "traffic_decisions_count": 0,
+    "traffic_outbox_count": 0
+  },
+  "native-child-pass-before-buffer-fix/live/fleet.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 0,
+    "station_moves_count": 0,
+    "reservations_count": 9,
+    "traffic_state_count": 0,
+    "traffic_decisions_count": 0,
+    "traffic_outbox_count": 0
+  },
+  "native-child-pass-before-buffer-fix/live/child-binding/robot_alpha.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 1,
+    "station_moves_count": 0,
+    "reservations_count": 1,
+    "traffic_state_count": 1,
+    "traffic_decisions_count": 5,
+    "traffic_outbox_count": 5,
+    "claims": {
+      "c73d37f7-2b42-506f-a679-5482c8eb465c": "RESERVED"
+    },
+    "outbox": [
+      {
+        "sequence": 1,
+        "command_id": "EXECUTE_TASK:4f177d72-e8af-46d9-8915-2380a416fd47",
+        "kind": "EXECUTE_TASK",
+        "task_id": "stationary-fixture-robot_alpha",
+        "assignment_epoch": 1,
+        "goal_uuid": "4f177d72-e8af-46d9-8915-2380a416fd47",
+        "payload": "{\"assigned_robot_id\": \"robot_alpha\", \"assignment_epoch\": 1, \"created_at\": 1.0, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 1.5000000000000002, \"yaw\": 0.0}, \"goal_uuid\": \"4f177d72-e8af-46d9-8915-2380a416fd47\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 1.5000000000000002, \"yaw\": 0.0}, \"preemption_count\": 0, \"priority\": 2, \"status\": \"ASSIGNED\", \"task_id\": \"stationary-fixture-robot_alpha\"}",
+        "state": "PENDING",
+        "attempts": 0,
+        "next_attempt_at": 0.0,
+        "last_error": null
+      }
+    ]
+  },
+  "native-child-pass-before-buffer-fix/live/child-binding/robot_gamma.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 1,
+    "station_moves_count": 0,
+    "reservations_count": 1,
+    "traffic_state_count": 1,
+    "traffic_decisions_count": 5,
+    "traffic_outbox_count": 5,
+    "claims": {
+      "1683c54a-d7db-583f-b11f-e7b3b9b9107a": "RESERVED"
+    },
+    "outbox": [
+      {
+        "sequence": 1,
+        "command_id": "EXECUTE_TASK:022378c0-a74b-4361-996c-16df4359af4b",
+        "kind": "EXECUTE_TASK",
+        "task_id": "stationary-fixture-robot_gamma",
+        "assignment_epoch": 1,
+        "goal_uuid": "022378c0-a74b-4361-996c-16df4359af4b",
+        "payload": "{\"assigned_robot_id\": \"robot_gamma\", \"assignment_epoch\": 1, \"created_at\": 1.0, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 4.0, \"yaw\": 0.0}, \"goal_uuid\": \"022378c0-a74b-4361-996c-16df4359af4b\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 4.0, \"yaw\": 0.0}, \"preemption_count\": 0, \"priority\": 2, \"status\": \"ASSIGNED\", \"task_id\": \"stationary-fixture-robot_gamma\"}",
+        "state": "PENDING",
+        "attempts": 0,
+        "next_attempt_at": 0.0,
+        "last_error": null
+      }
+    ]
+  },
+  "native-child-pass-before-buffer-fix/live/child-binding/robot_beta.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 1,
+    "station_moves_count": 0,
+    "reservations_count": 1,
+    "traffic_state_count": 1,
+    "traffic_decisions_count": 5,
+    "traffic_outbox_count": 5,
+    "claims": {
+      "7c5413a1-f4b5-558d-8a5a-27e54f151641": "RESERVED"
+    },
+    "outbox": [
+      {
+        "sequence": 1,
+        "command_id": "EXECUTE_TASK:d8285eb4-6799-4e2d-adff-9c4a28acdcac",
+        "kind": "EXECUTE_TASK",
+        "task_id": "stationary-fixture-robot_beta",
+        "assignment_epoch": 1,
+        "goal_uuid": "d8285eb4-6799-4e2d-adff-9c4a28acdcac",
+        "payload": "{\"assigned_robot_id\": \"robot_beta\", \"assignment_epoch\": 1, \"created_at\": 1.0, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 2.74999999999996, \"yaw\": 0.0}, \"goal_uuid\": \"d8285eb4-6799-4e2d-adff-9c4a28acdcac\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 2.74999999999996, \"yaw\": 0.0}, \"preemption_count\": 0, \"priority\": 2, \"status\": \"ASSIGNED\", \"task_id\": \"stationary-fixture-robot_beta\"}",
+        "state": "PENDING",
+        "attempts": 0,
+        "next_attempt_at": 0.0,
+        "last_error": null
+      }
+    ]
+  },
+  "final/live/fleet.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 0,
+    "station_moves_count": 0,
+    "reservations_count": 9,
+    "traffic_state_count": 0,
+    "traffic_decisions_count": 0,
+    "traffic_outbox_count": 0
+  },
+  "final/live/child-binding/robot_alpha.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 1,
+    "station_moves_count": 0,
+    "reservations_count": 1,
+    "traffic_state_count": 1,
+    "traffic_decisions_count": 5,
+    "traffic_outbox_count": 5,
+    "claims": {
+      "108d9fbc-03c8-5d45-9ca6-9de66c50ec5c": "RESERVED"
+    },
+    "outbox": [
+      {
+        "sequence": 1,
+        "command_id": "EXECUTE_TASK:4e3979be-6429-4da1-a7b9-aaa4c286cb8c",
+        "kind": "EXECUTE_TASK",
+        "task_id": "stationary-fixture-robot_alpha",
+        "assignment_epoch": 1,
+        "goal_uuid": "4e3979be-6429-4da1-a7b9-aaa4c286cb8c",
+        "payload": "{\"assigned_robot_id\": \"robot_alpha\", \"assignment_epoch\": 1, \"created_at\": 1.0, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 1.5000000000000002, \"yaw\": 3.1415926535897927}, \"goal_uuid\": \"4e3979be-6429-4da1-a7b9-aaa4c286cb8c\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 1.5000000000000002, \"yaw\": 3.1415926535897927}, \"preemption_count\": 0, \"priority\": 2, \"status\": \"ASSIGNED\", \"task_id\": \"stationary-fixture-robot_alpha\"}",
+        "state": "PENDING",
+        "attempts": 0,
+        "next_attempt_at": 0.0,
+        "last_error": null
+      }
+    ]
+  },
+  "final/live/child-binding/robot_gamma.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 1,
+    "station_moves_count": 0,
+    "reservations_count": 1,
+    "traffic_state_count": 1,
+    "traffic_decisions_count": 5,
+    "traffic_outbox_count": 5,
+    "claims": {
+      "09919b12-bea5-5cd1-a73b-3b869030cb6e": "RESERVED"
+    },
+    "outbox": [
+      {
+        "sequence": 1,
+        "command_id": "EXECUTE_TASK:4e3b81a3-b904-4476-9d91-fdab302352cc",
+        "kind": "EXECUTE_TASK",
+        "task_id": "stationary-fixture-robot_gamma",
+        "assignment_epoch": 1,
+        "goal_uuid": "4e3b81a3-b904-4476-9d91-fdab302352cc",
+        "payload": "{\"assigned_robot_id\": \"robot_gamma\", \"assignment_epoch\": 1, \"created_at\": 1.0, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 4.0, \"yaw\": 3.141592653589793}, \"goal_uuid\": \"4e3b81a3-b904-4476-9d91-fdab302352cc\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 4.0, \"yaw\": 3.141592653589793}, \"preemption_count\": 0, \"priority\": 2, \"status\": \"ASSIGNED\", \"task_id\": \"stationary-fixture-robot_gamma\"}",
+        "state": "PENDING",
+        "attempts": 0,
+        "next_attempt_at": 0.0,
+        "last_error": null
+      }
+    ]
+  },
+  "final/live/child-binding/robot_beta.sqlite3": {
+    "integrity": "ok",
+    "foreign_keys": [],
+    "tasks_count": 1,
+    "station_moves_count": 0,
+    "reservations_count": 1,
+    "traffic_state_count": 1,
+    "traffic_decisions_count": 5,
+    "traffic_outbox_count": 5,
+    "claims": {
+      "5604210f-7fc9-59b6-84bb-040d3f7bfd58": "RESERVED"
+    },
+    "outbox": [
+      {
+        "sequence": 1,
+        "command_id": "EXECUTE_TASK:ba09b459-7732-46b7-9e20-1cebc1541b2c",
+        "kind": "EXECUTE_TASK",
+        "task_id": "stationary-fixture-robot_beta",
+        "assignment_epoch": 1,
+        "goal_uuid": "ba09b459-7732-46b7-9e20-1cebc1541b2c",
+        "payload": "{\"assigned_robot_id\": \"robot_beta\", \"assignment_epoch\": 1, \"created_at\": 1.0, \"dropoff_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 2.74999999999996, \"yaw\": 3.141592653589793}, \"goal_uuid\": \"ba09b459-7732-46b7-9e20-1cebc1541b2c\", \"pickup_pose\": {\"frame_id\": \"map\", \"x\": 13.500000000000101, \"y\": 2.74999999999996, \"yaw\": 3.141592653589793}, \"preemption_count\": 0, \"priority\": 2, \"status\": \"ASSIGNED\", \"task_id\": \"stationary-fixture-robot_beta\"}",
+        "state": "PENDING",
+        "attempts": 0,
+        "next_attempt_at": 0.0,
+        "last_error": null
+      }
+    ]
+  }
+}

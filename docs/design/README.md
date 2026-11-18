@@ -1,5 +1,9 @@
 # Teknik tasarımlar
 
+- [C5 native actuator ve gerçek child/Path bağımlılık aşamaları](../validation/c5/traffic-integration-2026-11-18.md): [izole deney sözleşmesi](../../docker/experiments/c5-b6b7/README.md); hareket yetkisi kapalı.
+
+- [C5 robotlar arası konum ve rota farkındalığı](c5-peer-awareness.md): deneysel Nav2 peer katmanı ve kapalı trafik yetkisi sınırı.
+
 - [C5 Aşama 1 salt okunur operasyon paneli](c5-readonly-dashboard.md) · [API sözleşmesi](c5-readonly-api.md) · [Arayüz ve koordinatlar](c5-dashboard-ui.md)
 - [C5 Aşama 1.5 3D entegrasyonu](c5-3d-operations.md)
 

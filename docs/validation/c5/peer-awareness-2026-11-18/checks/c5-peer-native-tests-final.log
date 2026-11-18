@@ -1,0 +1,176 @@
+Starting >>> fleet_interfaces
+Finished <<< fleet_interfaces [1.22s]
+Starting >>> fleet_perception
+Finished <<< fleet_perception [5.06s]
+
+Summary: 2 packages finished [6.41s]
+Starting >>> fleet_perception
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+   Site: 776e76613b08
+   Build name: (empty)
+ Add coverage exclude regular expressions.
+Create new tag: 20261118-0646 - Experimental
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+Test project /peer-build/build/fleet_perception
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: test_peer_robot_layer
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml" "--package-name" "fleet_perception" "--output-file" "/peer-build/build/fleet_perception/ament_cmake_gtest/test_peer_robot_layer.txt" "--command" "/peer-build/build/fleet_perception/test_peer_robot_layer" "--gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml"
+1: Test timeout computed to be: 60
+1: -- run_test.py: invoking following command in '/peer-build/build/fleet_perception':
+1:  - /peer-build/build/fleet_perception/test_peer_robot_layer --gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml
+1: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+1: [==========] Running 10 tests from 2 test suites.
+1: [----------] Global test environment set-up.
+1: [----------] 9 tests from PeerLayerTest
+1: [ RUN      ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+1: [INFO] [1794984373.486572632] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984373.524568507] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.524617757] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.524640091] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984373.524908924] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MarksBothPeersAndExcludesSelf (46 ms)
+1: [ RUN      ] PeerLayerTest.MovingPeerClearsOldBounds
+1: [INFO] [1794984373.529029049] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984373.563125632] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.563143216] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.563151466] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.599679341] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.599703841] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.599711966] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984373.601089549] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MovingPeerClearsOldBounds (76 ms)
+1: [ RUN      ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+1: [INFO] [1794984373.605436632] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984373.641301216] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.641326049] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984373.641343966] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984373.993727549] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy (398 ms)
+1: [ RUN      ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+1: [INFO] [1794984374.007968424] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.045623883] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.045765091] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.045797424] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.092219216] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.092887549] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.092948258] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.129986841] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.130311091] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.131469966] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.SourceAgeAndWrongParentCannotPass (136 ms)
+1: [ RUN      ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+1: [INFO] [1794984374.143074258] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.181854133] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.181969424] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.182036966] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.218643633] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.218788424] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.218822508] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.220230716] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer (91 ms)
+1: [ RUN      ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+1: [INFO] [1794984374.234232758] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.270928008] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.271062591] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.271091633] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [WARN] [1794984374.271164299] [tf2_buffer]: Detected jump back in time. Clearing TF buffer.
+1: [ERROR] [1794984374.308465383] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.308658466] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.308696424] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.311067466] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy (91 ms)
+1: [ RUN      ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+1: [INFO] [1794984374.324643133] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.363327549] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.363534674] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.363573383] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.401637466] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.401868258] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.404136549] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent (93 ms)
+1: [ RUN      ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform
+1: [INFO] [1794984374.417429133] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.457589633] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.458489633] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.458587550] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.459732216] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform (56 ms)
+1: [ RUN      ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer
+1: [INFO] [1794984374.472923758] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.509119425] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.509324425] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.509408758] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.511654716] [peer_test]: Destroying
+1: [       OK ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer (51 ms)
+1: [----------] 9 tests from PeerLayerTest (1038 ms total)
+1: 
+1: [----------] 1 test from PeerLayerLocalTest
+1: [ RUN      ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry
+1: [INFO] [1794984374.523507341] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [ERROR] [1794984374.560384175] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.560467383] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.560493591] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.597210133] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.597372966] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [ERROR] [1794984374.597404050] [tf2_buffer]: Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. Without a dedicated thread it will always timeout.  If you have a separate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+1: [INFO] [1794984374.598641300] [peer_test]: Destroying
+1: [       OK ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry (87 ms)
+1: [----------] 1 test from PeerLayerLocalTest (87 ms total)
+1: 
+1: [----------] Global test environment tear-down
+1: [==========] 10 tests from 2 test suites ran. (1125 ms total)
+1: [  PASSED  ] 10 tests.
+1: -- run_test.py: return code 0
+1: -- run_test.py: inject classname prefix into gtest result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1: -- run_test.py: verify result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1/1 Test #1: test_peer_robot_layer ............   Passed    1.19 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+gtest    =   1.19 sec*proc (1 test)
+
+Total Test time (real) =   1.19 sec
+Finished <<< fleet_perception [1.23s]
+
+Summary: 1 package finished [2.22s]
+Summary: 11 tests, 0 errors, 0 failures, 0 skipped

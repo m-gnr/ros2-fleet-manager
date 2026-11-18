@@ -17,6 +17,9 @@
 
 #include "DiffDrive.hh"
 #include "Lease.hh"
+#ifdef C5_AUTH_ZERO_ONLY
+#include "../c5-b6b7/AuthorizedZero.hh"
+#endif
 
 #include <gz/msgs/odometry.pb.h>
 #include <gz/msgs/stringmsg.pb.h>
@@ -66,6 +69,10 @@ class ignition::gazebo::systems::DiffDrivePrivate
   /// \brief Callback for velocity subscription
   /// \param[in] _msg Velocity message
   public: void OnCmdVel(const msgs::Twist &_msg);
+#ifdef C5_AUTH_ZERO_ONLY
+  public: void OnAuthorizedZero(const msgs::StringMsg &_msg);
+  public: std::unique_ptr<c5_test::AuthorizedZero> authorization;
+#endif
 
   /// \brief Callback for enable/disable subscription
   /// \param[in] _msg Boolean message
@@ -189,6 +196,12 @@ void DiffDrive::Configure(const Entity &_entity,
         this->dataPtr->actuatorStateTopic);
   if (!std::isfinite(this->dataPtr->timeout) || this->dataPtr->timeout <= 0)
     throw std::invalid_argument("velocity_command_timeout must be positive and finite");
+#ifdef C5_AUTH_ZERO_ONLY
+  if (!_sdf->HasElement("authorization_file") || this->dataPtr->actuatorStateTopic.empty())
+    throw std::invalid_argument("Explicit zero-only authorization file and state topic required");
+  this->dataPtr->authorization = c5_test::AuthorizedZero::Load(
+    _sdf->Get<std::string>("authorization_file"), std::chrono::steady_clock::now());
+#endif
 
   // Get the canonical link
   std::vector<Entity> links = _ecm.ChildrenByComponents(
@@ -361,7 +374,11 @@ void DiffDrive::Configure(const Entity &_entity,
   topics.push_back("/model/" + this->dataPtr->model.Name(_ecm) + "/cmd_vel");
   auto topic = validTopic(topics);
 
+#ifdef C5_AUTH_ZERO_ONLY
+  this->dataPtr->node.Subscribe(topic, &DiffDrivePrivate::OnAuthorizedZero,
+#else
   this->dataPtr->node.Subscribe(topic, &DiffDrivePrivate::OnCmdVel,
+#endif
       this->dataPtr.get());
 
   // Subscribe to enable/disable
@@ -413,7 +430,11 @@ void DiffDrive::PreUpdate(const UpdateInfo &_info,
   IGN_PROFILE("DiffDrive::PreUpdate");
   {
     std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+#ifdef C5_AUTH_ZERO_ONLY
+    this->dataPtr->authorization->Tick(std::chrono::steady_clock::now(), _info.simTime.count(), this->dataPtr->lease);
+#else
     this->dataPtr->lease.Tick(std::chrono::steady_clock::now(), _info.simTime.count());
+#endif
     this->dataPtr->targetVel.Clear();
     this->dataPtr->leftJointSpeed = 0;
     this->dataPtr->rightJointSpeed = 0;
@@ -648,7 +669,7 @@ void DiffDrivePrivate::UpdateOdometry(const UpdateInfo &_info,
 
 //////////////////////////////////////////////////
 void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
-    const EntityComponentManager &/*_ecm*/)
+    const EntityComponentManager &_ecm)
 {
   IGN_PROFILE("DiffDrive::UpdateVelocity");
 
@@ -663,7 +684,11 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
   {
     std::lock_guard<std::mutex> lock(this->mutex);
     steadyNow = std::chrono::steady_clock::now();
+#ifdef C5_AUTH_ZERO_ONLY
+    this->authorization->Tick(steadyNow, _info.simTime.count(), this->lease);
+#else
     this->lease.Tick(steadyNow, _info.simTime.count());
+#endif
     this->targetVel.Clear();  // Test-only: no nonzero actuator target exists.
     this->haveCommand = this->lease.state == c5_test::State::ACTIVE;
     linVel = this->targetVel.linear().x();
@@ -677,6 +702,30 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
 
   if (this->actuatorStatePub)
   {
+#ifdef C5_AUTH_ZERO_ONLY
+    c5_test::Json state;
+    {
+      std::lock_guard<std::mutex> lock(this->mutex);
+      state = this->authorization->Snapshot(steadyNow, this->lease);
+      state["sim_ns"] = _info.simTime.count();
+      state["target_linear"] = linVel;
+      state["target_angular"] = angVel;
+      // These are the actual joint command components written in PreUpdate.
+      // They prove zero commands, never physical braking from a moving state.
+      state["joint_commands"] = c5_test::Json::array();
+      for (auto joint : this->leftJoints) {
+        const auto value = _ecm.Component<components::JointVelocityCmd>(joint);
+        state["joint_commands"].push_back(value ? c5_test::Json(value->Data()) : c5_test::Json());
+      }
+      for (auto joint : this->rightJoints) {
+        const auto value = _ecm.Component<components::JointVelocityCmd>(joint);
+        state["joint_commands"].push_back(value ? c5_test::Json(value->Data()) : c5_test::Json());
+      }
+    }
+    msgs::StringMsg message;
+    message.set_data(state.dump());
+    this->actuatorStatePub.Publish(message);
+#else
     std::ostringstream state;
     state << "state=" << stateName << ";have_command=" << (hasCommand ? 1 : 0)
           << ";timed_out=" << (hasTimedOut ? 1 : 0)
@@ -688,6 +737,7 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
     msgs::StringMsg message;
     message.set_data(state.str());
     this->actuatorStatePub.Publish(message);
+#endif
   }
 
   // Limit the target velocity if needed.
@@ -712,6 +762,11 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
 void DiffDrivePrivate::OnCmdVel(const msgs::Twist &_msg)
 {
   std::lock_guard<std::mutex> lock(this->mutex);
+#ifdef C5_AUTH_ZERO_ONLY
+  // Defense in depth: even an accidental direct call cannot refresh the lease.
+  (void)_msg;
+  this->targetVel.Clear();
+#else
   if (this->enabled)
   {
     const bool zero = _msg.linear().x() == 0 && _msg.linear().y() == 0 &&
@@ -722,7 +777,22 @@ void DiffDrivePrivate::OnCmdVel(const msgs::Twist &_msg)
     this->targetVel.Clear();
     this->haveCommand = this->lease.state == c5_test::State::ACTIVE;
   }
+#endif
 }
+
+#ifdef C5_AUTH_ZERO_ONLY
+void DiffDrivePrivate::OnAuthorizedZero(const msgs::StringMsg &_msg)
+{
+  std::lock_guard<std::mutex> lock(this->mutex);
+  if (this->enabled && this->authorization) {
+    const auto now = std::chrono::steady_clock::now();
+    if (this->authorization->Receive(_msg.data(), now, this->lease) == "ACCEPTED_ZERO")
+      this->received = now;
+  }
+  this->targetVel.Clear();
+  this->haveCommand = this->lease.state == c5_test::State::ACTIVE;
+}
+#endif
 
 //////////////////////////////////////////////////
 void DiffDrivePrivate::OnEnable(const msgs::Boolean &_msg)
@@ -745,7 +815,11 @@ IGNITION_ADD_PLUGIN(DiffDrive,
                     DiffDrive::ISystemPreUpdate,
                     DiffDrive::ISystemPostUpdate)
 
+#ifdef C5_AUTH_ZERO_ONLY
+IGNITION_ADD_PLUGIN_ALIAS(DiffDrive, "c5::test::AuthorizedZeroDiffDrive")
+#else
 IGNITION_ADD_PLUGIN_ALIAS(DiffDrive, "gz::sim::systems::DiffDrive")
 
 // TODO(CH3): Deprecated, remove on version 8
 IGNITION_ADD_PLUGIN_ALIAS(DiffDrive, "ignition::gazebo::systems::DiffDrive")
+#endif

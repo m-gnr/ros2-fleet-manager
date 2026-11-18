@@ -1,0 +1,15 @@
+flowchart TD
+    A["Config robotları ve mevcut Nav2 yarıçapları"] --> B["SDF footprint kapsama denetimi — IMPLEMENTED"]
+    B --> C{"İzole peer deneyi açık mı?"}
+    C -->|Hayır| D["Mevcut C5-A akışı korunur — IMPLEMENTED"]
+    C -->|Evet| E["Açık namespace TF uçları: beklenen zincir ve ilerleyen damga"]
+    E --> F{"Kaynak ve alım güncel, tam zamanlı TF var mı?"}
+    F -->|Evet| G["Diğer robot dairelerini kendi costmap frame'ine dönüştür"]
+    F -->|Hayır| H["Son işgal tutulur; current=false — IMPLEMENTED"]
+    G --> I["Global ve yerel peer katmanı; ardından inflation — IMPLEMENTED"]
+    J["Bağımsız LiDAR gözlemleri korunur"] --> I
+    K["Gerçek Nav2 planlarının mevcut salt okunur izleyicisi"] --> L["Konum ve rota kanıtı; hareket izni değildir"]
+    H --> M["Bekleme / resume ve terminal hata ayrımı — PARTIAL"]
+    L -.-> N["Mevcut B6B.1 / B6B.2 izin ve claim kimliği"]
+    N -.-> O["Kalifiye child/path bağı, yerel duruş ve fiziksel release — PLANNED / UNVERIFIED"]
+    O -.-> P["Dar koridor önceliği ve canlı çakışma koordinasyonu — UNVERIFIED"]

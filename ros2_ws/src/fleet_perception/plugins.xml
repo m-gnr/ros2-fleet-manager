@@ -2,4 +2,7 @@
   <class name="fleet_perception::ObservedObstacleLayer" type="fleet_perception::ObservedObstacleLayer" base_class_type="nav2_costmap_2d::Layer">
     <description>ObstacleLayer with telemetry of the locked buffers used in updateBounds.</description>
   </class>
+  <class name="fleet_perception::PeerRobotLayer" type="fleet_perception::PeerRobotLayer" base_class_type="nav2_costmap_2d::Layer">
+    <description>Experimental peer footprint observations with exact-time shared TF and conservative stale holds.</description>
+  </class>
 </library>

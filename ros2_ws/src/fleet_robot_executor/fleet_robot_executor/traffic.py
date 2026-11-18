@@ -22,6 +22,7 @@ class MovementGate:
         self.deadline = 0.0
         self.state = 'CLOSED'
         self.closed_requests = set()
+        self.child_observation = None
 
     def prepare(self, request, timeout):
         with self.lock:
@@ -32,6 +33,7 @@ class MovementGate:
             if request['request_id'] in self.closed_requests:
                 raise ValueError('Retired request cannot be reopened')
             self.request, self.decision, self.applied = deepcopy(request), None, None
+            self.child_observation = None
             self.deadline = self.clock() + timeout
             self.state = 'WAITING'
 
@@ -40,6 +42,7 @@ class MovementGate:
             if self.request:
                 self.closed_requests.add(self.request['request_id'])
             self.state, self.applied = reason, None
+            self.child_observation = None
 
     def _live(self):
         if self.request is None or self.request['request_id'] in self.closed_requests:
@@ -100,6 +103,68 @@ class MovementGate:
             # No local boundary interlock/actuator qualification. Never call sender.
             self.state = 'MOTION_DISABLED'
             return False
+
+    def observe_child_accepted(self, actual_uuid, serialized_path):
+        """Record an accepted child against the reserved immutable path.
+
+        Observation is not a local APPLIED acknowledgement or authorization.
+        The caller must obtain UUID/path from its real action client transaction.
+        Nonzero send remains inhibited, even after this record is complete.
+        """
+        with self.lock:
+            if not self._live() or not self.decision:
+                return None
+            if (actual_uuid != self.request['child_uuid'] or type(serialized_path) is not bytes
+                    or hashlib.sha256(serialized_path).hexdigest() != self.request['path_hash']):
+                self.revoke('CHILD_PATH_IDENTITY_MISMATCH')
+                return None
+            observation = {k: deepcopy(self.decision[k]) for k in
+                           ('identity', 'request_id', 'geometry_digest', 'movement_kind', 'station_id')}
+            observation.update(actual_child_uuid=actual_uuid,
+                               actual_path_hash=hashlib.sha256(serialized_path).hexdigest(),
+                               terminal_status=None, movement_authorized=False,
+                               physical_stop='UNKNOWN', ownership_release=False)
+            if self.child_observation is not None:
+                comparable = {**self.child_observation, 'terminal_status': None}
+                if comparable != observation:
+                    self.revoke('CHILD_OBSERVATION_CHANGED')
+                    return None
+                return deepcopy(self.child_observation)
+            self.child_observation = observation
+            return deepcopy(observation)
+
+    def observe_child_terminal(self, actual_uuid, status):
+        """A real terminal does not establish stop, retirement, or physical exit."""
+        with self.lock:
+            if (self.child_observation is None or actual_uuid != self.child_observation['actual_child_uuid']
+                    or type(status) is not int or status not in (4, 5, 6)):
+                return False
+            previous = self.child_observation['terminal_status']
+            if previous is not None and previous != status:
+                self.revoke('CHILD_TERMINAL_CHANGED')
+                return False
+            self.child_observation['terminal_status'] = status
+            return True
+
+
+def observe_follow_path_acceptance(gate, goal_handle, sent_goal, *, expected_action_name):
+    """Capture real ROS client response and exact Path bytes, metadata only.
+
+    This does not send a goal or open MovementGate.send. Endpoint matching is
+    transaction provenance, not DDS sender authentication or physical evidence.
+    """
+    from nav2_msgs.action import FollowPath
+    from rclpy.action.client import ClientGoalHandle
+    from rclpy.serialization import serialize_message
+    if (not isinstance(goal_handle, ClientGoalHandle) or not isinstance(sent_goal, FollowPath.Goal)
+            or not goal_handle.accepted or not isinstance(expected_action_name, str)
+            or not expected_action_name.startswith('/')
+            or goal_handle._action_client._action_type is not FollowPath
+            or goal_handle._action_client._action_name != expected_action_name):
+        gate.revoke('UNQUALIFIED_CHILD_RESPONSE')
+        return None
+    return gate.observe_child_accepted(str(UUID(bytes=bytes(goal_handle.goal_id.uuid))),
+                                      bytes(serialize_message(sent_goal.path)))
 
 
 def geometry_for(path, radius):

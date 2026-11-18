@@ -1,0 +1,76 @@
+{
+  "movement_authorized": false,
+  "ownership_release": false,
+  "cases": {
+    "raw_ros_and_ign_twist": "NO_AUTHENTICATED_RECEIPT; no raw driver subscriber",
+    "authorized_zero": {
+      "robot_alpha": 8,
+      "robot_beta": 8,
+      "robot_gamma": 8
+    },
+    "source_loss_wrong_mac_and_no_rearm": {
+      "receipt_unchanged": true,
+      "state": {
+        "accepted": 8,
+        "actuator_session": "5ec2b71e14cc3b09d4fb09377cf0438287ad04ab1f2cfb8b23c67098aae50ec5",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "ownership_release": false,
+        "reason": "BLOCKED_REARM",
+        "receipt_steady_ns": 608357792693,
+        "rejected": 20,
+        "sequence": 8,
+        "sim_ns": 162265000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 609036342026,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "73aff5b1dc40a79abd55c936e64cf47f2e69ab0cbca94d6cdab299c71591b658",
+        "observed_monotonic": 609.037762901
+      }
+    },
+    "authenticated_nonzero": {
+      "state": {
+        "accepted": 31,
+        "actuator_session": "314e89e5af16f3e423245be3d15bced0be71d91919fc49cfdee1051b6f7672f6",
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "movement_authorized": false,
+        "ownership_release": false,
+        "reason": "NONZERO_DISABLED",
+        "receipt_steady_ns": 609026533526,
+        "rejected": 1,
+        "sequence": 32,
+        "sim_ns": 162315000000,
+        "state": "BLOCKED_REARM",
+        "steady_ns": 609085979068,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "ticket": "6c07fd3f9f6a522d6750c3c4f2d91f86df8ca570017ac753afc56fbd678a570a",
+        "observed_monotonic": 609.087433485
+      }
+    }
+  },
+  "transport_inventory": {
+    "/robot_alpha/cmd_vel": "Publishers [Address, Message Type]:\n  tcp://172.17.0.2:42033, ignition.msgs.Twist\n",
+    "/robot_alpha/authorized_zero": "No publishers on topic [/robot_alpha/authorized_zero]\n",
+    "/robot_beta/cmd_vel": "Publishers [Address, Message Type]:\n  tcp://172.17.0.2:42033, ignition.msgs.Twist\n",
+    "/robot_beta/authorized_zero": "No publishers on topic [/robot_beta/authorized_zero]\n",
+    "/robot_gamma/cmd_vel": "Publishers [Address, Message Type]:\n  tcp://172.17.0.2:42033, ignition.msgs.Twist\n",
+    "/robot_gamma/authorized_zero": "No publishers on topic [/robot_gamma/authorized_zero]\n"
+  },
+  "result": "FAIL"
+}

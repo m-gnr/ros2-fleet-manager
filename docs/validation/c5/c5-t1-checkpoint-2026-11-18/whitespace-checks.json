@@ -1,0 +1,58 @@
+{
+  "full_staged_check": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit_code": 2,
+    "warnings": 205,
+    "output": "whitespace-warnings.log",
+    "output_presentation": "Diagnostic display only; trailing whitespace stripped in this display. Original test logs unchanged."
+  },
+  "source_and_document_check": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      ".",
+      ":!docs/validation/c5/c5-t1-checkpoint-2026-11-18/b6b5-regression.log",
+      ":!docs/validation/c5/c5-t1-checkpoint-2026-11-18/native-zero-build-test.log",
+      ":!docs/validation/c5/c5-t1-checkpoint-2026-11-18/peer-and-ros-tests.log",
+      ":!docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-final.log",
+      ":!docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-remap-retry.log",
+      ":!docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-remap.log",
+      ":!docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-retry.log",
+      ":!docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b5-regression.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-native-build.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-native-final-check.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-native-rebuild.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-start.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/checks/c5-peer-buffer-native-tests.log",
+      ":!docs/validation/c5/traffic-integration-2026-11-18/native-build/build-test.log"
+    ],
+    "exit_code": 0
+  },
+  "excluded_immutable_raw_logs": [
+    "docs/validation/c5/c5-t1-checkpoint-2026-11-18/b6b5-regression.log",
+    "docs/validation/c5/c5-t1-checkpoint-2026-11-18/native-zero-build-test.log",
+    "docs/validation/c5/c5-t1-checkpoint-2026-11-18/peer-and-ros-tests.log",
+    "docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-final.log",
+    "docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-remap-retry.log",
+    "docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-remap.log",
+    "docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests-retry.log",
+    "docs/validation/c5/peer-awareness-2026-11-18/checks/c5-peer-native-tests.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b5-regression.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-native-build.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-native-final-check.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-native-rebuild.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/checks/c5-b6b7-start.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/checks/c5-peer-buffer-native-tests.log",
+    "docs/validation/c5/traffic-integration-2026-11-18/native-build/build-test.log"
+  ],
+  "rationale": "Preserve exact raw evidence bytes; no source or document exclusions."
+}

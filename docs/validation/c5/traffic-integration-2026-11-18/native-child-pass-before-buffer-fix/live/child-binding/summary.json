@@ -1,0 +1,138 @@
+{
+  "result": "PASS_METADATA_ONLY",
+  "robots": [
+    {
+      "robot_id": "robot_alpha",
+      "endpoint": "/robot_alpha/follow_path",
+      "observation": {
+        "identity": {
+          "robot_id": "robot_alpha",
+          "task_id": "stationary-fixture-robot_alpha",
+          "epoch": 1,
+          "execute_uuid": "4f177d72-e8af-46d9-8915-2380a416fd47",
+          "child_uuid": "96a2f0d9-9e19-4a4b-a637-02bf9ba27378",
+          "executor_session": "dc708e29-4222-4b23-9825-951804b9cfd6",
+          "fm_session": "02ff7502-b5c9-4936-ac04-15956d1a31f2",
+          "permit_id": "c73d37f7-2b42-506f-a679-5482c8eb465c",
+          "generation": 1,
+          "path_hash": "fa0e0837af583f88878b8eae19518cca36da5ebf491ffcdd9b117f8daa183e32",
+          "map_revision": "zero-fixture-map",
+          "frame": "map",
+          "geometry_revision": "zero-fixture-geometry"
+        },
+        "request_id": "de990146-f0ff-4071-a02a-2b380bd80df5",
+        "geometry_digest": "4f4d9fad4e6f2876e9aecd938c57edc84e44d494f8efb425cfe8af79757e0ddf",
+        "movement_kind": "PICKUP",
+        "station_id": "",
+        "actual_child_uuid": "96a2f0d9-9e19-4a4b-a637-02bf9ba27378",
+        "actual_path_hash": "fa0e0837af583f88878b8eae19518cca36da5ebf491ffcdd9b117f8daa183e32",
+        "terminal_status": null,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false
+      },
+      "terminal_status": 4,
+      "fixture_parent_execute_task_sent": false,
+      "outbox_dispatcher_started": false,
+      "release": {
+        "status": "DENIED",
+        "reason": "RELEASE_THRESHOLDS_UNVERIFIED",
+        "movement_authorized": false
+      },
+      "changed_path_gate_state": "CHILD_PATH_IDENTITY_MISMATCH",
+      "goal_path_sha256": "fa0e0837af583f88878b8eae19518cca36da5ebf491ffcdd9b117f8daa183e32",
+      "path_bytes": "00010000aa01000000000000040000006d61700002000000aa01000000000000040000006d617000000000003900000000002b40010000000000f83f000000000000000000000000000000000000000000000000000000000000f03f3b808c842b88aa3caa01000000000000040000006d6170003900000000002b40010000000000f83f000000000000000000000000000000000000000000000000000000000000f03f3b808c842b88aa3c",
+      "physical_stop": "UNKNOWN",
+      "movement_authorized": false
+    },
+    {
+      "robot_id": "robot_beta",
+      "endpoint": "/robot_beta/follow_path",
+      "observation": {
+        "identity": {
+          "robot_id": "robot_beta",
+          "task_id": "stationary-fixture-robot_beta",
+          "epoch": 1,
+          "execute_uuid": "d8285eb4-6799-4e2d-adff-9c4a28acdcac",
+          "child_uuid": "23400e3c-da4b-43b5-966c-9d642a79ca29",
+          "executor_session": "c9125e0e-2e23-42f2-bc0b-a2b03eb38cbd",
+          "fm_session": "910cd116-47ab-430e-a16b-416af9f93def",
+          "permit_id": "7c5413a1-f4b5-558d-8a5a-27e54f151641",
+          "generation": 1,
+          "path_hash": "3b11a25d699476b68b1975063988b6ec23308bcd1689eccf50905692fe0881eb",
+          "map_revision": "zero-fixture-map",
+          "frame": "map",
+          "geometry_revision": "zero-fixture-geometry"
+        },
+        "request_id": "1f4ff90d-cffc-421d-8da6-6cd3ca110458",
+        "geometry_digest": "8ac50bf00fb529a3cd35cffa8f019e64c655dc04af90d1687482088232237dda",
+        "movement_kind": "PICKUP",
+        "station_id": "",
+        "actual_child_uuid": "23400e3c-da4b-43b5-966c-9d642a79ca29",
+        "actual_path_hash": "3b11a25d699476b68b1975063988b6ec23308bcd1689eccf50905692fe0881eb",
+        "terminal_status": null,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false
+      },
+      "terminal_status": 4,
+      "fixture_parent_execute_task_sent": false,
+      "outbox_dispatcher_started": false,
+      "release": {
+        "status": "DENIED",
+        "reason": "RELEASE_THRESHOLDS_UNVERIFIED",
+        "movement_authorized": false
+      },
+      "changed_path_gate_state": "CHILD_PATH_IDENTITY_MISMATCH",
+      "goal_path_sha256": "3b11a25d699476b68b1975063988b6ec23308bcd1689eccf50905692fe0881eb",
+      "path_bytes": "00010000aa010000402c4206040000006d61700002000000aa010000402c4206040000006d617000000000003900000000002b40a6ffffffffff0540000000000000000000000000000000000000000000000000000000000000f03f8d54e4c84b108c3caa010000402c4206040000006d6170003900000000002b40a6ffffffffff0540000000000000000000000000000000000000000000000000000000000000f03f8d54e4c84b108c3c",
+      "physical_stop": "UNKNOWN",
+      "movement_authorized": false
+    },
+    {
+      "robot_id": "robot_gamma",
+      "endpoint": "/robot_gamma/follow_path",
+      "observation": {
+        "identity": {
+          "robot_id": "robot_gamma",
+          "task_id": "stationary-fixture-robot_gamma",
+          "epoch": 1,
+          "execute_uuid": "022378c0-a74b-4361-996c-16df4359af4b",
+          "child_uuid": "b5084538-eb41-42ce-8fc3-62c7e8b71026",
+          "executor_session": "baeae812-ee0a-4dbf-98bc-ed866a54811f",
+          "fm_session": "494bfdc0-8c3a-4dac-869e-f64442303255",
+          "permit_id": "1683c54a-d7db-583f-b11f-e7b3b9b9107a",
+          "generation": 1,
+          "path_hash": "ad4244b00795486d71f24782bc74762ee5c4b2aa98272fbb492e95798b28b01f",
+          "map_revision": "zero-fixture-map",
+          "frame": "map",
+          "geometry_revision": "zero-fixture-geometry"
+        },
+        "request_id": "241739e5-b01d-4619-bc27-b6912855f5ca",
+        "geometry_digest": "71be8492de677a2393cefc2bb742e62aa8d1a99936031c1425bad5c3cc75635c",
+        "movement_kind": "PICKUP",
+        "station_id": "",
+        "actual_child_uuid": "b5084538-eb41-42ce-8fc3-62c7e8b71026",
+        "actual_path_hash": "ad4244b00795486d71f24782bc74762ee5c4b2aa98272fbb492e95798b28b01f",
+        "terminal_status": null,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false
+      },
+      "terminal_status": 4,
+      "fixture_parent_execute_task_sent": false,
+      "outbox_dispatcher_started": false,
+      "release": {
+        "status": "DENIED",
+        "reason": "RELEASE_THRESHOLDS_UNVERIFIED",
+        "movement_authorized": false
+      },
+      "changed_path_gate_state": "CHILD_PATH_IDENTITY_MISMATCH",
+      "goal_path_sha256": "ad4244b00795486d71f24782bc74762ee5c4b2aa98272fbb492e95798b28b01f",
+      "path_bytes": "00010000aa010000c0d0010e040000006d61700002000000aa010000c0d0010e040000006d617000000000003900000000002b400000000000001040000000000000000000000000000000000000000000000000000000000000f03ff9ffbe81a73ebb3caa010000c0d0010e040000006d6170003900000000002b400000000000001040000000000000000000000000000000000000000000000000000000000000f03ff9ffbe81a73ebb3c",
+      "physical_stop": "UNKNOWN",
+      "movement_authorized": false
+    }
+  ],
+  "limits": "Real stationary FollowPath; fixture parent assignment, no ExecuteTask delivery, no motion/release authority"
+}

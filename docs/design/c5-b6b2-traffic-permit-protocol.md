@@ -39,4 +39,12 @@ APPLIED ACK kimliği consumer'da doğrulanır, `UNQUALIFIED_LOCAL_ACK` olarak ka
 
 ## B6B.3 için en küçük sonraki adım
 
+18 Kasım ek uygulama: mevcut `MovementGate` artık kabul edilen gerçek
+FollowPath child UUID'sini ve gönderilen Path'in tüm serialized byte hash'ini
+rezervasyon kimliğiyle eşleyen **yetkisiz gözlem kaydı** tutabilir. Gerçek ROS
+ClientGoalHandle/tip/endpoint adaptörü ve terminal kimlik fence'i vardır.
+Bu kayıt APPLIED ACK, fiziksel duruş veya release değildir; `send` hâlâ daima
+False döner. Varsayılan Executor akışı bu gözlem API'sini çağırmaz.
+[Yeni doğrulama ve sınırlar](../validation/c5/traffic-integration-2026-11-18.md).
+
 **ÖNERİ:** hareket kapalı kalarak, permit kimliği/path/child bağını gerçekten yerel sınır uygulayıcısına atomik kuran ve revoke/retire durumunu okuyan producer sözleşmesini doğrulamak. Fake ACK yerine bu producer'ın uygulanmış kimlik kanıtını göstermek gerekir. Fiziksel hareket açmak ayrıca actuator fail-safe, gerçek path yürütmesi ve kalifiye release için bağımsız kabul gerektirir.

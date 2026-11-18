@@ -18,6 +18,12 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5-T1 deneysel checkpoint](validation/c5/c5-t1-checkpoint-2026-11-18.md): bağımsız testler ve varsayılan kapalı izolasyon yeniden doğrulandı; kaynak/kanıtlar korunur. T2 için hareketli güvenlik kabulü açık kalır.
+
+- [C5 trafik entegrasyonu bağımlılık aşamaları](validation/c5/traffic-integration-2026-11-18.md) · [Komutlar](validation/c5/traffic-integration-commands-2026-11-18.md): gerçek native sıfır alıcısı, gerçek child/Path metadata testi ve peer TF sorgu düzeltmesi; hareketli stop/hold/resume/release kabulü açık, varsayılan launcher kapalı.
+
+- [C5 robotlar arası konum ve rota farkındalığı](validation/c5/peer-awareness-2026-11-18.md) · [Komutlar ve kanıt](validation/c5/peer-awareness-commands-2026-11-18.md) · [Tasarım](design/c5-peer-awareness.md): deneysel peer costmap katmanı; üç taşıma + park ve ayrı şarj yaklaşması geçti. Gerçek trafik izniyle koordinasyon ve dar koridor kabulü açık; varsayılan başlatmada kapalıdır.
+
 - [C5 kanıta dayalı performans](validation/c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.
 
 

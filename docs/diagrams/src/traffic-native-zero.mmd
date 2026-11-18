@@ -1,0 +1,20 @@
+flowchart TD
+    A["Önceki PeerRobotLayer ve bağımsız LiDAR korunur"] --> B["İzole deney dünyası: tek native sıfır sürücü"]
+    C["Yetkili fixture: imzalı sıfır komut"] --> D["Gerçek ROS → IGN komut bridge'i"]
+    D --> E["Native callback: HMAC, session, sıra, context, bilet"]
+    E -->|Geçerli sıfır| F["Mevcut steady Lease yenilenir — IMPLEMENTED"]
+    E -->|Yanlış imza veya eski veri| G["Receipt yenilenmez — IMPLEMENTED"]
+    E -->|İmzalı nonzero| H["BLOCKED_REARM — IMPLEMENTED"]
+    I["Producer veya bridge kaybı"] --> J["Native timeout; ağdan rearm yok"]
+    F --> B
+    G --> B
+    H --> B
+    J --> B
+    K["Ham ROS / IGN Twist"] --> L["Bu deneyde sürücü aboneliği yok"]
+    B --> M["Gerçek joint hedefleri daima sıfır; fiziksel gözlem ayrı"]
+    N["Mevcut consumer ile fixture: rezervasyon + Outbox COMMIT"] --> O["Gerçek sıfır uzunluklu FollowPath child UUID / Path kaydı"]
+    O --> P["Yalnız metadata; send kapalı; release reddi"]
+    M -.-> Q["Hareketli duruş zarfı ve sağlık bağı — UNVERIFIED"]
+    P -.-> R["Gerçek ExecuteTask, hold/resume ve fiziksel release — PLANNED / UNVERIFIED"]
+    Q -.-> S["Varsayılan demo entegrasyonu KAPALI — PARTIAL"]
+    R -.-> S

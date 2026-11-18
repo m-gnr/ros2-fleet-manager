@@ -44,3 +44,15 @@ fren garantisi veremez. Sim geri dönüşü ve steady geri dönüşü kapalı du
 geçer; tam world reset/unload yaşam döngüsü bu testlerde doğrulanmaz.
 
 [Doğrulama ve engeller](../../../docs/validation/c5/c5-b6b5-watchdog-2026-11-15.md).
+
+## 18 Kasım native yetkilendirme uzantısı
+
+`DiffDrive.cc`, yalnız ayrı B6B.7 build'inin seçtiği `C5_AUTH_ZERO_ONLY` derleme
+kolunu da içerir. B6B.5'in varsayılan ham sıfır callback'i ve Lease davranışı
+korunur; iki eski CTest yeniden geçti. B6B.7, aynı fizik/joint yazıcısını ve
+değişmeyen Lease'i kullanarak StringMsg/HMAC kontrolünü native callback'e alır;
+ayrı C++ sınıf sembolleri ve `c5::test::AuthorizedZeroDiffDrive` alias'ı kullanır.
+Stock alias'ları bu build'de dışa aktarılmaz. Her iki build de yalnız sıfır
+hedef üretebilir. [Yeni test kapsamı ve açık bağımlılıklar](../../../docs/validation/c5/traffic-integration-2026-11-18.md).
+Eski kaynak/binary SHA kayıtları tarihsel kanıttır; yeni kaynakla eşleştiği
+iddia edilmez ve bu değişiklikte yeniden yazılmaz.

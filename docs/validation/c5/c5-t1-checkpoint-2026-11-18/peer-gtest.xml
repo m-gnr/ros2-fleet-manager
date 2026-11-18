@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="10" failures="0" disabled="0" errors="0" time="1.149" timestamp="2026-11-18T09:34:04" name="AllTests">
+  <testsuite name="PeerLayerTest" tests="9" failures="0" disabled="0" errors="0" time="1.056" timestamp="2026-11-18T09:34:04">
+    <testcase name="MarksBothPeersAndExcludesSelf" status="run" result="completed" time="0.05" timestamp="2026-11-18T09:34:04" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="MovingPeerClearsOldBounds" status="run" result="completed" time="0.08" timestamp="2026-11-18T09:34:04" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy" status="run" result="completed" time="0.404" timestamp="2026-11-18T09:34:04" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="SourceAgeAndWrongParentCannotPass" status="run" result="completed" time="0.129" timestamp="2026-11-18T09:34:04" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="FutureAndReorderedMeasurementsCannotMovePeer" status="run" result="completed" time="0.094" timestamp="2026-11-18T09:34:04" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="RewindInvalidatesAllHistoryAndHoldsLastOccupancy" status="run" result="completed" time="0.092" timestamp="2026-11-18T09:34:05" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="MissingChainAndInvalidQuaternionStayUncurrent" status="run" result="completed" time="0.097" timestamp="2026-11-18T09:34:05" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="MissingExactTimeHistoryDoesNotUseLatestTransform" status="run" result="completed" time="0.063" timestamp="2026-11-18T09:34:05" classname="fleet_perception.PeerLayerTest" />
+    <testcase name="ClipsPartialDiscAndNeverClearsAnotherLayer" status="run" result="completed" time="0.047" timestamp="2026-11-18T09:34:05" classname="fleet_perception.PeerLayerTest" />
+  </testsuite>
+  <testsuite name="PeerLayerLocalTest" tests="1" failures="0" disabled="0" errors="0" time="0.093" timestamp="2026-11-18T09:34:05">
+    <testcase name="TransformsPeersThroughSharedMapIntoOwnOdometry" status="run" result="completed" time="0.093" timestamp="2026-11-18T09:34:05" classname="fleet_perception.PeerLayerLocalTest" />
+  </testsuite>
+</testsuites>

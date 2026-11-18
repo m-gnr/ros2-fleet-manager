@@ -1,0 +1,152 @@
+Starting >>> fleet_interfaces
+Finished <<< fleet_interfaces [8.75s]
+Starting >>> fleet_perception
+Finished <<< fleet_perception [22.4s]
+
+Summary: 2 packages finished [31.4s]
+Starting >>> fleet_perception
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+   Site: 776e76613b08
+   Build name: (empty)
+ Add coverage exclude regular expressions.
+Create new tag: 20261118-0643 - Experimental
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+Test project /peer-build/build/fleet_perception
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: test_peer_robot_layer
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml" "--package-name" "fleet_perception" "--output-file" "/peer-build/build/fleet_perception/ament_cmake_gtest/test_peer_robot_layer.txt" "--command" "/peer-build/build/fleet_perception/test_peer_robot_layer" "--gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml"
+1: Test timeout computed to be: 60
+1: -- run_test.py: invoking following command in '/peer-build/build/fleet_perception':
+1:  - /peer-build/build/fleet_perception/test_peer_robot_layer --gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml
+1: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+1: [==========] Running 7 tests from 1 test suite.
+1: [----------] Global test environment set-up.
+1: [----------] 7 tests from PeerLayerTest
+1: [ RUN      ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+1: [INFO] [1794984187.939500671] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984187.942289838] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.MarksBothPeersAndExcludesSelf (41 ms)
+1: [ RUN      ] PeerLayerTest.MovingPeerClearsOldBounds
+1: [INFO] [1794984187.966440671] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984187.966831255] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.MovingPeerClearsOldBounds (13 ms)
+1: [ RUN      ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+1: [INFO] [1794984187.981767255] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984187.981882046] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy (38 ms)
+1: [ RUN      ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+1: [INFO] [1794984188.017194421] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984188.017387588] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.SourceAgeAndWrongParentCannotPass (22 ms)
+1: [ RUN      ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+1: [INFO] [1794984188.038163630] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984188.038381296] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer (34 ms)
+1: [ RUN      ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+1: [INFO] [1794984188.076052796] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984188.076344880] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy (37 ms)
+1: [ RUN      ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+1: [INFO] [1794984188.110437172] [peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: unknown file: Failure
+1: C++ exception with description "parameter 'peer.robot_ids' has invalid type: cannot declare a statically typed parameter with an uninitialized value" thrown in SetUp().
+1: [INFO] [1794984188.110635255] [peer_test]: Destroying
+1: [  FAILED  ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent (37 ms)
+1: [----------] 7 tests from PeerLayerTest (222 ms total)
+1: 
+1: [----------] Global test environment tear-down
+1: [==========] 7 tests from 1 test suite ran. (222 ms total)
+1: [  PASSED  ] 0 tests.
+1: [  FAILED  ] 7 tests, listed below:
+1: [  FAILED  ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+1: [  FAILED  ] PeerLayerTest.MovingPeerClearsOldBounds
+1: [  FAILED  ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+1: [  FAILED  ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+1: [  FAILED  ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+1: [  FAILED  ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+1: [  FAILED  ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+1: 
+1:  7 FAILED TESTS
+1: -- run_test.py: return code 1
+1: -- run_test.py: inject classname prefix into gtest result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1: -- run_test.py: verify result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1/1 Test #1: test_peer_robot_layer ............***Failed    0.44 sec
+
+0% tests passed, 1 tests failed out of 1
+
+Label Time Summary:
+gtest    =   0.44 sec*proc (1 test)
+
+Total Test time (real) =   0.47 sec
+
+The following tests FAILED:
+	  1 - test_peer_robot_layer (Failed)
+Errors while running CTest
+Output from these tests are in: /peer-build/build/fleet_perception/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
+Finished <<< fleet_perception [0.71s]	[ with test failures ]
+--- stderr: fleet_perception
+Errors while running CTest
+Output from these tests are in: /peer-build/build/fleet_perception/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
+---
+
+Summary: 1 package finished [13.0s]
+  1 package had stderr output: fleet_perception
+  1 package had test failures: fleet_perception
+Traceback (most recent call last):
+  File "/usr/bin/colcon", line 33, in <module>
+    sys.exit(load_entry_point('colcon-core==0.21.3', 'console_scripts', 'colcon')())
+  File "/usr/lib/python3/dist-packages/colcon_core/command.py", line 130, in main
+    return _main(
+  File "/usr/lib/python3/dist-packages/colcon_core/command.py", line 219, in _main
+    create_log_path(args.verb_name)
+  File "/usr/lib/python3/dist-packages/colcon_core/location.py", line 181, in create_log_path
+    os.makedirs(str(path))
+  File "/usr/lib/python3.10/os.py", line 215, in makedirs
+    makedirs(head, exist_ok=exist_ok)
+  File "/usr/lib/python3.10/os.py", line 225, in makedirs
+    mkdir(name, mode)
+OSError: [Errno 30] Read-only file system: 'log'

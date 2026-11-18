@@ -1,0 +1,112 @@
+{
+  "tasks": [],
+  "robots": [
+    {
+      "robot_id": "robot_alpha",
+      "snapshot": "{\"active_goal_uuid\": null, \"battery_control_requests\": [\"2ce44361-a6dd-4ccc-9fa4-97e84fdd128e\"], \"battery_control_session_id\": \"12a115ac-d02f-4363-9a63-d092848b51fd\", \"battery_energy_wh\": 23.21497437108197, \"battery_sample_ns\": 253930000000, \"battery_soc_percent\": 23.21497344970703, \"battery_valid_until\": 2143.349208393, \"charge_request_order\": 0, \"charging_station_id\": \"dock_4\", \"current_epoch\": 1, \"current_phase\": 0, \"current_task_id\": null, \"dock_station_id\": \"dock_4\", \"idle_start_timestamp\": 0.0, \"initial_status_verified\": true, \"is_loaded\": false, \"last_pose_sample_ns\": 254100000000, \"last_status_received_at\": 2141.534208393, \"pose\": {\"frame_id\": \"map\", \"x\": 10.846842475384644, \"y\": 8.103236517024422, \"yaw\": 1.8337099383625866}, \"requires_battery_telemetry\": true, \"robot_id\": \"robot_alpha\", \"route_pose_valid_until\": 2143.519208393, \"session_blocked\": false, \"session_id\": \"491ca256-7766-42f3-87b6-f34200c9338f\", \"specs\": {\"charge_power_w\": 20.0, \"consumption_wh_per_meter\": 0.2, \"idle_power_w\": 2.0, \"usable_capacity_wh\": 100.0}, \"state\": 3, \"station_pose_valid_until\": 2143.519208393}"
+    },
+    {
+      "robot_id": "robot_beta",
+      "snapshot": "{\"active_goal_uuid\": null, \"battery_control_requests\": [\"2ce44361-a6dd-4ccc-9fa4-97e84fdd128e\"], \"battery_control_session_id\": \"1c5380a9-d7dc-442e-8f3e-da4be26d21de\", \"battery_energy_wh\": 23.58292857647336, \"battery_sample_ns\": 253815000000, \"battery_soc_percent\": 23.582927703857422, \"battery_valid_until\": 2143.240691268, \"charge_request_order\": 0, \"charging_station_id\": \"dock_5\", \"current_epoch\": 1, \"current_phase\": 0, \"current_task_id\": null, \"dock_station_id\": \"dock_5\", \"idle_start_timestamp\": 0.0, \"initial_status_verified\": true, \"is_loaded\": false, \"last_pose_sample_ns\": 253960000000, \"last_status_received_at\": 2141.410691268, \"pose\": {\"frame_id\": \"map\", \"x\": 12.081127323173181, \"y\": 8.045332424702256, \"yaw\": 1.808773788725285}, \"requires_battery_telemetry\": true, \"robot_id\": \"robot_beta\", \"route_pose_valid_until\": 2143.385691268, \"session_blocked\": false, \"session_id\": \"b4772069-d0c5-4da5-9ade-4d1c6a608e3c\", \"specs\": {\"charge_power_w\": 20.0, \"consumption_wh_per_meter\": 0.2, \"idle_power_w\": 2.0, \"usable_capacity_wh\": 100.0}, \"state\": 3, \"station_pose_valid_until\": 2143.385691268}"
+    },
+    {
+      "robot_id": "robot_gamma",
+      "snapshot": "{\"active_goal_uuid\": null, \"battery_control_requests\": [\"2ce44361-a6dd-4ccc-9fa4-97e84fdd128e\"], \"battery_control_session_id\": \"079a4d7d-eabb-42fd-81a8-551c64d91701\", \"battery_energy_wh\": 23.954253775799963, \"battery_sample_ns\": 253945000000, \"battery_soc_percent\": 23.954254150390625, \"battery_valid_until\": 2143.368044352, \"charge_request_order\": 0, \"charging_station_id\": \"dock_6\", \"current_epoch\": 1, \"current_phase\": 0, \"current_task_id\": null, \"dock_station_id\": \"dock_6\", \"idle_start_timestamp\": 0.0, \"initial_status_verified\": true, \"is_loaded\": false, \"last_pose_sample_ns\": 254100000000, \"last_status_received_at\": 2141.528044352, \"pose\": {\"frame_id\": \"map\", \"x\": 13.279018584070858, \"y\": 8.016472304918645, \"yaw\": 1.5887430249587595}, \"requires_battery_telemetry\": true, \"robot_id\": \"robot_gamma\", \"route_pose_valid_until\": 2143.523044352, \"session_blocked\": false, \"session_id\": \"fcd9098b-63c5-4809-8c6b-e85ba7a573e4\", \"specs\": {\"charge_power_w\": 20.0, \"consumption_wh_per_meter\": 0.2, \"idle_power_w\": 2.0, \"usable_capacity_wh\": 100.0}, \"state\": 3, \"station_pose_valid_until\": 2143.523044352}"
+    }
+  ],
+  "station_moves": [
+    {
+      "move_id": "station:65168141-ec2f-4b8c-abfd-2f17957fe9f9",
+      "robot_id": "robot_beta",
+      "station_id": "dock_5",
+      "status": "ARRIVED",
+      "snapshot": "{\"assigned_robot_id\": \"robot_beta\", \"assignment_epoch\": 1, \"cancel_declined\": false, \"cancel_for_task\": null, \"error_reason\": \"\", \"goal_uuid\": \"65168141-ec2f-4b8c-abfd-2f17957fe9f9\", \"pose\": {\"frame_id\": \"map\", \"x\": 12.0, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"session_id\": \"b4772069-d0c5-4da5-9ade-4d1c6a608e3c\", \"station_id\": \"dock_5\", \"station_type\": \"CHARGING\", \"status\": \"ARRIVED\", \"task_id\": \"station:65168141-ec2f-4b8c-abfd-2f17957fe9f9\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "move_id": "station:452693ec-7144-4542-a470-8c516954ec39",
+      "robot_id": "robot_gamma",
+      "station_id": "dock_6",
+      "status": "ARRIVED",
+      "snapshot": "{\"assigned_robot_id\": \"robot_gamma\", \"assignment_epoch\": 1, \"cancel_declined\": false, \"cancel_for_task\": null, \"error_reason\": \"\", \"goal_uuid\": \"452693ec-7144-4542-a470-8c516954ec39\", \"pose\": {\"frame_id\": \"map\", \"x\": 13.25, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"session_id\": \"fcd9098b-63c5-4809-8c6b-e85ba7a573e4\", \"station_id\": \"dock_6\", \"station_type\": \"CHARGING\", \"status\": \"ARRIVED\", \"task_id\": \"station:452693ec-7144-4542-a470-8c516954ec39\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "move_id": "station:2189b8a4-8a05-4a82-a832-77b60027ade9",
+      "robot_id": "robot_alpha",
+      "station_id": "dock_4",
+      "status": "ARRIVED",
+      "snapshot": "{\"assigned_robot_id\": \"robot_alpha\", \"assignment_epoch\": 1, \"cancel_declined\": false, \"cancel_for_task\": null, \"error_reason\": \"\", \"goal_uuid\": \"2189b8a4-8a05-4a82-a832-77b60027ade9\", \"pose\": {\"frame_id\": \"map\", \"x\": 10.75, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"session_id\": \"491ca256-7766-42f3-87b6-f34200c9338f\", \"station_id\": \"dock_4\", \"station_type\": \"CHARGING\", \"status\": \"ARRIVED\", \"task_id\": \"station:2189b8a4-8a05-4a82-a832-77b60027ade9\", \"tolerance_radius\": 0.3}"
+    }
+  ],
+  "reservations": [
+    {
+      "station_id": "dock_1",
+      "state": "FREE",
+      "reserved_by": null,
+      "occupied_by": null,
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 0, \"departure_margin\": 0.05, \"occupied_by_robot_id\": null, \"pose\": {\"frame_id\": \"map\", \"x\": 7.0, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"reserved_by_robot_id\": null, \"state\": \"FREE\", \"station_id\": \"dock_1\", \"station_type\": \"CHARGING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "dock_2",
+      "state": "FREE",
+      "reserved_by": null,
+      "occupied_by": null,
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 0, \"departure_margin\": 0.05, \"occupied_by_robot_id\": null, \"pose\": {\"frame_id\": \"map\", \"x\": 8.25, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"reserved_by_robot_id\": null, \"state\": \"FREE\", \"station_id\": \"dock_2\", \"station_type\": \"CHARGING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "dock_3",
+      "state": "FREE",
+      "reserved_by": null,
+      "occupied_by": null,
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 0, \"departure_margin\": 0.05, \"occupied_by_robot_id\": null, \"pose\": {\"frame_id\": \"map\", \"x\": 9.5, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"reserved_by_robot_id\": null, \"state\": \"FREE\", \"station_id\": \"dock_3\", \"station_type\": \"CHARGING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "dock_4",
+      "state": "OCCUPIED",
+      "reserved_by": "robot_alpha",
+      "occupied_by": "robot_alpha",
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 110250000000, \"departure_margin\": 0.05, \"occupied_by_robot_id\": \"robot_alpha\", \"pose\": {\"frame_id\": \"map\", \"x\": 10.75, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"reserved_by_robot_id\": \"robot_alpha\", \"state\": \"OCCUPIED\", \"station_id\": \"dock_4\", \"station_type\": \"CHARGING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "dock_5",
+      "state": "OCCUPIED",
+      "reserved_by": "robot_beta",
+      "occupied_by": "robot_beta",
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 102270000000, \"departure_margin\": 0.05, \"occupied_by_robot_id\": \"robot_beta\", \"pose\": {\"frame_id\": \"map\", \"x\": 12.0, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"reserved_by_robot_id\": \"robot_beta\", \"state\": \"OCCUPIED\", \"station_id\": \"dock_5\", \"station_type\": \"CHARGING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "dock_6",
+      "state": "OCCUPIED",
+      "reserved_by": "robot_gamma",
+      "occupied_by": "robot_gamma",
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 96250000000, \"departure_margin\": 0.05, \"occupied_by_robot_id\": \"robot_gamma\", \"pose\": {\"frame_id\": \"map\", \"x\": 13.25, \"y\": 8.25, \"yaw\": 1.5707963267948966}, \"reserved_by_robot_id\": \"robot_gamma\", \"state\": \"OCCUPIED\", \"station_id\": \"dock_6\", \"station_type\": \"CHARGING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "park_1",
+      "state": "FREE",
+      "reserved_by": null,
+      "occupied_by": null,
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 0, \"departure_margin\": 0.05, \"occupied_by_robot_id\": null, \"pose\": {\"frame_id\": \"map\", \"x\": 13.5, \"y\": 1.5, \"yaw\": 3.141592653589793}, \"reserved_by_robot_id\": null, \"state\": \"FREE\", \"station_id\": \"park_1\", \"station_type\": \"PARKING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "park_2",
+      "state": "FREE",
+      "reserved_by": null,
+      "occupied_by": null,
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 0, \"departure_margin\": 0.05, \"occupied_by_robot_id\": null, \"pose\": {\"frame_id\": \"map\", \"x\": 13.5, \"y\": 2.75, \"yaw\": 3.141592653589793}, \"reserved_by_robot_id\": null, \"state\": \"FREE\", \"station_id\": \"park_2\", \"station_type\": \"PARKING\", \"tolerance_radius\": 0.3}"
+    },
+    {
+      "station_id": "park_3",
+      "state": "FREE",
+      "reserved_by": null,
+      "occupied_by": null,
+      "snapshot": "{\"blocked_after_ns\": 0, \"blocked_session_id\": null, \"departure_after_ns\": 0, \"departure_margin\": 0.05, \"occupied_by_robot_id\": null, \"pose\": {\"frame_id\": \"map\", \"x\": 13.5, \"y\": 4.0, \"yaw\": 3.141592653589793}, \"reserved_by_robot_id\": null, \"state\": \"FREE\", \"station_id\": \"park_3\", \"station_type\": \"PARKING\", \"tolerance_radius\": 0.3}"
+    }
+  ],
+  "integrity_check": "ok",
+  "foreign_key_check": [],
+  "traffic_counts": {
+    "traffic_state": 0,
+    "traffic_decisions": 0,
+    "traffic_outbox": 0
+  }
+}

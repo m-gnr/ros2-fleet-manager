@@ -1,0 +1,156 @@
+{
+  "result": "PASS",
+  "commands": {
+    "simulation": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/serve.py",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "/evidence/live/generated",
+      "routes"
+    ],
+    "observer": [
+      "/usr/bin/python3",
+      "docker/simulation-warehouse-grid/stage1_observer.py",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "/evidence/live",
+      "--database",
+      "/var/lib/fleet/live.sqlite3"
+    ],
+    "battery_robot_alpha": [
+      "/usr/bin/python3",
+      "-c",
+      "from fleet_battery_simulator.node import main; main()",
+      "--fleet-config",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "--robot-id",
+      "robot_alpha"
+    ],
+    "executor_robot_alpha": [
+      "/usr/bin/python3",
+      "docker/simulation-c4-2/executor_test_entry.py",
+      "--ros-args",
+      "-r",
+      "__node:=executor_robot_alpha",
+      "-r",
+      "__ns:=/robot_alpha",
+      "-p",
+      "fleet_config_path:=/workspace/config/fleet.warehouse-30x18.yaml",
+      "-p",
+      "robot_id:=robot_alpha",
+      "-p",
+      "use_sim_time:=true",
+      "-p",
+      "duplicate_record_capacity:=32"
+    ],
+    "battery_robot_beta": [
+      "/usr/bin/python3",
+      "-c",
+      "from fleet_battery_simulator.node import main; main()",
+      "--fleet-config",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "--robot-id",
+      "robot_beta"
+    ],
+    "executor_robot_beta": [
+      "/usr/bin/python3",
+      "docker/simulation-c4-2/executor_test_entry.py",
+      "--ros-args",
+      "-r",
+      "__node:=executor_robot_beta",
+      "-r",
+      "__ns:=/robot_beta",
+      "-p",
+      "fleet_config_path:=/workspace/config/fleet.warehouse-30x18.yaml",
+      "-p",
+      "robot_id:=robot_beta",
+      "-p",
+      "use_sim_time:=true",
+      "-p",
+      "duplicate_record_capacity:=32"
+    ],
+    "battery_robot_gamma": [
+      "/usr/bin/python3",
+      "-c",
+      "from fleet_battery_simulator.node import main; main()",
+      "--fleet-config",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "--robot-id",
+      "robot_gamma"
+    ],
+    "executor_robot_gamma": [
+      "/usr/bin/python3",
+      "docker/simulation-c4-2/executor_test_entry.py",
+      "--ros-args",
+      "-r",
+      "__node:=executor_robot_gamma",
+      "-r",
+      "__ns:=/robot_gamma",
+      "-p",
+      "fleet_config_path:=/workspace/config/fleet.warehouse-30x18.yaml",
+      "-p",
+      "robot_id:=robot_gamma",
+      "-p",
+      "use_sim_time:=true",
+      "-p",
+      "duplicate_record_capacity:=32"
+    ],
+    "scene": [
+      "/usr/bin/python3",
+      "fleet-visualizer/bridge/run.py",
+      "--fleet",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "--schema",
+      "/workspace/config/fleet.schema.json",
+      "--bind",
+      "127.0.0.1",
+      "--port",
+      "21483",
+      "--origin",
+      "http://scene",
+      "--observed-nav2-plans"
+    ],
+    "manager": [
+      "/usr/bin/python3",
+      "-m",
+      "backend.dashboard.runtime",
+      "--fleet",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "--database",
+      "/var/lib/fleet/live.sqlite3",
+      "--snapshot",
+      "/tmp/stage1/latest.json"
+    ],
+    "api": [
+      "/usr/bin/python3",
+      "-m",
+      "backend.dashboard.api",
+      "--fleet",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "--schema",
+      "/workspace/config/fleet.schema.json",
+      "--snapshot",
+      "/tmp/stage1/latest.json",
+      "--task-socket",
+      "/tmp/stage1/latest.tasks.sock",
+      "--container-bind",
+      "--port",
+      "21482",
+      "--origin",
+      "http://127.0.0.1:21484",
+      "--scene-port",
+      "21483"
+    ]
+  },
+  "checks": [
+    "canonical schema and profile",
+    "ROS overlay, plugin registration and shared library dependencies",
+    "all child and peer probe Python imports",
+    "planned child arguments and Executor profile reader"
+  ],
+  "schema": "/workspace/config/fleet.schema.json",
+  "plugin": {
+    "prefix": "/c5-cache/install/fleet_perception",
+    "xml": "/c5-cache/install/fleet_perception/share/fleet_perception/plugins.xml",
+    "library": "/c5-cache/install/fleet_perception/lib/libobserved_obstacle_layer.so"
+  }
+}

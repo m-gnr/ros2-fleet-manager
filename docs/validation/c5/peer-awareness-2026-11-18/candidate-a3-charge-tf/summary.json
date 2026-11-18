@@ -1,0 +1,147 @@
+{
+  "contact_messages": 0,
+  "first_contact": null,
+  "action_results": [
+    {
+      "utc": "2026-11-18T07:07:29.524954+00:00",
+      "monotonic": 1982.911197862,
+      "sim_ns": 96215000000,
+      "kind": "ACTION_RESULT",
+      "robot": "robot_gamma",
+      "action": "navigate_to_pose",
+      "uuid": "07b91f8b632240838cfe210abadde88f",
+      "message": {
+        "status": 4,
+        "result": {
+          "result": {}
+        }
+      }
+    },
+    {
+      "utc": "2026-11-18T07:07:35.520921+00:00",
+      "monotonic": 1988.907164364,
+      "sim_ns": 102205000000,
+      "kind": "ACTION_RESULT",
+      "robot": "robot_beta",
+      "action": "navigate_to_pose",
+      "uuid": "94cd8e6174604aa188750863b841becf",
+      "message": {
+        "status": 4,
+        "result": {
+          "result": {}
+        }
+      }
+    },
+    {
+      "utc": "2026-11-18T07:07:43.480288+00:00",
+      "monotonic": 1996.866530785,
+      "sim_ns": 110160000000,
+      "kind": "ACTION_RESULT",
+      "robot": "robot_alpha",
+      "action": "navigate_to_pose",
+      "uuid": "327fcd94c1984657a1fe0424575ac511",
+      "message": {
+        "status": 4,
+        "result": {
+          "result": {}
+        }
+      }
+    }
+  ],
+  "physical_pair_minimum_m": {
+    "robot_alpha/robot_beta": {
+      "distance_m": 1.082159229455654,
+      "stamp_ns": 106505000000,
+      "pairing_gap_ns": 0
+    },
+    "robot_alpha/robot_gamma": {
+      "distance_m": 2.1572529257753215,
+      "stamp_ns": 105105000000,
+      "pairing_gap_ns": 35000000
+    },
+    "robot_beta/robot_gamma": {
+      "distance_m": 1.0898323594569328,
+      "stamp_ns": 100240000000,
+      "pairing_gap_ns": 35000000
+    }
+  },
+  "all_three_executing_observed": false,
+  "last_physical_pose": {
+    "robot_alpha": [
+      256900000000,
+      10.884844290590449,
+      8.105404749830674
+    ],
+    "robot_beta": [
+      256935000000,
+      12.10115639415678,
+      8.075079921708026
+    ],
+    "robot_gamma": [
+      256900000000,
+      13.264746510982476,
+      8.000435688785409
+    ]
+  },
+  "last_robot_state": {
+    "robot_gamma": 1,
+    "robot_beta": 1,
+    "robot_alpha": 1
+  },
+  "probe_counts": {
+    "robot_alpha/FRAME_ERROR": 2,
+    "robot_alpha/LIVE": 904,
+    "robot_alpha/STALE": 2,
+    "robot_alpha/global_costmap/False": 3,
+    "robot_alpha/global_costmap/True": 180,
+    "robot_alpha/local_costmap/False": 17,
+    "robot_alpha/local_costmap/True": 902,
+    "robot_beta/FRAME_ERROR": 2,
+    "robot_beta/LIVE": 905,
+    "robot_beta/STALE": 2,
+    "robot_beta/global_costmap/False": 3,
+    "robot_beta/global_costmap/True": 180,
+    "robot_beta/local_costmap/False": 17,
+    "robot_beta/local_costmap/True": 903,
+    "robot_gamma/FRAME_ERROR": 2,
+    "robot_gamma/LIVE": 905,
+    "robot_gamma/STALE": 2,
+    "robot_gamma/global_costmap/False": 3,
+    "robot_gamma/global_costmap/True": 180,
+    "robot_gamma/local_costmap/False": 17,
+    "robot_gamma/local_costmap/True": 902
+  },
+  "distinct_observed_plans": {
+    "robot_beta": 25,
+    "robot_gamma": 20,
+    "robot_alpha": 32
+  },
+  "peer_centre_grid_samples": {
+    "robot_alpha/global_costmap/robot_beta/lethal": 92,
+    "robot_alpha/global_costmap/robot_beta/matched": 92,
+    "robot_alpha/global_costmap/robot_gamma/lethal": 92,
+    "robot_alpha/global_costmap/robot_gamma/matched": 92,
+    "robot_alpha/local_costmap/robot_beta/lethal": 283,
+    "robot_alpha/local_costmap/robot_beta/matched": 283,
+    "robot_beta/global_costmap/robot_alpha/lethal": 95,
+    "robot_beta/global_costmap/robot_alpha/matched": 95,
+    "robot_beta/global_costmap/robot_gamma/lethal": 95,
+    "robot_beta/global_costmap/robot_gamma/matched": 95,
+    "robot_beta/local_costmap/robot_alpha/lethal": 297,
+    "robot_beta/local_costmap/robot_alpha/matched": 297,
+    "robot_beta/local_costmap/robot_gamma/lethal": 301,
+    "robot_beta/local_costmap/robot_gamma/matched": 301,
+    "robot_gamma/global_costmap/robot_alpha/lethal": 93,
+    "robot_gamma/global_costmap/robot_alpha/matched": 93,
+    "robot_gamma/global_costmap/robot_beta/lethal": 93,
+    "robot_gamma/global_costmap/robot_beta/matched": 93,
+    "robot_gamma/local_costmap/robot_beta/lethal": 301,
+    "robot_gamma/local_costmap/robot_beta/matched": 301
+  },
+  "probe_wall_duration_s": 187.18028754500006,
+  "limits": [
+    "50 ms physical stamp pairing; sampled distances are not continuous separation bounds",
+    "50 ms report-to-grid matching; grid matches are not actuator or permit evidence",
+    "Path observation has no child UUID binding; no traffic grants inferred"
+  ]
+}

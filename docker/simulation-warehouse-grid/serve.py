@@ -19,8 +19,10 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("scenario", choices=("delivery", "passing", "routes"))
     parser.add_argument("--ready", type=Path)
+    parser.add_argument("--peer-awareness-experiment", action="store_true",
+                        help="Opt-in peer costmap observations; not a qualified traffic permit")
     args = parser.parse_args()
-    profile = generate(args.profile, args.output, args.scenario)
+    profile = generate(args.profile, args.output, args.scenario, peer_awareness=args.peer_awareness_experiment)
     if args.ready is not None:
         args.ready.write_text('READY\n')
     bridge = [bridge_executable(), "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock"]

@@ -1,5 +1,7 @@
 # Mimari ve algoritma diyagramları
 
+- [C5 native sıfır actuator ve child/Path kaydı — PARTIAL](../validation/c5/traffic-integration-2026-11-18.md): [Mermaid](src/traffic-native-zero.mmd) · [SVG](svg/traffic-native-zero.svg). Hareketli trafik yetkisi/release bu diyagramda uygulanmış sayılmaz.
+
 26 Ekim 2026 kaynak incelemesi. Bu katalog mevcut kararların görsel anlatımıdır; yeni mimari karar değildir. [İnceleme ve fark raporu](../validation/organization/organization-validation-2026-10-26.md) hedef ile kodun ayrıldığı yolları kaydeder.
 
 ## Durum ve görsel dil
@@ -1120,3 +1122,9 @@ flowchart TD
 - [Test-only actuator watchdog](src/actuator-watchdog-test.mmd) · [SVG](svg/actuator-watchdog-test.svg): PARTIAL; yalnız sıfır akışı, rearm kilitli, ürün/fiziksel fren UNVERIFIED.
 
 - C5-B6B.6 komut sınırı — [Mermaid](src/actuator-command-authorization.mmd) · [SVG](svg/actuator-command-authorization.svg): PARTIAL test-only; ürün ACL/fiziksel stop UNVERIFIED.
+
+## C5 robotlar arası farkındalık — PARTIAL
+
+[Deneysel katman tasarımı](../design/c5-peer-awareness.md) · [Canlı doğrulama](../validation/c5/peer-awareness-2026-11-18.md) · [Mermaid](src/peer-awareness.mmd) · [SVG](svg/peer-awareness.svg). Global/yerel peer gözlemi uygulanmıştır; gerçek izinle koordinasyon ve dar koridor kabulü doğrulanmış değildir.
+
+![Robotlar arası farkındalık](svg/peer-awareness.svg)

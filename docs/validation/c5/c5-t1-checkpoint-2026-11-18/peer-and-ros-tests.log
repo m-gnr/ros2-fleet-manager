@@ -1,0 +1,141 @@
+Starting >>> fleet_interfaces
+Finished <<< fleet_interfaces [29.8s]
+Starting >>> fleet_perception
+Finished <<< fleet_perception [8.95s]
+
+Summary: 2 packages finished [39.3s]
+Starting >>> fleet_perception
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+   Site: 6364cd822a8a
+   Build name: (empty)
+ Add coverage exclude regular expressions.
+Create new tag: 20261118-0934 - Experimental
+UpdateCTestConfiguration  from :/peer-build/build/fleet_perception/CTestConfiguration.ini
+Parse Config file:/peer-build/build/fleet_perception/CTestConfiguration.ini
+Test project /peer-build/build/fleet_perception
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: test_peer_robot_layer
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml" "--package-name" "fleet_perception" "--output-file" "/peer-build/build/fleet_perception/ament_cmake_gtest/test_peer_robot_layer.txt" "--command" "/peer-build/build/fleet_perception/test_peer_robot_layer" "--gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml"
+1: Test timeout computed to be: 60
+1: -- run_test.py: invoking following command in '/peer-build/build/fleet_perception':
+1:  - /peer-build/build/fleet_perception/test_peer_robot_layer --gtest_output=xml:/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml
+1: Running main() from /opt/ros/humble/src/gtest_vendor/src/gtest_main.cc
+1: [==========] Running 10 tests from 2 test suites.
+1: [----------] Global test environment set-up.
+1: [----------] 9 tests from PeerLayerTest
+1: [ RUN      ] PeerLayerTest.MarksBothPeersAndExcludesSelf
+1: 1794994444.261513 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994444.266123800] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994444.305453300] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MarksBothPeersAndExcludesSelf (50 ms)
+1: [ RUN      ] PeerLayerTest.MovingPeerClearsOldBounds
+1: 1794994444.308730 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994444.309957550] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994444.384619300] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MovingPeerClearsOldBounds (80 ms)
+1: [ RUN      ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy
+1: 1794994444.388916 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994444.390677675] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994444.782787842] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.StaleReceiptAndDuplicateDoNotCertifyFreshnessOrClearOccupancy (404 ms)
+1: [ RUN      ] PeerLayerTest.SourceAgeAndWrongParentCannotPass
+1: 1794994444.793266 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994444.799182383] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994444.915248550] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.SourceAgeAndWrongParentCannotPass (129 ms)
+1: [ RUN      ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer
+1: 1794994444.922379 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994444.928638550] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994445.008641425] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.FutureAndReorderedMeasurementsCannotMovePeer (94 ms)
+1: [ RUN      ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy
+1: 1794994445.016104 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994445.020656634] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [WARN] [1794994445.060486009] [tf2_buffer]: Detected jump back in time. Clearing TF buffer.
+1: [INFO] [1794994445.098587925] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.RewindInvalidatesAllHistoryAndHoldsLastOccupancy (92 ms)
+1: [ RUN      ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent
+1: 1794994445.108643 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994445.116228425] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994445.198107717] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MissingChainAndInvalidQuaternionStayUncurrent (97 ms)
+1: [ RUN      ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform
+1: 1794994445.205905 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994445.209828175] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994445.260386092] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.MissingExactTimeHistoryDoesNotUseLatestTransform (63 ms)
+1: [ RUN      ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer
+1: 1794994445.268491 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994445.272078550] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994445.309560175] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerTest.ClipsPartialDiscAndNeverClearsAnotherLayer (47 ms)
+1: [----------] 9 tests from PeerLayerTest (1056 ms total)
+1: 
+1: [----------] 1 test from PeerLayerLocalTest
+1: [ RUN      ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry
+1: 1794994445.315996 [223] test_peer_: selected interface "lo" is not multicast-capable: disabling multicast
+1: [INFO] [1794994445.320961092] [alpha.global_costmap.peer_test]: 
+1: 	peer_test lifecycle node launched. 
+1: 	Waiting on external lifecycle transitions to activate
+1: 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+1: [INFO] [1794994445.397621884] [alpha.global_costmap.peer_test]: Destroying
+1: [       OK ] PeerLayerLocalTest.TransformsPeersThroughSharedMapIntoOwnOdometry (93 ms)
+1: [----------] 1 test from PeerLayerLocalTest (93 ms total)
+1: 
+1: [----------] Global test environment tear-down
+1: [==========] 10 tests from 2 test suites ran. (1149 ms total)
+1: [  PASSED  ] 10 tests.
+1: -- run_test.py: return code 0
+1: -- run_test.py: inject classname prefix into gtest result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1: -- run_test.py: verify result file '/peer-build/build/fleet_perception/test_results/fleet_perception/test_peer_robot_layer.gtest.xml'
+1/1 Test #1: test_peer_robot_layer ............   Passed    1.22 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+gtest    =   1.22 sec*proc (1 test)
+
+Total Test time (real) =   1.22 sec
+Finished <<< fleet_perception [1.26s]
+
+Summary: 1 package finished [2.57s]
+Summary: 11 tests, 0 errors, 0 failures, 0 skipped
+........................................................................ [ 38%]
+........................................................................ [ 76%]
+............................................                             [100%]
+188 passed in 3.33s

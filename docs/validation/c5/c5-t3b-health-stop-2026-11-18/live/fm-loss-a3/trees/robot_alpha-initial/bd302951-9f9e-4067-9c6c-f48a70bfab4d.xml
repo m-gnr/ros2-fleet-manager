@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <Sequence>
+      <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased" />
+      <FleetObservedFollowPath path="{path}" controller_id="FollowPath" context_id="bd302951-9f9e-4067-9c6c-f48a70bfab4d" nav_goal_uuid="2287c5e9-d0ff-4b79-8533-784438cff825" executor_session="6bd04224-6265-47b0-8550-d4e59a980caa" />
+    </Sequence>
+  </BehaviorTree>
+</root>

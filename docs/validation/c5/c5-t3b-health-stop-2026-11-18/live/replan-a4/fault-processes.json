@@ -1,0 +1,20 @@
+{
+  "odometry_bridge": {
+    "pid": 34,
+    "command": [
+      "/opt/ros/humble/lib/ros_gz_bridge/parameter_bridge",
+      "/robot_alpha/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
+      "/robot_beta/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry",
+      "/robot_gamma/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry"
+    ]
+  },
+  "tf_helper": {
+    "pid": 35,
+    "command": [
+      "/usr/bin/python3",
+      "/workspace/docker/simulation-warehouse-grid/tf.py",
+      "/workspace/config/fleet.warehouse-30x18.yaml",
+      "/evidence/replan-a4/generated/warehouse.sdf"
+    ]
+  }
+}

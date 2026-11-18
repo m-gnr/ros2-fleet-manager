@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5-T3B gerçek sağlık gözlemi ve koşullu duruş hesabı](validation/c5/c5-t3b-health-stop-2026-11-18.md) · [Komutlar](validation/c5/c5-t3b-health-stop-commands-2026-11-18.md) · [T3C planı](validation/c5/c5-t3c-braking-plan-2026-11-18.md): deneysel altyapı; kalibrasyon eksikse UNBOUNDED. Nonzero ve varsayılan entegrasyon kapalı; fiziksel fren kabulü yok.
+
 - [C5-T3A gerçek FM permit → native sıfır context](validation/c5/c5-t3a-native-permit-2026-11-18.md) · [Komutlar](validation/c5/c5-t3a-native-permit-commands-2026-11-18.md): bağımsız sıfır aktarım/ACK kapsamı doğrulandı; deneysel, varsayılan kapalı. Hareketli duruş/hold/resume/release T3B+ için açık.
 
 - [C5-T3A tarihsel devam notu — durduruldu](validation/c5/c5-t3a-continuation-2026-11-18.md): commit edilmemiş çalışma ve kanıtlar korundu; tam T3A kabulü yok, varsayılan kapalı.

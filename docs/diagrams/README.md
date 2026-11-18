@@ -1,5 +1,7 @@
 # Mimari ve algoritma diyagramları
 
+- [C5-T3B sağlık ve duruş altyapısı](../validation/c5/c5-t3b-health-stop-2026-11-18.md): [Mermaid](src/traffic-health-stop.mmd) · [SVG](svg/traffic-health-stop.svg). Gerçek gözlem/koşullu hesap IMPLEMENTED; fiziksel bounds, kaynak kimliği ve bağımsız fren UNVERIFIED.
+
 - [C5-T3A gerçek permit → native sıfır doğrulaması](../validation/c5/c5-t3a-native-permit-2026-11-18.md): [Mermaid](src/traffic-live-permit-zero.mmd) · [SVG](svg/traffic-live-permit-zero.svg). Sıfır aktarım ve ayrı ACK IMPLEMENTED; hareketli duruş/release UNVERIFIED, varsayılan kapalı.
 
 - [C5-T2 gerçek ürün child bağı — metadata IMPLEMENTED, hareket PARTIAL](../validation/c5/c5-t2-product-child-2026-11-18.md): [Mermaid](src/traffic-product-child.mmd) · [SVG](svg/traffic-product-child.svg). T1 diyagramı tarihsel component kapsamını korur; bu ek ürün üst goal bağını gösterir.

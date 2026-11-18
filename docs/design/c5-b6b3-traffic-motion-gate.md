@@ -1,5 +1,99 @@
 # C5-B6B.3 — Yerel hareket kapısı ve actuator sınırı
 
+## 18 Kasım C5-T3B eki — gerçek gözlem ve koşullu duruş hesabı
+
+**IMPLEMENTED / yalnız deneysel altyapı.** Aşağıdaki tarihsel fake interlock
+ürün hareket yetkisine dönüşmez. `RobotHealthProbe`, yalnız T3A'nın izole
+koşucusunda açık hook ile kurulur. Varsayılan FM/Executor/GUI/launcher kurmaz.
+Probe kalıcı ExecuteTask/permit/child kararlarını salt okunur okur;
+Scheduler, Outbox, RobotStatus ve sahiplik otoritesini değiştirmez.
+
+`domain/robot_health.py`, ölçüm damgasını ve yerel monotonik alım yaşını
+ayrı denetler. Profilin mevcut odometry/observation/transport/watchdog/clock
+bütçeleri ve 2 s STALE sabiti kullanılır; FM eşikleri değişmez.
+`observations_current` yalnız tanısal zaman/biçim/bağlam tutarlılığıdır;
+**movement_eligible=false** her sonuçta sabittir. Eksik, gelecek, eski,
+geçersiz veya çelişkili veri tanıyı da düşürür. Bir kaynağın hatası diğer
+kaynakların raporlanmasını engellemez.
+
+| Kaynak | Gerçek gözlem / türetme | Açık sınır |
+|---|---|---|
+| Odometry | Header/frame/child, poz/quaternion, bildirilen twist/covariance; hız normu türetilir | Teker kinematiği bildirimi bağımsız kalibre gövde hız sınırı değildir |
+| TF | Namespace buffer'ında tam odometry damgasında map→base lookup; edge/frame kaydı | Son TF veya initial-pose fallback kullanılmaz; map pozu lokalizasyon tahminidir |
+| AMCL | Gerçek poz/covariance; simetri/PSD/sonlu değer ve yaş; sigma türetilir | Sigma kesin hata sınırı değildir; PSD başarısızlığı clamp edilmez |
+| RobotStatus | Gerçek session UUID, artan status_seq, epoch/task/faz/state ve damgalar | Yeni sıra aynı yayın zamanını taşıyabilir; fiziksel ölçüm zamanı yenilenmiş sayılmaz |
+| Lifecycle | Gerçek GetState RPC, ACTIVE=3, yerel request/response süresi | RPC receipt ölçüm damgası, endpoint adı süreç kimliği değildir |
+| Native health | Gerçek UpdateVelocity/joint component readback'i, ayrı HMAC domain ve update sırası | İmzalı eski ACTIVE kaydı anlık sağlık veya fiziksel duruş değildir |
+| FM bağlamı | Kalıcı ürün ataması, kaynak Outbox byte'ları, body/context hash'i, generation ve claim | Probe permit/ACK/claim yazmaz; restart otomatik replay değildir |
+
+Kurulu Humble `_take_subscription`, callback'e mesaj bilgisinin yalnız mesaj
+parçasını verir. Graph endpoint/GID kümesi **GRAPH_SNAPSHOT_ONLY** kanıtıdır;
+mesajın gerçek yayıncı kimliği uydurulmaz. ROS ölçümlerinin task/epoch bağı
+receipt association seviyesindedir; kriptografik kaynak oturumu değildir.
+Kaynak kümesi/session, geri sarılan saat ve değişen context fence edilir.
+Kapanmış permit olumlu claim görüntüsüyle canlanamaz. Duplicate ölçüm alım
+yaşını yenilemez; status sırası ölçüm damgasından ayrıdır.
+
+T3A komut/ACK wire'ı değişmez. `AuthorizedZero::AttachHealth`, yalnız live
+native fixture'da, actual joint component'ler okunduktan sonra mevcut
+`native_actuator` mesajına `native_health={body,mac}` ekler.
+`C5_NATIVE_ZERO_HEALTH_V1` domain'i hedefleri, joint command'ları, sim
+damgasını, update sırasını ve imzalı native_status'u bağlar. Yanlış MAC/domain,
+replay ve unsigned dış readback ile çelişki reddedilir. Bu izin protokolü
+değildir. ACK tarihsel doğrulama, Outbox PENDING, fiziksel stop UNKNOWN ve
+release false kalır. Nonzero ve ağdan rearm yoktur.
+
+Sağlık readback'i yalnız T3B'nin açık `health_period_sec` provision alanıyla
+yayımlanır; değer mevcut profilin `timer_period_sec` değeridir. Eski T3A
+provision'ı sağlık yayını açmaz. Normal native status/komut akışı aynı kalır;
+sağlık paketleri arasındaki legacy status, sağlık yaşını yenilemez. Lifecycle
+RPC polling'i mevcut watchdog/transport bütçelerinin küçüğüyle sınırlıdır.
+Bu gözlem yükü sınırlamasıdır; lease, bilet, ACK veya STALE süresi uzatılmaz.
+
+Native readback aboneleri history=1 kullanır. Eski biletlerin kuyruğunu
+tüketmek güncel alıcı verisi sağlamaz; daha yeni report sırası kayıplı
+örneklenebilir, ancak imza/session/sıra ve receiver bilet süresi kontrolü
+atlanmaz. İzin/komut retry kanalı aynı kalır. İzole hata enjeksiyonunda tek
+mevcut C++ bridge'in gerçek odometri çıkışı pasif ROS bağlantısıyla iletilir;
+ölçüm yeniden damgalanmaz, gerçek robot durumu üretilmez.
+
+`domain/stop_envelope.py` aynı B6B `sweep` / `covered` geometrisini kullanır.
+Ölçülmüş alt frenleme, üst reaksiyon ivmesi, dört gecikme bileşeni, hız/konum
+hata sınırları ve marj eksikse **UNBOUNDED / tube=None** döner. Sıfır gözlenen
+hız eksikleri kapatmaz. Nav2 decel ayarları fiziksel kapasite yerine geçmez.
+Tüm girdiler açık verilse bile **CONDITIONAL_CANDIDATE / qualified=false**
+kalır; hash kendi başına ölçümü kalifiye etmez.
+
+Koşullu model: `T=t_detect+t_compute+t_comm+t_actuator`,
+`v=|v_obs|+e_v`, `v1=v+a_max*T`,
+`d=v*T+a_max*T²/2+v1²/(2*b_min)`. Açısal hesap aynı yapıdadır.
+Konum hata payı + açık marj + fiziksel çevreleyen footprint yarıçapı + `d`,
+bütün yönlerde daire/AABB oluşturur. Daire her yaw'ı içerir; dönüş mesafesi
+iki kez eklenmez. Bounds tüm duruş boyunca geçerli değilse fiziksel garanti
+vermez. Eksik, negatif, sıfır frenleme veya taşan aritmetik sonlu tüp üretmez.
+
+Rezervasyon değerlendirmesi mevcut dikdörtgen birleşim kapsamasını kullanır;
+boşluklar atlanmaz. Göreli değerlendirme iki robotun bağımsız duruş alanını
+toplar; peer'in yol vereceği varsayılmaz. Sınırsız peer ile sonuç UNKNOWN'dır.
+Hesap acquire/release yapmaz; UNBOUNDED, rezervasyon yeterliliği kanıtı değildir.
+
+Mevcut `ObservedObstacleLayer` / `ObservationHealth`, LiDAR buffer'larının
+gerçek costmap update kullanımını ayrıca anlatır; bu probe onun yerine yeni
+otorite kurmaz. Bütün sensör/producer zincirinin hareket kalifikasyonu açık
+kalır. Costmap current=false duruş değildir. PeerRobotLayer/LiDAR değişmedi.
+
+Native watchdog FM/Executor/bridge'den ayrı süreçte gözlenir; kendi update
+döngüsü durunca bağımsız fren garantisi veremez. T3B SIGSTOP'u bütün native
+Gazebo sürecini/fiziği dondurur; dış stale tespiti ve resume timeout'u hareketli
+fren kabulü değildir. Sağlık çıktısını nonzero izin zincirine bağlayan kalifiye
+producer, OS/anahtar izolasyonu ve bağımsız fail-safe hâlâ açık bağımlılıktır.
+
+[T3B doğrulama](../validation/c5/c5-t3b-health-stop-2026-11-18.md) ·
+[T3C önkoşul/test planı](../validation/c5/c5-t3c-braking-plan-2026-11-18.md) ·
+[Mermaid](../diagrams/src/traffic-health-stop.mmd) · [SVG](../diagrams/svg/traffic-health-stop.svg).
+
+## Korunan B6B.3 tarihsel kapsam
+
 15 Kasım 2026 · `main`. **IMPLEMENTED / DOĞRULANDI:** yalnız saf Python, fake üretici/actuator, immutable yerel uygulama ve hedefli protokol/SQLite testleri. **PARTIAL:** gerçek topoloji kaynaklardan çıkarıldı; canlı topic graph ölçülmedi. **PLANNED / UNVERIFIED:** ROS hız interlock'u, kalifiye sensör/duruş tüpü, bağımsız actuator fail-safe ve fiziksel duruş. Bu kayıt ürün hareket kabulü değildir.
 
 Dayanak: [B6A.1](../validation/c5/c5-b6a-1-warehouse-traffic-architecture-2026-11-15.md), [B6B.0](../validation/c5/c5-b6b0-followpath-spike-2026-11-15.md), [B6B.1](../validation/c5/c5-b6b1-traffic-core-2026-11-15.md), [B6B.2](c5-b6b2-traffic-permit-protocol.md), [B5G](../validation/c5/c5-b5g-headless-watchdog-2026-11-15.md), [B5H](c5-b5h-motion-envelope-review-2026-11-15.md). [Test kaydı](../validation/c5/c5-b6b3-motion-gate-2026-11-15.md) · [Mermaid](../diagrams/src/traffic-motion-gate.mmd) · [SVG](../diagrams/svg/traffic-motion-gate.svg).

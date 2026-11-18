@@ -721,6 +721,7 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
         const auto value = _ecm.Component<components::JointVelocityCmd>(joint);
         state["joint_commands"].push_back(value ? c5_test::Json(value->Data()) : c5_test::Json());
       }
+      this->authorization->AttachHealth(state, steadyNow);
     }
     msgs::StringMsg message;
     message.set_data(state.dump());

@@ -1,0 +1,488 @@
+{
+  "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+  "case": "executor-loss",
+  "cases": {
+    "real_permit_native_ack": {
+      "records": [
+        {
+          "fm_context_valid_at_ack": true,
+          "identity": {
+            "child_uuid": "950f6bfe-73b6-709f-7f79-663a1964954f",
+            "epoch": 1,
+            "execute_uuid": "5fdecf22-d8a8-4bd5-b87e-7912d5304c7b",
+            "executor_session": "24a63b63-d666-4de9-a4d2-bddc2613591d",
+            "fm_session": "6e39bc92-03e2-4372-a8bf-c66f420b0ffc",
+            "frame": "map",
+            "generation": 1,
+            "geometry_revision": "t3a-geometry",
+            "map_revision": "t3a-map",
+            "path_hash": "38f5f401422f82b2ae75aa57c6ade8fbe5c5159a71e53d2631e4829c1bc243a9",
+            "permit_id": "36718512-b0a8-5926-a8c2-cfe1ab77c752",
+            "robot_id": "robot_alpha",
+            "task_id": "t3a-robot_alpha"
+          },
+          "movement_authorized": false,
+          "native_status": {
+            "command_sha256": "abb1c11aa26124f8592ea1ac71fd5bdf10db4801db3dd6bdc5b1c3671ce24bea",
+            "context_sha256": "3b513ea6569357f4caacf2c31323035eff5697b242e43dbfa9e6e18685c2c1e8",
+            "generation": 1,
+            "movement_authorized": false,
+            "operation": "INSTALL_ZERO",
+            "ownership_release": false,
+            "permit_id": "36718512-b0a8-5926-a8c2-cfe1ab77c752",
+            "receiver_session": "7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd",
+            "receiver_state": "ACTIVE",
+            "report_sequence": 1435,
+            "robot_id": "robot_alpha",
+            "sequence": 1,
+            "source_session": "6e39bc92-03e2-4372-a8bf-c66f420b0ffc",
+            "steady_ns": 1244375815896,
+            "ticket": "1c2b3b1576a5245b8e223012df755f102eb04d7e56de9023808c1e0b23ba1f82",
+            "verified_steady_ns": 1244373464563
+          },
+          "native_verified": true,
+          "ownership_release": false,
+          "physical_stop": "UNKNOWN",
+          "receiver_live_now": "UNKNOWN",
+          "status": "NATIVE_ZERO_VERIFIED",
+          "transfer_id": "native-transfer:2ab887de168f8aec:eb44667d-acd5-59a0-90b6-2096302d0976"
+        }
+      ],
+      "source": "Real FM COMMIT/Outbox; actual native signed status"
+    },
+    "executor_loss": {
+      "accepted": 2,
+      "actuator_session": "7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd",
+      "inhibited_command_sha256": "",
+      "inhibition_reason": "",
+      "joint_commands": [
+        [
+          0.0
+        ],
+        [
+          0.0
+        ]
+      ],
+      "movement_authorized": false,
+      "native_health": {
+        "body": "{\"joint_commands\":[[0.0],[0.0]],\"native_status\":{\"body\":\"{\\\"command_sha256\\\":\\\"3af45fc6e914ecbe37a9717f4a006936526350f2ae284f45260e26845439acfe\\\",\\\"context_sha256\\\":\\\"3b513ea6569357f4caacf2c31323035eff5697b242e43dbfa9e6e18685c2c1e8\\\",\\\"generation\\\":1,\\\"movement_authorized\\\":false,\\\"operation\\\":\\\"INSTALL_ZERO\\\",\\\"ownership_release\\\":false,\\\"permit_id\\\":\\\"36718512-b0a8-5926-a8c2-cfe1ab77c752\\\",\\\"receiver_session\\\":\\\"7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd\\\",\\\"receiver_state\\\":\\\"TIMED_OUT\\\",\\\"report_sequence\\\":1502,\\\"robot_id\\\":\\\"robot_alpha\\\",\\\"sequence\\\":2,\\\"source_session\\\":\\\"6e39bc92-03e2-4372-a8bf-c66f420b0ffc\\\",\\\"steady_ns\\\":1244710144605,\\\"ticket\\\":\\\"189310ccbcc26c5a60124c4af8ec3b7bdc19471e788b4372da12eac1234be9d3\\\",\\\"verified_steady_ns\\\":1244456543146}\",\"mac\":\"05a1669b4ac5519387d35853b96557b81f545d335c23eceaef1816fc63f01224\"},\"sim_ns\":7510000000,\"target_angular\":0.0,\"target_linear\":0.0,\"update_sequence\":1502}",
+        "mac": "288183b8b158e5184a5ff084d127e3612832e068fd6b676ea9b0f842bcc3db5d"
+      },
+      "native_status": {
+        "body": "{\"command_sha256\":\"3af45fc6e914ecbe37a9717f4a006936526350f2ae284f45260e26845439acfe\",\"context_sha256\":\"3b513ea6569357f4caacf2c31323035eff5697b242e43dbfa9e6e18685c2c1e8\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"36718512-b0a8-5926-a8c2-cfe1ab77c752\",\"receiver_session\":\"7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd\",\"receiver_state\":\"TIMED_OUT\",\"report_sequence\":1502,\"robot_id\":\"robot_alpha\",\"sequence\":2,\"source_session\":\"6e39bc92-03e2-4372-a8bf-c66f420b0ffc\",\"steady_ns\":1244710144605,\"ticket\":\"189310ccbcc26c5a60124c4af8ec3b7bdc19471e788b4372da12eac1234be9d3\",\"verified_steady_ns\":1244456543146}",
+        "mac": "05a1669b4ac5519387d35853b96557b81f545d335c23eceaef1816fc63f01224"
+      },
+      "ownership_release": false,
+      "reason": "ACCEPTED_ZERO",
+      "receipt_steady_ns": 1244456543146,
+      "rejected": 0,
+      "sequence": 2,
+      "sim_ns": 7510000000,
+      "state": "TIMED_OUT",
+      "steady_ns": 1244710144605,
+      "target_angular": 0.0,
+      "target_linear": 0.0,
+      "ticket": "189310ccbcc26c5a60124c4af8ec3b7bdc19471e788b4372da12eac1234be9d3"
+    },
+    "health_validation": {
+      "actual_robot": "robot_alpha",
+      "health": {
+        "robot_id": "robot_alpha",
+        "observations_current": false,
+        "reasons": [
+          "INVALID_HEALTH:Symmetric PSD planar covariance required",
+          "NATIVE_LEASE_NOT_ACTIVE",
+          "STALE_OR_UNKNOWN:amcl",
+          "STALE_OR_UNKNOWN:tf"
+        ],
+        "source_ages": {
+          "clock": {
+            "current": true,
+            "receipt_age_sec": 0.03045887500002209,
+            "source_age_sec": 0.055,
+            "rejected": null,
+            "source_id": "0110e3717bd52b8d8950e318000015030000000000000000",
+            "source_stamp_ns": 8840000000
+          },
+          "odometry": {
+            "current": true,
+            "receipt_age_sec": 0.013533749999851352,
+            "source_age_sec": 0.145,
+            "rejected": null,
+            "source_id": "0110736cbccba9703281f8ae000015030000000000000000",
+            "source_stamp_ns": 8750000000
+          },
+          "tf": {
+            "current": false,
+            "receipt_age_sec": null,
+            "source_age_sec": null,
+            "rejected": "TF_AT_MEASUREMENT_UNAVAILABLE",
+            "source_id": null,
+            "source_stamp_ns": null
+          },
+          "amcl": {
+            "current": false,
+            "receipt_age_sec": 5.600265753000031,
+            "source_age_sec": 8.695,
+            "rejected": null,
+            "source_id": "0110ca189c5750dcd5cc01b4000028030000000000000000",
+            "source_stamp_ns": 200000000
+          },
+          "robot_status": {
+            "current": true,
+            "receipt_age_sec": 1.6989152930000273,
+            "source_age_sec": 1.72,
+            "rejected": null,
+            "source_id": "0110cc32fae6dd8824990a42000030030000000000000000",
+            "source_stamp_ns": 7175000000
+          },
+          "native": {
+            "current": true,
+            "receipt_age_sec": 0.010406291999970563,
+            "source_age_sec": 0.085,
+            "rejected": null,
+            "source_id": "7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd",
+            "source_stamp_ns": 8810000000
+          },
+          "lifecycle:amcl": {
+            "current": true,
+            "receipt_age_sec": 0.10152608399994278,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_alpha/amcl/get_state",
+            "source_stamp_ns": null
+          },
+          "lifecycle:controller_server": {
+            "current": true,
+            "receipt_age_sec": 0.10152608399994278,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_alpha/controller_server/get_state",
+            "source_stamp_ns": null
+          },
+          "lifecycle:planner_server": {
+            "current": true,
+            "receipt_age_sec": 0.10152608399994278,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_alpha/planner_server/get_state",
+            "source_stamp_ns": null
+          },
+          "lifecycle:bt_navigator": {
+            "current": true,
+            "receipt_age_sec": 0.10152608399994278,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_alpha/bt_navigator/get_state",
+            "source_stamp_ns": null
+          }
+        },
+        "measured": {
+          "odometry": {
+            "frame": "robot_alpha/odom",
+            "child": "robot_alpha/base_link",
+            "position": [
+              -4.798310357993266e-19,
+              -3.8091283760987014e-36,
+              0.0
+            ],
+            "orientation": [
+              0.0,
+              0.0,
+              -6.598058499260697e-19,
+              1.0
+            ],
+            "velocity": [
+              8.05503563036008e-20,
+              0.0,
+              -3.095842137137064e-19
+            ],
+            "pose_covariance": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "twist_covariance": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "amcl": {
+            "frame": "map",
+            "position": [
+              13.500000000000101,
+              1.5000000000000002,
+              0.0
+            ],
+            "orientation": [
+              0.0,
+              0.0,
+              1.0,
+              6.123233995736766e-17
+            ],
+            "covariance": [
+              -4.884981308350792e-13,
+              2.6434410216324977e-13,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.6434410216324977e-13,
+              3.708144902248023e-14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.3322676295501875e-15
+            ]
+          },
+          "native": {
+            "joint_commands": [
+              [
+                0.0
+              ],
+              [
+                0.0
+              ]
+            ],
+            "native_status": {
+              "body": "{\"command_sha256\":\"3af45fc6e914ecbe37a9717f4a006936526350f2ae284f45260e26845439acfe\",\"context_sha256\":\"3b513ea6569357f4caacf2c31323035eff5697b242e43dbfa9e6e18685c2c1e8\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"36718512-b0a8-5926-a8c2-cfe1ab77c752\",\"receiver_session\":\"7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd\",\"receiver_state\":\"TIMED_OUT\",\"report_sequence\":1762,\"robot_id\":\"robot_alpha\",\"sequence\":2,\"source_session\":\"6e39bc92-03e2-4372-a8bf-c66f420b0ffc\",\"steady_ns\":1246036957855,\"ticket\":\"02cde6dabe44cec89ae6a9f6b4113e5abe665bebe1d09784334573b788f1d761\",\"verified_steady_ns\":1244456543146}",
+              "mac": "8a2de85bb9ba5eca891d8378fb1561a62a7fc75ea27b9ce18b1a4efa8efe4a37"
+            },
+            "sim_ns": 8810000000,
+            "target_angular": 0.0,
+            "target_linear": 0.0,
+            "update_sequence": 1762,
+            "status": {
+              "command_sha256": "3af45fc6e914ecbe37a9717f4a006936526350f2ae284f45260e26845439acfe",
+              "context_sha256": "3b513ea6569357f4caacf2c31323035eff5697b242e43dbfa9e6e18685c2c1e8",
+              "generation": 1,
+              "movement_authorized": false,
+              "operation": "INSTALL_ZERO",
+              "ownership_release": false,
+              "permit_id": "36718512-b0a8-5926-a8c2-cfe1ab77c752",
+              "receiver_session": "7fe079b593f3bbc64e0604f824040ef2119df91437dc611d09e5a473492e72bd",
+              "receiver_state": "TIMED_OUT",
+              "report_sequence": 1762,
+              "robot_id": "robot_alpha",
+              "sequence": 2,
+              "source_session": "6e39bc92-03e2-4372-a8bf-c66f420b0ffc",
+              "steady_ns": 1246036957855,
+              "ticket": "02cde6dabe44cec89ae6a9f6b4113e5abe665bebe1d09784334573b788f1d761",
+              "verified_steady_ns": 1244456543146
+            }
+          },
+          "robot_status": {
+            "robot_id": "robot_alpha",
+            "sequence": 9,
+            "session": "24a63b63-d666-4de9-a4d2-bddc2613591d",
+            "epoch": 1,
+            "task_id": "t3a-robot_alpha",
+            "state": 2,
+            "phase": 1,
+            "loaded": false,
+            "pose_frame": "map",
+            "pose_stamp_ns": 7175000000
+          }
+        },
+        "derived": {
+          "linear_speed_m_s": 8.05503563036008e-20,
+          "angular_speed_rad_s": -3.095842137137064e-19
+        },
+        "source_context_binding": "ROS sources: receipt association, no authenticated epoch/session",
+        "native_authentication": "HMAC in shared FM/native fixture trust domain",
+        "movement_eligible": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "qualification_blockers": [
+          "SOURCE_IDENTITY_UNQUALIFIED",
+          "COVARIANCE_NOT_HARD_BOUND",
+          "BRAKING_AND_DELAY_UNMEASURED",
+          "INDEPENDENT_FAIL_SAFE_UNVERIFIED",
+          "NONZERO_DISABLED"
+        ]
+      },
+      "stop_envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "peer_stop_assessments": {
+        "robot_alpha": {
+          "envelope": {
+            "status": "UNBOUNDED",
+            "qualified": false,
+            "movement_authorized": false,
+            "physical_stop": "UNKNOWN",
+            "ownership_release": false,
+            "tube": null,
+            "independent_fail_safe": "UNVERIFIED",
+            "reasons": [
+              "INVALID_OBSERVATION_OR_FOOTPRINT"
+            ]
+          },
+          "relative_to_assignee": {
+            "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+            "movement_authorized": false
+          }
+        },
+        "robot_beta": {
+          "envelope": {
+            "status": "UNBOUNDED",
+            "qualified": false,
+            "movement_authorized": false,
+            "physical_stop": "UNKNOWN",
+            "ownership_release": false,
+            "tube": null,
+            "independent_fail_safe": "UNVERIFIED",
+            "reasons": [
+              "INVALID_OBSERVATION_OR_FOOTPRINT"
+            ]
+          },
+          "relative_to_assignee": {
+            "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+            "movement_authorized": false
+          }
+        },
+        "robot_gamma": {
+          "envelope": {
+            "status": "UNBOUNDED",
+            "qualified": false,
+            "movement_authorized": false,
+            "physical_stop": "UNKNOWN",
+            "ownership_release": false,
+            "tube": null,
+            "independent_fail_safe": "UNVERIFIED",
+            "reasons": [
+              "INVALID_OBSERVATION_OR_FOOTPRINT"
+            ]
+          },
+          "relative_to_assignee": {
+            "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+            "movement_authorized": false
+          }
+        }
+      },
+      "reservation_assessment": {
+        "status": "UNKNOWN_STOP_TUBE",
+        "movement_authorized": false
+      },
+      "motion_authorized": false
+    },
+    "fm_restart": {
+      "exit_code": 1,
+      "scenario_reset_required": true
+    }
+  },
+  "native_samples": {
+    "robot_alpha": 779,
+    "robot_beta": 780,
+    "robot_gamma": 779
+  },
+  "max_stationary_displacement_m": {
+    "robot_alpha": 4.247091835718432e-11,
+    "robot_beta": 4.247091567322059e-11,
+    "robot_gamma": 4.247091567322059e-11
+  },
+  "native_library_sha256": "7800904a7dacb5589b0620739d11095eaf051199aa6db27c2ec64f5769681836",
+  "movement_authorized": false,
+  "physical_stop": "UNKNOWN",
+  "ownership_release": false
+}

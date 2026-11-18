@@ -1,5 +1,7 @@
 # Doğrulama kayıtları
 
+- [C5-T3B sağlık ve duruş hesabı altyapısı](c5/c5-t3b-health-stop-2026-11-18.md) · [Komutlar](c5/c5-t3b-health-stop-commands-2026-11-18.md) · [T3C planı](c5/c5-t3c-braking-plan-2026-11-18.md): 442 host, 154 ROS, 3 + 2 native CTest; 8 izole durağan fault koşusu. Kalibrasyon eksik, zarf UNBOUNDED; nonzero/varsayılan entegrasyon kapalı.
+
 - [C5-T3A gerçek FM permit → native sıfır context](c5/c5-t3a-native-permit-2026-11-18.md) · [Komutlar](c5/c5-t3a-native-permit-commands-2026-11-18.md): 375 host, 84 ROS, 3 native CTest; yedi izole sıfır-komut senaryosu. Deneysel ve varsayılan kapalı; fiziksel hareket kabulü değildir.
 
 - [C5-T3A güvenli durdurma / devam notu — 18 Kasım](c5/c5-t3a-continuation-2026-11-18.md): kaynak snapshot'ı, geçen seçkiler ve iki canlı deneme korunur; entegrasyon PARTIAL, commit/push yok.

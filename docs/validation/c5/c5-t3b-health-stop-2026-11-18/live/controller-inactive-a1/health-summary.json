@@ -1,0 +1,385 @@
+{
+  "actual_robot": "robot_alpha",
+  "health": {
+    "robot_id": "robot_alpha",
+    "observations_current": false,
+    "reasons": [
+      "EXECUTOR_ID_OR_ERROR",
+      "INVALID_HEALTH:Symmetric PSD planar covariance required",
+      "LIFECYCLE_NOT_ACTIVE:controller_server",
+      "NATIVE_LEASE_NOT_ACTIVE",
+      "PERMIT_NOT_RESERVED",
+      "STALE_OR_UNKNOWN:amcl",
+      "STALE_OR_UNKNOWN:tf"
+    ],
+    "source_ages": {
+      "clock": {
+        "current": true,
+        "receipt_age_sec": 0.05665512499990655,
+        "source_age_sec": 0.065,
+        "rejected": null,
+        "source_id": "0110b88c947f22a6d60d84c5000015030000000000000000",
+        "source_stamp_ns": 8145000000
+      },
+      "odometry": {
+        "current": true,
+        "receipt_age_sec": 0.026857874999905107,
+        "source_age_sec": 0.16,
+        "rejected": null,
+        "source_id": "0110cb20d1ac786d427198c4000015030000000000000000",
+        "source_stamp_ns": 8050000000
+      },
+      "tf": {
+        "current": false,
+        "receipt_age_sec": null,
+        "source_age_sec": null,
+        "rejected": "TF_AT_MEASUREMENT_UNAVAILABLE",
+        "source_id": null,
+        "source_stamp_ns": null
+      },
+      "amcl": {
+        "current": false,
+        "receipt_age_sec": 4.814008418999947,
+        "source_age_sec": 8.01,
+        "rejected": null,
+        "source_id": "01100009bdf3bb8076420b37000028030000000000000000",
+        "source_stamp_ns": 200000000
+      },
+      "robot_status": {
+        "current": true,
+        "receipt_age_sec": 0.06785308300004544,
+        "source_age_sec": 0.065,
+        "rejected": null,
+        "source_id": "011082a9742b9e712f14d835000030030000000000000000",
+        "source_stamp_ns": 8145000000
+      },
+      "native": {
+        "current": true,
+        "receipt_age_sec": 0.021993541000028927,
+        "source_age_sec": 0.085,
+        "rejected": null,
+        "source_id": "05186ac3895c610fae51d63678f945faade731dba9ba1f558e204f58fb2485c1",
+        "source_stamp_ns": 8125000000
+      },
+      "lifecycle:amcl": {
+        "current": true,
+        "receipt_age_sec": 0.1540447499999118,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/amcl/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:controller_server": {
+        "current": true,
+        "receipt_age_sec": 0.3050387910000154,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/controller_server/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:planner_server": {
+        "current": true,
+        "receipt_age_sec": 0.1540447499999118,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/planner_server/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:bt_navigator": {
+        "current": true,
+        "receipt_age_sec": 0.1540447499999118,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/bt_navigator/get_state",
+        "source_stamp_ns": null
+      }
+    },
+    "measured": {
+      "odometry": {
+        "frame": "robot_alpha/odom",
+        "child": "robot_alpha/base_link",
+        "position": [
+          -4.0252437092967063e-19,
+          -3.91420011661681e-36,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          -7.422490846132865e-19,
+          1.0
+        ],
+        "velocity": [
+          5.0719668396518994e-20,
+          0.0,
+          -1.4953592954351638e-18
+        ],
+        "pose_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "twist_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "amcl": {
+        "frame": "map",
+        "position": [
+          13.500000000000101,
+          1.5000000000000002,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          1.0,
+          6.123233995736766e-17
+        ],
+        "covariance": [
+          -4.884981308350792e-13,
+          2.6434410216324977e-13,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.6434410216324977e-13,
+          3.708144902248023e-14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -1.3322676295501875e-15
+        ]
+      },
+      "native": {
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "native_status": {
+          "body": "{\"command_sha256\":\"dbfdeabfd6091f301be8870fbd37edcae63e5d394a0ff43e8894128022e4487d\",\"context_sha256\":\"702ea342572d97e3cd2af04de77287d09b61f136ea4b6b0ef4c27bf47330e948\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"REVOKE_ZERO\",\"ownership_release\":false,\"permit_id\":\"faff4a98-540a-5b3d-a6e0-614b9fd235d4\",\"receiver_session\":\"05186ac3895c610fae51d63678f945faade731dba9ba1f558e204f58fb2485c1\",\"receiver_state\":\"BLOCKED_REARM\",\"report_sequence\":1625,\"robot_id\":\"robot_alpha\",\"sequence\":7,\"source_session\":\"63b7176e-ddcb-45a3-9783-135d7f534b2e\",\"steady_ns\":1075397483654,\"ticket\":\"b33db16f535a2cf0abb250007056eb5cb1b2d2f4eb3dff545451c769866fa93d\",\"verified_steady_ns\":1075362078071}",
+          "mac": "14a345548dff882252717ec4bdf40ff3c932fabd5968aede03888890c1708123"
+        },
+        "sim_ns": 8125000000,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "update_sequence": 1625,
+        "status": {
+          "command_sha256": "dbfdeabfd6091f301be8870fbd37edcae63e5d394a0ff43e8894128022e4487d",
+          "context_sha256": "702ea342572d97e3cd2af04de77287d09b61f136ea4b6b0ef4c27bf47330e948",
+          "generation": 1,
+          "movement_authorized": false,
+          "operation": "REVOKE_ZERO",
+          "ownership_release": false,
+          "permit_id": "faff4a98-540a-5b3d-a6e0-614b9fd235d4",
+          "receiver_session": "05186ac3895c610fae51d63678f945faade731dba9ba1f558e204f58fb2485c1",
+          "receiver_state": "BLOCKED_REARM",
+          "report_sequence": 1625,
+          "robot_id": "robot_alpha",
+          "sequence": 7,
+          "source_session": "63b7176e-ddcb-45a3-9783-135d7f534b2e",
+          "steady_ns": 1075397483654,
+          "ticket": "b33db16f535a2cf0abb250007056eb5cb1b2d2f4eb3dff545451c769866fa93d",
+          "verified_steady_ns": 1075362078071
+        }
+      },
+      "robot_status": {
+        "robot_id": "robot_alpha",
+        "sequence": 11,
+        "session": "ccdd5dd1-88d0-44c4-913c-36fb6b0fd1da",
+        "epoch": 1,
+        "task_id": "t3a-robot_alpha",
+        "state": 6,
+        "phase": 0,
+        "loaded": false,
+        "pose_frame": "map",
+        "pose_stamp_ns": 8120000000
+      }
+    },
+    "derived": {
+      "linear_speed_m_s": 5.0719668396518994e-20,
+      "angular_speed_rad_s": -1.4953592954351638e-18
+    },
+    "source_context_binding": "ROS sources: receipt association, no authenticated epoch/session",
+    "native_authentication": "HMAC in shared FM/native fixture trust domain",
+    "movement_eligible": false,
+    "physical_stop": "UNKNOWN",
+    "ownership_release": false,
+    "qualification_blockers": [
+      "SOURCE_IDENTITY_UNQUALIFIED",
+      "COVARIANCE_NOT_HARD_BOUND",
+      "BRAKING_AND_DELAY_UNMEASURED",
+      "INDEPENDENT_FAIL_SAFE_UNVERIFIED",
+      "NONZERO_DISABLED"
+    ]
+  },
+  "stop_envelope": {
+    "status": "UNBOUNDED",
+    "qualified": false,
+    "movement_authorized": false,
+    "physical_stop": "UNKNOWN",
+    "ownership_release": false,
+    "tube": null,
+    "independent_fail_safe": "UNVERIFIED",
+    "reasons": [
+      "INVALID_OBSERVATION_OR_FOOTPRINT"
+    ]
+  },
+  "peer_stop_assessments": {
+    "robot_alpha": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    },
+    "robot_beta": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    },
+    "robot_gamma": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    }
+  },
+  "reservation_assessment": {
+    "status": "UNKNOWN_STOP_TUBE",
+    "movement_authorized": false
+  },
+  "motion_authorized": false
+}

@@ -1,0 +1,450 @@
+{
+  "actual_robot": "robot_beta",
+  "health": {
+    "robot_id": "robot_beta",
+    "observations_current": false,
+    "reasons": [
+      "INVALID_HEALTH:Symmetric PSD planar covariance required",
+      "STALE_OR_UNKNOWN:amcl"
+    ],
+    "source_ages": {
+      "clock": {
+        "current": true,
+        "receipt_age_sec": 1.6749999986132025e-05,
+        "source_age_sec": 0.0,
+        "rejected": null,
+        "source_id": "011090826cae0c67f6d5b756000015030000000000000000",
+        "source_stamp_ns": 7470000000
+      },
+      "odometry": {
+        "current": true,
+        "receipt_age_sec": 0.0030706249999639113,
+        "source_age_sec": 0.015,
+        "rejected": null,
+        "source_id": "01103a7270a966c6d1a15cc3000016030000000000000000",
+        "source_stamp_ns": 7455000000
+      },
+      "tf": {
+        "current": true,
+        "receipt_age_sec": 0.0,
+        "source_age_sec": 0.015,
+        "rejected": null,
+        "source_id": "01106cb022ae168ba541e63700001a030000000000000000|0110a8b92727d1cbc938912b000025030000000000000000|01106cb022ae168ba541e63700001a030000000000000000|0110a8b92727d1cbc938912b000025030000000000000000",
+        "source_stamp_ns": 7455000000
+      },
+      "amcl": {
+        "current": false,
+        "receipt_age_sec": 3.455271042999982,
+        "source_age_sec": 7.27,
+        "rejected": null,
+        "source_id": "0110a8b92727d1cbc938912b000028030000000000000000",
+        "source_stamp_ns": 200000000
+      },
+      "robot_status": {
+        "current": true,
+        "receipt_age_sec": 0.1409094580000101,
+        "source_age_sec": 0.18,
+        "rejected": null,
+        "source_id": "01104ad0d886445e5507f9cc000030030000000000000000",
+        "source_stamp_ns": 7290000000
+      },
+      "native": {
+        "current": true,
+        "receipt_age_sec": 0.021869790999971883,
+        "source_age_sec": 0.025,
+        "rejected": null,
+        "source_id": "68cca0a308dc965b629693b6369f961ba36e7f7d511e641bb7692b7dc0baae69",
+        "source_stamp_ns": 7445000000
+      },
+      "lifecycle:amcl": {
+        "current": true,
+        "receipt_age_sec": 0.20087291699996968,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_beta/amcl/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:controller_server": {
+        "current": true,
+        "receipt_age_sec": 0.20087291699996968,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_beta/controller_server/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:planner_server": {
+        "current": true,
+        "receipt_age_sec": 0.20087291699996968,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_beta/planner_server/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:bt_navigator": {
+        "current": true,
+        "receipt_age_sec": 0.20087291699996968,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_beta/bt_navigator/get_state",
+        "source_stamp_ns": null
+      }
+    },
+    "measured": {
+      "odometry": {
+        "frame": "robot_beta/odom",
+        "child": "robot_beta/base_link",
+        "position": [
+          -2.188061947432105e-19,
+          -3.318958372385659e-36,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          -7.815922570161758e-19,
+          1.0
+        ],
+        "velocity": [
+          -1.946556027761886e-21,
+          0.0,
+          3.684733084182043e-19
+        ],
+        "pose_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "twist_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "amcl": {
+        "frame": "map",
+        "position": [
+          13.500000000000101,
+          2.74999999999996,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          1.0,
+          6.123233995736766e-17
+        ],
+        "covariance": [
+          -4.884981308350792e-13,
+          4.103384299014619e-13,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          4.103384299014619e-13,
+          9.725553695716211e-14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -1.3322676295501875e-15
+        ]
+      },
+      "map_pose": [
+        13.500000000000101,
+        2.74999999999996,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        6.201528251383676e-17
+      ],
+      "native": {
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "native_status": {
+          "body": "{\"command_sha256\":\"4f06bab6d3da29f82b60ea021775bb1224f5eeabfdc1aecbb169cd915b3ef806\",\"context_sha256\":\"806ea00bac243dced80cff26cba098a8e4fc026f1f0b92a93d65228be9cac4aa\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"6637f0e0-a92c-5b9f-844e-20b2fbb231a7\",\"receiver_session\":\"68cca0a308dc965b629693b6369f961ba36e7f7d511e641bb7692b7dc0baae69\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1489,\"robot_id\":\"robot_beta\",\"sequence\":4,\"source_session\":\"9e63fde3-9610-4947-875f-705478661248\",\"steady_ns\":497291083101,\"ticket\":\"b595f3a9d10df0e74579229c8f320aff4bf60e309a1a0afdfce9d1d1d68d7038\",\"verified_steady_ns\":497269054643}",
+          "mac": "c0fa9351c07858c2f6435f514ac8223b6e1cac913d03e1cc0395559a0595877d"
+        },
+        "sim_ns": 7445000000,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "update_sequence": 147,
+        "status": {
+          "command_sha256": "4f06bab6d3da29f82b60ea021775bb1224f5eeabfdc1aecbb169cd915b3ef806",
+          "context_sha256": "806ea00bac243dced80cff26cba098a8e4fc026f1f0b92a93d65228be9cac4aa",
+          "generation": 1,
+          "movement_authorized": false,
+          "operation": "INSTALL_ZERO",
+          "ownership_release": false,
+          "permit_id": "6637f0e0-a92c-5b9f-844e-20b2fbb231a7",
+          "receiver_session": "68cca0a308dc965b629693b6369f961ba36e7f7d511e641bb7692b7dc0baae69",
+          "receiver_state": "ACTIVE",
+          "report_sequence": 1489,
+          "robot_id": "robot_beta",
+          "sequence": 4,
+          "source_session": "9e63fde3-9610-4947-875f-705478661248",
+          "steady_ns": 497291083101,
+          "ticket": "b595f3a9d10df0e74579229c8f320aff4bf60e309a1a0afdfce9d1d1d68d7038",
+          "verified_steady_ns": 497269054643
+        }
+      },
+      "robot_status": {
+        "robot_id": "robot_beta",
+        "sequence": 7,
+        "session": "1e022e62-29a7-426d-bb29-be3dbd0e9c5f",
+        "epoch": 1,
+        "task_id": "t3a-robot_alpha",
+        "state": 2,
+        "phase": 1,
+        "loaded": false,
+        "pose_frame": "map",
+        "pose_stamp_ns": 7280000000
+      }
+    },
+    "derived": {
+      "linear_speed_m_s": 1.946556027761886e-21,
+      "angular_speed_rad_s": 3.684733084182043e-19,
+      "yaw_rad": 3.141592653589793
+    },
+    "source_context_binding": "ROS sources: receipt association, no authenticated epoch/session",
+    "native_authentication": "HMAC in shared FM/native fixture trust domain",
+    "movement_eligible": false,
+    "physical_stop": "UNKNOWN",
+    "ownership_release": false,
+    "qualification_blockers": [
+      "SOURCE_IDENTITY_UNQUALIFIED",
+      "COVARIANCE_NOT_HARD_BOUND",
+      "BRAKING_AND_DELAY_UNMEASURED",
+      "INDEPENDENT_FAIL_SAFE_UNVERIFIED",
+      "NONZERO_DISABLED"
+    ]
+  },
+  "stop_envelope": {
+    "status": "UNBOUNDED",
+    "qualified": false,
+    "movement_authorized": false,
+    "physical_stop": "UNKNOWN",
+    "ownership_release": false,
+    "tube": null,
+    "independent_fail_safe": "UNVERIFIED",
+    "reasons": [
+      "MISSING_MEASUREMENTS"
+    ],
+    "missing": [
+      "linear_deceleration_m_s2",
+      "angular_deceleration_rad_s2",
+      "linear_acceleration_m_s2",
+      "angular_acceleration_rad_s2",
+      "detection_sec",
+      "computation_sec",
+      "communication_sec",
+      "actuator_sec",
+      "position_error_m",
+      "speed_error_m_s",
+      "angular_speed_error_rad_s",
+      "margin_m",
+      "evidence_sha256"
+    ]
+  },
+  "peer_stop_assessments": {
+    "robot_alpha": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "MISSING_MEASUREMENTS"
+        ],
+        "missing": [
+          "linear_deceleration_m_s2",
+          "angular_deceleration_rad_s2",
+          "linear_acceleration_m_s2",
+          "angular_acceleration_rad_s2",
+          "detection_sec",
+          "computation_sec",
+          "communication_sec",
+          "actuator_sec",
+          "position_error_m",
+          "speed_error_m_s",
+          "angular_speed_error_rad_s",
+          "margin_m",
+          "evidence_sha256"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    },
+    "robot_beta": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "MISSING_MEASUREMENTS"
+        ],
+        "missing": [
+          "linear_deceleration_m_s2",
+          "angular_deceleration_rad_s2",
+          "linear_acceleration_m_s2",
+          "angular_acceleration_rad_s2",
+          "detection_sec",
+          "computation_sec",
+          "communication_sec",
+          "actuator_sec",
+          "position_error_m",
+          "speed_error_m_s",
+          "angular_speed_error_rad_s",
+          "margin_m",
+          "evidence_sha256"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    },
+    "robot_gamma": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "MISSING_MEASUREMENTS"
+        ],
+        "missing": [
+          "linear_deceleration_m_s2",
+          "angular_deceleration_rad_s2",
+          "linear_acceleration_m_s2",
+          "angular_acceleration_rad_s2",
+          "detection_sec",
+          "computation_sec",
+          "communication_sec",
+          "actuator_sec",
+          "position_error_m",
+          "speed_error_m_s",
+          "angular_speed_error_rad_s",
+          "margin_m",
+          "evidence_sha256"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    }
+  },
+  "reservation_assessment": {
+    "status": "UNKNOWN_STOP_TUBE",
+    "movement_authorized": false
+  },
+  "motion_authorized": false
+}

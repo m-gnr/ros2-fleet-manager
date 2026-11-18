@@ -1,0 +1,384 @@
+{
+  "actual_robot": "robot_alpha",
+  "health": {
+    "robot_id": "robot_alpha",
+    "observations_current": false,
+    "reasons": [
+      "INVALID_HEALTH:Symmetric PSD planar covariance required",
+      "PERMIT_CLOSED",
+      "PERMIT_NOT_RESERVED",
+      "STALE_OR_UNKNOWN:amcl",
+      "STALE_OR_UNKNOWN:native",
+      "STALE_OR_UNKNOWN:tf"
+    ],
+    "source_ages": {
+      "clock": {
+        "current": true,
+        "receipt_age_sec": 0.038280084000007264,
+        "source_age_sec": 0.02,
+        "rejected": null,
+        "source_id": "011033e7b9c30da29f9a903c000015030000000000000000",
+        "source_stamp_ns": 8530000000
+      },
+      "odometry": {
+        "current": true,
+        "receipt_age_sec": 0.060133709000012914,
+        "source_age_sec": 0.15,
+        "rejected": null,
+        "source_id": "01108d57d5c7331e3a774eb0000015030000000000000000",
+        "source_stamp_ns": 8400000000
+      },
+      "tf": {
+        "current": false,
+        "receipt_age_sec": 3.1303230430000326,
+        "source_age_sec": 2.355,
+        "rejected": "TF_AT_MEASUREMENT_UNAVAILABLE",
+        "source_id": "01105284066e69872b5aa500000025030000000000000000|0110e324540862f08a28fe6c000016030000000000000000|01105284066e69872b5aa500000025030000000000000000|0110e324540862f08a28fe6c000016030000000000000000",
+        "source_stamp_ns": 6195000000
+      },
+      "amcl": {
+        "current": false,
+        "receipt_age_sec": 5.820737628000018,
+        "source_age_sec": 8.35,
+        "rejected": null,
+        "source_id": "01105284066e69872b5aa500000028030000000000000000",
+        "source_stamp_ns": 200000000
+      },
+      "robot_status": {
+        "current": true,
+        "receipt_age_sec": 0.1595167090000018,
+        "source_age_sec": 0.135,
+        "rejected": null,
+        "source_id": "0110a39ed7745512cc2f5fea000030030000000000000000",
+        "source_stamp_ns": 8415000000
+      },
+      "native": {
+        "current": false,
+        "receipt_age_sec": 0.40299845900000264,
+        "source_age_sec": 0.34,
+        "rejected": null,
+        "source_id": "4ec00d3617de9275ee4a8fb2fc05ba0a62f856550db5e440c0c8d4faf1319eb4",
+        "source_stamp_ns": 8210000000
+      },
+      "lifecycle:amcl": {
+        "current": true,
+        "receipt_age_sec": 0.15252562500000977,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/amcl/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:controller_server": {
+        "current": true,
+        "receipt_age_sec": 0.15252562500000977,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/controller_server/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:planner_server": {
+        "current": true,
+        "receipt_age_sec": 0.15252562500000977,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/planner_server/get_state",
+        "source_stamp_ns": null
+      },
+      "lifecycle:bt_navigator": {
+        "current": true,
+        "receipt_age_sec": 0.10124700000000075,
+        "source_age_sec": null,
+        "rejected": null,
+        "source_id": "robot_alpha/bt_navigator/get_state",
+        "source_stamp_ns": null
+      }
+    },
+    "measured": {
+      "odometry": {
+        "frame": "robot_alpha/odom",
+        "child": "robot_alpha/base_link",
+        "position": [
+          -4.440354360424847e-19,
+          -3.85591951916356e-36,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          -6.437934507319424e-19,
+          1.0
+        ],
+        "velocity": [
+          -1.746189443655299e-19,
+          0.0,
+          7.770672218998102e-19
+        ],
+        "pose_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "twist_covariance": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "amcl": {
+        "frame": "map",
+        "position": [
+          13.500000000000101,
+          1.5000000000000002,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          1.0,
+          6.123233995736766e-17
+        ],
+        "covariance": [
+          -4.884981308350792e-13,
+          2.6434410216324977e-13,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.6434410216324977e-13,
+          3.708144902248023e-14,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -1.3322676295501875e-15
+        ]
+      },
+      "native": {
+        "joint_commands": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "native_status": {
+          "body": "{\"command_sha256\":\"e1b3632e858ac3c6ad3b9dffa12a205b42a774480b194612ff945d9c8aec60c6\",\"context_sha256\":\"531a6ab23729ba0df7b90a6a543fb3f50b36006a7a01fb170fd7a8127cb02e6e\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"a036378c-d4ed-5f15-9bfb-b0efd99debd4\",\"receiver_session\":\"4ec00d3617de9275ee4a8fb2fc05ba0a62f856550db5e440c0c8d4faf1319eb4\",\"receiver_state\":\"ACTIVE\",\"report_sequence\":1642,\"robot_id\":\"robot_alpha\",\"sequence\":11,\"source_session\":\"8696cbc6-41a6-4af2-accc-b0235ec1ddc2\",\"steady_ns\":437219105739,\"ticket\":\"3d0a51e846d117354171302a80a1a667739d0d8e606f0b799da5ef157410ac4d\",\"verified_steady_ns\":437212049697}",
+          "mac": "53fe87dc696777bbae4be39731e8de925864ab67620598383c1e00e98d9c7cb0"
+        },
+        "sim_ns": 8210000000,
+        "target_angular": 0.0,
+        "target_linear": 0.0,
+        "update_sequence": 184,
+        "status": {
+          "command_sha256": "e1b3632e858ac3c6ad3b9dffa12a205b42a774480b194612ff945d9c8aec60c6",
+          "context_sha256": "531a6ab23729ba0df7b90a6a543fb3f50b36006a7a01fb170fd7a8127cb02e6e",
+          "generation": 1,
+          "movement_authorized": false,
+          "operation": "INSTALL_ZERO",
+          "ownership_release": false,
+          "permit_id": "a036378c-d4ed-5f15-9bfb-b0efd99debd4",
+          "receiver_session": "4ec00d3617de9275ee4a8fb2fc05ba0a62f856550db5e440c0c8d4faf1319eb4",
+          "receiver_state": "ACTIVE",
+          "report_sequence": 1642,
+          "robot_id": "robot_alpha",
+          "sequence": 11,
+          "source_session": "8696cbc6-41a6-4af2-accc-b0235ec1ddc2",
+          "steady_ns": 437219105739,
+          "ticket": "3d0a51e846d117354171302a80a1a667739d0d8e606f0b799da5ef157410ac4d",
+          "verified_steady_ns": 437212049697
+        }
+      },
+      "robot_status": {
+        "robot_id": "robot_alpha",
+        "sequence": 16,
+        "session": "1c8e8acd-361e-4478-a20a-4b76947957f5",
+        "epoch": 1,
+        "task_id": "t3a-robot_alpha",
+        "state": 2,
+        "phase": 1,
+        "loaded": false,
+        "pose_frame": "map",
+        "pose_stamp_ns": 8400000000
+      }
+    },
+    "derived": {
+      "linear_speed_m_s": 1.746189443655299e-19,
+      "angular_speed_rad_s": 7.770672218998102e-19
+    },
+    "source_context_binding": "ROS sources: receipt association, no authenticated epoch/session",
+    "native_authentication": "HMAC in shared FM/native fixture trust domain",
+    "movement_eligible": false,
+    "physical_stop": "UNKNOWN",
+    "ownership_release": false,
+    "qualification_blockers": [
+      "SOURCE_IDENTITY_UNQUALIFIED",
+      "COVARIANCE_NOT_HARD_BOUND",
+      "BRAKING_AND_DELAY_UNMEASURED",
+      "INDEPENDENT_FAIL_SAFE_UNVERIFIED",
+      "NONZERO_DISABLED"
+    ]
+  },
+  "stop_envelope": {
+    "status": "UNBOUNDED",
+    "qualified": false,
+    "movement_authorized": false,
+    "physical_stop": "UNKNOWN",
+    "ownership_release": false,
+    "tube": null,
+    "independent_fail_safe": "UNVERIFIED",
+    "reasons": [
+      "INVALID_OBSERVATION_OR_FOOTPRINT"
+    ]
+  },
+  "peer_stop_assessments": {
+    "robot_alpha": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    },
+    "robot_beta": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    },
+    "robot_gamma": {
+      "envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "INVALID_OBSERVATION_OR_FOOTPRINT"
+        ]
+      },
+      "relative_to_assignee": {
+        "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+        "movement_authorized": false
+      }
+    }
+  },
+  "reservation_assessment": {
+    "status": "UNKNOWN_STOP_TUBE",
+    "movement_authorized": false
+  },
+  "motion_authorized": false
+}

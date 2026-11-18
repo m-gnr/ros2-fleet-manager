@@ -75,6 +75,8 @@ class AuthorizedZero {
     auto fields = std::set<std::string>{"key_hex", "source_session", "context", "permit_id", "generation",
                   "lease_sec", "ticket_sec", "permit_sec"};
     if (live) {fields.insert("live_permits"); fields.insert("robot_id");}
+    healthEnabled = live && p.contains("health_period_sec");
+    if (healthEnabled) fields.insert("health_period_sec");
     if (!Keys(p, fields) || (live && p["live_permits"] != Json(true))) throw std::invalid_argument("Provision schema");
     auto hex = p.at("key_hex").get<std::string>();
     if (hex.size() != 64 || hex.find_first_not_of("0123456789abcdef") != std::string::npos)
@@ -90,6 +92,10 @@ class AuthorizedZero {
     generation = p.at("generation").get<uint64_t>(); context = p.at("context");
     if (live) robot = p["robot_id"].get<std::string>();
     leaseSec = Positive(p.at("lease_sec")); ticketSec = Positive(p.at("ticket_sec"));
+    if (healthEnabled) {
+      healthPeriod = Positive(p.at("health_period_sec"));
+      if (healthPeriod >= leaseSec) throw std::invalid_argument("Diagnostic health period must fit native lease observation");
+    }
     permitSec = Positive(p.at("permit_sec")); permitUntil = Add(now, permitSec);
     session = Nonce();
   }
@@ -222,6 +228,23 @@ class AuthorizedZero {
     }
     return output;
   }
+  void AttachHealth(Json & state, Time now) {
+    state.erase("native_health");
+    if (!healthEnabled || (healthReports && now < Add(lastHealth,healthPeriod))) return;
+    lastHealth=now;
+    // Called only by the real UpdateVelocity readback, after joint components
+    // were read. This is observation evidence; no input or authority is added.
+    Json health = {{"native_status", state.at("native_status")},
+      {"sim_ns", state.at("sim_ns")}, {"target_linear", state.at("target_linear")},
+      {"target_angular", state.at("target_angular")}, {"joint_commands", state.at("joint_commands")},
+      {"update_sequence", ++healthReports}};
+    const auto body=health.dump();
+    const auto input=std::string("C5_NATIVE_ZERO_HEALTH_V1\n")+body;
+    unsigned int size=0; unsigned char mac[EVP_MAX_MD_SIZE];
+    if (!HMAC(EVP_sha256(), key.data(), key.size(), reinterpret_cast<const unsigned char *>(input.data()),
+        input.size(), mac, &size)) throw std::runtime_error("Health HMAC unavailable");
+    state["native_health"]={{"body",body},{"mac",Hex(mac,size)}};
+  }
   std::string session, reason{"NO_COMMAND"};
   uint64_t sequence{0}, accepted{0}, rejected{0};
   std::string inhibitionReason, inhibitionCommand;
@@ -271,8 +294,11 @@ class AuthorizedZero {
   std::string source, permit, ticket, lastBody;
   uint64_t generation;
   bool live{false}, bound{false};
+  bool healthEnabled{false};
+  double healthPeriod{0.};
+  Time lastHealth{};
   std::string robot, lastOperation{"NONE"};
-  uint64_t reports{0};
+  uint64_t reports{0}, healthReports{0};
   Time verifiedAt{};
   double leaseSec, ticketSec, permitSec;
   Time ticketUntil{}, permitUntil{};

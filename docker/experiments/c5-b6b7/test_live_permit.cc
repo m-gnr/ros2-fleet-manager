@@ -7,7 +7,7 @@ std::string U(int n) {return "11111111-1111-1111-1111-11111111111"+std::to_strin
 Json LiveProvision() {
   auto p=Provision(); p["live_permits"]=true;p["robot_id"]="r1";
   p["source_session"]="";p["context"]=Json::object();p["permit_id"]="";p["generation"]=0u;
-  p["permit_sec"]=2.; return p;
+  p["permit_sec"]=2.;p["health_period_sec"]=.05; return p;
 }
 Json Context() {
   Json identity={{"robot_id","r1"},{"task_id","unit-task"},{"epoch",1u},{"execute_uuid",U(2)},
@@ -51,6 +51,19 @@ int main() {
   assert(status["command_sha256"]==Digest(first.dump()));
   assert(status["source_session"]==U(1) && status["generation"]==1);
   assert(status["movement_authorized"]==false && status["ownership_release"]==false);
+  snapshot["sim_ns"]=10; snapshot["target_linear"]=0.; snapshot["target_angular"]=0.;
+  snapshot["joint_commands"]={{0.},{0.}};
+  a.AttachHealth(snapshot,t);
+  auto health=StrictJson(snapshot["native_health"]["body"]);
+  assert(health["native_status"]==snapshot["native_status"]);
+  assert(health["joint_commands"]==snapshot["joint_commands"] && health["update_sequence"]==1);
+  a.AttachHealth(snapshot,t+std::chrono::milliseconds(10));assert(!snapshot.contains("native_health"));
+  a.AttachHealth(snapshot,t+std::chrono::milliseconds(50));
+  assert(StrictJson(snapshot["native_health"]["body"])["update_sequence"]==2);
+  assert(status["command_sha256"]==Digest(first.dump()));
+  auto oldProvision=LiveProvision();oldProvision.erase("health_period_sec");
+  AuthorizedZero noHealth(oldProvision,t);auto oldSnapshot=noHealth.Snapshot(t,lease);
+  noHealth.AttachHealth(oldSnapshot,t);assert(!oldSnapshot.contains("native_health"));
   auto revoke=LiveBody(a,2,t);revoke["command_context"]["operation"]="REVOKE_ZERO";
   assert(a.Receive(Wire(revoke),t,lease)=="PERMIT_REVOKED");
   assert(lease.state==State::BLOCKED_REARM && a.receipt==receipt);

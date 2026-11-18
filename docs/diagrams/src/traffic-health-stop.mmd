@@ -1,0 +1,17 @@
+flowchart TD
+    A["Gerçek ROS kaynakları<br/>Odom, TF, AMCL, RobotStatus, lifecycle"] --> B["Ölçüm stamp + yerel alım yaşı<br/>Frame, covariance, session ve context kontrolleri"]
+    G["ROS graph endpoint kümesi<br/>Mesaj yayıncı kimliği UNKNOWN"] --> B
+    C["Mevcut FM / T2 / T3A<br/>COMMIT, gerçek child / Path ve sıfır transferi"] --> B
+    C --> D["Mevcut native sıfır actuator<br/>Nonzero / rearm daima kapalı"]
+    D --> E["Gerçek UpdateVelocity / joint readback<br/>Ayrı imzalı native_health — IMPLEMENTED"]
+    E --> B
+    B --> F["Salt okunur tanısal değerlendirme<br/>Hareket uygunluğu false, duruş UNKNOWN"]
+    F --> H["Duruş hesap altyapısı — IMPLEMENTED<br/>Mevcut B6B sweep / union kapsaması"]
+    I["Ölçülmüş fren, ivme, gecikme,<br/>konum / hız hata sınırları ve marj"] --> H
+    H -->|"Eksik ölçüm"| J["UNBOUNDED, tube yok<br/>Rezervasyon yeterliliği UNKNOWN"]
+    H -->|"Açık koşullu girdiler"| K["Koşullu daire / AABB ve göreli peer alanı<br/>qualified=false"]
+    L["Native process / loop donması"] --> M["Dış gözlemci readback yaşlanmasını görür<br/>Donan döngü kendi watchdog'unu çalıştıramaz"]
+    M --> F
+    J -.-> N["Fiziksel kalibrasyon, kaynak kimliği,<br/>bağımsız fail-safe, hold / release<br/>UNVERIFIED — T3C+"]
+    K -.-> N
+    N -.-> O["Varsayılan demo entegrasyonu kapalı<br/>Hareketli fren kabulü yok — PARTIAL"]

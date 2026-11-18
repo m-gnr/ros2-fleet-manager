@@ -23,7 +23,10 @@ class NativeZeroLink:
         group=ReentrantCallbackGroup()
         self.publisher=node.create_publisher(String,node._qualify('authorized_zero'),16)
         self.exchange=node.create_publisher(String,node._qualify('native_permit_exchange'),16)
-        self.subscription=node.create_subscription(String,node._qualify('native_actuator'),self.state,16,callback_group=group)
+        # Readback is a latest-value observation. Draining a history of old
+        # tickets can consume their receiver-local lifetime before forwarding.
+        # Permit envelopes keep their existing immutable retry channel.
+        self.subscription=node.create_subscription(String,node._qualify('native_actuator'),self.state,1,callback_group=group)
         self.envelopes=node.create_subscription(String,node._qualify('native_permit_envelope'),self.envelope,16,callback_group=group)
         self.timer=node.create_timer(period,self.tick,clock=Clock(clock_type=ClockType.STEADY_TIME),callback_group=group)
 

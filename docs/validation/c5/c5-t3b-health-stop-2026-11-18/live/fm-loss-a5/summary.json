@@ -1,0 +1,553 @@
+{
+  "result": "PASS_REAL_FM_NATIVE_ZERO_ONLY",
+  "case": "fm-loss",
+  "cases": {
+    "real_permit_native_ack": {
+      "records": [
+        {
+          "fm_context_valid_at_ack": true,
+          "identity": {
+            "child_uuid": "08d13ea5-5427-d620-684d-8be7b61b3dc2",
+            "epoch": 1,
+            "execute_uuid": "3e12e499-aa8f-46a1-9db2-75f8fab46728",
+            "executor_session": "24969278-f2c4-4843-bfc4-b8b6bbd93852",
+            "fm_session": "df1b2957-126f-42d2-a5bc-243c3d510ca9",
+            "frame": "map",
+            "generation": 1,
+            "geometry_revision": "t3a-geometry",
+            "map_revision": "t3a-map",
+            "path_hash": "41b72b9c3ec31198951aec659b118937b8c35c5ed2707d27a0546fddd768694a",
+            "permit_id": "f04d0a8c-919d-53c1-9a40-5dc44ec60fb2",
+            "robot_id": "robot_beta",
+            "task_id": "t3a-robot_alpha"
+          },
+          "movement_authorized": false,
+          "native_status": {
+            "command_sha256": "dd4da85c89f9d66340d42b815dd04a9b6875bc2758b1563221aa9e0794e68530",
+            "context_sha256": "06b95fdb0f5bf8db7139fe8538b5bcabf5f3f261d962c9bf96f5acc70c029f66",
+            "generation": 1,
+            "movement_authorized": false,
+            "operation": "INSTALL_ZERO",
+            "ownership_release": false,
+            "permit_id": "f04d0a8c-919d-53c1-9a40-5dc44ec60fb2",
+            "receiver_session": "a51742d9dd5d4f2a6349c8d87392f7d31469f85d79b454c31752c0d4cc7dbe38",
+            "receiver_state": "ACTIVE",
+            "report_sequence": 1420,
+            "robot_id": "robot_beta",
+            "sequence": 1,
+            "source_session": "df1b2957-126f-42d2-a5bc-243c3d510ca9",
+            "steady_ns": 433373304447,
+            "ticket": "d9853447a8188f4d241db14b8fbcbcf782cb8e8bc27423f328f593219775f394",
+            "verified_steady_ns": 433362040780
+          },
+          "native_verified": true,
+          "ownership_release": false,
+          "physical_stop": "UNKNOWN",
+          "receiver_live_now": "UNKNOWN",
+          "status": "NATIVE_ZERO_VERIFIED",
+          "transfer_id": "native-transfer:dbb9e56a1adf6573:53622c82-809e-5acd-8e54-de88b73f1de0"
+        }
+      ],
+      "source": "Real FM COMMIT/Outbox; actual native signed status"
+    },
+    "fm_loss": {
+      "accepted": 2,
+      "actuator_session": "a51742d9dd5d4f2a6349c8d87392f7d31469f85d79b454c31752c0d4cc7dbe38",
+      "inhibited_command_sha256": "",
+      "inhibition_reason": "",
+      "joint_commands": [
+        [
+          0.0
+        ],
+        [
+          0.0
+        ]
+      ],
+      "movement_authorized": false,
+      "native_status": {
+        "body": "{\"command_sha256\":\"eceaf05e42a7eb77356df692ada08bba368d444c05e6d8515035e6630341fe44\",\"context_sha256\":\"06b95fdb0f5bf8db7139fe8538b5bcabf5f3f261d962c9bf96f5acc70c029f66\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"f04d0a8c-919d-53c1-9a40-5dc44ec60fb2\",\"receiver_session\":\"a51742d9dd5d4f2a6349c8d87392f7d31469f85d79b454c31752c0d4cc7dbe38\",\"receiver_state\":\"TIMED_OUT\",\"report_sequence\":1476,\"robot_id\":\"robot_beta\",\"sequence\":2,\"source_session\":\"df1b2957-126f-42d2-a5bc-243c3d510ca9\",\"steady_ns\":433653495822,\"ticket\":\"6c74d99fa44ee7046f14c9758974383a363490f0fe8b980d36bd8c01e63403b3\",\"verified_steady_ns\":433400254405}",
+        "mac": "4a88c1fdea87e4451d784f916320b9c7a7931d17e9fb9a3782125f661cde43d5"
+      },
+      "ownership_release": false,
+      "reason": "ACCEPTED_ZERO",
+      "receipt_steady_ns": 433400254405,
+      "rejected": 0,
+      "sequence": 2,
+      "sim_ns": 7380000000,
+      "state": "TIMED_OUT",
+      "steady_ns": 433653495822,
+      "target_angular": 0.0,
+      "target_linear": 0.0,
+      "ticket": "6c74d99fa44ee7046f14c9758974383a363490f0fe8b980d36bd8c01e63403b3"
+    },
+    "health_validation": {
+      "actual_robot": "robot_beta",
+      "health": {
+        "robot_id": "robot_beta",
+        "observations_current": false,
+        "reasons": [
+          "INVALID_HEALTH:Symmetric PSD planar covariance required",
+          "NATIVE_LEASE_NOT_ACTIVE",
+          "STALE_OR_UNKNOWN:amcl"
+        ],
+        "source_ages": {
+          "clock": {
+            "current": true,
+            "receipt_age_sec": 0.0023010829999634552,
+            "source_age_sec": 0.005,
+            "rejected": null,
+            "source_id": "0110d8cf7f9288d28f5359de000015030000000000000000",
+            "source_stamp_ns": 7425000000
+          },
+          "odometry": {
+            "current": true,
+            "receipt_age_sec": 0.013031624999996438,
+            "source_age_sec": 0.01,
+            "rejected": null,
+            "source_id": "011087bdcf70f97230982880000016030000000000000000",
+            "source_stamp_ns": 7420000000
+          },
+          "tf": {
+            "current": true,
+            "receipt_age_sec": 0.0,
+            "source_age_sec": 0.01,
+            "rejected": null,
+            "source_id": "01109f9cd81a445cec73feff00001a030000000000000000|0110a5627416ded25bd4a60d000025030000000000000000|01109f9cd81a445cec73feff00001a030000000000000000|0110a5627416ded25bd4a60d000025030000000000000000",
+            "source_stamp_ns": 7420000000
+          },
+          "amcl": {
+            "current": false,
+            "receipt_age_sec": 3.514010417999998,
+            "source_age_sec": 7.23,
+            "rejected": null,
+            "source_id": "0110a5627416ded25bd4a60d000028030000000000000000",
+            "source_stamp_ns": 200000000
+          },
+          "robot_status": {
+            "current": true,
+            "receipt_age_sec": 4.716699999107732e-05,
+            "source_age_sec": 0.0,
+            "rejected": null,
+            "source_id": "0110219720be99ebd8fe926c000030030000000000000000",
+            "source_stamp_ns": 7430000000
+          },
+          "native": {
+            "current": true,
+            "receipt_age_sec": 0.01240158299998484,
+            "source_age_sec": 0.01,
+            "rejected": null,
+            "source_id": "a51742d9dd5d4f2a6349c8d87392f7d31469f85d79b454c31752c0d4cc7dbe38",
+            "source_stamp_ns": 7420000000
+          },
+          "lifecycle:amcl": {
+            "current": true,
+            "receipt_age_sec": 0.25328841699996474,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_beta/amcl/get_state",
+            "source_stamp_ns": null
+          },
+          "lifecycle:controller_server": {
+            "current": true,
+            "receipt_age_sec": 0.25328841699996474,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_beta/controller_server/get_state",
+            "source_stamp_ns": null
+          },
+          "lifecycle:planner_server": {
+            "current": true,
+            "receipt_age_sec": 0.25328841699996474,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_beta/planner_server/get_state",
+            "source_stamp_ns": null
+          },
+          "lifecycle:bt_navigator": {
+            "current": true,
+            "receipt_age_sec": 0.25328841699996474,
+            "source_age_sec": null,
+            "rejected": null,
+            "source_id": "robot_beta/bt_navigator/get_state",
+            "source_stamp_ns": null
+          }
+        },
+        "measured": {
+          "odometry": {
+            "frame": "robot_beta/odom",
+            "child": "robot_beta/base_link",
+            "position": [
+              -2.26131023800511e-19,
+              -3.307469447504073e-36,
+              0.0
+            ],
+            "orientation": [
+              0.0,
+              0.0,
+              -7.727410350361801e-19,
+              1.0
+            ],
+            "velocity": [
+              -4.041193698096129e-19,
+              0.0,
+              1.0902334342465153e-18
+            ],
+            "pose_covariance": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "twist_covariance": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "amcl": {
+            "frame": "map",
+            "position": [
+              13.500000000000101,
+              2.74999999999996,
+              0.0
+            ],
+            "orientation": [
+              0.0,
+              0.0,
+              1.0,
+              6.123233995736766e-17
+            ],
+            "covariance": [
+              -4.884981308350792e-13,
+              4.103384299014619e-13,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              4.103384299014619e-13,
+              9.725553695716211e-14,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.3322676295501875e-15
+            ]
+          },
+          "map_pose": [
+            13.500000000000101,
+            2.74999999999996,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            6.200643129185676e-17
+          ],
+          "native": {
+            "joint_commands": [
+              [
+                0.0
+              ],
+              [
+                0.0
+              ]
+            ],
+            "native_status": {
+              "body": "{\"command_sha256\":\"eceaf05e42a7eb77356df692ada08bba368d444c05e6d8515035e6630341fe44\",\"context_sha256\":\"06b95fdb0f5bf8db7139fe8538b5bcabf5f3f261d962c9bf96f5acc70c029f66\",\"generation\":1,\"movement_authorized\":false,\"operation\":\"INSTALL_ZERO\",\"ownership_release\":false,\"permit_id\":\"f04d0a8c-919d-53c1-9a40-5dc44ec60fb2\",\"receiver_session\":\"a51742d9dd5d4f2a6349c8d87392f7d31469f85d79b454c31752c0d4cc7dbe38\",\"receiver_state\":\"TIMED_OUT\",\"report_sequence\":1484,\"robot_id\":\"robot_beta\",\"sequence\":2,\"source_session\":\"df1b2957-126f-42d2-a5bc-243c3d510ca9\",\"steady_ns\":433693403406,\"ticket\":\"6c74d99fa44ee7046f14c9758974383a363490f0fe8b980d36bd8c01e63403b3\",\"verified_steady_ns\":433400254405}",
+              "mac": "2db539c64a0f6e23a91613ef8958c29efa9c873b17d4efae670a2ef10e0e683e"
+            },
+            "sim_ns": 7420000000,
+            "target_angular": 0.0,
+            "target_linear": 0.0,
+            "update_sequence": 147,
+            "status": {
+              "command_sha256": "eceaf05e42a7eb77356df692ada08bba368d444c05e6d8515035e6630341fe44",
+              "context_sha256": "06b95fdb0f5bf8db7139fe8538b5bcabf5f3f261d962c9bf96f5acc70c029f66",
+              "generation": 1,
+              "movement_authorized": false,
+              "operation": "INSTALL_ZERO",
+              "ownership_release": false,
+              "permit_id": "f04d0a8c-919d-53c1-9a40-5dc44ec60fb2",
+              "receiver_session": "a51742d9dd5d4f2a6349c8d87392f7d31469f85d79b454c31752c0d4cc7dbe38",
+              "receiver_state": "TIMED_OUT",
+              "report_sequence": 1484,
+              "robot_id": "robot_beta",
+              "sequence": 2,
+              "source_session": "df1b2957-126f-42d2-a5bc-243c3d510ca9",
+              "steady_ns": 433693403406,
+              "ticket": "6c74d99fa44ee7046f14c9758974383a363490f0fe8b980d36bd8c01e63403b3",
+              "verified_steady_ns": 433400254405
+            }
+          },
+          "robot_status": {
+            "robot_id": "robot_beta",
+            "sequence": 9,
+            "session": "24969278-f2c4-4843-bfc4-b8b6bbd93852",
+            "epoch": 1,
+            "task_id": "t3a-robot_alpha",
+            "state": 2,
+            "phase": 1,
+            "loaded": false,
+            "pose_frame": "map",
+            "pose_stamp_ns": 7420000000
+          }
+        },
+        "derived": {
+          "linear_speed_m_s": 4.041193698096129e-19,
+          "angular_speed_rad_s": 1.0902334342465153e-18,
+          "yaw_rad": 3.141592653589793
+        },
+        "source_context_binding": "ROS sources: receipt association, no authenticated epoch/session",
+        "native_authentication": "HMAC in shared FM/native fixture trust domain",
+        "movement_eligible": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "qualification_blockers": [
+          "SOURCE_IDENTITY_UNQUALIFIED",
+          "COVARIANCE_NOT_HARD_BOUND",
+          "BRAKING_AND_DELAY_UNMEASURED",
+          "INDEPENDENT_FAIL_SAFE_UNVERIFIED",
+          "NONZERO_DISABLED"
+        ]
+      },
+      "stop_envelope": {
+        "status": "UNBOUNDED",
+        "qualified": false,
+        "movement_authorized": false,
+        "physical_stop": "UNKNOWN",
+        "ownership_release": false,
+        "tube": null,
+        "independent_fail_safe": "UNVERIFIED",
+        "reasons": [
+          "MISSING_MEASUREMENTS"
+        ],
+        "missing": [
+          "linear_deceleration_m_s2",
+          "angular_deceleration_rad_s2",
+          "linear_acceleration_m_s2",
+          "angular_acceleration_rad_s2",
+          "detection_sec",
+          "computation_sec",
+          "communication_sec",
+          "actuator_sec",
+          "position_error_m",
+          "speed_error_m_s",
+          "angular_speed_error_rad_s",
+          "margin_m",
+          "evidence_sha256"
+        ]
+      },
+      "peer_stop_assessments": {
+        "robot_alpha": {
+          "envelope": {
+            "status": "UNBOUNDED",
+            "qualified": false,
+            "movement_authorized": false,
+            "physical_stop": "UNKNOWN",
+            "ownership_release": false,
+            "tube": null,
+            "independent_fail_safe": "UNVERIFIED",
+            "reasons": [
+              "MISSING_MEASUREMENTS"
+            ],
+            "missing": [
+              "linear_deceleration_m_s2",
+              "angular_deceleration_rad_s2",
+              "linear_acceleration_m_s2",
+              "angular_acceleration_rad_s2",
+              "detection_sec",
+              "computation_sec",
+              "communication_sec",
+              "actuator_sec",
+              "position_error_m",
+              "speed_error_m_s",
+              "angular_speed_error_rad_s",
+              "margin_m",
+              "evidence_sha256"
+            ]
+          },
+          "relative_to_assignee": {
+            "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+            "movement_authorized": false
+          }
+        },
+        "robot_beta": {
+          "envelope": {
+            "status": "UNBOUNDED",
+            "qualified": false,
+            "movement_authorized": false,
+            "physical_stop": "UNKNOWN",
+            "ownership_release": false,
+            "tube": null,
+            "independent_fail_safe": "UNVERIFIED",
+            "reasons": [
+              "MISSING_MEASUREMENTS"
+            ],
+            "missing": [
+              "linear_deceleration_m_s2",
+              "angular_deceleration_rad_s2",
+              "linear_acceleration_m_s2",
+              "angular_acceleration_rad_s2",
+              "detection_sec",
+              "computation_sec",
+              "communication_sec",
+              "actuator_sec",
+              "position_error_m",
+              "speed_error_m_s",
+              "angular_speed_error_rad_s",
+              "margin_m",
+              "evidence_sha256"
+            ]
+          },
+          "relative_to_assignee": {
+            "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+            "movement_authorized": false
+          }
+        },
+        "robot_gamma": {
+          "envelope": {
+            "status": "UNBOUNDED",
+            "qualified": false,
+            "movement_authorized": false,
+            "physical_stop": "UNKNOWN",
+            "ownership_release": false,
+            "tube": null,
+            "independent_fail_safe": "UNVERIFIED",
+            "reasons": [
+              "MISSING_MEASUREMENTS"
+            ],
+            "missing": [
+              "linear_deceleration_m_s2",
+              "angular_deceleration_rad_s2",
+              "linear_acceleration_m_s2",
+              "angular_acceleration_rad_s2",
+              "detection_sec",
+              "computation_sec",
+              "communication_sec",
+              "actuator_sec",
+              "position_error_m",
+              "speed_error_m_s",
+              "angular_speed_error_rad_s",
+              "margin_m",
+              "evidence_sha256"
+            ]
+          },
+          "relative_to_assignee": {
+            "status": "UNKNOWN_RELATIVE_OCCUPANCY",
+            "movement_authorized": false
+          }
+        }
+      },
+      "reservation_assessment": {
+        "status": "UNKNOWN_STOP_TUBE",
+        "movement_authorized": false
+      },
+      "motion_authorized": false
+    },
+    "fm_restart": {
+      "exit_code": 1,
+      "scenario_reset_required": true
+    }
+  },
+  "native_samples": {
+    "robot_alpha": 230,
+    "robot_beta": 222,
+    "robot_gamma": 197
+  },
+  "max_stationary_displacement_m": {
+    "robot_alpha": 4.247091835718432e-11,
+    "robot_beta": 4.247091567322059e-11,
+    "robot_gamma": 4.247091567322059e-11
+  },
+  "native_library_sha256": "4237efaf5f454bfde0e236969fcd02b2ce0cdec0aa12d763499d3699e84ec6bb",
+  "movement_authorized": false,
+  "physical_stop": "UNKNOWN",
+  "ownership_release": false
+}

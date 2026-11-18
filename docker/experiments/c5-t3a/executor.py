@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 import signal
+import time
 
 import rclpy
 from rclpy.parameter import Parameter
@@ -14,13 +15,27 @@ from fleet_robot_executor.native_zero import NativeZeroLink
 import yaml
 
 
+def wait_initial_readiness(output, *, timeout=15., clock=time.monotonic, sleep=time.sleep):
+    """Initial fixture admission only. Never unblocks a restarted Executor."""
+    assert (output/'reset-verified.json').is_file()
+    deadline=clock()+timeout
+    while True:
+        try:
+            current=json.loads((output/'startup-readiness.json').read_text())
+            if current.get('current_status')=='READY':return current
+        except (FileNotFoundError,json.JSONDecodeError):pass
+        if clock()>=deadline:raise TimeoutError('Current readiness required for initial Executor admission')
+        sleep(.05)
+
+
 def main():
     p=argparse.ArgumentParser();p.add_argument('profile',type=Path);p.add_argument('output',type=Path)
     p.add_argument('robot');p.add_argument('--initial',action='store_true');p.add_argument('--replan',action='store_true')
     args=p.parse_args();cfg=load_config(args.profile);robot=next(r for r in cfg.robots if r.id==args.robot)
     if args.initial:
-        assert (args.output/'reset-verified.json').is_file()
-        assert json.loads((args.output/'startup-readiness.json').read_text())['current_status']=='READY'
+        proof=wait_initial_readiness(args.output)
+        (args.output/(robot.id+'-initial-admission.json')).write_text(json.dumps(dict(
+            observed_monotonic=time.monotonic(),current_readiness=proof),indent=2)+'\n')
     # Initial reset proof is never reused to unblock a restarted Executor.
     settings=json.loads(Path('config/simulation-c3-3-3.json').read_text())
     params=yaml.safe_load((args.output/'generated'/('nav2-'+robot.id+'.yaml')).read_text())

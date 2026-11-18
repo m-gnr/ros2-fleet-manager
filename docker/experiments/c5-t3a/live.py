@@ -28,14 +28,14 @@ sys.path.insert(0,str(ROOT/'docker/simulation-common'))
 from live_processes import bridge_executable
 
 
-def main():
+def main(*, extra_cases=(), observer_factory=None, fault_handler=None, case_validator=None, world_path=None):
     p=argparse.ArgumentParser();p.add_argument('profile',type=Path);p.add_argument('output',type=Path)
     p.add_argument('--case',choices=['negative','replan','executor-loss','bridge-loss','fm-loss',
-                                  'startup-missing','startup-delayed'],required=True)
+                                  'startup-missing','startup-delayed',*extra_cases],required=True)
     args=p.parse_args();args.profile=args.profile.resolve();args.output=args.output.resolve()
     args.output.mkdir(parents=True,exist_ok=False);cfg=load_config(args.profile)
     database=Path('/tmp')/('t3a-'+str(uuid4())+'.sqlite3')
-    children=[];expected_dead=set();node=None;native_log=None
+    children=[];expected_dead=set();node=None;native_log=None;probe=None
     states={};history=defaultdict(list);positions=defaultdict(list);publishers={};cases={}
     def launch(name,command):
         with (args.output/(name+'.log')).open('w') as log:
@@ -44,6 +44,7 @@ def main():
     def pump(seconds=.01):
         if node:rclpy.spin_once(node,timeout_sec=seconds)
         else:time.sleep(seconds)
+        if probe:probe.tick()
     def until(predicate,seconds=12.):
         end=time.monotonic()+seconds
         while time.monotonic()<end:
@@ -113,7 +114,7 @@ def main():
                 return
         raise AssertionError('Native did not reject '+kind+' as '+expected)
     try:
-        simulation=launch('simulation',[sys.executable,str(Path(__file__).with_name('world.py')),str(args.profile),str(args.output/'generated'),'routes'])
+        simulation=launch('simulation',[sys.executable,str(world_path or Path(__file__).with_name('world.py')),str(args.profile),str(args.output/'generated'),'routes'])
         observer=launch('observer',[sys.executable,'docker/simulation-warehouse-grid/stage1_observer.py',str(args.profile),
                                   str(args.output),'--database',str(database)])
         def ready():
@@ -131,6 +132,7 @@ def main():
         (args.output/'native-loaded-mappings.json').write_text(json.dumps(mappings,indent=2)+'\n')
         rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
         node=rclpy.create_node('t3a_independent_native_probe',parameter_overrides=[Parameter('use_sim_time',value=True)])
+        if observer_factory:probe=observer_factory(node,cfg,args,database)
         native_log=gzip.open(args.output/'native.jsonl.gz','wt')
         def record(rid,msg):
             value=strict(msg.data);states[rid]=value;history[rid].append(value)
@@ -140,7 +142,7 @@ def main():
             return [sys.executable,str(Path(__file__).with_name('executor.py')),str(args.profile),str(args.output),
                     robot.id,'--initial']+(['--replan'] if args.case=='replan' else [])
         for robot in cfg.robots:
-            node.create_subscription(String,robot.namespace+'/native_actuator',lambda m,r=robot.id:record(r,m),16)
+            node.create_subscription(String,robot.namespace+'/native_actuator',lambda m,r=robot.id:record(r,m),1)
             node.create_subscription(PoseStamped,robot.namespace+'/physical_pose',
                 lambda m,r=robot.id:positions[r].append((m.pose.position.x,m.pose.position.y)),qos_profile_sensor_data)
             publishers[robot.id]=node.create_publisher(String,robot.namespace+'/authorized_zero',16)
@@ -196,7 +198,11 @@ def main():
         until(lambda:(args.output/'release-response.json').exists())
         assert json.loads((args.output/'release-response.json').read_text())['reason']=='RELEASE_THRESHOLDS_UNVERIFIED'
         cases['real_permit_native_ack']=dict(records=initial_acks,source='Real FM COMMIT/Outbox; actual native signed status')
-        if args.case=='replan':
+        controls=dict(args=args,node=node,probe=probe,until=until,pump=pump,states=states,
+                      robot=first,config=cfg,cases=cases,children=children)
+        if args.case in extra_cases:
+            cases['health_faults']=fault_handler(args.case,controls)
+        elif args.case=='replan':
             until(lambda:any(a['status']=='NATIVE_ZERO_REVOKED' for a in acks()))
             until(lambda:states[first.id]['state']=='BLOCKED_REARM')
             old=states[first.id]['accepted'];publishers[first.id].publish(String(data=sign(first_transfer['body'],load_key('/run/c5-b6b7/'+first.id+'.json'))))
@@ -232,6 +238,7 @@ def main():
             stop_child('manager',manager,signal.SIGKILL)
             until(lambda:states[first.id]['state']=='TIMED_OUT')
             cases['fm_loss']=deepcopy(states[first.id])
+        if case_validator:cases['health_validation']=case_validator(args.case,controls)
         # Restarting the actual manager with the same durable DB must fail closed.
         if manager.poll() is None:stop_child('manager',manager,signal.SIGINT)
         expected_dead.add('manager_restart')
@@ -257,9 +264,23 @@ def main():
             movement_authorized=False,physical_stop='UNKNOWN',ownership_release=False)
         (args.output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
     finally:
+        if probe:probe.close()
         if native_log:native_log.close()
-        exits={}
-        for name,child in reversed(children):
+        exits={};bridge_quiesced=False
+        def shutdown_priority(item):
+            name=item[0]
+            if name.startswith('manager'):return 0
+            if name.startswith('executor'):return 1
+            if name.startswith('battery'):return 2
+            if 'bridge' in name:return 3
+            if name=='observer':return 4
+            return 5
+        # Stop the zero-command producers before their transport. Keeping a
+        # bridge alive is not permission renewal or physical release evidence.
+        for name,child in sorted(reversed(children),key=shutdown_priority):
+            if 'bridge' in name and not bridge_quiesced:
+                if cfg.fleet.perception_safety:time.sleep(cfg.fleet.perception_safety.transport_sec)
+                bridge_quiesced=True
             if child.poll() is None:child.send_signal(signal.SIGTERM if name=='simulation' else signal.SIGINT)
             try:child.wait(timeout=50 if name=='simulation' else 10)
             except subprocess.TimeoutExpired:child.kill();child.wait();exits[name+'_forced']=True

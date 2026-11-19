@@ -1,5 +1,14 @@
 # C5-B6B.3 — Yerel hareket kapısı ve actuator sınırı
 
+## 19 Kasım C5-T3C-1A eki — ayrı native işçi ve son sıfır veto
+
+[Uygulama, testler ve sınırlar](../validation/c5/c5-t3c1a-native-worker-2026-11-19.md).
+Mevcut B6B.7 doğrulayıcısı ayrı süreçte, aynı DiffDrive'ın açık deney build'inde
+tek joint yazıcısı nonblocking yerel kayıtla bağlıdır. İşçi kaybında fizik
+ilerlerken sıfır seçim ve kalıcı kapalı kilit doğrulandı. ACK native doğrulama
+olarak kalır; APPLIED veya fiziksel duruş değildir. Sağlık veto'sunun tamamı,
+kalifiye frenleme ve release açık; varsayılan launcher değişmedi.
+
 ## 18 Kasım C5-T3B eki — gerçek gözlem ve koşullu duruş hesabı
 
 **IMPLEMENTED / yalnız deneysel altyapı.** Aşağıdaki tarihsel fake interlock

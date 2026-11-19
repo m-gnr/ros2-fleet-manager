@@ -1,0 +1,18 @@
+flowchart TB
+  FM["FM / SQLite COMMIT / Outbox<br/>Mevcut T2 child ve Path bağı"] --> EX["Executor / NativeZeroLink<br/>Değişmez imzalı sıfır zarfı"]
+  EX --> BR["Mevcut ROS / IGN bridge"]
+  BR --> W["Ayrı native işçi süreci<br/>AuthorizedZero + Lease + HMAC"]
+  W -->|"İmzalı doğrulama ACK<br/>Fiziksel uygulama değildir"| FM
+  W --> IPC["Sınırlı nonblocking yerel kayıt<br/>PID / UID / boot / session / context"]
+  IPC --> V["Mevcut tek DiffDrive joint yazıcısı<br/>Yerel bilet ve komut deadline<br/>Her seçim kesin sıfır"]
+  V --> P["Tek stock Physics / DART<br/>Gerçek fizik adımı"]
+  V -. "Fizik öncesi seçilen hedef" .-> R["Ayrı salt okunur recorder<br/>Kanıt kanalı yetki vermez"]
+  P -. "Tamamlanan Update sayacı<br/>Fizik sonrası gerçek hız" .-> R
+  F["İşçi stop / kill / IPC kaybı<br/>Eski veya hatalı snapshot"] -->|"Kapalı kilit; yeniden açılma yok"| V
+  H["T3C-1B+: sağlık veto ve kalibrasyon<br/>HENÜZ TAMAMLANMADI"] -.-> V
+  S["T3C-1A deneysel sıfır zinciri<br/>Nonzero / rearm / release kapalı<br/>Varsayılan launcher dışında"]
+  S -.-> V
+  classDef closed fill:#fff1f0,stroke:#bb3333,color:#222
+  classDef planned fill:#fff6d5,stroke:#9a7615,color:#222
+  class V,F,S closed
+  class H planned

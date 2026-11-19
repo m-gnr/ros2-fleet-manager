@@ -1,5 +1,7 @@
 # Doğrulama kayıtları
 
+- [C5-T3C-1A native işçi/son sıfır veto](c5/c5-t3c1a-native-worker-2026-11-19.md) · [Komutlar](c5/c5-t3c1a-native-worker-commands-2026-11-19.md): 442 host, 154 ROS, 1 + 3 + 2 native CTest; sekiz izole durağan koşuda işçi kaybına rağmen gerçek Physics ilerlemesi. Hareketli fren, sağlık veto'sunun tamamı ve release kabulü değil.
+
 - [C5-T3C-0 duruş mimari incelemesi](c5/c5-t3c0-stop-architecture-2026-11-19.md): statik Fortress/actuator incelemesi ve 66 mevcut saf test; süreç ayrımı/tek yazıcı veto önerisi ve T3C-1 kapıları. Hareketli test veya uygulama yapılmadı.
 
 - [C5-T3B sağlık ve duruş hesabı altyapısı](c5/c5-t3b-health-stop-2026-11-18.md) · [Komutlar](c5/c5-t3b-health-stop-commands-2026-11-18.md) · [T3C planı](c5/c5-t3c-braking-plan-2026-11-18.md): 442 host, 154 ROS, 3 + 2 native CTest; 8 izole durağan fault koşusu. Kalibrasyon eksik, zarf UNBOUNDED; nonzero/varsayılan entegrasyon kapalı.

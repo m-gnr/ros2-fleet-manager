@@ -1,5 +1,7 @@
 # Mimari ve algoritma diyagramları
 
+- [C5-T3C-1A native işçi ayrımı](../validation/c5/c5-t3c1a-native-worker-2026-11-19.md): [Mermaid](src/traffic-native-worker.mmd) · [SVG](svg/traffic-native-worker.svg). Sıfır işçi/tek yazıcı IMPLEMENTED; tam sağlık veto ve fiziksel fren UNVERIFIED, varsayılan kapalı.
+
 - [C5-T3B sağlık ve duruş altyapısı](../validation/c5/c5-t3b-health-stop-2026-11-18.md): [Mermaid](src/traffic-health-stop.mmd) · [SVG](svg/traffic-health-stop.svg). Gerçek gözlem/koşullu hesap IMPLEMENTED; fiziksel bounds, kaynak kimliği ve bağımsız fren UNVERIFIED.
 
 - [C5-T3A gerçek permit → native sıfır doğrulaması](../validation/c5/c5-t3a-native-permit-2026-11-18.md): [Mermaid](src/traffic-live-permit-zero.mmd) · [SVG](svg/traffic-live-permit-zero.svg). Sıfır aktarım ve ayrı ACK IMPLEMENTED; hareketli duruş/release UNVERIFIED, varsayılan kapalı.

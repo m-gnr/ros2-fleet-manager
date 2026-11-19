@@ -1,0 +1,21 @@
+{
+  "base": "cddeacb6f9622fd4f0dd5e891da2b4135c958b23",
+  "native_build": "a5",
+  "native_sources_exact": {
+    "docker/experiments/c5-t3c1a/physics.cc": "9657889d892f4328008e4310607e45422b655edd2b5964b2cdec75eaa1e481ff",
+    "docker/experiments/c5-t3c1a/record.cc": "0eccd061f21a99262c837bae92bf23204659b9055f48abae0525a30ea2795070",
+    "docker/experiments/c5-t3c1a/server.cc": "5a34da510b76b7e415f67b9bb7f32cefa7a2bd3991df1ee382041ce41bf1f7a1",
+    "docker/experiments/c5-t3c1a/test_ipc.cc": "107bc5d872c5f66c535b5e084893caa62a7995e40b1ab8cec6ddd93c4e53bd65",
+    "docker/experiments/c5-t3c1a/worker.cc": "f27214b324f2d1165a78663ed76c47a5f850f1fc033fc23be03332ebf91d3b64",
+    "docker/experiments/c5-t3c1a/Evidence.hh": "0b92316998974116b345fac331c56ae3c4e60ba8e39cf8dabbfac4b0ff544e25",
+    "docker/experiments/c5-t3c1a/Ipc.hh": "ef3b0749e0298b554ab6316bedce7d32e0211319d775252fa26f2583ae4c6a8c",
+    "docker/experiments/c5-t3c1a/CMakeLists.txt": "a3c2e83a428c1447997f221f44061902cf3183b7f395a01a00de4d9e2a006771",
+    "docker/experiments/c5-b6b5/DiffDrive.cc": "603519a41418ec7c606ed4ce12ef0025a22f2a970edebcd0864b98f9533e5499"
+  },
+  "runtime_source_sha256": {
+    "docker/experiments/c5-t3c1a/world.py": "76525979dcd7ddb3935c8f504be8a0abbcb81cd08c7c61621c8dd4d475c6ef53",
+    "docker/experiments/c5-t3c1a/audit.py": "1d7ac7a901d49d8692e68f7bfe35bf386181b7dd123ca59f6cb495011879cc37",
+    "docker/experiments/c5-t3c1a/live.py": "abc1307527c41b95b4f42a6535fd8bb1a53682ad850442b7b8733b609660b0f9"
+  },
+  "first_second_matrix_change": "--- \n+++ \n@@ -100,7 +100,7 @@\n         for path in Path('/proc').glob('[0-9]*/maps'):\n             try:lines=path.read_text().splitlines()\n             except (OSError,PermissionError):continue\n-            loaded=[line for line in lines if '/b6b7-native/' in line or 'ignition-gazebo-physics-system.so' in line or 'dartsim-plugin.so' in line]\n+            loaded=[line for line in lines if '/b6b7-native/' in line or 'physics-system.so' in line or 'dartsim-plugin.so' in line]\n             if loaded:mappings.append(dict(pid=int(path.parent.name),mappings=loaded))\n         save('loaded-mappings.json',mappings)\n         gazebo=next(m['pid'] for m in mappings if any('libc5-authorized-zero-drive.so' in v for v in m['mappings']))\n"
+}

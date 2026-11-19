@@ -20,6 +20,14 @@
 #ifdef C5_AUTH_ZERO_ONLY
 #include "../c5-b6b7/AuthorizedZero.hh"
 #endif
+#ifdef C5_SPLIT_ZERO_ONLY
+#include "../c5-t3c1a/Ipc.hh"
+#include "../c5-t3c1a/Evidence.hh"
+#include <gz/sim/components/JointVelocity.hh>
+#include <gz/sim/components/Pose.hh>
+#include <gz/sim/components/LinearVelocity.hh>
+#include <gz/sim/components/AngularVelocity.hh>
+#endif
 
 #include <gz/msgs/odometry.pb.h>
 #include <gz/msgs/stringmsg.pb.h>
@@ -72,6 +80,14 @@ class ignition::gazebo::systems::DiffDrivePrivate
 #ifdef C5_AUTH_ZERO_ONLY
   public: void OnAuthorizedZero(const msgs::StringMsg &_msg);
   public: std::unique_ptr<c5_test::AuthorizedZero> authorization;
+#endif
+
+#ifdef C5_SPLIT_ZERO_ONLY
+  public: std::unique_ptr<c5_split::Veto> veto;
+  public: c5_split::Request splitRecord{};
+  public: int traceFd{-1};
+  public: std::chrono::steady_clock::time_point lastTrace{};
+  public: double tracePeriod{};
 #endif
 
   /// \brief Callback for enable/disable subscription
@@ -191,9 +207,11 @@ void DiffDrive::Configure(const Entity &_entity,
   this->dataPtr->model = Model(_entity);
   this->dataPtr->timeout = _sdf->Get<double>("velocity_command_timeout", 0.25).first;
   this->dataPtr->actuatorStateTopic = _sdf->Get<std::string>("actuator_state_topic", "").first;
+  #ifndef C5_SPLIT_ZERO_ONLY
   if (!this->dataPtr->actuatorStateTopic.empty())
     this->dataPtr->actuatorStatePub = this->dataPtr->node.Advertise<msgs::StringMsg>(
         this->dataPtr->actuatorStateTopic);
+  #endif
   if (!std::isfinite(this->dataPtr->timeout) || this->dataPtr->timeout <= 0)
     throw std::invalid_argument("velocity_command_timeout must be positive and finite");
 #ifdef C5_AUTH_ZERO_ONLY
@@ -203,6 +221,16 @@ void DiffDrive::Configure(const Entity &_entity,
     _sdf->Get<std::string>("authorization_file"), std::chrono::steady_clock::now());
 #endif
 
+#ifdef C5_SPLIT_ZERO_ONLY
+  this->dataPtr->veto=std::make_unique<c5_split::Veto>(
+    _sdf->Get<int>("split_fd"),c5_split::field(_sdf->Get<std::string>("writer_boot")),
+    _sdf->Get<int>("worker_pid"),_sdf->Get<double>("ticket_sec"),_sdf->Get<double>("lease_sec"));
+  this->dataPtr->traceFd=_sdf->Get<int>("trace_fd");
+  this->dataPtr->tracePeriod=_sdf->Get<double>("trace_period_sec");
+  if(fcntl(this->dataPtr->traceFd,F_GETFL)<0||!(fcntl(this->dataPtr->traceFd,F_GETFL)&O_NONBLOCK)||
+      !std::isfinite(this->dataPtr->tracePeriod)||this->dataPtr->tracePeriod<=0)
+    throw std::invalid_argument("Nonblocking trace and explicit profile period required");
+#endif
   // Get the canonical link
   std::vector<Entity> links = _ecm.ChildrenByComponents(
       this->dataPtr->model.Entity(), components::CanonicalLink());
@@ -365,6 +393,7 @@ void DiffDrive::Configure(const Entity &_entity,
   this->dataPtr->odom.SetWheelParams(this->dataPtr->wheelSeparation,
       this->dataPtr->wheelRadius, this->dataPtr->wheelRadius);
 
+  #ifndef C5_SPLIT_ZERO_ONLY
   // Subscribe to commands
   std::vector<std::string> topics;
   if (_sdf->HasElement("topic"))
@@ -392,6 +421,7 @@ void DiffDrive::Configure(const Entity &_entity,
     this->dataPtr->node.Subscribe(enableTopic, &DiffDrivePrivate::OnEnable,
         this->dataPtr.get());
   }
+  #endif
   this->dataPtr->enabled = true;
 
   std::vector<std::string> odomTopics;
@@ -403,15 +433,19 @@ void DiffDrive::Configure(const Entity &_entity,
       "/odometry");
   auto odomTopic = validTopic(odomTopics);
 
+  #ifndef C5_SPLIT_ZERO_ONLY
   this->dataPtr->odomPub = this->dataPtr->node.Advertise<msgs::Odometry>(
       odomTopic);
+  #endif
 
   std::string tfTopic{"/model/" + this->dataPtr->model.Name(_ecm) +
     "/tf"};
   if (_sdf->HasElement("tf_topic"))
     tfTopic = _sdf->Get<std::string>("tf_topic");
+  #ifndef C5_SPLIT_ZERO_ONLY
   this->dataPtr->tfPub = this->dataPtr->node.Advertise<msgs::Pose_V>(
       tfTopic);
+  #endif
 
   if (_sdf->HasElement("frame_id"))
     this->dataPtr->sdfFrameId = _sdf->Get<std::string>("frame_id");
@@ -419,8 +453,10 @@ void DiffDrive::Configure(const Entity &_entity,
   if (_sdf->HasElement("child_frame_id"))
     this->dataPtr->sdfChildFrameId = _sdf->Get<std::string>("child_frame_id");
 
+  #ifndef C5_SPLIT_ZERO_ONLY
   ignmsg << "DiffDrive subscribing to twist messages on [" << topic << "]"
          << std::endl;
+  #endif
 }
 
 //////////////////////////////////////////////////
@@ -428,6 +464,16 @@ void DiffDrive::PreUpdate(const UpdateInfo &_info,
     EntityComponentManager &_ecm)
 {
   IGN_PROFILE("DiffDrive::PreUpdate");
+#ifdef C5_SPLIT_ZERO_ONLY
+  this->dataPtr->veto->Step(std::chrono::steady_clock::now(),_info.simTime.count());
+  this->dataPtr->targetVel.Clear();this->dataPtr->leftJointSpeed=0;this->dataPtr->rightJointSpeed=0;
+  auto & proof=this->dataPtr->splitRecord;
+  proof.iteration=_info.iterations;proof.sim_ns=_info.simTime.count();
+  proof.reason=uint32_t(this->dataPtr->veto->reason);proof.latched=this->dataPtr->veto->latched;
+  proof.accepted=this->dataPtr->veto->accepted;proof.rejected=this->dataPtr->veto->rejected;
+  proof.command=this->dataPtr->veto->lastCommand;proof.boot=this->dataPtr->veto->boot;
+  proof.native_session=this->dataPtr->veto->session;proof.context=this->dataPtr->veto->context;proof.body=this->dataPtr->veto->body;
+#else
   {
     std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 #ifdef C5_AUTH_ZERO_ONLY
@@ -440,6 +486,7 @@ void DiffDrive::PreUpdate(const UpdateInfo &_info,
     this->dataPtr->rightJointSpeed = 0;
   }
 
+  #endif
   // \TODO(anyone) Support rewind
   if (_info.dt < std::chrono::steady_clock::duration::zero())
   {
@@ -540,6 +587,16 @@ void DiffDrive::PreUpdate(const UpdateInfo &_info,
     }
   }
 
+#ifdef C5_SPLIT_ZERO_ONLY
+  auto & proof2=this->dataPtr->splitRecord;
+  proof2.selected[0]=this->dataPtr->leftJointSpeed;proof2.selected[1]=this->dataPtr->rightJointSpeed;
+  for(auto joint:{this->dataPtr->leftJoints[0],this->dataPtr->rightJoints[0]})
+    if(!_ecm.Component<components::JointVelocity>(joint))_ecm.CreateComponent(joint,components::JointVelocity());
+  auto link=this->dataPtr->canonicalLink.Entity();
+  if(!_ecm.Component<components::WorldPose>(link))_ecm.CreateComponent(link,components::WorldPose());
+  if(!_ecm.Component<components::WorldLinearVelocity>(link))_ecm.CreateComponent(link,components::WorldLinearVelocity());
+  if(!_ecm.Component<components::WorldAngularVelocity>(link))_ecm.CreateComponent(link,components::WorldAngularVelocity());
+#endif
   // Create the left and right side joint position components if they
   // don't exist.
   auto leftPos = _ecm.Component<components::JointPosition>(
@@ -570,6 +627,30 @@ void DiffDrive::PostUpdate(const UpdateInfo &_info,
 
   this->dataPtr->UpdateVelocity(_info, _ecm);
   this->dataPtr->UpdateOdometry(_info, _ecm);
+#ifdef C5_SPLIT_ZERO_ONLY
+  if(this->dataPtr->leftJoints.empty()||this->dataPtr->rightJoints.empty())return;
+  auto & record=this->dataPtr->splitRecord;
+  const auto steps=_ecm.Component<c5_split::PhysicsSteps>(worldEntity(_ecm));
+  record.physics_steps=steps?steps->Data():0;
+  const auto pose=_ecm.Component<components::WorldPose>(this->dataPtr->canonicalLink.Entity());
+  if(pose){record.position[0]=pose->Data().Pos().X();record.position[1]=pose->Data().Pos().Y();record.position[2]=pose->Data().Pos().Z();}
+  const auto linear=_ecm.Component<components::WorldLinearVelocity>(this->dataPtr->canonicalLink.Entity());
+  const auto angular=_ecm.Component<components::WorldAngularVelocity>(this->dataPtr->canonicalLink.Entity());
+  record.actual_velocity_known=linear&&angular;size_t index=0;
+  if(linear&&angular){for(int axis=0;axis<3;++axis){record.body_velocity[axis]=linear->Data()[axis];record.body_velocity[axis+3]=angular->Data()[axis];}}
+  for(auto joint:{this->dataPtr->leftJoints[0],this->dataPtr->rightJoints[0]}){
+    auto velocity=_ecm.Component<components::JointVelocity>(joint);
+    if(!velocity||velocity->Data().size()!=1)record.actual_velocity_known=0;
+    else record.joint_velocity[index]=velocity->Data()[0];++index;
+  }
+  const auto now=std::chrono::steady_clock::now();record.steady_ns=now.time_since_epoch().count();
+  this->dataPtr->veto->Send(record,now);
+  if(now-this->dataPtr->lastTrace>=c5_split::Veto::duration(this->dataPtr->tracePeriod)){
+    // No logging, JSON, transport publication, locks or waits on the physics thread.
+    (void)send(this->dataPtr->traceFd,&record,sizeof(record),MSG_DONTWAIT|MSG_NOSIGNAL);
+    this->dataPtr->lastTrace=now;
+  }
+#endif
 }
 
 //////////////////////////////////////////////////
@@ -611,6 +692,11 @@ void DiffDrivePrivate::UpdateOdometry(const UpdateInfo &_info,
   }
   this->lastOdomPubTime = _info.simTime;
 
+#ifdef C5_SPLIT_ZERO_ONLY
+  auto & record=this->splitRecord;record.odom_sim_ns=_info.simTime.count();
+  record.odom[0]=this->odom.X();record.odom[1]=this->odom.Y();record.odom[2]=*this->odom.Heading();
+  record.odom[3]=this->odom.LinearVelocity();record.odom[4]=*this->odom.AngularVelocity();
+#else
   // Construct the odometry message and publish it.
   msgs::Odometry msg;
   msg.mutable_pose()->mutable_position()->set_x(this->odom.X());
@@ -665,6 +751,7 @@ void DiffDrivePrivate::UpdateOdometry(const UpdateInfo &_info,
   // Publish the messages
   this->odomPub.Publish(msg);
   this->tfPub.Publish(tfMsg);
+#endif
 }
 
 //////////////////////////////////////////////////
@@ -672,6 +759,9 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
     const EntityComponentManager &_ecm)
 {
   IGN_PROFILE("DiffDrive::UpdateVelocity");
+#ifdef C5_SPLIT_ZERO_ONLY
+  this->targetVel.Clear();this->leftJointSpeed=0;this->rightJointSpeed=0;return;
+#endif
 
   double linVel;
   double angVel;
@@ -763,7 +853,7 @@ void DiffDrivePrivate::UpdateVelocity(const UpdateInfo &_info,
 void DiffDrivePrivate::OnCmdVel(const msgs::Twist &_msg)
 {
   std::lock_guard<std::mutex> lock(this->mutex);
-#ifdef C5_AUTH_ZERO_ONLY
+#if defined(C5_AUTH_ZERO_ONLY) || defined(C5_SPLIT_ZERO_ONLY)
   // Defense in depth: even an accidental direct call cannot refresh the lease.
   (void)_msg;
   this->targetVel.Clear();
@@ -816,7 +906,9 @@ IGNITION_ADD_PLUGIN(DiffDrive,
                     DiffDrive::ISystemPreUpdate,
                     DiffDrive::ISystemPostUpdate)
 
-#ifdef C5_AUTH_ZERO_ONLY
+#ifdef C5_SPLIT_ZERO_ONLY
+IGNITION_ADD_PLUGIN_ALIAS(DiffDrive, "c5::test::SplitZeroDiffDrive")
+#elif defined(C5_AUTH_ZERO_ONLY)
 IGNITION_ADD_PLUGIN_ALIAS(DiffDrive, "c5::test::AuthorizedZeroDiffDrive")
 #else
 IGNITION_ADD_PLUGIN_ALIAS(DiffDrive, "gz::sim::systems::DiffDrive")

@@ -1,0 +1,136 @@
+{
+  "result": "PASS_OFFLINE_CROSS_STAGE_AUDIT",
+  "cases": [
+    {
+      "run": "worker-stop-final3",
+      "domain": 204,
+      "robot_id": "robot_gamma",
+      "reason": "TIMEOUT",
+      "physics_before": 1423,
+      "physics_while_fault": 1506,
+      "writer_samples": {
+        "robot_alpha": 150,
+        "robot_beta": 150,
+        "robot_gamma": 151
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "worker-kill-final3",
+      "domain": 205,
+      "robot_id": "robot_alpha",
+      "reason": "TIMEOUT",
+      "physics_before": 1497,
+      "physics_while_fault": 1573,
+      "writer_samples": {
+        "robot_alpha": 157,
+        "robot_beta": 156,
+        "robot_gamma": 158
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "ipc-loss-final3",
+      "domain": 206,
+      "robot_id": "robot_gamma",
+      "reason": "TIMEOUT",
+      "physics_before": 1535,
+      "physics_while_fault": 1607,
+      "writer_samples": {
+        "robot_alpha": 162,
+        "robot_beta": 162,
+        "robot_gamma": 161
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "duplicate-final3",
+      "domain": 207,
+      "robot_id": "robot_alpha",
+      "reason": "REPLAY",
+      "physics_before": 1395,
+      "physics_while_fault": 1427,
+      "writer_samples": {
+        "robot_alpha": 144,
+        "robot_beta": 144,
+        "robot_gamma": 144
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "wrong-context-final3",
+      "domain": 208,
+      "robot_id": "robot_alpha",
+      "reason": "CONTEXT",
+      "physics_before": 1310,
+      "physics_while_fault": 1342,
+      "writer_samples": {
+        "robot_alpha": 135,
+        "robot_beta": 134,
+        "robot_gamma": 134
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "wrong-session-final3",
+      "domain": 209,
+      "robot_id": "robot_alpha",
+      "reason": "SESSION",
+      "physics_before": 1455,
+      "physics_while_fault": 1487,
+      "writer_samples": {
+        "robot_alpha": 148,
+        "robot_beta": 149,
+        "robot_gamma": 149
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "corrupt-final3",
+      "domain": 210,
+      "robot_id": "robot_alpha",
+      "reason": "MALFORMED",
+      "physics_before": 1470,
+      "physics_while_fault": 1503,
+      "writer_samples": {
+        "robot_alpha": 152,
+        "robot_beta": 152,
+        "robot_gamma": 151
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    },
+    {
+      "run": "delayed-final3",
+      "domain": 211,
+      "robot_id": "robot_alpha",
+      "reason": "TIMEOUT",
+      "physics_before": 1533,
+      "physics_while_fault": 1618,
+      "writer_samples": {
+        "robot_alpha": 164,
+        "robot_beta": 164,
+        "robot_gamma": 164
+      },
+      "source_assignment_and_body_match": true,
+      "mac_reauthenticated_offline": false,
+      "mac_verified_by_live_probe": true
+    }
+  ],
+  "movement_authorized": false,
+  "physical_stop": "UNKNOWN",
+  "ownership_release": false
+}

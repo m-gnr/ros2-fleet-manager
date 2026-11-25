@@ -1,0 +1,104 @@
+{
+  "sonuç": "GEÇTİ",
+  "BAŞLANGIÇ_SHA": "73166da1a0569155eadc318fcfb3993ed0a7ab00",
+  "profil": "config/fleet.warehouse-30x18.yaml",
+  "oturum": "c5-demo-20261125T171850Z-2a7c4ebdab69",
+  "domain": 214,
+  "yerel_grid": {
+    "yönler": {
+      "robot_beta": {
+        "grids_in_motion": 19,
+        "peer_in_window": 19,
+        "verified": 19
+      },
+      "robot_alpha": {
+        "grids_in_motion": 19,
+        "peer_in_window": 19,
+        "verified": 19
+      }
+    },
+    "eşzamanlı_grid_çifti": 19,
+    "en_büyük_grid_fark_ms": 15.0,
+    "karşılaşma_sim_s": [
+      [
+        147.1175,
+        157.675
+      ]
+    ]
+  },
+  "minimum_merkez_mesafesi_m": 0.971932,
+  "minimum_damgası_sim_s": 147.875,
+  "üçlü_öteleme_sim_s": [
+    [
+      146.79,
+      147.14
+    ],
+    [
+      147.35,
+      158.025
+    ]
+  ],
+  "hareketler": {
+    "delivery": {
+      "robot": "robot_gamma",
+      "öteleme_sim_s": [
+        101.57,
+        267.715
+      ]
+    },
+    "park": {
+      "robot": "robot_beta",
+      "öteleme_sim_s": [
+        122.185,
+        158.025
+      ]
+    },
+    "charge": {
+      "robot": "robot_alpha",
+      "öteleme_sim_s": [
+        146.79,
+        181.65
+      ]
+    }
+  },
+  "teslimat": {
+    "durum": "COMPLETED",
+    "completed_epoch": 1,
+    "bitiş_sim_s": 270.445
+  },
+  "park": {
+    "istasyon": "park_2",
+    "durum": "ARRIVED"
+  },
+  "şarj": {
+    "istasyon": "dock_6",
+    "is_charging": true,
+    "ilk_sim_s": 181.98
+  },
+  "robot_teması": 0,
+  "terminal_nav2_abort": 0,
+  "güncellik_örnek_sayıları": {
+    "robot_status_stale": 0,
+    "panel_pose_stale": 10,
+    "panel_unavailable": 10,
+    "tf_probe_not_live": 0,
+    "costmap_not_current": 96
+  },
+  "kapanış": {
+    "container_exit": 0,
+    "alt_süreçler": {
+      "api": 0,
+      "manager": 0,
+      "scene": 0,
+      "battery_robot_alpha": 0,
+      "executor_robot_alpha": 0,
+      "battery_robot_beta": 0,
+      "executor_robot_beta": 0,
+      "battery_robot_gamma": 0,
+      "executor_robot_gamma": 0,
+      "observer": 0,
+      "simulation": 0
+    },
+    "sqlite_integrity": "ok"
+  }
+}

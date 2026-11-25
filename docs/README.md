@@ -46,6 +46,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 - [C5 üç robotlu trafik provası, Aşama 1](validation/c5/uc-robot-trafik-provasi-asama-1-2026-11-25.md) · [Kanıt özeti](validation/c5/uc-robot-trafik-provasi-asama-1-2026-11-25.json). Teslimat, park ve şarj hareketi örtüştü. Altı yönlü global costmap görünürlüğü ve temassız varışlar gözlenen demo koşusunda doğrulandı.
 
+- [C5 yakın park ve şarj yaklaşımı, Aşama 2](validation/c5/uc-robot-trafik-provasi-asama-2-2026-11-25.md) · [Kanıt özeti](validation/c5/uc-robot-trafik-provasi-asama-2-2026-11-25.json). Üç hareket örtüştü, sağ geçişte iki yönlü yerel costmap işareti ve temassız varışlar doğrulandı.
+
 - [C5 robotlar arası konum ve rota farkındalığı](validation/c5/peer-awareness-2026-11-18.md) · [Komutlar ve kanıt](validation/c5/peer-awareness-commands-2026-11-18.md) · [Tasarım](design/c5-peer-awareness.md): deneysel peer costmap katmanı; üç taşıma + park ve ayrı şarj yaklaşması geçti. Gerçek trafik izniyle koordinasyon ve dar koridor kabulü açık; varsayılan başlatmada kapalıdır.
 
 - [C5 kanıta dayalı performans](validation/c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.

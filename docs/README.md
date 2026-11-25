@@ -18,6 +18,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5-T3C-2A kontrollü hareket öncesi hazırlık](validation/c5/c5-t3c2a-preparation-2026-11-25.md) · [Komutlar](validation/c5/c5-t3c2a-preparation-commands-2026-11-25.md): salt okunur envanter ve regresyonlar PASS; 2B hareketli geçiş BLOCKED, StopEnvelope UNBOUNDED. Hareket veya yeni Gazebo koşusu yok.
+
 - [C5-T3C-1B son iki engelin düzeltmesi ve bağımsız kabul](validation/c5/c5-t3c1b-last-two-2026-11-25.md) · [Komutlar](validation/c5/c5-t3c1b-last-two-commands-2026-11-25.md): sabit son sürümde 14/14 durağan koşu ve regresyonlar geçti. Challenge ret ayrımı, özgün sağlık süre zinciri ve pre-task kanıt incelemesi; deneysel/varsayılan kapalı, hareketli fren kabulü yok.
 
 - [C5-T3C-1B final kabul denemesi](validation/c5/c5-t3c1b-final-2026-11-25.md) · [Komutlar](validation/c5/c5-t3c1b-final-commands-2026-11-25.md): aynı sabit sürümle 14 koşu; 12 PASS / 2 FAIL, regresyonlar geçti. Odometry güncellik ve IPC REPLAY önkoşulları açık; commit/push yok.

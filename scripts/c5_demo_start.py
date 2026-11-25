@@ -117,7 +117,8 @@ def main() -> int:
         "exec python3 docker/simulation-warehouse-grid/stage1_run.py "
         f"{shlex.quote(str(profile.relative_to(root)))} /evidence/live "
         f"--api-port {api_port} --scene-port {scene_port} "
-        f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install"
+        f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install "
+        "--peer-awareness-experiment"
     )
     run([
         "docker", "run", "--detach", "--init", "--name", session_id, "--network", "bridge",

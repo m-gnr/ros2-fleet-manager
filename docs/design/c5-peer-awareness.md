@@ -1,6 +1,6 @@
 # C5 — Robotlar arası konum ve rota farkındalığı
 
-18 Kasım 2026. **PARTIAL / deneysel.** Kullanıcının bu görevdeki açık isteği üç
+18 Kasım 2026. **PARTIAL.** Kullanıcının bu görevdeki açık isteği üç
 robotun rota/footprint farkındalığını, dar koridor incelemesini ve izole canlı
 testleri kapsar. Bu kayıt fiziksel güvenlik kalifikasyonu veya trafik hareket
 yetkisi vermez. [Yeni koşu ve kabul durumu](../validation/c5/peer-awareness-2026-11-18.md).
@@ -21,7 +21,7 @@ topolojisi, damga, TTL ve terminal durum kontrolleriyle izler. Bu Path gözlemi
 çalışan Nav2 child UUID'sine bağlanmış izin değildir. FM'in ComputePathToPose
 mesafe sorgusu da Executor'ın yürüttüğü güncel planın yerine konamaz.
 
-Üretilen global costmap statik harita ve inflation içerir; yerel costmap
+18 Kasım temel koşusunun global costmap’i statik harita ve inflation içerir; yerel costmap
 bağımsız LiDAR kaynaklarını `ObservedObstacleLayer` ile işler. Parkta duran
 robot için global planner'ın kullanacağı ayrı footprint gözlemi yoktur.
 18 Kasım performans kaydında ve yeni baseline koşusunda Alpha'nın park
@@ -31,9 +31,10 @@ fiziksel koridorun güvenli olduğunu göstermez.
 ## Dar kapsamlı aday
 
 `fleet_perception::PeerRobotLayer`, mevcut Nav2 eklenti mekanizmasında ek
-gözlem katmanıdır. Varsayılan `generate()` ve `scripts/start_demo.sh` korunur.
-Yalnız test harness'inin `--peer-awareness-experiment` seçeneği katmanı global
-ve yerel costmap'te inflation öncesine ekler. Varsayılan ürün aktivasyonu yoktur.
+gözlem katmanıdır. `scripts/start_demo.sh`, mevcut `stage1_run.py`
+`--peer-awareness-experiment` seçeneğini kullanır. Seçenek katmanı global ve
+yerel costmap’te inflation öncesine ekler. `generate()` doğrudan çağrıldığında
+seçenek varsayılan olarak kapalıdır.
 
 LiDAR gibi sunulan sentetik scan/cloud yerine ayrı geometri katmanı seçildi:
 bağımsız algılama kaynağı/telemetrisi korunur; ray clearing bir robotu silemez.
@@ -82,8 +83,8 @@ sahiplik bırakma, otomatik geri sürüş ve ayrı öncelik politikası eklenmem
 **Açık engel:** stok Nav2'nin güncel olmayan costmap beklemesi timeout sonrasında
 terminal abort üretebilir. Mevcut Executor bunu gerçek Nav2 hatası olarak
 işler. Trafik/iletişim beklemesini yeni FAILED/ERROR kaynağına dönüştürmeden
-yerel hold/resume sözleşmesine bağlamak gerekir. Varsayılan aktivasyon veya
-STALE toleransını büyütmek çözüm değildir. B6B.2'nin hareket kapalı durumu ve
+yerel hold/resume sözleşmesine bağlamak gerekir. Normal demoda katman etkin
+olduğunda Nav2’nin bu bekleme davranışı sürer. B6B.2'nin hareket kapalı durumu ve
 `motion_envelope: null` korunur. Dar koridor ilerleme/öncelik ve kilitlenmeden
 kurtulma kabulü bu aday tarafından sağlanmış sayılmaz.
 

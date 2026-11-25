@@ -1,0 +1,129 @@
+{
+  "sonuç": "GEÇTİ",
+  "BAŞLANGIÇ_SHA": "0cf8f66d7c95b91b7b73e9677e82953f0016ce9e",
+  "oturum": "c5-demo-20261125T165517Z-16fb37c0b59e",
+  "ros_domain_id": 228,
+  "profil": "config/fleet.warehouse-30x18.yaml",
+  "deneysel_peer_layer": true,
+  "robotlar": {
+    "delivery": {
+      "robot": "robot_gamma",
+      "öteleme_sim_s": [
+        85.68,
+        252.35
+      ],
+      "en_uzun_ötelemesiz_sim_s": 3.92
+    },
+    "park": {
+      "robot": "robot_beta",
+      "öteleme_sim_s": [
+        105.84,
+        139.895
+      ],
+      "en_uzun_ötelemesiz_sim_s": 2.765
+    },
+    "charge": {
+      "robot": "robot_alpha",
+      "öteleme_sim_s": [
+        115.92,
+        144.76
+      ],
+      "en_uzun_ötelemesiz_sim_s": 0.21
+    }
+  },
+  "üçlü_öteleme_pencereleri_sim_s": [
+    [
+      115.92,
+      116.27
+    ],
+    [
+      116.48,
+      116.62
+    ],
+    [
+      116.725,
+      139.895
+    ]
+  ],
+  "global_grid_peer_merkezi": {
+    "robot_alpha/global_costmap/robot_beta": {
+      "matched": 13,
+      "lethal": 13
+    },
+    "robot_alpha/global_costmap/robot_gamma": {
+      "matched": 13,
+      "lethal": 13
+    },
+    "robot_beta/global_costmap/robot_alpha": {
+      "matched": 13,
+      "lethal": 13
+    },
+    "robot_beta/global_costmap/robot_gamma": {
+      "matched": 13,
+      "lethal": 13
+    },
+    "robot_gamma/global_costmap/robot_alpha": {
+      "matched": 13,
+      "lethal": 13
+    },
+    "robot_gamma/global_costmap/robot_beta": {
+      "matched": 13,
+      "lethal": 13
+    }
+  },
+  "gazebo_robot_teması": 0,
+  "nav2_abort": 0,
+  "robot_status_stale": 0,
+  "gözlenen_robot_status_en_uzun_aralık_duvar_s": {
+    "robot_alpha": 0.547,
+    "robot_beta": 0.521,
+    "robot_gamma": 0.603
+  },
+  "teslimat": {
+    "görev_id": "web-8b9f8806-abc0-4f0c-8b30-ccd7b1001c22",
+    "durum": "COMPLETED",
+    "completed_epoch": 1,
+    "tamamlanma_sim_s": 255.745
+  },
+  "park": {
+    "istasyon": "park_2",
+    "durum": "ARRIVED"
+  },
+  "şarj": {
+    "istasyon": "dock_6",
+    "is_charging": true,
+    "ilk_sim_s": 144.915
+  },
+  "sağ_geçit": {
+    "örneklenen_izler_kesişti": false,
+    "en_yakın_iz_örnekleri_m": 0.331,
+    "o_örneklerin_sim_s_farkı": 18.13,
+    "eşzamanlı_örnek_min_m": 4.261
+  },
+  "sapmalar": {
+    "beta_local_peer_uncurrent_sim_s": [
+      180.005,
+      180.13
+    ],
+    "gamma_panel_poz_stale_sim_s": 208.64,
+    "gamma_nav2_planner_ack_timeout_uyarısı": 1
+  },
+  "kapanış": {
+    "container_exit": 0,
+    "bitiş_utc": "2026-11-25T17:00:00.319869053Z",
+    "alt_süreçler": {
+      "api": 0,
+      "manager": 0,
+      "scene": 0,
+      "battery_robot_alpha": 0,
+      "executor_robot_alpha": 0,
+      "battery_robot_beta": 0,
+      "executor_robot_beta": 0,
+      "battery_robot_gamma": 0,
+      "executor_robot_gamma": 0,
+      "observer": 0,
+      "simulation": 0
+    },
+    "sqlite_integrity": "ok"
+  }
+}

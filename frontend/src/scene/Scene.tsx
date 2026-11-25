@@ -23,6 +23,7 @@ import { OperationMarkers } from './OperationMarkers'
 import { Costmap, type CostmapGrid } from './Costmap'
 import type { ScreenRect } from './calloutPlacement'
 import type { OperationPoint } from './operationPoints'
+import { robotIdentityColor } from './robotIdentity'
 import type { RobotVisualState } from './robotPresentation'
 
 type SceneProps = {
@@ -522,7 +523,7 @@ function Vehicles({ layout: grid, feed, command, lowQuality, labels, markers, pa
       }
     }}>
     <group scale={robotVisualScale} name="robot-visual-scale">
-      <Burger softShadows={!lowQuality} />
+      <Burger color={robotIdentityColor(id)} softShadows={!lowQuality} />
     </group>
   </group>)
 }

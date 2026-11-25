@@ -8,6 +8,7 @@ import {
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
+import { robotIdentityColor } from './robotIdentity'
 import { groundPoint, maxPlanPoints, maxTrailPoints, routeVisibility, trailFade, type RouteOptions } from './routes'
 import type { Telemetry } from './telemetry'
 import type { SceneFeed } from './sceneFeed'
@@ -19,14 +20,12 @@ function positionBuffer(capacity: number) {
   return geometry
 }
 
-const trailColor = '#64748B'
-const planColor = '#7C8798'
 const trailMaxAgeMs = 9000
 const trailMaxDistance = 2.8
 
-export function createRouteLayers() {
+function createRouteLayers(color: string) {
   const trail = new LineSegments(positionBuffer(2 * (maxTrailPoints - 1)),
-    new LineBasicMaterial({ color: trailColor, transparent: true, depthWrite: false }))
+    new LineBasicMaterial({ color, transparent: true, depthWrite: false, toneMapped: false }))
   const planGeometry = new LineSegmentsGeometry().setPositions(new Float32Array((maxPlanPoints - 1) * 6))
   const positions = planGeometry.getAttribute('instanceStart') as InterleavedBufferAttribute
   positions.data.setUsage(DynamicDrawUsage)
@@ -36,11 +35,11 @@ export function createRouteLayers() {
   planGeometry.setAttribute('instanceDistanceEnd', new InterleavedBufferAttribute(distances, 1, 1))
   planGeometry.instanceCount = 0
   const plan = new LineSegments2(planGeometry, new LineMaterial({
-    color: planColor, transparent: true, depthWrite: false, linewidth: 1.25,
-    dashed: true, dashSize: 0.09, gapSize: 0.08,
+    color, transparent: true, depthWrite: false, toneMapped: false, linewidth: 2.75,
+    dashed: true, dashSize: 0.16, gapSize: 0.08,
   }))
   const ends = new Points(positionBuffer(2), new PointsMaterial({
-    color: planColor, transparent: true, depthWrite: false, size: 0.055,
+    color, transparent: true, depthWrite: false, toneMapped: false, size: 0.055,
   }))
   for (const layer of [trail, plan, ends]) {
     layer.frustumCulled = false
@@ -125,7 +124,7 @@ function planVertices(geometry: LineSegmentsGeometry) {
 export function RouteLayers({ feed, id, moving, selected, options, trace }: {
   feed: SceneFeed; id: string; moving: boolean; selected: boolean; options: RouteOptions; trace: boolean
 }) {
-  const layers = useMemo(() => createRouteLayers(), [])
+  const layers = useMemo(() => createRouteLayers(robotIdentityColor(id)), [id])
   const previous = useRef<{ layers?: typeof layers; path?: Telemetry['path']; trail?: Telemetry['trail'] }>({})
   useEffect(() => () => layers.dispose(), [layers])
   useFrame(({ gl, invalidate }) => {
@@ -142,9 +141,8 @@ export function RouteLayers({ feed, id, moving, selected, options, trace }: {
     layers.trail.visible = visibility.trail && (moving || fade > 0) && fade > 0 &&
       layers.trail.geometry.drawRange.count > 0
     layers.plan.visible = layers.ends.visible = visibility.plan && layers.plan.geometry.instanceCount > 0
-    layers.trail.material.opacity = visibility.opacity * fade * 0.34
-    layers.plan.material.opacity = visibility.opacity * 0.32
-    layers.ends.material.opacity = visibility.opacity * 0.38
+    layers.trail.material.opacity = visibility.opacity * fade * 0.48
+    layers.plan.material.opacity = layers.ends.material.opacity = visibility.opacity * 0.78
     if (layers.trail.visible && fade < 1) invalidate()
     if (trace && (changedTrail || changedPlan)) {
       gl.domElement.dispatchEvent(new CustomEvent('fleet-visualizer:routes', { bubbles: true, detail: {

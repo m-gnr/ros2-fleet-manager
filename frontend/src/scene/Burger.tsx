@@ -37,13 +37,14 @@ function ContactShadow() {
   </mesh>
 }
 
-export const Burger = memo(function Burger({ softShadows }: { softShadows: boolean }) {
+export const Burger = memo(function Burger({ color, softShadows }: { color: string; softShadows: boolean }) {
   return <>
     {softShadows && <ContactShadow />}
     <group name="burger-body">
-      {[0.032, 0.088, 0.136].map((y, index) => <mesh key={y} position={[0, y, 0]}>
+      {[0.032, 0.088, 0.136].map(y => <mesh key={y} position={[0, y, 0]}>
         <boxGeometry args={[burgerSize.length, 0.009, 0.128]} />
-        <meshStandardMaterial color={index === 1 ? '#4c626d' : '#d5a653'} roughness={0.52} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.15}
+          roughness={0.52} toneMapped={false} />
       </mesh>)}
       <mesh position={[-0.008, 0.061, 0]}>
         <boxGeometry args={[0.104, 0.048, 0.085]} />

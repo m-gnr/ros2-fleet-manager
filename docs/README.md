@@ -52,6 +52,8 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 - [C5 normal demo başlatıcısında PeerRobotLayer](validation/c5/start-demo-peer-layer-2026-11-25.md). Üç robotlu GUI başlangıcı, yerel ve global costmap’ler, önceki Alpha–Beta temas koşularının tekrarı ve kontrollü kapanış.
 
+- [C5 3D robot kimlik renkleri ve Nav2 rotaları](validation/c5/c5-robot-route-colors-2026-11-25.md). Canlı üç robotla Chrome görsel kontrolü ve frontend regresyonları.
+
 - [C5 robotlar arası konum ve rota farkındalığı](validation/c5/peer-awareness-2026-11-18.md) · [Komutlar ve kanıt](validation/c5/peer-awareness-commands-2026-11-18.md) · [Tasarım](design/c5-peer-awareness.md). 18 Kasım’ın deneysel katmanında üç taşıma ve park ile ayrı şarj yaklaşması geçti. Gerçek trafik izniyle koordinasyon ve dar koridor kabulü açık.
 
 - [C5 kanıta dayalı performans](validation/c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.

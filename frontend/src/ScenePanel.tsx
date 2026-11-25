@@ -2,6 +2,7 @@ import { Box, Crosshair, Layers, Maximize, Orbit, RotateCcw, Scan } from "lucide
 import { Component, Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cameraLabels, resetCamera, selectCamera, type CameraCommand, type CameraMode } from "./scene/camera";
 import type { Fleet as SceneView } from "./scene/fleet";
+import { robotIdentityColor } from "./scene/robotIdentity";
 import { robotStateColor, robotVisualState } from "./scene/robotPresentation";
 import type { RouteOptions } from "./scene/routes";
 import { markerDiameter } from "./scene/marker";
@@ -98,7 +99,7 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
             ref={node => { if (node) parkLabels.set(point.key, node); else parkLabels.delete(point.key); }}>
             {point.owner ?? point.id}
           </span>)}
-        {robotIds.map((id, index) => {
+        {robotIds.map((id) => {
           const status = view.robots.get(id)?.status ?? "NO_DATA";
           const isSelected = id === selected;
           const visualState = robotStates.get(id) ?? 'unknown';
@@ -116,7 +117,8 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
             <span data-robot-id={id} title={`${id} · ${status}`} ref={(node) => {
               if (node) labels.set(id, node);
               else labels.delete(id);
-            }} className={`scene-label ${status.toLowerCase()} ${isSelected ? "selected" : ""}`}>
+            }} className={`scene-label ${status.toLowerCase()} ${isSelected ? "selected" : ""}`}
+              style={{ color: robotIdentityColor(id) }}>
               <span>{id}</span>{(isSelected || status !== "LIVE") && <small>{status}</small>}
             </span>
           </Fragment>;
@@ -140,6 +142,8 @@ export function ScenePanel({ fleet, connected, feed, view, robotIds, selected, o
         <i className="plan-key" />Gözlemlenen Nav2 planı <small>Durum B</small></label>
       <label><input type="checkbox" checked={routes.trail} onChange={(e) => setRoutes({ ...routes, trail: e.target.checked })} />
         <i className="trail-key" />TF hareket izi</label>
+      <label><input type="checkbox" checked={routes.selectedOnly} disabled={!selected}
+        onChange={(e) => setRoutes({ ...routes, selectedOnly: e.target.checked })} />Yalnız seçili robot</label>
       {layout && <label><input type="checkbox" checked={showExterior}
         onChange={e => setShowExterior(e.target.checked)} />Çevreyi göster</label>}
       <label className="scene-quality"><input type="checkbox" checked={lowQuality} onChange={(e) => setLowQuality(e.target.checked)} />

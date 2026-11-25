@@ -68,6 +68,16 @@ test('three live robots and task roles survive camera and label changes', async 
   await expect(page.locator('.scene-point-label')).toHaveCount(0)
   await expect(page.locator('.scene-point-tooltip')).toHaveCount(0)
   await expect(page.locator('.scene-indicator')).toContainText('3/3 TF LIVE')
+  const expectIdentityColors = async () => {
+    for (const [id, color] of [
+      ['robot_alpha', 'rgb(37, 99, 235)'],
+      ['robot_beta', 'rgb(194, 65, 12)'],
+      ['robot_gamma', 'rgb(126, 34, 206)'],
+    ]) {
+      await expect(page.locator(`.scene-label[data-robot-id="${id}"]`)).toHaveCSS('color', color)
+    }
+  }
+  await expectIdentityColors()
   await expect.poll(() => page.evaluate(() => Reflect.get(window, 'scene_frame')?.surface)).toEqual({
     floorGridSegments: 50,
     rackContactShadows: layout.racks.length,
@@ -103,6 +113,15 @@ test('three live robots and task roles survive camera and label changes', async 
   await expect.poll(robotOverlaps).toEqual([])
   await page.locator('button.scene-marker[data-robot-id="robot_beta"]').click()
   await expect(page.locator('button.scene-marker[data-robot-id="robot_beta"]')).toHaveAttribute('aria-pressed', 'true')
+  const selectedOnly = page.getByRole('checkbox', { name: 'Yalnız seçili robot' })
+  const visibleRobots = () => page.evaluate(() => Reflect.get(window, 'scene_frame')?.robots
+    .filter((robot: { visible: boolean }) => robot.visible)
+    .map((robot: { robot_id: string }) => robot.robot_id))
+  await selectedOnly.check()
+  await expect.poll(visibleRobots).toEqual(['robot_beta'])
+  await selectedOnly.uncheck()
+  await expect.poll(visibleRobots).toEqual(ids)
+  await expectIdentityColors()
   await expect.poll(() => page.evaluate(() => Reflect.get(window, 'scene_frame')?.points
     .find((point: { id: string }) => point.id === 'visual-task')?.kind)).toBe('pickup')
   const points = await page.evaluate(() => Reflect.get(window, 'scene_frame').points)

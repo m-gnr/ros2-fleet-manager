@@ -1,0 +1,225 @@
+{
+  "sonuç": "GEÇTİ",
+  "başlangıç_sha": "274a4083bcc6c5d7000e32497b13b5a3ea478ade",
+  "profil": "config/fleet.warehouse-30x18.yaml",
+  "oturum": "c5-demo-20261125T173634Z-1026d28f07e7",
+  "ros_domain_id": 224,
+  "konum_tetiği": {
+    "eşik_xy_m": [
+      10.5,
+      0.25
+    ],
+    "beta_xy_m": [
+      14.190857,
+      0.269472
+    ],
+    "sim_s": 136.885,
+    "alpha_soc_percent": 24
+  },
+  "öteleme_sim_s": {
+    "robot_gamma": [
+      92.225,
+      276.115
+    ],
+    "robot_beta": [
+      112.735,
+      149.52
+    ],
+    "robot_alpha": [
+      137.935,
+      166.845
+    ]
+  },
+  "üçlü_öteleme_sim_s": [
+    [
+      137.935,
+      138.18
+    ],
+    [
+      138.53,
+      138.74
+    ],
+    [
+      138.95,
+      149.52
+    ]
+  ],
+  "üçlü_öteleme_toplam_sim_s": 11.025,
+  "yerel_costmap": {
+    "iki_yönlü_çift": 18,
+    "doğrulanan_grid": {
+      "robot_beta": {
+        "toplam": 21,
+        "doğrulanan": 20
+      },
+      "robot_alpha": {
+        "toplam": 19,
+        "doğrulanan": 19
+      }
+    },
+    "en_büyük_grid_fark_ms": 215.0,
+    "karşılaşma_sim_s": [
+      [
+        139.085,
+        149.2925
+      ]
+    ]
+  },
+  "minimum_merkez_mesafesi": {
+    "m": 1.034996,
+    "sim_s": 145.495,
+    "alpha_xy_m": [
+      13.269728,
+      2.992311
+    ],
+    "beta_xy_m": [
+      14.064408,
+      2.329212
+    ]
+  },
+  "hedefler": {
+    "robot_alpha": {
+      "istasyon": "dock_6",
+      "durum": "ARRIVED",
+      "is_charging": true,
+      "ilk_batarya_sim_s": 167.02
+    },
+    "robot_beta": {
+      "istasyon": "park_2",
+      "durum": "ARRIVED"
+    },
+    "robot_gamma": {
+      "görev": "pick_A1 → packing_1",
+      "durum": "COMPLETED",
+      "completed_epoch": 1,
+      "bitiş_sim_s": 279.735
+    }
+  },
+  "temas": {
+    "izlenen_kanal": 18,
+    "robotlar_arası": 0
+  },
+  "güncellik": {
+    "api_503": [
+      {
+        "endpoint": "/api/robots",
+        "utc": "2026-11-25T20:36:48.606+03:00",
+        "phase": "startup"
+      },
+      {
+        "endpoint": "/api/tasks",
+        "utc": "2026-11-25T20:36:48.610+03:00",
+        "phase": "startup"
+      }
+    ],
+    "panel_pose_stale_snapshot": {
+      "ros": 10,
+      "ws": 7
+    },
+    "panel_unavailable_snapshot": {
+      "ros": 9,
+      "ws": 6
+    },
+    "robot_status_stale": 0,
+    "costmap_current_false": {
+      "local_costmap": 157,
+      "global_costmap": 42
+    },
+    "yakın_karşılaşmada_olay": 0,
+    "panelde_görünen_durumlar": {
+      "product_connection": [],
+      "scene_tf": [],
+      "robot_alpha": [
+        {
+          "first": "2026-11-25T20:38:44.067+03:00",
+          "recovered_by": "2026-11-25T20:38:44.472+03:00"
+        },
+        {
+          "first": "2026-11-25T20:41:11.562+03:00",
+          "recovered_by": "2026-11-25T20:41:11.767+03:00"
+        }
+      ],
+      "robot_beta": [
+        {
+          "first": "2026-11-25T20:38:36.966+03:00",
+          "recovered_by": "2026-11-25T20:38:37.170+03:00"
+        },
+        {
+          "first": "2026-11-25T20:40:30.609+03:00",
+          "recovered_by": "2026-11-25T20:40:30.813+03:00"
+        },
+        {
+          "first": "2026-11-25T20:41:05.866+03:00",
+          "recovered_by": "2026-11-25T20:41:06.271+03:00"
+        }
+      ],
+      "robot_gamma": [
+        {
+          "first": "2026-11-25T20:38:29.432+03:00",
+          "recovered_by": "2026-11-25T20:38:29.837+03:00"
+        }
+      ]
+    }
+  },
+  "websocket": {
+    "ürün_snapshot": 1264,
+    "en_uzun_snapshot_aralığı_s": 0.728,
+    "plan_paketleri": {
+      "robot_alpha": 40,
+      "robot_beta": 142,
+      "robot_gamma": 224
+    }
+  },
+  "ekran_görüntüleri": [
+    {
+      "name": "gui-ready.png",
+      "first": "2026-11-25T20:36:52.476+03:00",
+      "sim_s": [],
+      "sha256": "35b182ee13aad7b0918c165d114506cc93e58b54eb72b3ee5c483ef4ad9734c2"
+    },
+    {
+      "name": "gui-completed.png",
+      "first": "2026-11-25T20:42:41.801+03:00",
+      "sim_s": [
+        280.1101,
+        280.2004
+      ],
+      "sha256": "9ae0a1d69648421d4f83dd01c1f6d52bcafdcb66d9166b2c8d448d50e898a684"
+    },
+    {
+      "name": "gui-deliveries.png",
+      "first": "2026-11-25T20:42:42.240+03:00",
+      "sim_s": [
+        280.3357,
+        280.3986
+      ],
+      "sha256": "9f5e951e4d1de2287d7c88b7ee7346d9f96cbf55ce1bbcc5f09cd9d528b11fa4"
+    },
+    {
+      "name": "gui-overlap.png",
+      "first": "2026-11-25T20:39:22.389+03:00",
+      "sim_s": [
+        145.393,
+        145.4897
+      ],
+      "sha256": "bec708d7f8ed7987c5d0078b64656b4ae3bb0f80f2cee0aa1c36d8bfa9d14b76"
+    }
+  ],
+  "kapanış": {
+    "container_exit": 0,
+    "alt_süreçler": {
+      "api": 0,
+      "manager": 0,
+      "scene": 0,
+      "battery_robot_alpha": 0,
+      "executor_robot_alpha": 0,
+      "battery_robot_beta": 0,
+      "executor_robot_beta": 0,
+      "battery_robot_gamma": 0,
+      "executor_robot_gamma": 0,
+      "observer": 0,
+      "simulation": 0
+    },
+    "sqlite_integrity": "ok"
+  }
+}

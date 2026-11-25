@@ -123,3 +123,11 @@ sonrasında uzak taban f69d1024… ve `merge-base --is-ancestor origin/main HEAD
 exit 0 idi. Tam kabulden sonra ilgili deneysel kaynak/rapor/kanıtlar için
 normal commit ve `git push origin HEAD:main` yetkilidir; force push yoktur.
 Son commit/uzak SHA ve temiz çalışma ağacı oturum tesliminde doğrulanır.
+
+
+Checkpoint sonrasında `.patch` format kontrolü de yapıldı. Source-only
+`git diff --check HEAD^ HEAD -- . ':(exclude)docker/experiments/c5-t3c1b/patches/*.patch'`
+exit 0 verdi. `git apply --numstat` bridge patch'inde exit 0, kullanılmayan
+Nav2 tarihsel patch'inde **exit 128 / corrupt patch** verdi. İkisi de ham
+çıktısıyla saklandı; Nav2 artefaktı PASS diye işaretlenmedi. Aktif build'in
+bu patch'i kullanmadığı build_ros.sh girdilerinden kontrol edildi.

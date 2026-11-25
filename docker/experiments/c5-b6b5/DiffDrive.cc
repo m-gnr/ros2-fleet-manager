@@ -224,7 +224,11 @@ void DiffDrive::Configure(const Entity &_entity,
 #ifdef C5_SPLIT_ZERO_ONLY
   this->dataPtr->veto=std::make_unique<c5_split::Veto>(
     _sdf->Get<int>("split_fd"),c5_split::field(_sdf->Get<std::string>("writer_boot")),
-    _sdf->Get<int>("worker_pid"),_sdf->Get<double>("ticket_sec"),_sdf->Get<double>("lease_sec"));
+    _sdf->Get<int>("worker_pid"),_sdf->Get<double>("ticket_sec"),_sdf->Get<double>("lease_sec")
+#ifdef C5_SPLIT_HEALTH_VETO
+    ,_sdf->Get<double>("health_budget_sec")
+#endif
+  );
   this->dataPtr->traceFd=_sdf->Get<int>("trace_fd");
   this->dataPtr->tracePeriod=_sdf->Get<double>("trace_period_sec");
   if(fcntl(this->dataPtr->traceFd,F_GETFL)<0||!(fcntl(this->dataPtr->traceFd,F_GETFL)&O_NONBLOCK)||
@@ -473,6 +477,15 @@ void DiffDrive::PreUpdate(const UpdateInfo &_info,
   proof.accepted=this->dataPtr->veto->accepted;proof.rejected=this->dataPtr->veto->rejected;
   proof.command=this->dataPtr->veto->lastCommand;proof.boot=this->dataPtr->veto->boot;
   proof.native_session=this->dataPtr->veto->session;proof.context=this->dataPtr->veto->context;proof.body=this->dataPtr->veto->body;
+#ifdef C5_SPLIT_HEALTH_VETO
+  auto & v=*this->dataPtr->veto;proof.health=v.lastHealth;proof.health_input=v.lastInput.health;proof.health_ticket=v.healthTicket;proof.health_seen=v.healthSeen;
+  proof.input_session=v.lastInput.session;proof.input_context=v.lastInput.context;proof.input_body=v.lastInput.body;
+  proof.input_command=v.lastInput.command;proof.input_report=v.lastInput.report;proof.input_accepted=v.inputAccepted;
+  proof.ipc_trace=v.ipcTrace;
+  proof.health_deadline_ns=c5_split::Veto::ns(v.healthDeadline);
+  const auto & healthStamp=v.healthTickets[v.lastHealth.ticket%v.healthTickets.size()];
+  proof.health_ticket_issued_ns=healthStamp.first==v.lastHealth.ticket?c5_split::Veto::ns(healthStamp.second):0;
+#endif
 #else
   {
     std::lock_guard<std::mutex> lock(this->dataPtr->mutex);

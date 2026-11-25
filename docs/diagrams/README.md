@@ -1,5 +1,7 @@
 # Mimari ve algoritma diyagramları
 
+- [C5-T3C-1B gerçek sağlık ve son yazıcı](../validation/c5/c5-t3c1b-health-veto-2026-11-24.md): [Mermaid](src/traffic-native-health-veto.mmd) · [SVG](svg/traffic-native-health-veto.svg). Sağlık/IPC bağı PARTIAL; tam canlı kabul ve hareketli fren UNVERIFIED. Deneysel, varsayılan kapalı.
+
 - [C5-T3C-1A native işçi ayrımı](../validation/c5/c5-t3c1a-native-worker-2026-11-19.md): [Mermaid](src/traffic-native-worker.mmd) · [SVG](svg/traffic-native-worker.svg). Sıfır işçi/tek yazıcı IMPLEMENTED; tam sağlık veto ve fiziksel fren UNVERIFIED, varsayılan kapalı.
 
 - [C5-T3B sağlık ve duruş altyapısı](../validation/c5/c5-t3b-health-stop-2026-11-18.md): [Mermaid](src/traffic-health-stop.mmd) · [SVG](svg/traffic-health-stop.svg). Gerçek gözlem/koşullu hesap IMPLEMENTED; fiziksel bounds, kaynak kimliği ve bağımsız fren UNVERIFIED.

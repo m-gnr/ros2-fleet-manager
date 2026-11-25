@@ -1,0 +1,20 @@
+flowchart TB
+  FM["Mevcut FM / SQLite COMMIT / Outbox<br/>Gerçek ExecuteTask ve FollowPath / Path bağı"] --> EX["Executor / NativeZeroLink<br/>Değişmez imzalı sıfır zarfı"]
+  EX --> BR["Mevcut ROS / IGN bridge"]
+  BR --> W["Ayrı native işçi<br/>B6B.7 HMAC / session / sequence / permit / lease"]
+  W -->|"Doğrulama ACK; APPLIED değildir"| FM
+  O["Gerçek odometri / ölçüm zamanında TF / AMCL<br/>RobotStatus / lifecycle / ObservationHealth"] --> H["T3B HealthWindow + SplitHealthWindow<br/>Kaynak damgası ve ilk alım yaşı korunur<br/>ROS yayıncı kimliği UNKNOWN"]
+  W -. "İmzalı gerçek IPC readback<br/>ACK'den ayrı tanısal kanıt" .-> H
+  H -->|"Yalnız veto; hareket yetkisi vermez"| BR
+  W --> IPC["Sınırlı nonblocking yerel snapshot<br/>PID / UID / boot / session / context<br/>Özgün ölçüm bütçesi + yazıcı bileti"]
+  IPC --> V["Mevcut tek DiffDrive joint yazıcısı<br/>Beklemeyen yerel süre denetimi<br/>Her koşulda sıfır hedef"]
+  V --> P["Tek stock Physics / DART"]
+  V -. "Fizik öncesi hedef ve gerçek IPC kimliği" .-> R["Salt okunur ayrı recorder"]
+  P -. "Tamamlanan fizik sayacı<br/>Fizik sonrası gerçek joint / gövde hızı" .-> R
+  F["Sağlık / işçi / IPC kaybı<br/>Stale / replay / yanlış context"] -->|"Kapalı kilit; eski paket açamaz"| V
+  S["Deneysel; varsayılan launcher dışında<br/>Nonzero / rearm / rollover / release kapalı<br/>StopEnvelope UNBOUNDED"] -.-> V
+  U["Physics veya son yazıcı bozulursa<br/>Bağımsız donanım freni yok<br/>Hareketli frenleme DOĞRULANMADI"] -.-> P
+  classDef closed fill:#fff1f0,stroke:#bb3333,color:#222
+  classDef observation fill:#eaf4ff,stroke:#4679a5,color:#222
+  class V,F,S,U closed
+  class H,O,R observation

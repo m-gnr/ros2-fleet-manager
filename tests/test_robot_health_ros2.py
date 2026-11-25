@@ -108,3 +108,47 @@ def test_odometry_fault_link_preserves_the_complete_serialized_measurement():
         while not seen and time.monotonic()<end:publisher.publish(message);rclpy.spin_once(node,timeout_sec=.02)
         assert seen and all(value==bytes(serialize_message(message)) for value in seen)
     finally:node.destroy_node();rclpy.try_shutdown()
+
+
+def test_split_probe_pairs_delayed_tf_with_original_odometry_receipt(tmp_path):
+    """Typed synthetic sources: alignment must not restamp or rejuvenate data."""
+    from backend.fleet_manager.adapters.split_health import SplitHealthProbe
+    cfg=load_config('config/fleet.warehouse-30x18.yaml');rid=cfg.robots[0].id;ns=cfg.robots[0].namespace
+    params={r.id:{'amcl':{'ros__parameters':dict(global_frame_id='map',odom_frame_id=r.id+'/odom',base_frame_id=r.id+'/base_link')},
+        'local_costmap':{'local_costmap':{'ros__parameters':{'obstacle_layer':dict(plugin='fleet_perception::ObservedObstacleLayer',
+            observation_sources='scan',scan=dict(topic='scan'))}}}} for r in cfg.robots}
+    rclpy.init();node=rclpy.create_node('split_health_alignment_'+uuid4().hex,parameter_overrides=[Parameter('use_sim_time',value=True)])
+    probe=None
+    try:
+        probe=SplitHealthProbe(node,cfg,params,{r.id:KEY for r in cfg.robots},lambda r,n:(None,None),tmp_path)
+        clock=node.create_publisher(Clock,'/clock',10);odom=node.create_publisher(Odometry,ns+'/odom',10)
+        tf=node.create_publisher(TFMessage,ns+'/tf',10)
+        c=Clock();c.clock.sec=10;c.clock.nanosec=20_000_000
+        o=Odometry();o.header.stamp.sec=10;o.header.stamp.nanosec=10_000_000
+        o.header.frame_id=rid+'/odom';o.child_frame_id=rid+'/base_link';o.pose.pose.orientation.w=1.
+        end=time.monotonic()+3.
+        while time.monotonic()<end and not probe.pending_odometry[rid]:
+            clock.publish(c);odom.publish(o);rclpy.spin_once(node,timeout_sec=.01)
+        assert probe.pending_odometry[rid]
+        receipt=probe.pending_odometry[rid][-1]['receipt']
+        probe.tick();assert 'odometry' not in probe.windows[rid].samples
+        edges=[]
+        for parent,child in [('map',rid+'/odom'),(rid+'/odom',rid+'/base_link')]:
+            t=TransformStamped();t.header.stamp=o.header.stamp;t.header.frame_id=parent;t.child_frame_id=child
+            t.transform.rotation.w=1.;edges.append(t)
+        end=time.monotonic()+3.
+        while time.monotonic()<end and 'tf' not in probe.windows[rid].samples:
+            clock.publish(c);tf.publish(TFMessage(transforms=edges))
+            for _ in range(8):rclpy.spin_once(node,timeout_sec=0.)
+            probe.tick();time.sleep(.01)
+        w=probe.windows[rid];assert w.samples['odometry']['stamp_ns']==10_010_000_000
+        assert w.samples['odometry']['receipt']==receipt
+        assert w.samples['tf']['stamp_ns']==10_010_000_000
+        assert not probe.latest[rid]['movement_eligible']
+        before=w.samples['odometry']['receipt'];odom.publish(o)
+        end=time.monotonic()+.1
+        while time.monotonic()<end:rclpy.spin_once(node,timeout_sec=.005);probe.tick()
+        assert w.samples['odometry']['receipt']==before
+    finally:
+        if probe:probe.close()
+        node.destroy_node();rclpy.try_shutdown()

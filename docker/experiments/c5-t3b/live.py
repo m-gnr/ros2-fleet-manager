@@ -22,7 +22,7 @@ spec=importlib.util.spec_from_file_location('t3a_live',ROOT/'docker/experiments/
 base=importlib.util.module_from_spec(spec);spec.loader.exec_module(base)
 
 
-def factory(node,cfg,args,database):
+def factory(node,cfg,args,database,*,probe_class=RobotHealthProbe):
     def context(rid,native):
         try:
             with sqlite3.connect('file:'+str(database)+'?mode=ro',uri=True) as db:
@@ -52,7 +52,15 @@ def factory(node,cfg,args,database):
                     if known:
                         known=json.loads(known[0])
                         if known['identity']==identity:command=digest,known['command_sequence']
-                return dict(identity=identity,context_sha256=sha(compact(normalized)),claim_reserved=reserved),command
+                result=dict(identity=identity,context_sha256=sha(compact(normalized)),claim_reserved=reserved)
+                if native and 'writer' in native['value']:
+                    writer=native['value']['writer']
+                    found=db.execute("SELECT decision FROM traffic_decisions WHERE event_id LIKE 'native-transfer:%' "
+                        "AND json_extract(decision,'$.command_sha256')=?",(writer['command_sha256'],)).fetchone()
+                    if found:
+                        found=json.loads(found[0])
+                        if found['identity']==identity:result['writer_command']=[found['command_sha256'],found['command_sequence']]
+                return result,command
         except (sqlite3.OperationalError,KeyError,ValueError):return None,None
     params={r.id:yaml.safe_load((args.output/'generated'/('nav2-'+r.id+'.yaml')).read_text()) for r in cfg.robots}
     inventory={}
@@ -77,7 +85,7 @@ def factory(node,cfg,args,database):
                 for link in model.findall('link') for collision in link.findall('collision')],
             configured_limits_are_measured_braking=False,motion_envelope=cfg.fleet.perception_safety.motion_envelope)
     (args.output/'physical-config-inventory.json').write_text(json.dumps(inventory,indent=2)+'\n')
-    probe=RobotHealthProbe(node,cfg,params,{r.id:load_key('/run/c5-b6b7/'+r.id+'.json') for r in cfg.robots},context,args.output)
+    probe=probe_class(node,cfg,params,{r.id:load_key('/run/c5-b6b7/'+r.id+'.json') for r in cfg.robots},context,args.output)
     probe.t3b_inventory=inventory
     return probe
 

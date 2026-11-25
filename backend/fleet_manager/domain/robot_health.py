@@ -117,6 +117,15 @@ class HealthWindow:
         except (KeyError, ValueError, TypeError, RecursionError):
             return self.reject('native', 'NATIVE_AUTHENTICATION_OR_SCHEMA')
 
+    def native_issues(self, n):
+        reasons = []
+        if (not all(number(n[k]) and n[k] == 0 for k in ('target_linear','target_angular'))
+                or len(n['joint_commands']) < 2 or any(not isinstance(v,list) or len(v) != 1
+                    or not number(v[0]) or v[0] != 0. for v in n['joint_commands'])):
+            reasons.append('NATIVE_TARGET_CONTRADICTION_OR_UNKNOWN')
+        if n['status']['receiver_state'] != 'ACTIVE':reasons.append('NATIVE_LEASE_NOT_ACTIVE')
+        return reasons
+
     def evaluate(self, *, ros_ns, now, context=None, known_command=None):
         reasons = sorted(self.fences)
         clock_known = type(ros_ns) is int and ros_ns > 0 and number(now)
@@ -183,11 +192,7 @@ class HealthWindow:
             if n is not None:
                 measured['native'] = n
                 s = n['status']
-                if (not all(number(n[k]) and n[k] == 0 for k in ('target_linear','target_angular'))
-                        or len(n['joint_commands']) < 2 or any(not isinstance(v,list) or len(v) != 1
-                            or not number(v[0]) or v[0] != 0. for v in n['joint_commands'])):
-                    reasons.append('NATIVE_TARGET_CONTRADICTION_OR_UNKNOWN')
-                if s['receiver_state'] != 'ACTIVE':reasons.append('NATIVE_LEASE_NOT_ACTIVE')
+                reasons.extend(self.native_issues(n))
             status = data('robot_status')
             if status is not None:
                 measured['robot_status'] = status

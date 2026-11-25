@@ -1,5 +1,13 @@
 # Doğrulama kayıtları
 
+- [C5-T3C-1B son iki engelin düzeltmesi ve bağımsız kabul](c5/c5-t3c1b-last-two-2026-11-25.md) · [Komutlar](c5/c5-t3c1b-last-two-commands-2026-11-25.md): sabit son sürümde 14/14 durağan koşu ve regresyonlar geçti. Challenge ret ayrımı, özgün sağlık süre zinciri ve pre-task kanıt incelemesi; deneysel/varsayılan kapalı, hareketli fren kabulü yok.
+
+- [C5-T3C-1B final kabul denemesi](c5/c5-t3c1b-final-2026-11-25.md) · [Komutlar](c5/c5-t3c1b-final-commands-2026-11-25.md): aynı sabit sürümle 14 koşu; 12 PASS / 2 FAIL, regresyonlar geçti. Odometry güncellik ve IPC REPLAY önkoşulları açık; commit/push yok.
+
+- [C5-T3C-1B üç hedefli entegrasyon düzeltmesi](c5/c5-t3c1b-integration-fixes-2026-11-25.md) · [Komutlar](c5/c5-t3c1b-integration-fixes-commands-2026-11-25.md): 3/3 ayrı temiz koşu, 487 host, 200 ROS, 2 native + 1 lifetime CTest. Tam matris/T3C-2 yok; commit/push yapılmadı.
+
+- [C5-T3C-1B sağlık → native son veto](c5/c5-t3c1b-health-veto-2026-11-24.md) · [Komutlar](c5/c5-t3c1b-health-veto-commands-2026-11-24.md): KISMİ; son host/ROS ve native regresyonları geçti. İzole matrisin tam kabulü başarısız; commit/push yok. Sıfır-komut, UNBOUNDED zarf ve varsayılan kapalı sınırları korunur.
+
 - [C5-T3C-1A native işçi/son sıfır veto](c5/c5-t3c1a-native-worker-2026-11-19.md) · [Komutlar](c5/c5-t3c1a-native-worker-commands-2026-11-19.md): 442 host, 154 ROS, 1 + 3 + 2 native CTest; sekiz izole durağan koşuda işçi kaybına rağmen gerçek Physics ilerlemesi. Hareketli fren, sağlık veto'sunun tamamı ve release kabulü değil.
 
 - [C5-T3C-0 duruş mimari incelemesi](c5/c5-t3c0-stop-architecture-2026-11-19.md): statik Fortress/actuator incelemesi ve 66 mevcut saf test; süreç ayrımı/tek yazıcı veto önerisi ve T3C-1 kapıları. Hareketli test veya uygulama yapılmadı.

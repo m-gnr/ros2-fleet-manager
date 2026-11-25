@@ -1,0 +1,113 @@
+# Doğrulama kayıtları
+
+- [C5-T3C-1B sağlık → native son veto](c5/c5-t3c1b-health-veto-2026-11-24.md) · [Komutlar](c5/c5-t3c1b-health-veto-commands-2026-11-24.md): KISMİ; son host/ROS ve native regresyonları geçti. İzole matrisin tam kabulü başarısız; commit/push yok. Sıfır-komut, UNBOUNDED zarf ve varsayılan kapalı sınırları korunur.
+
+- [C5-T3C-1A native işçi/son sıfır veto](c5/c5-t3c1a-native-worker-2026-11-19.md) · [Komutlar](c5/c5-t3c1a-native-worker-commands-2026-11-19.md): 442 host, 154 ROS, 1 + 3 + 2 native CTest; sekiz izole durağan koşuda işçi kaybına rağmen gerçek Physics ilerlemesi. Hareketli fren, sağlık veto'sunun tamamı ve release kabulü değil.
+
+- [C5-T3C-0 duruş mimari incelemesi](c5/c5-t3c0-stop-architecture-2026-11-19.md): statik Fortress/actuator incelemesi ve 66 mevcut saf test; süreç ayrımı/tek yazıcı veto önerisi ve T3C-1 kapıları. Hareketli test veya uygulama yapılmadı.
+
+- [C5-T3B sağlık ve duruş hesabı altyapısı](c5/c5-t3b-health-stop-2026-11-18.md) · [Komutlar](c5/c5-t3b-health-stop-commands-2026-11-18.md) · [T3C planı](c5/c5-t3c-braking-plan-2026-11-18.md): 442 host, 154 ROS, 3 + 2 native CTest; 8 izole durağan fault koşusu. Kalibrasyon eksik, zarf UNBOUNDED; nonzero/varsayılan entegrasyon kapalı.
+
+- [C5-T3A gerçek FM permit → native sıfır context](c5/c5-t3a-native-permit-2026-11-18.md) · [Komutlar](c5/c5-t3a-native-permit-commands-2026-11-18.md): 375 host, 84 ROS, 3 native CTest; yedi izole sıfır-komut senaryosu. Deneysel ve varsayılan kapalı; fiziksel hareket kabulü değildir.
+
+- [C5-T3A güvenli durdurma / devam notu — 18 Kasım](c5/c5-t3a-continuation-2026-11-18.md): kaynak snapshot'ı, geçen seçkiler ve iki canlı deneme korunur; entegrasyon PARTIAL, commit/push yok.
+
+- [C5-T2 gerçek ürün child/Path bağı — 18 Kasım](c5/c5-t2-product-child-2026-11-18.md) · [Komutlar](c5/c5-t2-product-child-commands-2026-11-18.md): bağımsız testler ve izole gerçek Nav2 metadata koşusu; nonzero/hold/resume/release kabulü değildir, varsayılan kapalıdır.
+
+- [C5-T1 deneysel çalışmaların korunması](c5/c5-t1-checkpoint-2026-11-18.md): yeni bağımsız testler ve varsayılan launcher izolasyonu; deneysel checkpoint, hareket güvenliği kabulü değildir.
+
+- [C5 trafik entegrasyonu bağımlılık aşamaları](c5/traffic-integration-2026-11-18.md) · [Komut eki](c5/traffic-integration-commands-2026-11-18.md): native sıfır yetkilendirme ve gerçek durağan child/Path testleri geçti; gerçek hareket zinciri tamamlanmadı, tam kabul yok.
+
+- [C5 robotlar arası farkındalık](c5/peer-awareness-2026-11-18.md) · [Komutlar](c5/peer-awareness-commands-2026-11-18.md): baseline park teması yeniden üretildi; deneysel adayda üç taşıma/park ve ayrı üçlü şarj yaklaşması temassız geçti. Trafik koordinasyonu ve hareketli kesinti kabulü açık, ürün varsayılanında kapalı.
+
+- [C5 kanıta dayalı performans](c5/performance-2026-11-18.md): değişikliksiz baseline, FM/SQLite kazanımı; park dönüşü teması nedeniyle PARTIAL sonuç.
+
+Rapor ve komut ekleri aynı aşama dizinindedir. Kod blokları geçmişte çalıştırılan komutları ve alınan çıktıları aynen korur; eski Compose yolları için [güncel yol kılavuzunu](../../docker/compose/README.md) kullanın. Tarihsel komutların bu düzenlemede yeniden çalıştırıldığı iddia edilmez.
+
+| Aşama | Kayıtlar | Tarihsel sonuç |
+|---|---|---|
+| Demo Launcher V1.1 — telemetry ve güvenli kapanış | [Doğrulama](c5/start-demo-launcher-v1-1-2026-11-17.md) | Chrome reconnect ve WebGL2, 3/3 TF LIVE, iki tam Ctrl+C kapanışında bütün child/container exit kodları 0 ve portlar boş; dashboard 8/8 test geçti. |
+| Üç robot tek komut demo launcher'ı | [Doğrulama](c5/start-demo-launcher-2026-11-17.md) | Gerçek üç robot GUI, `3/3 TF LIVE`, sinyal/ebeveyn/başarısız başlangıç cleanup ve overlay cache yeniden kullanımı geçti; Chrome WebGL sahnesi fallback'te kaldı. |
+| Visualize → main regresyon karşılaştırması | [Rapor](c5/visualize-main-integration-2026-11-17.md) · [Komutlar](c5/visualize-main-integration-commands-2026-11-17.md) | Tam Playwright 34/34, frontend build, YAML, C5 backend 255/8 skip ve ROS TF 4/4 geçti; hareket ve yeni canlı Gazebo koşusu NOT TESTED. `main` ve `origin/main` değişmedi, GitHub push onayı bekleniyor. |
+| Visualize V6 dış zemin paleti | [Rapor ve komutlar](c5/visualize-v6-palette-2026-11-17.md) | Önce V1–V6 checkpoint commit’i; ardından commit edilmemiş palet. Build ve 3/3 test geçti; Chrome’da açıklık sırası doğrulandı. |
+| Visualize V6 yaşayan dış çevre | [Rapor](c5/visualize-v6-validation-2026-11-17.md) · [Komutlar](c5/visualize-v6-commands-2026-11-17.md) | Build ve 8 hedefli test geçti; avlu/saha, instancing ve durdurulabilir dekoratif hareket; kısa Chrome örneği 60,00 → 59,90 FPS. |
+| Visualize V5 minimal dış çevre | [Rapor](c5/visualize-v5-validation-2026-11-17.md) · [Komutlar](c5/visualize-v5-commands-2026-11-17.md) | V4 önkoşulu doğrulandı; build ve 7 hedefli Chrome testi geçti. Yalnız görsel sevkiyat açıklığı; gerçek harita engeli korundu. |
+| Visualize V4 zemin ve aydınlatma | [Rapor](c5/visualize-v4-validation-2026-11-17.md) · [Komutlar](c5/visualize-v4-commands-2026-11-17.md) | Build ve son seri koşuda 7 hedefli Chrome testi geçti; shadow map kapalı, gerçek ROS/Gazebo koşulmadı. |
+| Visualize V3 robot öncelikli sunum | [Rapor](c5/visualize-v3-validation-2026-11-17.md) · [Komutlar](c5/visualize-v3-commands-2026-11-17.md) | Build ve 7 hedefli Chrome testi geçti; üç robot/yaw/state ve üç zoom kadrajı doğrulandı, gerçek ROS/Gazebo koşulmadı. |
+| Visualize V2 zemin adları ve bilgi balonları | [Rapor](c5/visualize-v2-validation-2026-11-17.md) · [Komutlar](c5/visualize-v2-commands-2026-11-17.md) | Mock Chrome 3/3 TF ve 5 hedefli test geçti; gerçek ROS/Gazebo koşulmadı. |
+| Visualize V1 görev noktaları | [Rapor](c5/visualize-v1-validation-2026-11-17.md) · [Komutlar](c5/visualize-v1-commands-2026-11-17.md) | Mock Chrome 3/3 TF ve 4 hedefli test geçti; gerçek ROS/Gazebo koşulmadı. |
+| C5-A main entegrasyon checkpoint'i | [Rapor](c5/c5-a-main-integration-2026-11-14.md) · [Komutlar](c5/c5-a-main-integration-commands-2026-11-14.md) | Main kullanıcı değişiklikleri korundu; 26 host testi ve 23 Chrome testi geçti. Target canlı görev `EXECUTING` durumunda durduruldu, COMPLETED doğrulanmadı |
+| C5-A ilk entegrasyon | [Rapor](c5/c5-a-first-integration-2026-11-14.md) · [Komut eki](c5/c5-a-first-integration-commands-2026-11-14.md) | Tek gerçek Chrome → FM → Nav2 pickup/dropoff COMPLETED; iki robot ve batarya görünürlüğü. Sensör qualification kabulü değildir |
+| C5 Alpha/Beta TF cold-start | [Rapor](c5/c5-alpha-beta-tf-startup-2026-11-17.md) · [Komut eki](c5/c5-alpha-beta-tf-startup-commands-2026-11-17.md) | AMCL, tüm Nav2 lifecycle düğümleri, NavigateToPose action server'ı ve güncel iki robot TF zinciri hazır olmadan API açılmaz; görev gönderilmedi |
+| C5 üç robot AMCL readiness incelemesi | [Rapor](c5/c5-three-robot-amcl-readiness-2026-11-17.md) · [Komut eki](c5/c5-three-robot-amcl-readiness-commands-2026-11-17.md) | Hareketsiz 3/3 robotta AMCL pozu tekrarı yok; odom/scan/TF güncel, AMCL/Nav2 hazır. READY → WAITING alt nedeni kaydedilmedi; PARTIAL |
+| C5 Aşama 1.3 | [Rapor](c5/c5-stage1-3-localization-approach-2026-11-11.md) · [Komutlar](c5/c5-stage1-3-commands-2026-11-11.md) | AMCL gözlem modeli, aynı damgalı raf yaklaşması ve bağımsız kabul kayıtları |
+| C5 Aşama 1.2 | [Rapor](c5/c5-stage1-2-physical-localization-2026-11-11.md) · [Komutlar](c5/c5-stage1-2-commands-2026-11-11.md) | Dönüş odometrisi ve collision zarfı düzeltildi; son pickup 1/5, paralel beta FAILED; kabul verilmedi |
+| C5 Aşama 1.1 | [Rapor](c5/stage1-1-validation-2026-11-11.md) · [Komutlar](c5/stage1-1-commands-2026-11-11.md) | F1 gerçek feedback/EXECUTING düzeltildi; üç izole F2 deneyinde 1 geçti / 2 kaldı. Koşulsuz kabul verilmedi |
+| DDS topic/action | [Action raporu](dds/dds-action-validation-2026-10-23.md) · [Topic raporu](dds/dds-validation-2026-10-22.md) | İlgili kapsamda geçti |
+| A | [Rapor](simulation/a/simulation-validation-2026-10-23.md) | Temel fizik geçti |
+| B1 | [Rapor](simulation/b1/simulation-stage-b-2026-10-23.md) · [Komut eki](simulation/b1/simulation-stage-b-commands-2026-10-23.md) | İki temiz başarılı koşu; ilk hatalar korundu |
+| B2 | [Rapor](simulation/b2/simulation-stage-b2-2026-10-23.md) · [Komut eki](simulation/b2/simulation-stage-b2-commands-2026-10-23.md) · [Devam rapor](simulation/b2/simulation-stage-b2-continuation-2026-10-23.md) · [Devam komut eki](simulation/b2/simulation-stage-b2-continuation-commands-2026-10-23.md) | İlk durma kaydı ve devamında iki temiz başarı |
+| AMCL | [Rapor](simulation/amcl/simulation-stage-amcl-test-2026-10-23.md) · [Komut eki](simulation/amcl/simulation-stage-amcl-test-commands-2026-10-23.md) | 1 geçti / 1 kaldı |
+| B3 | [Rapor](simulation/b3/simulation-stage-b3-2026-10-23.md) · [Komut eki](simulation/b3/simulation-stage-b3-commands-2026-10-23.md) | 1 temiz başarı, 1 başarısız, 1 durduruldu |
+| B3 Retry | [Rapor](simulation/b3-retry/simulation-stage-b3-retry-2026-10-23.md) · [Komut eki](simulation/b3-retry/simulation-stage-b3-retry-commands-2026-10-23.md) | 2/2 temiz başarı |
+| C1 | [Rapor](c1/c1-validation-2026-10-24.md) | 74/74 birim/sözleşme testi geçti; 1, 2, 3 robot doğrulandı |
+| C2.1 | [Rapor](c2/c2-1-validation-2026-10-24.md) | 49/49 durum makinesi ve IDL testi geçti; saf Python doğrulandı |
+| C2.2 | [Rapor](c2/c2-2-validation-2026-10-24.md) | 55/55 ROS 2 Humble düğüm ve yaşam döngüsü testi geçti; entegrasyon doğrulandı |
+| C2.3 | [Rapor](c2/c2-3-validation-2026-10-24.md) | 2/2 temiz canlı simülasyon koşusu geçti; 7/7 senaryo (lojistik döngü, preemption, hata kurtarma, Option A) doğrulandı |
+| C3.1 | [Rapor](c3/c3-1-validation-2026-10-24.md) | 25/25 saf Python çekirdek, FIFO/öncelik, Wh enerji, Karar 08 T01-T09 ve rezervasyon testi geçti |
+| C3.2 | [Rapor](c3/c3-2-validation-2026-10-24.md) · [Komut eki](c3/c3-2-commands-2026-10-24.md) | 29 SQLite/consumer testi geçti; tam regresyonda 174 geçti, ROS ortamı gerektiren 10 test atlandı |
+| C3.3.1 | [Rapor](c3/c3-3-1-validation-2026-10-24.md) | Sıra/oturum sözleşmesi, duplicate koruması, Nav2 güvenli iptali ve canlı simülasyon doğrulandı (189 host, 81 ROS 2/DDS testi, 7/7 canlı senaryo geçti) |
+| C3.3.2 | [Rapor](c3/c3-3-2-validation-2026-10-24.md) | ROS 2 adaptör entegrasyonu doğrulandı: status subscriber, session order/SESSION_BLOCKED, eylem istemcisi, Outbox göndericisi, task_review_holds, 0.20m/30s rota önbelleği (212 host, 102 ROS 2/DDS testi, 7/7 canlı senaryo geçti) |
+| C3.3.3 | [Rapor](c3/c3-3-3-validation-2026-10-24.md) | İki robotlu uçtan uca canlı simülasyon ve DDS entegrasyonu doğrulandı: Gazebo Fortress headless + iki Nav2 + iki Executor + Fleet Manager (214 host testi, T01–T10 senaryolarının tamamı 10/10 temiz geçti) |
+| C3.3.4 Görev 2 | [Rapor](c3/c3-3-4-task-2-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-2-commands-2026-11-05.md) | Oturum engeli ve istasyon sahipliği için host, ROS ve canlı regresyon kayıtları |
+| C3.3.4 Görev 3 | [Rapor](c3/c3-3-4-task-3-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-3-commands-2026-11-05.md) | Preemption sonrası normal zamanlamada yeniden uygunluk denetimi ve Outbox güvenliği |
+| C3.3.4 Görev 4 | [Rapor](c3/c3-3-4-task-4-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-4-commands-2026-11-05.md) | Normal bırakma, fiziksel kanıtla BLOCKED istasyon kurtarma ve canlı koşu bulguları |
+| C3.3.4 Görev 5+6 | [Rapor](c3/c3-3-4-task-5-6-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-5-6-commands-2026-11-05.md) | Robot bazlı canlı rota, SQL COMMIT güvenliği, C3.3.3/C2.3 regresyonları ve ayrı T02-AUTO-ROUTES koşuları |
+| C3.3.4 Görev 7 | [Rapor](c3/c3-3-4-task-7-validation-2026-11-05.md) · [Komut eki](c3/c3-3-4-task-7-commands-2026-11-05.md) | YAML enerji politikalarının Scheduler'a aktarımı ve ayrı YAML-ENERGY-POLICY kabul koşusu |
+| C3.3.4-FINAL | [C4 geçiş kontrolü](c3/c3-3-4-final-c4-gate-2026-11-05.md) · [Komut eki](c3/c3-3-4-final-commands-2026-11-05.md) | İki ardışık temiz C3.3.3 koşusu 10/10, gerçek HIGH teslimatı ve temiz kapanış doğrulandı; C4'e geçiş onaylandı |
+| C4.1 | [Rapor](c4/c4-1-validation-2026-11-06.md) · [Komut eki](c4/c4-1-commands-2026-11-06.md) | İki robotlu Fortress tüketim hesabı ve DDS izolasyonu doğrulandı. C2.3 ve C3.3.3 regresyonları geçti |
+| C4.2 | [Rapor](c4/c4-2-validation-2026-11-06.md) · [Komut eki](c4/c4-2-commands-2026-11-06.md) | İki robotlu Fortress ortamında telemetri, enerji yetersizliği, geçici kesinti ve gerçek Nav2 teslimatı doğrulandı |
+| C4.3 | [Rapor](c4/c4-3-validation-2026-11-06.md) · [Komut eki](c4/c4-3-commands-2026-11-06.md) | Park ve dock yaklaşımı, canlı HIGH duruşu ve SQLite/Outbox bütünlüğü doğrulandı |
+| C4.4 | [Rapor](c4/c4-4-validation-2026-11-06.md) · [Komut eki](c4/c4-4-commands-2026-11-06.md) | Fiziksel dock teması, iki robotlu şarj ve ayrılma kanıtıyla devir |
+| C4.5 | [Sonuç raporu](c4/c4-5-validation-2026-11-06.md) · [Komut eki](c4/c4-5-commands-2026-11-06.md) · [C4 kabul listesi](c4/c4-acceptance-2026-11-06.md) | İki robotlu enerji, fiziksel şarj devri, görev ve güvenli preemption |
+| C5 Aşama 1 | [Rapor](c5/c5-stage1-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-commands-2026-11-06.md) · [Performans](c5/c5-stage1-performance-2026-11-06.md) | İki robotlu Fortress ve Chrome, salt okunur canlı panel ve güvenli yeniden eşitleme |
+| C5 Aşama 1.5 | [Rapor](c5/c5-stage1-5-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-5-commands-2026-11-06.md) | 3D Chrome/WebGL, TF/Path ve bağımsız ürün güncelliği |
+| C5 TF STALE araştırması | [Rapor](c5/tf-stale-2026-11-18.md) · [Komut ve ham ölçüm eki](c5/tf-stale-commands-2026-11-18.md) | 1/2/3 robot canlı karşılaştırması; frontend ürün/TF ayrımı düzeltildi, üç robotlu tam kabul açık |
+| C5 Aşama 1.6 | [Rapor](c5/c5-stage1-6-validation-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-commands-2026-11-06.md) | Depo öncelikli yerleşim, kadraj ve canlı Chrome karşılaştırması |
+| C5 Aşama 1.6 görsel kabul düzeltmesi | [Rapor](c5/c5-stage1-6-visual-acceptance-2026-11-06.md) · [Komutlar](c5/c5-stage1-6-visual-commands-2026-11-06.md) | Üretim Chrome projeksiyonu, robot işaretleri, yerleşim ve canlı Fortress |
+| C5 Aşama 1.7B | [Rapor](c5/c5-stage1-7b-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7b-commands-2026-11-07.md) | Yerel CC0 depo, dört viewport, 19 Chrome testi ve iki robotlu canlı Fortress |
+| C5 Aşama 1.7C | [Rapor](c5/c5-stage1-7c-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7c-commands-2026-11-07.md) | Sunum yerleşimi, kaynak temelli operasyon alanları, dört Chrome viewport’u ve iki robotlu Fortress |
+| C5 Aşama 1.7D | [Rapor](c5/c5-stage1-7d-validation-2026-11-07.md) · [Komutlar](c5/c5-stage1-7d-commands-2026-11-07.md) | Depo duvarları, kare operasyon bölgeleri, Chrome ve kayıtlı TF/Nav2 açıklığı |
+| C5 Aşama 1.7E | [Rapor](c5/c5-stage1-7e-validation-2026-11-08.md) · [Komutlar](c5/c5-stage1-7e-commands-2026-11-08.md) | İşlevsel iç yerleşim, yakın görev işaretleri, Chrome ve canlı TF/Nav2 ayak izi denetimi |
+| C5 Izgara depo profili | [Rapor ve komutlar](c5/warehouse-grid-validation-2026-11-08.md) | YAML, backend kaynak eşleşmesi, koridor fixture’ı ve üretim Chrome |
+| C5 20 × 12 m ortak depo | [Rapor ve komutlar](c5/warehouse-grid-20x12-validation-2026-11-08.md) | SDF, Nav2, Chrome ve iki canlı hareket senaryosu |
+| C5 Üstten depo açıklığı | [Rapor ve komutlar](c5/warehouse-grid-clearance-2026-11-08.md) | Dock ve alım açıklığı, etiket bağlantıları, Nav2 merkez rotası |
+| C5 dağıtılmış 30 × 18 m depo | [Rapor](c5/warehouse-30x18-validation-2026-11-11.md) · [Komutlar](c5/warehouse-30x18-commands-2026-11-11.md) | Ortak raster, dağıtılmış yaklaşmalar, katalog görev girişi, Chrome ve Fortress/Nav2 |
+| C5 30 × 18 m uçtan uca Aşama 1 | [Rapor](c5/e2e-stage1-validation-2026-11-11.md) · [Komutlar](c5/e2e-stage1-commands-2026-11-11.md) | Tek görev ve iki robotlu paralel görev COMPLETED; feedback/EXECUTING ve bir fiziksel yaklaşma kontrolü başarısız. Koşulsuz kabul verilmedi; Aşama 2/3 başlatılmadı |
+
+B3 Retry başarısı dinamik çarpışma önleme, dar koridor çözümü, 3+ robot performansı veya nihai üç servisli dağıtım kanıtı değildir. C1 konfigürasyon doğrulaması canlı simülasyon veya Compose çalışma kanıtı değildir. Testler kendi image, ayar, ölçüt ve tarihleriyle değerlendirilir.
+
+## Depo ve dokümantasyon denetimleri
+
+- [26 Ekim 2026 düzenleme ve diyagram doğrulaması](organization/organization-validation-2026-10-26.md) · [komut eki](organization/organization-commands-2026-10-26.md)
+
+- [C5 Git checkpoint denetimi — 12 Kasım](c5/git-checkpoint-2026-11-12/README.md) · [Komut eki](c5/git-checkpoint-commands-2026-11-12.md); ürün kabulü veya Aşama 2 koşusu değildir.
+
+- [C5 Aşama 2.0 dinamik batarya kontrolleri](c5/battery-control-validation-2026-11-12.md) · [Komutlar](c5/battery-control-commands-2026-11-12.md): host, gerçek ROS servisi ve izole canlı Chrome; Gazebo şarj kabulü değildir.
+- [Visualize V2 park alanı yer değişikliği](c5/visualize-park-relocation-2026-11-17.md) · [Komutlar](c5/visualize-park-relocation-commands-2026-11-17.md): YAML, harita, 3D yuva ve aktif üç robotlu oturumun kaynak farkı; canlı park hedefi henüz test edilmedi.
+- [Visualize V2.1 canlı park doğrulama denemesi](c5/visualize-v2-1-live-validation-2026-11-17.md) · [Komutlar](c5/visualize-v2-1-live-commands-2026-11-17.md): 9/9 salt okunur Nav2 planı; aktif YAML uyuşmazlığı ve TF/clock duraksaması nedeniyle fiziksel park/çıkış yapılmadı.
+- [Visualize V2.3 üç robotun parkta canlı başlangıcı](c5/visualize-v2-3-validation-2026-11-17.md) · [Komutlar](c5/visualize-v2-3-commands-2026-11-17.md): gerçek Gazebo spawn, WebSocket ve Chrome `3/3 TF LIVE` geçti; hareket **NOT TESTED**.
+
+- [C5-B6B.1 birleşik trafik rezervasyon çekirdeği](c5/c5-b6b1-traffic-core-2026-11-15.md): 13 hedefli domain/SQLite testi geçti; hareket yetkisi kapalı.
+
+- [C5-B6B.2 trafik protokolü](c5/c5-b6b2-traffic-protocol-2026-11-15.md) · [Komutlar](c5/c5-b6b2-traffic-protocol-commands-2026-11-15.md): 46 hedefli test geçti; hareket kapalı.
+
+- [C5-B6B.3 yerel hareket kapısı](c5/c5-b6b3-motion-gate-2026-11-15.md) · [Komutlar](c5/c5-b6b3-motion-gate-commands-2026-11-15.md): 69 hedefli test, gerçek nonzero kapalı.
+
+- [C5-B6B.4 hareketsiz ROS/IGN topoloji doğrulaması](c5/c5-b6b4-topology-2026-11-15.md) · [Komutlar](c5/c5-b6b4-topology-commands-2026-11-15.md): yalnız fake producer/actuator; fiziksel duruş kabulü yok.
+
+- [C5-B6B.5 test-only actuator watchdog](c5/c5-b6b5-watchdog-2026-11-15.md) · [Komutlar](c5/c5-b6b5-watchdog-commands-2026-11-15.md): native build/ABI ve sıfır hedef; ürün/fiziksel fren kabulü yok.
+
+- [C5-B6B.6 actuator yetkilendirme testleri](c5/c5-b6b6-authorization-2026-11-15.md) · [Komutlar](c5/c5-b6b6-authorization-commands-2026-11-15.md): hareketsiz fake actuator; ürün kabulü yok.
+
+- [C5 güvenli session cleanup ve tek demo](c5/c5-session-cleanup-2026-11-17.md) · [Komut eki](c5/c5-session-cleanup-commands-2026-11-17.md): üç robot cold-start ve readiness kaydı; PARTIAL.

@@ -26,16 +26,17 @@ sys.path.insert(0,str(ROOT/'docker/simulation-common'))
 from live_processes import bridge_executable
 
 
-def main():
+def main(*,extra_cases=(),observer_factory=None,fault_handler=None,validator=None,world_path=None,extra_commands=(),before_fault=None,spin_batch=1,prepare=None,defer_release=False,process_wrapper=None):
     parser=argparse.ArgumentParser();parser.add_argument('profile',type=Path);parser.add_argument('output',type=Path)
     parser.add_argument('--case',choices=['worker-stop','worker-kill','ipc-loss','duplicate','wrong-context',
-        'wrong-session','corrupt','delayed'],required=True)
+        'wrong-session','corrupt','delayed',*extra_cases],required=True)
     args=parser.parse_args();args.profile=args.profile.resolve();args.output=args.output.resolve()
     args.output.mkdir(parents=True,exist_ok=False);cfg=load_config(args.profile)
     # Match the existing T3A fixture: live WAL is local to Linux, then backed up.
     db=Path('/tmp')/('t3c1a-'+str(uuid4())+'.sqlite3')
-    children=[];node=None;expected=set();writer=defaultdict(list);states={};signed_status=defaultdict(dict);offset=0;carry='';native=None
+    children=[];node=None;expected=set();writer=defaultdict(list);states={};signed_status=defaultdict(dict);offset=0;carry='';native=None;probe=None
     def launch(name,command):
+        if process_wrapper:command=process_wrapper(name,command,args.output)
         with (args.output/(name+'.log')).open('w') as stream:
             child=subprocess.Popen(command,stdout=stream,stderr=subprocess.STDOUT)
         children.append((name,child));return child
@@ -43,8 +44,12 @@ def main():
         path=args.output/name;temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(value,indent=2)+'\n');temporary.replace(path)
     def pump():
         nonlocal offset,carry
-        if node:rclpy.spin_once(node,timeout_sec=.01)
+        if probe and hasattr(probe,'trace'):probe.trace('pump_begin')
+        if node:
+            rclpy.spin_once(node,timeout_sec=.01)
+            for _ in range(spin_batch-1):rclpy.spin_once(node,timeout_sec=0.)
         else:time.sleep(.02)
+        if probe:probe.tick()
         path=args.output/'writer.jsonl'
         if path.exists():
             with path.open() as file:file.seek(offset);text=file.read();offset=file.tell()
@@ -52,6 +57,7 @@ def main():
             for line in lines:
                 if line:
                     record=json.loads(line);writer[record['robot_id']].append(record)
+        if probe and hasattr(probe,'trace'):probe.trace('pump_end')
     def until(predicate,timeout=12.):
         deadline=time.monotonic()+timeout
         while time.monotonic()<deadline:
@@ -69,12 +75,14 @@ def main():
         except sqlite3.OperationalError:return []
     def decisions(prefix):return [json.loads(r['decision']) for r in rows('SELECT decision FROM traffic_decisions WHERE event_id LIKE ?',(prefix+'%',))]
     try:
-        launch('simulation',[sys.executable,str(Path(__file__).with_name('world.py')),str(args.profile),str(args.output/'generated'),'routes'])
+        launch('simulation',[sys.executable,str(world_path or Path(__file__).with_name('world.py')),str(args.profile),str(args.output/'generated'),'routes'])
         launch('observer',[sys.executable,'docker/simulation-warehouse-grid/stage1_observer.py',str(args.profile),str(args.output),'--database',str(db)])
         until(lambda:(args.output/'reset-verified.json').exists() and (args.output/'startup-readiness.json').exists()
               and json.loads((args.output/'startup-readiness.json').read_text())['current_status']=='READY',180.)
         rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
         node=rclpy.create_node('t3c1a_stationary_probe',parameter_overrides=[Parameter('use_sim_time',value=True)])
+        if observer_factory:probe=observer_factory(node,cfg,args,db)
+        if prepare:prepare(node,cfg,args,probe,until)
         native=gzip.open(args.output/'native-verifier.jsonl.gz','wt')
         def observe(rid,message):
             value=json.loads(message.data);states[rid]=value;native.write(json.dumps(dict(robot_id=rid,**value))+'\n')
@@ -84,19 +92,15 @@ def main():
             node.create_subscription(String,robot.namespace+'/native_actuator',lambda m,r=robot.id:observe(r,m),1)
             launch('battery_'+robot.id,[sys.executable,'-c','from fleet_battery_simulator.node import main; main()',
                 '--fleet-config',str(args.profile),'--robot-id',robot.id])
-            launch('executor_'+robot.id,[sys.executable,'docker/experiments/c5-t3a/executor.py',str(args.profile),str(args.output),robot.id,'--initial'])
-        launch('command_bridge',[bridge_executable()]+[r.namespace+'/authorized_zero@std_msgs/msg/String]ignition.msgs.StringMsg' for r in cfg.robots])
+            launch('executor_'+robot.id,[sys.executable,'docker/experiments/c5-t3a/executor.py',str(args.profile),str(args.output),robot.id,'--initial']+(['--replan'] if args.case=='replan' else []))
+        launch('command_bridge',[bridge_executable()]+[r.namespace+'/authorized_zero@std_msgs/msg/String]ignition.msgs.StringMsg' for r in cfg.robots]+[r.namespace+suffix for r in cfg.robots for suffix in extra_commands])
         manager=launch('manager',[sys.executable,'docker/experiments/c5-t3a/manager.py',str(args.profile),str(args.output),str(db)])
         until(lambda:len(rows('SELECT snapshot FROM robots'))==len(cfg.robots) and
             all(json.loads(r['snapshot'])['initial_status_verified'] for r in rows('SELECT snapshot FROM robots')))
         robots={r['robot_id']:json.loads(r['snapshot']) for r in rows('SELECT robot_id,snapshot FROM robots')}
         point=deepcopy(robots[cfg.robots[0].id]['pose']);point['x']-=.6;drop=deepcopy(point);drop['x']-=.6
-        save('tasks.json',[dict(task_id='t3c1a-task',pickup=point,dropoff=drop)])
-        until(lambda:any(a['status']=='NATIVE_ZERO_VERIFIED' for a in decisions('native-ack:')))
-        acks=decisions('native-ack:');ack=next(a for a in acks if a['status']=='NATIVE_ZERO_VERIFIED');rid=ack['identity']['robot_id']
-        until(lambda:writer[rid] and writer[rid][-1]['selection_reason']=='VERIFIED_ZERO')
-        until(lambda:writer[rid][-1]['command_sha256'] in signed_status[rid])
-        manifests=json.loads((args.output/'workers.json').read_text());pid=manifests[rid]['pid'];mappings=[]
+        if probe and hasattr(probe,'trace'):probe.trace('library_inspection_begin')
+        manifests=json.loads((args.output/'workers.json').read_text());mappings=[]
         for path in Path('/proc').glob('[0-9]*/maps'):
             try:lines=path.read_text().splitlines()
             except (OSError,PermissionError):continue
@@ -104,7 +108,13 @@ def main():
             if loaded:mappings.append(dict(pid=int(path.parent.name),mappings=loaded))
         save('loaded-mappings.json',mappings)
         gazebo=next(m['pid'] for m in mappings if any('libc5-authorized-zero-drive.so' in v for v in m['mappings']))
-        assert pid!=gazebo
+        if probe and hasattr(probe,'trace'):probe.trace('library_inspection_end')
+        save('tasks.json',[dict(task_id='t3c1a-task',pickup=point,dropoff=drop)])
+        until(lambda:any(a['status']=='NATIVE_ZERO_VERIFIED' for a in decisions('native-ack:')))
+        acks=decisions('native-ack:');ack=next(a for a in acks if a['status']=='NATIVE_ZERO_VERIFIED');rid=ack['identity']['robot_id']
+        pid=manifests[rid]['pid'];assert pid!=gazebo
+        until(lambda:writer[rid] and writer[rid][-1]['selection_reason']=='VERIFIED_ZERO')
+        until(lambda:writer[rid][-1]['command_sha256'] in signed_status[rid])
         transfer=next(t for t in decisions('native-transfer:') if t['transfer_id']==ack['transfer_id'])
         signed=json.loads(rows('SELECT payload FROM traffic_decisions WHERE event_id=?',('native-ack:'+ack['transfer_id'],))[0]['payload'])['payload']['native_status']
         assert verify(signed,load_key('/run/c5-b6b7/'+rid+'.json'),domain=STATUS_DOMAIN)==ack['native_status']
@@ -119,29 +129,38 @@ def main():
         save('writer-committed-binding.json',dict(selection=selection,native_status=observed,committed_transfer=selected_transfer))
         for row in rows('SELECT d.decision,o.payload FROM traffic_decisions d JOIN traffic_outbox o ON d.event_id=o.event_id'):
             assert row['decision']==row['payload']
-        request=json.loads(transfer['body'])['command_context']['permit_event_id'][7:]
-        save('release-request.json',dict(request_id=request))
-        until(lambda:(args.output/'release-response.json').exists())
-        assert json.loads((args.output/'release-response.json').read_text())['reason']=='RELEASE_THRESHOLDS_UNVERIFIED'
+        def check_release():
+            request=json.loads(transfer['body'])['command_context']['permit_event_id'][7:]
+            save('release-request.json',dict(request_id=request))
+            until(lambda:(args.output/'release-response.json').exists())
+            assert json.loads((args.output/'release-response.json').read_text())['reason']=='RELEASE_THRESHOLDS_UNVERIFIED'
+        if not defer_release:check_release()
+        controls=dict(args=args,node=node,probe=probe,until=until,pump=pump,writer=writer,states=states,robot_id=rid,
+            native_pid=pid,gazebo_pid=gazebo,config=cfg,rows=rows,decisions=decisions,save=save,children=children,ack=ack)
+        if before_fault:before_fault(args.case,controls)
         before=deepcopy(writer[rid][-1]);started=time.monotonic_ns();start_index=len(writer[rid]);held=False
+        if before_fault:assert not before['latched'] and before['selection_reason']=='VERIFIED_ZERO'
         process_evidence={}
         def process_status(process):
             path=Path('/proc')/str(process)/'status'
             return path.read_text() if path.exists() else 'PROCESS_ABSENT'
         try:
-            if args.case=='worker-stop':
+            if args.case in extra_cases:fault_handler(args.case,controls)
+            elif args.case=='worker-stop':
                 os.kill(pid,signal.SIGSTOP);held=True
                 until(lambda:'State:\tT' in process_status(pid))
             elif args.case=='worker-kill':os.kill(pid,signal.SIGKILL)
             else:save(rid+'-worker-fault.json',dict(mode={'ipc-loss':'ipc_close','wrong-context':'wrong_context','wrong-session':'wrong_session'}.get(args.case,args.case)))
             until(lambda:writer[rid][-1]['latched'])
             first_latched=deepcopy(writer[rid][-1]);until(lambda:writer[rid][-1]['post_completed_physics_updates']>first_latched['post_completed_physics_updates']+20)
+            if before_fault:assert first_latched['writer_steady_ns']>=started
             during=deepcopy(writer[rid][-1]);assert during['post_completed_physics_updates']>before['post_completed_physics_updates']
             assert during['sim_ns']>before['sim_ns']
             process_evidence=dict(worker_status_during=process_status(pid),gazebo_status_during=process_status(gazebo))
             if args.case=='worker-stop':assert 'State:\tT' in process_evidence['worker_status_during']
         finally:
             if held:os.kill(pid,signal.SIGCONT)
+        if defer_release:check_release()
         if args.case=='worker-kill':
             save('worker-restart-request.json',dict(robot_id=rid))
             until(lambda:'restart_pid' in json.loads((args.output/'workers.json').read_text())[rid])
@@ -152,13 +171,15 @@ def main():
         spans={r:max(math.dist(v['post_world_position'][:2],samples[0]['post_world_position'][:2]) for v in samples) for r,samples in writer.items() if samples}
         assert all(span<.001 for span in spans.values())
         assert any(v['post_actual_velocity_known'] for v in writer[rid][start_index:])
-        save('summary.json',dict(result='PASS_STATIONARY_SPLIT_ZERO_ONLY',case=args.case,robot_id=rid,worker_pid=pid,gazebo_pid=gazebo,
+        health_validation=validator(args.case,controls) if validator else None
+        save('summary.json',dict(health_validation=health_validation,result='PASS_STATIONARY_SPLIT_ZERO_ONLY',case=args.case,robot_id=rid,worker_pid=pid,gazebo_pid=gazebo,
             fault_started_observer_monotonic_ns=started,before=before,first_latched=first_latched,during=during,after=after,
             committed_ack=ack,writer_samples={r:len(v) for r,v in writer.items()},max_stationary_displacement_m=spans,
             process_evidence=process_evidence,
             physics_counter_semantics='Completed stock Physics::Update, unpaused positive dt; not an external clock timer',
             nonzero_enabled=False,movement_authorized=False,physical_stop='UNKNOWN',ownership_release=False))
     finally:
+        if probe:probe.close()
         if native:native.close()
         exits={};quiet=False
         def priority(item):

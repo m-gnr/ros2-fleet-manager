@@ -139,11 +139,32 @@ class RobotHealthProbe:
                     static=static,frame=transform.header.frame_id,child=transform.child_frame_id,
                     position=xyz(transform.transform.translation),orientation=quaternion(transform.transform.rotation)))+'\n')
 
-    def tick(self):
-        from lifecycle_msgs.srv import GetState
+    def observe_transform(self,rid,now,ros_ns):
         from rclpy.time import Time
         from rclpy.clock import ClockType
         from tf2_ros import TransformException
+        window=self.windows[rid]
+        odom = window.samples.get('odometry')
+        if odom:
+            try:
+                tf = self.buffers[rid].lookup_transform(window.frames['map'],window.frames['base'],
+                    Time(nanoseconds=odom['stamp_ns'],clock_type=ClockType.ROS_TIME))
+                edges = [(window.frames['map'],window.frames['odom']),
+                         (window.frames['odom'],window.frames['base'])]
+                sources = [self.tf_sources[rid].get(edge) for edge in edges]
+                if not all(sources):raise TransformException('Unobserved transform edge source')
+                source = '|'.join(sources)
+                window.receive('tf',value=dict(frame=tf.header.frame_id,child=tf.child_frame_id,
+                    position=xyz(tf.transform.translation),orientation=quaternion(tf.transform.rotation),
+                    at_odometry_stamp=stamp_ns(tf.header.stamp)==odom['stamp_ns']),
+                    stamp_ns=stamp_ns(tf.header.stamp),receipt=now,source_id=source)
+            except TransformException as error:
+                window.reject('tf','TF_AT_MEASUREMENT_UNAVAILABLE')
+                self.raw.write(json.dumps(dict(stream='tf_lookup_error',robot=rid,
+                    source_stamp_ns=odom['stamp_ns'],received_monotonic=now,error=str(error)))+'\n')
+
+    def tick(self):
+        from lifecycle_msgs.srv import GetState
         now = time.monotonic()
         if self.closed or now < self.next_tick:return
         self.next_tick = now+self.config.fleet.perception_safety.timer_period_sec
@@ -175,21 +196,7 @@ class RobotHealthProbe:
                         except Exception:self.windows[rid].reject('lifecycle:'+role,'LIFECYCLE_RPC_ERROR')
                 future.add_done_callback(response)
             for rid, window in self.windows.items():
-                odom = window.samples.get('odometry')
-                if odom:
-                    try:
-                        tf = self.buffers[rid].lookup_transform(window.frames['map'],window.frames['base'],
-                            Time(nanoseconds=odom['stamp_ns'],clock_type=ClockType.ROS_TIME))
-                        edges = [(window.frames['map'],window.frames['odom']),
-                                 (window.frames['odom'],window.frames['base'])]
-                        sources = [self.tf_sources[rid].get(edge) for edge in edges]
-                        if not all(sources):raise TransformException('Unobserved transform edge source')
-                        source = '|'.join(sources)
-                        window.receive('tf',value=dict(frame=tf.header.frame_id,child=tf.child_frame_id,
-                            position=xyz(tf.transform.translation),orientation=quaternion(tf.transform.rotation),
-                            at_odometry_stamp=stamp_ns(tf.header.stamp)==odom['stamp_ns']),
-                            stamp_ns=stamp_ns(tf.header.stamp),receipt=now,source_id=source)
-                    except TransformException:window.reject('tf','TF_AT_MEASUREMENT_UNAVAILABLE')
+                self.observe_transform(rid,now,ros_ns)
                 context, command = self.context_provider(rid,window.samples.get('native'))
                 result = window.evaluate(ros_ns=ros_ns,now=now,context=context,known_command=command)
                 self.latest[rid] = result

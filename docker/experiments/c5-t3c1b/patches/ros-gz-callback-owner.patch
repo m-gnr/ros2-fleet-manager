@@ -1,0 +1,21 @@
+--- a/ros_gz_bridge/src/factory.hpp
++++ b/ros_gz_bridge/src/factory.hpp
+@@ -111,11 +111,17 @@
+ 
+     auto ros_type = ros_type_name_;
+     auto gz_type = gz_type_name_;
++    rclcpp::Node::WeakPtr owner = ros_node;
+     std::function<void(std::shared_ptr<const ROS_T>, const rclcpp::MessageInfo &)> fn =
+-      [self_pub_gids, gz_pub, ros_type, gz_type, ros_node](
++      [self_pub_gids, gz_pub, ros_type, gz_type, owner](
+       std::shared_ptr<const ROS_T> ros_msg,
+       const rclcpp::MessageInfo & msg_info) mutable
+       {
++        // The node owns the handle/subscription; do not close that cycle.
++        auto ros_node = owner.lock();
++        if (!ros_node) {
++          return;
++        }
+         // Skip messages published by this bridge node to prevent loops.
+         const auto & sender_gid = msg_info.get_rmw_message_info().publisher_gid;
+         for (const auto & gid : *self_pub_gids) {

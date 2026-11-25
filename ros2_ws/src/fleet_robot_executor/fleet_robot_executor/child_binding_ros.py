@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 import threading
 import time
+import os
 from uuid import UUID, uuid4
 import xml.etree.ElementTree as ET
 
@@ -101,6 +102,9 @@ class ROSChildBindingObserver:
         from .traffic import geometry_for
         with self.lock:
             b = self.binding
+            if os.environ.get('C5_1B_DIAGNOSTICS')=='1':
+                self.node.get_logger().info('CHILD_RECEIVE kind=%s seq=%s binding=%s closed=%s' % (
+                    message.kind,message.observation_seq,b.context_id if b else None,b.closed if b else None))
             if b is None or b.closed:
                 return
             if str(UUID(bytes=bytes(message.context_id.uuid))) != b.context_id:
@@ -119,8 +123,12 @@ class ROSChildBindingObserver:
             o.update(sequence=message.observation_seq, kind=message.kind, reason=message.reason,
                      stamp_ns=message.stamp.sec*10**9+message.stamp.nanosec,
                      path_bytes=raw, terminal_status=message.terminal_status)
-            p = b.observe(o, now_ns=self.node.get_clock().now().nanoseconds, receipt_now=time.monotonic(),
+            observed_ros_ns=self.node.get_clock().now().nanoseconds
+            p = b.observe(o, now_ns=observed_ros_ns, receipt_now=time.monotonic(),
                           assignment=self._parent(self.parent_handle, self.kind))
+            if os.environ.get('C5_1B_DIAGNOSTICS')=='1':
+                self.node.get_logger().info('CHILD_OBSERVE source_age_ns=%s forwarded=%s closed=%s' % (
+                    observed_ros_ns-o['stamp_ns'],p is not None,b.closed))
             if p is None:
                 return
             if p['child_provenance']['kind'] == 1:

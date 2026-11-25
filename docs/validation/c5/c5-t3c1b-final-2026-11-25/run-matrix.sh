@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -u
+ledger=/tmp/c5-t3c1b-final-20261125/matrix.tsv
+printf 'case\trun\tdomain\texit\n' > "$ledger"
+index=181
+for scenario in health-flow-loss tf-loss odometry-loss amcl-loss controller-inactive observation-loss health-context health-session health-old worker-stop worker-kill ipc-loss replan cancel; do
+ run="$scenario-final1";name="c5-1b-final-$run"
+ docker run --rm --init --name "$name" --network bridge --workdir /workspace \
+  --env ROS_DOMAIN_ID="$index" --env RMW_IMPLEMENTATION=rmw_cyclonedds_cpp --env ROS_LOCALHOST_ONLY=0 --env IGN_PARTITION="$name" \
+  --env C5_1B_CLEANUP_FIX_LIBRARY=/build/lifecycle/libc5-costmap-cleanup.so \
+  -v /tmp/c5-t3c1b-recovery-20261124/frozen-source-1:/workspace:ro \
+  -v /tmp/c5-t3c1b-recovery-20261124/ros-fixed-a4:/build:ro \
+  -v /tmp/c5-t3c1b-native-20261124-a4:/b6b7-native:ro \
+  -v /tmp/c5-t3c1b-final-20261125:/evidence c5-b6b5-build:local bash -ec '
+  source /opt/ros/humble/setup.bash
+  source /build/install/local_setup.bash
+  export PYTHONPATH=/workspace:/workspace/backend:/workspace/ros2_ws/src/fleet_robot_executor:/workspace/ros2_ws/src/fleet_battery_simulator:/workspace/fleet-visualizer/bridge:$PYTHONPATH
+  python3 docker/experiments/c5-t3c1b/live.py config/fleet.warehouse-30x18.yaml "/evidence/$1" --case "$2"
+ ' targeted "$run" "$scenario" > "/tmp/c5-t3c1b-final-20261125/$run.cli.log" 2>&1
+ result=$?;printf '%s\t%s\t%s\t%s\n' "$scenario" "$run" "$index" "$result" >> "$ledger"
+ index=$((index+1))
+done

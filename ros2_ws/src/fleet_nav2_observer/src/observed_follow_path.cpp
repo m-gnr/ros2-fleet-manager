@@ -1,6 +1,7 @@
 // Metadata observer only. Loading this plugin does not enforce traffic or qualify stop.
 #include <string>
 #include <random>
+#include <cstdlib>
 #include "nav2_behavior_tree/plugins/action/follow_path_action.hpp"
 #include "behaviortree_cpp_v3/bt_factory.h"
 #include "fleet_interfaces/msg/traffic_child_observation.hpp"
@@ -109,6 +110,10 @@ private:
     message.terminal_status = terminal_status;
     message.reason = reason;
     message.path = accepted_path_;
+    if (std::getenv("C5_1B_DIAGNOSTICS")) {
+      RCLCPP_INFO(node_->get_logger(), "CHILD_EMIT kind=%u seq=%lu subscribers=%zu poses=%zu",
+        unsigned(kind), sequence_, publisher_->get_subscription_count(), message.path.poses.size());
+    }
     publisher_->publish(message);
   }
   Message base_;

@@ -14,10 +14,10 @@ def read(path):
     with gzip.open(str(path)+'.gz','rt') as stream:return stream.read()
 
 
-def audit(root,matrix):
-    expected={'worker-stop':'TIMEOUT','worker-kill':'TIMEOUT','ipc-loss':'TIMEOUT','duplicate':'REPLAY',
+def audit(root,matrix,*,expected=None,selected=None):
+    expected=expected or {'worker-stop':'TIMEOUT','worker-kill':'TIMEOUT','ipc-loss':'TIMEOUT','duplicate':'REPLAY',
               'wrong-context':'CONTEXT','wrong-session':'SESSION','corrupt':'MALFORMED','delayed':'TIMEOUT'}
-    selected=[line.split('\t') for line in matrix.read_text().splitlines() if line]
+    selected=selected if selected is not None else [line.split('\t') for line in matrix.read_text().splitlines() if line]
     assert len(selected)==len(expected)
     reports=[]
     for run,domain,code in selected:
@@ -29,7 +29,8 @@ def audit(root,matrix):
         assert all(v==0 or (case=='worker-kill' and k==rid and v==-9) for k,v in shutdown.items())
         before,first,during,after=(s[k] for k in ('before','first_latched','during','after'))
         assert before['selection_reason']=='VERIFIED_ZERO' and not before['latched']
-        assert first['selection_reason']==expected[case]
+        allowed=expected[case] if isinstance(expected[case],set) else {expected[case]}
+        assert first['selection_reason'] in allowed
         assert all(v['latched'] and v['pre_selected_joint_targets']==[0.,0.] for v in (first,during,after))
         assert after['accepted']==first['accepted']
         assert during['post_completed_physics_updates']>first['post_completed_physics_updates']+20
@@ -87,7 +88,7 @@ def audit(root,matrix):
         assert all(math.isfinite(z) for v in samples for z in v['post_actual_body_velocity'])
         assert json.loads(read(path/'release-response.json'))['reason']=='RELEASE_THRESHOLDS_UNVERIFIED'
         assert max(s['max_stationary_displacement_m'].values())<.001
-        reports.append(dict(run=run,domain=int(domain),robot_id=rid,reason=expected[case],
+        reports.append(dict(run=run,domain=int(domain),robot_id=rid,reason=first['selection_reason'],
             physics_before=before['post_completed_physics_updates'],physics_while_fault=during['post_completed_physics_updates'],
             writer_samples=s['writer_samples'],source_assignment_and_body_match=True,
             mac_reauthenticated_offline=False,mac_verified_by_live_probe=True))

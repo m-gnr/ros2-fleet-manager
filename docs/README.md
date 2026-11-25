@@ -18,6 +18,14 @@ Kaynak önceliği bu dizinle değiştirilmez. Nihai belgenin açık çelişki ç
 
 ## Geliştirme
 
+- [C5-T3C-1B son iki engelin düzeltmesi ve bağımsız kabul](validation/c5/c5-t3c1b-last-two-2026-11-25.md) · [Komutlar](validation/c5/c5-t3c1b-last-two-commands-2026-11-25.md): sabit son sürümde 14/14 durağan koşu ve regresyonlar geçti. Challenge ret ayrımı, özgün sağlık süre zinciri ve pre-task kanıt incelemesi; deneysel/varsayılan kapalı, hareketli fren kabulü yok.
+
+- [C5-T3C-1B final kabul denemesi](validation/c5/c5-t3c1b-final-2026-11-25.md) · [Komutlar](validation/c5/c5-t3c1b-final-commands-2026-11-25.md): aynı sabit sürümle 14 koşu; 12 PASS / 2 FAIL, regresyonlar geçti. Odometry güncellik ve IPC REPLAY önkoşulları açık; commit/push yok.
+
+- [C5-T3C-1B üç entegrasyon hatasının hedefli doğrulaması](validation/c5/c5-t3c1b-integration-fixes-2026-11-25.md) · [Komutlar](validation/c5/c5-t3c1b-integration-fixes-commands-2026-11-25.md): üç senaryo aynı kaynak/binary ile temiz; bridge sahiplik ve Nav2 callback yaşam süresi düzeltmeleri. Tam 14'lü matris, hareketli deney ve commit/push yok.
+
+- [C5-T3C-1B gerçek sağlık → son yazıcı veto'su](validation/c5/c5-t3c1b-health-veto-2026-11-24.md) · [Komutlar](validation/c5/c5-t3c1b-health-veto-commands-2026-11-24.md): KISMİ; sıfır sağlık/IPC bağı geliştirildi, tam canlı kabul engelleri açık. Nonzero ve varsayılan entegrasyon kapalı; commit/push yapılmadı.
+
 - [C5-T3C-1A ayrı native işçi ve sıfır son veto](validation/c5/c5-t3c1a-native-worker-2026-11-19.md) · [Komutlar](validation/c5/c5-t3c1a-native-worker-commands-2026-11-19.md): işçi kaybında gerçek Physics ilerlemesi, sekiz izole durağan koşu. Deneysel/varsayılan kapalı; sağlık veto'sunun tamamı ve hareketli fren kabulü açık.
 
 - [C5-T3C-0 hareketli duruş mimari incelemesi](validation/c5/c5-t3c0-stop-architecture-2026-11-19.md): ayrı native işçisi ve mevcut tek fizik yazıcısında son veto önerisi; süreç/fizik hata sınırları ve T3C-1 sırası. ÖNERİ; nonzero ve uygulama yetkisi vermez.

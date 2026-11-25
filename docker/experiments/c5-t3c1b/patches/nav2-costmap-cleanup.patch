@@ -1,0 +1,25 @@
+--- a/nav2_costmap_2d/src/costmap_2d_ros.cpp
++++ b/nav2_costmap_2d/src/costmap_2d_ros.cpp
+@@ -331,6 +331,12 @@
+ {
+   RCLCPP_INFO(get_logger(), "Cleaning up");
+ 
++  // Quiesce callbacks before destroying their costmap/service dependencies.
++  // Backport of the lifetime fix discussed in Navigation2 issue #4323.
++  executor_thread_.reset();
++  costmap_publisher_.reset();
++  clear_costmap_service_.reset();
++
+   layered_costmap_.reset();
+ 
+   tf_listener_.reset();
+@@ -339,10 +345,6 @@
+   footprint_sub_.reset();
+   footprint_pub_.reset();
+ 
+-  costmap_publisher_.reset();
+-  clear_costmap_service_.reset();
+-
+-  executor_thread_.reset();
+   return nav2_util::CallbackReturn::SUCCESS;
+ }

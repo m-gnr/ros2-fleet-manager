@@ -21,8 +21,10 @@ def main():
     parser.add_argument("--ready", type=Path)
     parser.add_argument("--peer-awareness-experiment", action="store_true",
                         help="Opt-in peer costmap observations; not a qualified traffic permit")
+    parser.add_argument("--warehouse-escape", action="store_true")
     args = parser.parse_args()
-    profile = generate(args.profile, args.output, args.scenario, peer_awareness=args.peer_awareness_experiment)
+    profile = generate(args.profile, args.output, args.scenario, peer_awareness=args.peer_awareness_experiment,
+                       warehouse_escape=args.warehouse_escape)
     if args.ready is not None:
         args.ready.write_text('READY\n')
     bridge = [bridge_executable(), "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock"]

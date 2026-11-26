@@ -3,6 +3,7 @@ import argparse
 from decimal import Decimal
 import json
 import re
+from itertools import product
 from math import pi
 from pathlib import Path
 import sys
@@ -12,7 +13,9 @@ from xml.etree import ElementTree as ET
 import yaml
 
 from fleet_config import load_config
-from fleet_config.obstacle_sensors import install_sensors, configure_observations, validate_clear_fov
+from fleet_config.obstacle_sensors import (
+    compose, install_sensors, configure_observations, pose, shape_bound, validate_clear_fov,
+)
 from fleet_config.occupancy import encode_grid, raster
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,11 +94,83 @@ def configure_peer_observations(params, config, robot, radii):
         )
 
 
-def generate(path, out, scenario="delivery", *, peer_awareness=False):
+def projected_collision_hull(model):
+    """Enclose the projection of all SDF collision shapes, including sensor housings."""
+    points = set()
+    for link in model.findall("link"):
+        for collision in link.findall("collision"):
+            center, matrix = compose(pose(link), pose(collision))
+            _, bounds = shape_bound(collision.find("geometry"), center, matrix)
+            points.update(product(*bounds[:2]))
+
+    def half_hull(ordered):
+        hull = []
+        for point in ordered:
+            while len(hull) > 1:
+                a, b = hull[-2:]
+                if (b[0] - a[0]) * (point[1] - a[1]) > (b[1] - a[1]) * (point[0] - a[0]):
+                    break
+                hull.pop()
+            hull.append(point)
+        return hull[:-1]
+
+    ordered = sorted(points)
+    hull = half_hull(ordered) + half_hull(reversed(ordered))
+    if len(hull) < 3:
+        raise ValueError("Recovery requires a physical collision footprint")
+    return [coordinate for point in hull for coordinate in point]
+
+
+def configure_escape(params, config, robot, out, radius, radii, hulls):
+    local = params["local_costmap"]["local_costmap"]["ros__parameters"]
+    global_cost = params["global_costmap"]["global_costmap"]["ros__parameters"]
+    footprint = local.get("robot_radius")
+    if (not footprint or footprint != global_cost.get("robot_radius") or
+            radius + footprint + local["resolution"] >= min(local["width"], local["height"]) / 2):
+        raise ValueError(f"{robot.id}: escape radius and footprint must fit the local costmap")
+    for costmap in (local, global_cost):
+        if costmap["plugins"][-2:] != ["peer_robot_layer", "inflation_layer"]:
+            raise ValueError("Clearance requires the peer layer after all static and sensor layers")
+        costmap["peer_robot_layer"]["publish_recovery_costmap"] = True
+    navigator = params["bt_navigator"]["ros__parameters"]
+    tree = ET.parse(ROOT / "config/navigate-to-pose-escape.xml")
+    escape = tree.find(".//FleetEscape")
+    physical_topics = [r.namespace + "/physical_pose" for r in config.robots]
+    physical_radii = [radii[r.id] for r in config.robots]
+    self_index = next(i for i, r in enumerate(config.robots) if r.id == robot.id)
+    physical_hulls = [";".join(map(str, hulls[r.id])) for r in config.robots]
+    controller = params["controller_server"]["ros__parameters"]
+    controller["controller_plugins"].append("FleetClearance")
+    controller["FleetClearance"] = dict(
+        plugin="fleet_nav2_escape::ClearanceController", physical_topics=physical_topics,
+        radii=physical_radii, self_index=self_index, physical_hulls=physical_hulls,
+    )
+    controller["goal_checker_plugins"].append("clearance_goal_checker")
+    controller["clearance_goal_checker"] = dict(
+        plugin="nav2_controller::StoppedGoalChecker", stateful=False, xy_goal_tolerance=0.05,
+        yaw_goal_tolerance=0.18, trans_stopped_velocity=0.01, rot_stopped_velocity=0.01,
+    )
+    escape.attrib.update(radius=str(radius), footprint=str(footprint),
+                         physical_topics=";".join(physical_topics),
+                         physical_radii=";".join(map(str, physical_radii)), self_index=str(self_index),
+                         physical_hulls="|".join(physical_hulls),
+                         base_frame=navigator["robot_base_frame"], odom_topic=navigator["odom_topic"],
+                         # A Docker Desktop host bind mount does not serialize flock.
+                         lease="/tmp/fleet-nav2-escape.lock")
+    bt_path = out.resolve() / f"escape-{robot.id}.xml"
+    tree.write(bt_path, encoding="utf-8")
+    navigator["default_nav_to_pose_bt_xml"] = str(bt_path)
+    navigator["plugin_lib_names"].append("fleet_escape_bt_nodes")
+
+
+def generate(path, out, scenario="delivery", *, peer_awareness=False, warehouse_escape=False):
     config = load_config(path)
     layout = config.warehouse
     if layout is None:
         raise ValueError("fleet profile has no warehouse")
+    escape_radius = config.fleet.nav2_escape_radius_m if warehouse_escape else None
+    if escape_radius is not None and not peer_awareness:
+        raise ValueError("warehouse escape requires peer costmap observations")
     out.mkdir(parents=True, exist_ok=True)
     data = config.model_dump()
     if scenario == "passing":
@@ -148,7 +223,6 @@ def generate(path, out, scenario="delivery", *, peer_awareness=False):
             # Verify the generated collision assembly, including sensor housings,
             # is enclosed; a convenient Nav2 radius alone is not geometry proof.
             if robot.obstacle_sensor_model is None:
-                from fleet_config.obstacle_sensors import pose, compose, shape_bound
                 model = tree.find(f'.//model[@name="{robot.id}"]')
                 for link in model.findall('link'):
                     for collision in link.findall('collision'):
@@ -173,6 +247,8 @@ def generate(path, out, scenario="delivery", *, peer_awareness=False):
                 ET.SubElement(contact, "topic").text = robot.namespace + '/contact_' + link.get("name")
     tree.write(sdf, encoding="utf-8", xml_declaration=True)
 
+    hulls = {robot.id: projected_collision_hull(tree.find(f'.//model[@name="{robot.id}"]'))
+             for robot in config.robots} if escape_radius is not None else {}
     for robot in data["robots"]:
         name, ns, start = robot["id"], robot["namespace"], robot["initial_pose"]
         text = (path.parent / robot["nav2_params_path"]).read_text()
@@ -193,6 +269,8 @@ def generate(path, out, scenario="delivery", *, peer_awareness=False):
         configure_observations(params, config, configured_robot)
         if peer_awareness:
             configure_peer_observations(params, config, configured_robot, radii)
+        if escape_radius is not None:
+            configure_escape(params, config, configured_robot, out, escape_radius, radii, hulls)
         (out / f"nav2-{name}.yaml").write_text(yaml.safe_dump(params, sort_keys=False))
     (out / "scene.json").write_text(json.dumps(layout.scene_payload(), ensure_ascii=False, indent=2)+"\n")
     (out / "goals.json").write_text(json.dumps(goals, indent=2)+"\n")

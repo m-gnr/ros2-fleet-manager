@@ -1,4 +1,5 @@
 """Candidate peer observations remain opt-in and share the fleet geometry source."""
+from itertools import product
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -6,9 +7,57 @@ import pytest
 import yaml
 
 from fleet_config import load_config
+from fleet_config.obstacle_sensors import compose, pose, shape_bound
 from fleet_config.warehouse_assets import generate, configure_peer_observations
 
 PROFILE = Path("config/fleet.warehouse-30x18.yaml").resolve()
+
+
+def test_demo_escape_tree_shares_one_lease_and_replans_original_goal(tmp_path):
+    with pytest.raises(ValueError, match="requires peer costmap"):
+        generate(PROFILE, tmp_path / "unsafe", warehouse_escape=True)
+    out = tmp_path / "demo"
+    cfg = generate(PROFILE, out, peer_awareness=True, warehouse_escape=True)
+    world = ET.parse(out / "warehouse.sdf")
+    for robot in cfg.robots:
+        params = yaml.safe_load((out / f"nav2-{robot.id}.yaml").read_text())
+        nav = params["bt_navigator"]["ros__parameters"]
+        assert "fleet_escape_bt_nodes" in nav["plugin_lib_names"]
+        tree = ET.parse(nav["default_nav_to_pose_bt_xml"])
+        recovery = tree.find(".//RecoveryNode[@name='NavigateRecovery']")
+        assert recovery.get("number_of_retries") == "1"
+        planner = recovery.find(".//ComputePathToPose")
+        assert planner.get("goal") == "{goal}"
+        assert int(planner.get("server_timeout")) > nav["default_server_timeout"]
+        assert recovery.find(".//FleetFollowPath").get("aborted") == "{aborted_follow}"
+        escape = recovery.find("FleetEscape")
+        assert float(escape.get("radius")) == cfg.fleet.nav2_escape_radius_m
+        assert escape.get("base_frame") == f"{robot.id}/base_link"
+        assert escape.get("odom_topic") == f"{robot.namespace}/odom"
+        assert escape.get("lease") == "/tmp/fleet-nav2-escape.lock"
+        controller = params["controller_server"]["ros__parameters"]
+        for kind in ("local_costmap", "global_costmap"):
+            layer = params[kind][kind]["ros__parameters"]["peer_robot_layer"]
+            assert layer["publish_recovery_costmap"]
+        clearance = controller["FleetClearance"]
+        assert clearance["physical_topics"] == [r.namespace + "/physical_pose" for r in cfg.robots]
+        assert escape.get("physical_topics").split(";") == clearance["physical_topics"]
+        assert escape.get("physical_radii").split(";") == list(map(str, clearance["radii"]))
+        assert cfg.robots[clearance["self_index"]].id == robot.id
+        assert int(escape.get("self_index")) == clearance["self_index"]
+        assert recovery.find(".//FleetFollowPath").get("goal_checker_id") == "general_goal_checker"
+        assert escape.get("physical_hulls").split("|") == clearance["physical_hulls"]
+        hull = list(map(float, clearance["physical_hulls"][clearance["self_index"]].split(";")))
+        vertices = list(zip(hull[::2], hull[1::2], strict=True))
+        assert len(vertices) >= 3
+        edges = list(zip(vertices, vertices[1:] + vertices[:1], strict=True))
+        for link in world.findall(f".//model[@name='{robot.id}']/link"):
+            for collision in link.findall("collision"):
+                center, rotation = compose(pose(link), pose(collision))
+                _, bounds = shape_bound(collision.find("geometry"), center, rotation)
+                for x, y in product(*bounds[:2]):
+                    assert all((b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]) >= -1e-10
+                               for a, b in edges)
 
 
 def test_default_generation_and_experiment_preserve_world_and_lidar(tmp_path):

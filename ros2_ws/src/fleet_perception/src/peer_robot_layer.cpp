@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "nav2_costmap_2d/layer.hpp"
+#include "nav2_msgs/msg/costmap.hpp"
 #include "nav2_costmap_2d/layered_costmap.hpp"
 #include "nav2_costmap_2d/cost_values.hpp"
 #include "pluginlib/class_list_macros.hpp"
@@ -79,6 +80,12 @@ public:
     }
     publisher_ = node->create_publisher<std_msgs::msg::String>("peer_observations", 1);
     publisher_->on_activate();
+    declareParameter("publish_recovery_costmap", rclcpp::ParameterValue(false));
+    if (node->get_parameter(name_ + ".publish_recovery_costmap").as_bool()) {
+      recovery_map_ = node->create_publisher<nav2_msgs::msg::Costmap>(
+        "recovery_obstacle_costmap", rclcpp::QoS(1).reliable().transient_local());
+      recovery_map_->on_activate();
+    }
     enabled_ = true;
     current_ = false;
   }
@@ -147,6 +154,9 @@ public:
     int max_i, int max_j) override
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (recovery_map_ && recovery_map_->get_subscription_count() > 0) {
+      publish_recovery_map(master);
+    }
     const double half = master.getResolution() / 2.;
     // Mark every grid square touching the conservative circle, including when
     // its centre is outside a rolling window. Never clear another layer's cost.
@@ -173,6 +183,26 @@ public:
   bool isClearable() override {return false;}
 
 private:
+  void publish_recovery_map(nav2_costmap_2d::Costmap2D & master)
+  {
+    // Use the master after static and sensor updates. The navigation grid
+    // below still receives every peer cell and normal inflation.
+    nav2_msgs::msg::Costmap message;
+    message.header.frame_id = layered_costmap_->getGlobalFrameID();
+    message.header.stamp = clock_->now();
+    auto & meta = message.metadata;
+    meta.layer = "before_peer";
+    meta.resolution = master.getResolution();
+    meta.size_x = master.getSizeInCellsX();
+    meta.size_y = master.getSizeInCellsY();
+    meta.origin.position.x = master.getOriginX();
+    meta.origin.position.y = master.getOriginY();
+    meta.origin.orientation.w = 1.0;
+    const auto * cells = master.getCharMap();
+    message.data.assign(cells, cells + static_cast<size_t>(meta.size_x) * meta.size_y);
+    recovery_map_->publish(message);
+  }
+
   static bool positive(double v) {return std::isfinite(v) && v > 0.;}
   bool fresh(const Edge & e, int64_t now, Steady::time_point steady, double age, double lead) const
   {
@@ -237,6 +267,7 @@ private:
   std::unique_ptr<tf2_ros::Buffer> buffer_;
   std::vector<rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr> subscriptions_;
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>::SharedPtr publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<nav2_msgs::msg::Costmap>::SharedPtr recovery_map_;
 };
 }  // namespace fleet_perception
 PLUGINLIB_EXPORT_CLASS(fleet_perception::PeerRobotLayer, nav2_costmap_2d::Layer)

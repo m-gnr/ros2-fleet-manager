@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--peer-awareness-experiment", action="store_true",
                         help="Isolated candidate only; preserve all existing safety gates")
+    parser.add_argument("--warehouse-escape", action="store_true")
     args = parser.parse_args()
     args.profile = args.profile.resolve()
     args.output = args.output.resolve()
@@ -66,7 +67,8 @@ def main():
         commands.append((name, cmd))
     plan('simulation',[sys.executable,'docker/simulation-warehouse-grid/serve.py',str(args.profile),
                              str(args.output/'generated'),'routes'] +
-                             (['--peer-awareness-experiment'] if args.peer_awareness_experiment else []))
+                             (['--peer-awareness-experiment'] if args.peer_awareness_experiment else []) +
+                             (['--warehouse-escape'] if args.warehouse_escape else []))
     plan('observer',[sys.executable,'docker/simulation-warehouse-grid/stage1_observer.py',str(args.profile),str(args.output),
                            '--database',str(database)])
     settings=json.loads(Path('config/simulation-c3-3-3.json').read_text())

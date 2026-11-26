@@ -1,5 +1,11 @@
 # Doğrulama kayıtları
 
+- [C5 253 costmap bandından kontrollü çıkış](c5/followpath-clearance-2026-11-26.md).
+
+- [C5 Beta–Gamma kaçış karşılaşması](c5/followpath-escape-peer-encounter-2026-11-26.md) · [Komutlar](c5/followpath-escape-peer-encounter-commands-2026-11-26.md).
+
+- [C5 FollowPath kaçışı ve yeniden planlama](c5/followpath-escape-2026-11-26.md) · [Komutlar](c5/followpath-escape-commands-2026-11-26.md).
+
 - [C5-T3C-2A kontrollü hareket öncesi hazırlık](c5/c5-t3c2a-preparation-2026-11-25.md) · [Komutlar](c5/c5-t3c2a-preparation-commands-2026-11-25.md): salt okunur envanter ve regresyonlar PASS; 2B hareketli geçiş BLOCKED, StopEnvelope UNBOUNDED. Hareket veya yeni Gazebo koşusu yok.
 
 - [C5-T3C-1B son iki engelin düzeltmesi ve bağımsız kabul](c5/c5-t3c1b-last-two-2026-11-25.md) · [Komutlar](c5/c5-t3c1b-last-two-commands-2026-11-25.md): sabit son sürümde 14/14 durağan koşu ve regresyonlar geçti. Challenge ret ayrımı, özgün sağlık süre zinciri ve pre-task kanıt incelemesi; deneysel/varsayılan kapalı, hareketli fren kabulü yok.

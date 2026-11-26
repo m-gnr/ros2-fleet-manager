@@ -651,6 +651,20 @@
               "type": "null"
             }
           ]
+        },
+        "nav2_escape_radius_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.5,
+              "maximum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Warehouse Nav2 escape candidate radius, metres.",
+          "title": "Nav2 Escape Radius M"
         }
       },
       "required": [

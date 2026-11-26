@@ -123,6 +123,10 @@ class Fleet(Contract):
     battery_models: Annotated[dict[Identifier, BatteryModel], Field(min_length=1)]
     obstacle_sensor_models: dict[Identifier, ObstacleSensorAssembly] = Field(default_factory=dict)
     perception_safety: PerceptionSafety | None = Field(default_factory=lambda: None)
+    nav2_escape_radius_m: Annotated[float, Field(gt=0.5, le=1.0)] | None = Field(
+        default_factory=lambda: None,
+        description="Warehouse Nav2 escape candidate radius, metres.",
+    )
 
     @field_validator("use_sim_time", mode="before")
     @classmethod

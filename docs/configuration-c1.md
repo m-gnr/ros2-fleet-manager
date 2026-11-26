@@ -17,6 +17,7 @@ Genel filo ve ortam parametreleri:
 - `name` (string): Filo tanıtıcı adı.
 - `map_path` (string): Harita YAML dosyasının `fleet.yaml` dizinine göre bağıl yolu (örn. `map/map.yaml`).
 - `use_sim_time` (boolean, sabit `true`): Tüm düğümlerin Gazebo `/clock` zamanını kullanmasını zorunlu kılar.
+- `nav2_escape_radius_m` (isteğe bağlı, 0,5 m'den büyük ve en çok 1,0 m): C5 depo başlatıcısında Nav2 kaçış adayı aramasının üst yarıçapı. Sekiz yön üst sınırda, üst sınır ile 0,40 m arasındaki orta noktada ve 0,40 m'de denenir. Üretici, yarıçapı robot footprint'i ve costmap çözünürlüğüyle birlikte yerel pencereye sığdırır. Alan boşsa depo profili varsayılan Nav2 ağacını kullanır.
 - `battery_models` (sözlük): Robot tiplerine göre batarya parametreleri:
   - `usable_capacity_wh` (float > 0): Kullanılabilir net batarya kapasitesi (**Watt-saat / Wh**).
   - `consumption_wh_per_meter` (float > 0): Hareket tüketim katsayısı $k$ (**Wh/m**).

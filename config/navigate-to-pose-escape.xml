@@ -1,0 +1,22 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <Sequence>
+      <SetBlackboard output_key="aborted_follow" value="none"/>
+      <RecoveryNode number_of_retries="1" name="NavigateRecovery">
+        <PipelineSequence name="NavigateWithReplanning">
+          <RateController hz="1.0">
+            <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+              <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased" server_timeout="500"/>
+              <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap" server_timeout="500"/>
+            </RecoveryNode>
+          </RateController>
+          <FleetFollowPath path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker" aborted="{aborted_follow}" server_timeout="500"/>
+        </PipelineSequence>
+        <FleetEscape goal="{goal}" aborted="{aborted_follow}" radius="@ESCAPE_RADIUS@"
+          footprint="@ROBOT_RADIUS@" base_frame="@BASE_FRAME@" odom_topic="@ODOM_TOPIC@"
+          lease="@ESCAPE_LEASE@" physical_topics="@PHYSICAL_TOPICS@"
+          physical_radii="@PHYSICAL_RADII@" self_index="@SELF_INDEX@" physical_hulls="@PHYSICAL_HULLS@"/>
+      </RecoveryNode>
+    </Sequence>
+  </BehaviorTree>
+</root>

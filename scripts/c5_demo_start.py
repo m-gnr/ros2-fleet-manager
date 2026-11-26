@@ -19,7 +19,10 @@ from c5_session_cleanup import CleanupError, run
 
 
 IMAGE = "ros2-fleet-c5-validation:humble-fortress"
-OVERLAY_PACKAGES = (Path("interfaces/fleet_interfaces"), Path("ros2_ws/src/fleet_perception"))
+OVERLAY_PACKAGES = (
+    Path("interfaces/fleet_interfaces"), Path("ros2_ws/src/fleet_perception"),
+    Path("ros2_ws/src/fleet_nav2_escape"),
+)
 
 
 def overlay_cache(root: Path) -> tuple[Path, str, str]:
@@ -108,7 +111,7 @@ def main() -> int:
         "exec 9>/c5-cache/build.lock; flock 9; "
         "if [[ ! -f /c5-cache/install/local_setup.bash ]]; then "
         "colcon --log-base /c5-cache/log build "
-        "--base-paths interfaces/fleet_interfaces ros2_ws/src/fleet_perception "
+        f"--base-paths {' '.join(shlex.quote(str(path)) for path in OVERLAY_PACKAGES)} "
         "--build-base /c5-cache/build --install-base /c5-cache/install; fi; "
         "flock -u 9; exec 9>&-; fi; "
         "source /c5-cache/install/local_setup.bash; "
@@ -118,7 +121,7 @@ def main() -> int:
         f"{shlex.quote(str(profile.relative_to(root)))} /evidence/live "
         f"--api-port {api_port} --scene-port {scene_port} "
         f"--origin http://127.0.0.1:{ui_port} --ros-overlay /c5-cache/install "
-        "--peer-awareness-experiment"
+        "--peer-awareness-experiment --warehouse-escape"
     )
     run([
         "docker", "run", "--detach", "--init", "--name", session_id, "--network", "bridge",
